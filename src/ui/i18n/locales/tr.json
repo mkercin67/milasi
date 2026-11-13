@@ -104,5 +104,14 @@
   "diagnostics.close": "Kapat",
   "status.noVerticalOffset": "Notalarda dikey konum değiştirilemez, perde için ok tuşlarını kullanın",
   "status.pointerInfo": "İşaretçi: Ölçü {measure} · {pitch}",
-  "status.overrideOffset": "dx {dx} · dy {dy}"
+  "status.overrideOffset": "dx {dx} · dy {dy}",
+  "toolbar.play": "Çal",
+  "toolbar.pause": "Duraklat",
+  "toolbar.stop": "Durdur",
+  "toolbar.volume": "Ses Düzeyi",
+  "toolbar.mute": "Sessiz",
+  "toolbar.unmute": "Sesi Aç",
+  "toolbar.previewSound": "Duyurma sesi",
+  "status.playing": "Çalınıyor",
+  "status.paused": "Duraklatıldı"
 }

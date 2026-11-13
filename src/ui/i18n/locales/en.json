@@ -104,5 +104,14 @@
   "diagnostics.close": "Close",
   "status.noVerticalOffset": "Vertical offset is disabled on notes, use arrow keys for pitch",
   "status.pointerInfo": "Pointer: Measure {measure} · {pitch}",
-  "status.overrideOffset": "dx {dx} · dy {dy}"
+  "status.overrideOffset": "dx {dx} · dy {dy}",
+  "toolbar.play": "Play",
+  "toolbar.pause": "Pause",
+  "toolbar.stop": "Stop",
+  "toolbar.volume": "Volume",
+  "toolbar.mute": "Mute",
+  "toolbar.unmute": "Unmute",
+  "toolbar.previewSound": "Audition sound",
+  "status.playing": "Playing",
+  "status.paused": "Paused"
 }

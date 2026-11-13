@@ -50,6 +50,11 @@ export interface ScoreViewProps {
   onHoverInfo?: (info: { pitch: Pitch; measureNumber: number } | null) => void;
   onDragStatus?: (status: string | null) => void;
   onLayoutChange?: (layout: LayoutResult) => void;
+  isPlaying?: boolean;
+  isPaused?: boolean;
+  activePlaybackEventIds?: string[];
+  playbackSeconds?: number;
+  onPreviewPitches?: (pitches: Pitch[]) => void;
 }
 
 interface GhostNoteData {
@@ -94,6 +99,10 @@ export const ScoreView: React.FC<ScoreViewProps> = ({
   onHoverInfo,
   onDragStatus,
   onLayoutChange,
+  isPlaying = false,
+  isPaused = false,
+  activePlaybackEventIds = [],
+  onPreviewPitches,
 }) => {
   const { t, zoom, noteNameStyle, language } = useI18n();
   const isInputMode = mode === 'input';
@@ -634,6 +643,9 @@ export const ScoreView: React.FC<ScoreViewProps> = ({
       const targetPitches = startStepPositions.map((sp) =>
         yToStaffPosition(clef, staffPositionToY(sp + clampedStepDelta), keySig)
       );
+      if (dragStateRef.current.stepDelta !== clampedStepDelta) {
+        onPreviewPitches?.(targetPitches);
+      }
       dragStateRef.current.stepDelta = clampedStepDelta;
       dragStateRef.current.targetPitches = targetPitches;
 
@@ -789,6 +801,123 @@ export const ScoreView: React.FC<ScoreViewProps> = ({
     onSelectEvent(null);
   };
 
+  // Map eventId to layout coordinates for fast, zero-DOM-read playhead and highlighting
+  const eventLayoutMap = useMemo(() => {
+    const map = new Map<string, { x: number; sysIndex: number; sysY: number }>();
+    for (const sys of layout.systems) {
+      for (const item of sys.items) {
+        if (item.eventId && !map.has(item.eventId)) {
+          map.set(item.eventId, { x: item.x, sysIndex: sys.index, sysY: sys.y });
+        }
+      }
+    }
+    return map;
+  }, [layout]);
+
+  const lastPlayheadRef = useRef<{ x: number; y1: number; y2: number; sysIndex: number } | null>(null);
+
+  const playhead = useMemo(() => {
+    if (!isPlaying && !isPaused) {
+      lastPlayheadRef.current = null;
+      return null;
+    }
+    if (activePlaybackEventIds && activePlaybackEventIds.length > 0) {
+      for (const id of activePlaybackEventIds) {
+        const loc = eventLayoutMap.get(id);
+        if (loc) {
+          const res = {
+            x: loc.x * staffSpacePx,
+            y1: (loc.sysY - 1) * staffSpacePx,
+            y2: (loc.sysY + 5) * staffSpacePx,
+            sysIndex: loc.sysIndex,
+          };
+          lastPlayheadRef.current = res;
+          return res;
+        }
+      }
+    }
+    return lastPlayheadRef.current;
+  }, [isPlaying, isPaused, activePlaybackEventIds, eventLayoutMap, staffSpacePx]);
+
+  // Dynamic green playback highlighting via DOM class and attributes without full React re-render
+  const prevHighlightedIdsRef = useRef<Set<string>>(new Set());
+
+  useEffect(() => {
+    if (!svgRef.current) return;
+    const currentSet = new Set(isPlaying || isPaused ? activePlaybackEventIds : []);
+    const prevSet = prevHighlightedIdsRef.current;
+
+    for (const id of prevSet) {
+      if (!currentSet.has(id)) {
+        const el = svgRef.current.querySelector(`g[data-event-id="${id}"]`);
+        if (el) {
+          el.classList.remove('playback-highlight');
+          el.removeAttribute('data-playback-active');
+        }
+      }
+    }
+
+    for (const id of currentSet) {
+      if (!prevSet.has(id)) {
+        const el = svgRef.current.querySelector(`g[data-event-id="${id}"]`);
+        if (el) {
+          el.classList.add('playback-highlight');
+          el.setAttribute('data-playback-active', 'true');
+        }
+      }
+    }
+
+    prevHighlightedIdsRef.current = currentSet;
+  }, [activePlaybackEventIds, isPlaying, isPaused]);
+
+  useEffect(() => {
+    if (!isPlaying && !isPaused && prevHighlightedIdsRef.current.size > 0) {
+      if (svgRef.current) {
+        for (const id of prevHighlightedIdsRef.current) {
+          const el = svgRef.current.querySelector(`g[data-event-id="${id}"]`);
+          if (el) {
+            el.classList.remove('playback-highlight');
+            el.removeAttribute('data-playback-active');
+          }
+        }
+      }
+      prevHighlightedIdsRef.current.clear();
+    }
+  }, [isPlaying, isPaused]);
+
+  // Auto-scroll to keep active system visible, paused for 3s if user scrolls
+  const lastAutoScrollSysRef = useRef<number>(-1);
+  const userScrollPauseUntilRef = useRef<number>(0);
+  const isProgrammaticScrollRef = useRef<boolean>(false);
+
+  useEffect(() => {
+    if (!isPlaying || !playhead) return;
+    if (playhead.sysIndex === lastAutoScrollSysRef.current) return;
+
+    const now = performance.now();
+    if (now < userScrollPauseUntilRef.current) return;
+
+    lastAutoScrollSysRef.current = playhead.sysIndex;
+
+    if (containerRef.current) {
+      const sys = layout.systems[playhead.sysIndex];
+      if (sys) {
+        const targetScrollTop = Math.max(0, (sys.y - 1.5) * staffSpacePx);
+        isProgrammaticScrollRef.current = true;
+        containerRef.current.scrollTo({ top: targetScrollTop, behavior: 'smooth' });
+        setTimeout(() => {
+          isProgrammaticScrollRef.current = false;
+        }, 500);
+      }
+    }
+  }, [playhead, isPlaying, layout, staffSpacePx]);
+
+  const handleContainerScroll = () => {
+    updateContainerRect();
+    if (isProgrammaticScrollRef.current) return;
+    userScrollPauseUntilRef.current = performance.now() + 3000;
+  };
+
   const totalWidthPx = layout.width * staffSpacePx;
   const totalHeightPx = layout.height * staffSpacePx;
 
@@ -802,7 +931,7 @@ export const ScoreView: React.FC<ScoreViewProps> = ({
       onPointerCancel={handlePointerCancel}
       onPointerEnter={handlePointerEnter}
       onPointerLeave={handlePointerLeave}
-      onScroll={updateContainerRect}
+      onScroll={handleContainerScroll}
       onContextMenu={(e) => e.preventDefault()}
       className="notranslate"
       translate="no"
@@ -849,6 +978,14 @@ export const ScoreView: React.FC<ScoreViewProps> = ({
         svg rect.measure-hit-area {
           fill: transparent !important;
           stroke: none !important;
+        }
+        svg g.score-event-group.playback-highlight use,
+        svg g.score-event-group.playback-highlight path {
+          fill: #16a34a !important;
+          color: #16a34a !important;
+        }
+        svg g.score-event-group.playback-highlight line {
+          stroke: #16a34a !important;
         }
         ${
           isInputMode
@@ -909,6 +1046,22 @@ export const ScoreView: React.FC<ScoreViewProps> = ({
               useTextFallback={useTextFallback}
             />
           ))}
+
+          {/* Playback Playhead Line */}
+          {(isPlaying || isPaused) && playhead && (
+            <line
+              data-testid="playback-playhead"
+              className="score-playback-playhead notranslate"
+              x1={playhead.x}
+              y1={playhead.y1}
+              x2={playhead.x}
+              y2={playhead.y2}
+              stroke="#16a34a"
+              strokeWidth={2}
+              opacity={0.85}
+              pointerEvents="none"
+            />
+          )}
 
           {/* Persistent cursor overlay inside the SVG */}
           {isInputMode && cursorPos && (

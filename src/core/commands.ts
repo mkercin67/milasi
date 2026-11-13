@@ -464,3 +464,26 @@ export function transposeEvent(eventId: Id, semitones: number): Command {
   };
 }
 
+/**
+ * Sets the tempo on a measure (typically measure 0).
+ */
+export function setTempo(
+  measureIndex: number,
+  tempo: { bpm: number; beatUnit?: number }
+): Command {
+  return {
+    name: 'Set Tempo',
+    apply(score: Score): Score {
+      return produce(score, (draft) => {
+        if (draft.measures[measureIndex]) {
+          draft.measures[measureIndex].tempo = {
+            bpm: Math.max(20, Math.min(300, Math.round(tempo.bpm))),
+            beatUnit: tempo.beatUnit ?? draft.measures[measureIndex].tempo?.beatUnit ?? 1.0,
+          };
+        }
+      });
+    },
+  };
+}
+
+

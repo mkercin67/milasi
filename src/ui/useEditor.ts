@@ -243,7 +243,7 @@ export function useEditor(initialScore?: Score) {
 
   // Enter a note with the keyboard
   const enterPitchAtCursor = useCallback(
-    (letter: PitchStep, errorMsg: string, noCursorMsg?: string) => {
+    (letter: PitchStep, errorMsg: string, noCursorMsg?: string, onNoteEntered?: (p: Pitch) => void) => {
       if (mode !== 'input') return;
       if (!cursor) {
         triggerRejectedError(noCursorMsg ?? 'İmleç yok, bir ölçüye tıklayın');
@@ -281,6 +281,8 @@ export function useEditor(initialScore?: Score) {
         triggerRejectedError(errorMsg);
         return;
       }
+
+      onNoteEntered?.(pitch);
 
       const duration = durationTicks(activeDuration, activeDots);
       const mIdx = score.measures.findIndex((m) => m.id === activeCursor.measureId);

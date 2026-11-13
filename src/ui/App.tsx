@@ -6,12 +6,14 @@
  */
 
 import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { convertToRest, setOverride, transposeEvent, setScoreMetadata } from '../core/commands';
+import { convertToRest, setOverride, transposeEvent, setScoreMetadata, setTempo } from '../core/commands';
 import { createEmptyScore } from '../core/factory';
 import { Pitch, Score } from '../core/model';
+import { ScoreCursor } from '../core/input';
 import { serializeScore, deserializeScore } from '../io/json';
 import { saveAutosave, loadAutosave, clearAutosave } from '../io/storage';
 import { LayoutResult } from '../layout/types';
+import { AudioEngine, FakeEngine, Player, PreviewPlayer, ToneEngine } from '../playback';
 import { Diagnostics, PerfSample } from './Diagnostics';
 import { I18nProvider, useI18n } from './i18n';
 import { EditorMode, mapKeyEvent } from './keymap';
@@ -47,6 +49,22 @@ function calcPercentile(arr: number[], p: number): number {
   const sorted = [...arr].sort((a, b) => a - b);
   const idx = Math.min(sorted.length - 1, Math.floor(sorted.length * (p / 100)));
   return Number(sorted[idx].toFixed(2));
+}
+
+function findEventPitches(score: Score, eventId: string): Pitch[] | null {
+  for (const p of score.parts) {
+    for (const st of p.staves) {
+      for (const m of Object.values(st.measures)) {
+        for (const v of m.voices) {
+          const ev = v.events.find((it) => it.id === eventId);
+          if (ev && ev.kind === 'note') {
+            return ev.pitches;
+          }
+        }
+      }
+    }
+  }
+  return null;
 }
 
 const EditorShell: React.FC = () => {
@@ -114,6 +132,108 @@ const EditorShell: React.FC = () => {
   const [hoverPitch, setHoverPitch] = useState<Pitch | null>(null);
   const [hoverInfo, setHoverInfo] = useState<{ pitch: Pitch; measureNumber: number } | null>(null);
   const [dragStatus, setDragStatus] = useState<string | null>(null);
+
+  // Audio Engine & Scheduler (Milestone 4)
+  const [audioEngine] = useState<AudioEngine>(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('audio') === 'fake') {
+        const fake = new FakeEngine();
+        (window as any).__audioLog = fake.logs;
+        (window as any).__audioEngine = fake;
+        return fake;
+      }
+    }
+    return new ToneEngine();
+  });
+
+  const [player] = useState<Player>(() => new Player(score, audioEngine));
+  const [previewPlayer] = useState<PreviewPlayer>(() => new PreviewPlayer(audioEngine));
+
+  const [isPlaying, setIsPlaying] = useState<boolean>(false);
+  const [isPaused, setIsPaused] = useState<boolean>(false);
+  const [activePlaybackEventIds, setActivePlaybackEventIds] = useState<string[]>([]);
+  const [playbackSeconds, setPlaybackSeconds] = useState<number>(0);
+  const [volume, setVolume] = useState<number>(0.8);
+  const [isMuted, setIsMuted] = useState<boolean>(false);
+  const [previewSound, setPreviewSound] = useState<boolean>(() => previewPlayer.enabled);
+
+  // Sync score updates to player (and stop playback on score modifications)
+  useEffect(() => {
+    player.setScore(score);
+    setIsPlaying(player.state === 'playing');
+    setIsPaused(player.state === 'paused');
+  }, [score, player]);
+
+  // Listen to Player lookahead position updates
+  useEffect(() => {
+    const unsub = player.onPosition((pos) => {
+      setIsPlaying(player.state === 'playing');
+      setIsPaused(player.state === 'paused');
+      setActivePlaybackEventIds(pos.activeEventIds);
+      setPlaybackSeconds(pos.seconds);
+    });
+    return () => {
+      unsub();
+      player.dispose();
+    };
+  }, [player]);
+
+  const handleTogglePlay = useCallback(() => {
+    if (player.state === 'playing') {
+      player.pause();
+      setIsPlaying(false);
+      setIsPaused(true);
+    } else if (player.state === 'paused') {
+      player.resume();
+      setIsPlaying(true);
+      setIsPaused(false);
+    } else {
+      player.play(selectedEventId ?? undefined).then(() => {
+        setIsPlaying(player.state === 'playing');
+        setIsPaused(player.state === 'paused');
+      });
+    }
+  }, [player, selectedEventId]);
+
+  const handleStop = useCallback(() => {
+    player.stop();
+    setIsPlaying(false);
+    setIsPaused(false);
+    setActivePlaybackEventIds([]);
+    setPlaybackSeconds(0);
+  }, [player]);
+
+  const handleChangeTempo = useCallback(
+    (bpm: number) => {
+      if (player.state !== 'idle') {
+        player.stop();
+      }
+      executeCommand(setTempo(0, { bpm }));
+    },
+    [executeCommand, player]
+  );
+
+  const handleVolumeChange = useCallback(
+    (v: number) => {
+      setVolume(v);
+      if (!isMuted) audioEngine.setVolume(v);
+    },
+    [audioEngine, isMuted]
+  );
+
+  const handleToggleMute = useCallback(() => {
+    const next = !isMuted;
+    setIsMuted(next);
+    audioEngine.setVolume(next ? 0 : volume);
+  }, [audioEngine, isMuted, volume]);
+
+  const handleTogglePreviewSound = useCallback(() => {
+    const next = !previewSound;
+    setPreviewSound(next);
+    previewPlayer.enabled = next;
+  }, [previewPlayer, previewSound]);
+
   const latestLayoutRef = useRef<LayoutResult | null>(null);
   const scoreRef = useRef<Score>(score);
   scoreRef.current = score;
@@ -536,6 +656,33 @@ const EditorShell: React.FC = () => {
         }
       }
 
+      // Playback shortcuts: Space = play/pause (Shift+Space = play from start)
+      if (e.code === 'Space') {
+        e.preventDefault();
+        if (e.shiftKey) {
+          player.stop();
+          player.play();
+        } else {
+          if (player.state === 'playing') {
+            player.pause();
+          } else if (player.state === 'paused') {
+            player.resume();
+          } else {
+            player.play(selectedEventId ?? undefined);
+          }
+        }
+        return;
+      }
+
+      // Esc stops playback first (if playing or paused)
+      if (e.code === 'Escape') {
+        if (player.state === 'playing' || player.state === 'paused') {
+          e.preventDefault();
+          player.stop();
+          return;
+        }
+      }
+
       const action = mapKeyEvent(e, mode);
       if (!action) return;
 
@@ -614,25 +761,41 @@ const EditorShell: React.FC = () => {
             break;
           case 'transpose-semitone-up':
             if (selectedEventId) {
-              if (mode === 'select') executeCommand(transposeEvent(selectedEventId, 1));
+              if (mode === 'select') {
+                const nextScore = executeCommand(transposeEvent(selectedEventId, 1));
+                const p = findEventPitches(nextScore, selectedEventId);
+                if (p) previewPlayer.previewPitches(p);
+              }
               recordSample('ArrowUp');
             }
             break;
           case 'transpose-semitone-down':
             if (selectedEventId) {
-              if (mode === 'select') executeCommand(transposeEvent(selectedEventId, -1));
+              if (mode === 'select') {
+                const nextScore = executeCommand(transposeEvent(selectedEventId, -1));
+                const p = findEventPitches(nextScore, selectedEventId);
+                if (p) previewPlayer.previewPitches(p);
+              }
               recordSample('ArrowDown');
             }
             break;
           case 'transpose-octave-up':
             if (selectedEventId) {
-              if (mode === 'select') executeCommand(transposeEvent(selectedEventId, 12));
+              if (mode === 'select') {
+                const nextScore = executeCommand(transposeEvent(selectedEventId, 12));
+                const p = findEventPitches(nextScore, selectedEventId);
+                if (p) previewPlayer.previewPitches(p);
+              }
               recordSample('Ctrl+ArrowUp');
             }
             break;
           case 'transpose-octave-down':
             if (selectedEventId) {
-              if (mode === 'select') executeCommand(transposeEvent(selectedEventId, -12));
+              if (mode === 'select') {
+                const nextScore = executeCommand(transposeEvent(selectedEventId, -12));
+                const p = findEventPitches(nextScore, selectedEventId);
+                if (p) previewPlayer.previewPitches(p);
+              }
               recordSample('Ctrl+ArrowDown');
             }
             break;
@@ -661,7 +824,12 @@ const EditorShell: React.FC = () => {
         }
       } else if (typeof action === 'object') {
         if (action.type === 'enter-pitch') {
-          enterPitchAtCursor(action.letter, t('error.doesNotFit'), t('error.noCursor'));
+          enterPitchAtCursor(
+            action.letter,
+            t('error.doesNotFit'),
+            t('error.noCursor'),
+            (p) => previewPlayer.previewPitches([p])
+          );
           recordSample(`Key${action.letter}`);
         } else if (action.type === 'set-duration') {
           setActiveDuration(action.baseType);
@@ -724,6 +892,16 @@ const EditorShell: React.FC = () => {
     t,
   ]);
 
+  const handleEnterPitchDirect = (pitch: Pitch, customCursor?: ScoreCursor) => {
+    previewPlayer.previewPitches([pitch]);
+    enterPitchDirect(pitch, customCursor);
+  };
+
+  const handleChangePitch = (eventId: string, pitches: Pitch[]) => {
+    previewPlayer.previewPitches(pitches);
+    changeEventPitch(eventId, pitches);
+  };
+
   return (
     <div
       className="notranslate"
@@ -769,6 +947,18 @@ const EditorShell: React.FC = () => {
         onToggleDot={toggleDot}
         isRestSelected={isRestSelected}
         onToggleRest={toggleRestSelected}
+        isPlaying={isPlaying}
+        isPaused={isPaused}
+        onTogglePlay={handleTogglePlay}
+        onStop={handleStop}
+        tempoBpm={score.measures[0]?.tempo?.bpm ?? 120}
+        onChangeTempo={handleChangeTempo}
+        volume={volume}
+        isMuted={isMuted}
+        onVolumeChange={handleVolumeChange}
+        onToggleMute={handleToggleMute}
+        previewSound={previewSound}
+        onTogglePreviewSound={handleTogglePreviewSound}
       />
       <ScoreView
         score={score}
@@ -778,9 +968,14 @@ const EditorShell: React.FC = () => {
         mode={mode}
         activeDuration={activeDuration}
         onSelectMeasure={setCursorToMeasure}
-        onEnterPitchDirect={enterPitchDirect}
+        onEnterPitchDirect={handleEnterPitchDirect}
         onApplyOverride={applyEventOverride}
-        onChangePitch={changeEventPitch}
+        onChangePitch={handleChangePitch}
+        isPlaying={isPlaying}
+        isPaused={isPaused}
+        activePlaybackEventIds={activePlaybackEventIds}
+        playbackSeconds={playbackSeconds}
+        onPreviewPitches={(pitches) => previewPlayer.previewPitches(pitches)}
         onLayoutChange={(layout) => {
           latestLayoutRef.current = layout;
         }}

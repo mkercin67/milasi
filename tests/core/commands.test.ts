@@ -7,10 +7,12 @@ import {
   History,
   insertNote,
   setOverride,
+  setTempo,
   setTimeSig,
   transposeEvent,
 } from '../../src/core/commands';
 import {
+  createEmptyScore,
   createMeasure,
   createNote,
   createPart,
@@ -461,5 +463,24 @@ describe('commands and History', () => {
     // Redo clears them again
     history.redo();
     expect(history.score.overrides).toEqual({});
+  });
+
+  it('supports setTempo on measure 0 with clamp [20, 300] and undo/redo', () => {
+    const score = createEmptyScore({ measures: 2 });
+    const history = new History(score);
+
+    // Initial tempo undefined or default
+    history.do(setTempo(0, { bpm: 140 }));
+    expect(history.score.measures[0].tempo?.bpm).toBe(140);
+
+    // Clamp check
+    history.do(setTempo(0, { bpm: 500 }));
+    expect(history.score.measures[0].tempo?.bpm).toBe(300);
+
+    history.undo();
+    expect(history.score.measures[0].tempo?.bpm).toBe(140);
+
+    history.undo();
+    expect(history.score.measures[0].tempo).toBeUndefined();
   });
 });
