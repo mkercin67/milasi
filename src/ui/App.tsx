@@ -975,6 +975,16 @@ const EditorShell: React.FC = () => {
     clearAllEventOverrides,
     hasSelectedOverride,
     hasAnyOverride,
+    selectAllInStaff,
+    copySelection,
+    cutSelection,
+    pasteClipboard,
+    insertNewMeasure,
+    handleDeleteMeasureWithPrompt,
+    extendSelectionDirection,
+    cycleAccidentalSelection,
+    resetAccidentalSelection,
+    toggleTieSelection,
     t,
   ]);
 

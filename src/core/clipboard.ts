@@ -130,7 +130,8 @@ function ticksToBaseType(ticks: number): BaseDurationType {
 export function pasteEvents(
   score: Score,
   target: { staffId: string; voiceId: string; startMeasureId: string; startOffsetTicks: number },
-  pastedEvents: ScoreEvent[]
+  pastedEvents: ScoreEvent[],
+  placedEventIds?: string[]
 ): Score {
   if (pastedEvents.length === 0) return score;
 
@@ -191,6 +192,10 @@ export function pasteEvents(
         });
       }
 
+      if (placedEventIds) {
+        placedEventIds.push(newEv.id);
+      }
+
       if (!measureAdditions.has(curMIdx)) {
         measureAdditions.set(curMIdx, []);
       }
@@ -249,10 +254,33 @@ export function pasteEvents(
       }
     }
 
-    // Remainder after pasteEnd up to totalMTicks
+    // Existing events after pasteEnd: preserve them!
     const afterEvents: ScoreEvent[] = [];
-    if (pasteEnd < totalMTicks) {
-      const remainingTicks = totalMTicks - pasteEnd;
+    let curT = 0;
+    for (const ev of existing) {
+      const evStart = curT;
+      const evEnd = curT + ev.duration;
+      curT += ev.duration;
+
+      if (evStart >= pasteEnd) {
+        afterEvents.push(ev);
+      } else if (evEnd > pasteEnd) {
+        const remTicks = evEnd - pasteEnd;
+        const subUnits = decomposeStandardUnits(remTicks);
+        for (const u of subUnits) {
+          if (ev.kind === 'note') {
+            afterEvents.push(createNote({ pitches: [...ev.pitches], baseType: ticksToBaseType(u) }));
+          } else {
+            afterEvents.push(createRest({ baseType: ticksToBaseType(u), duration: u }));
+          }
+        }
+      }
+    }
+
+    // If total duration is less than measureTicks, pad with rests
+    const curTotalTicks = [...beforeEvents, ...additions, ...afterEvents].reduce((acc, e) => acc + e.duration, 0);
+    if (curTotalTicks < totalMTicks) {
+      const remainingTicks = totalMTicks - curTotalTicks;
       const subUnits = decomposeStandardUnits(remainingTicks);
       for (const u of subUnits) {
         afterEvents.push(createRest({ baseType: ticksToBaseType(u), duration: u }));

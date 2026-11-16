@@ -112,4 +112,33 @@ describe('Milestone 6a: Range Selection (src/core/selection.ts)', () => {
       count: 4,
     });
   });
+
+  it('extends selection across measures even when measures have different voice IDs', () => {
+    const score = createEmptyScore({ measures: 3 });
+    const staff = score.parts[0].staves[0];
+    const m0Id = score.measures[0].id;
+    const m1Id = score.measures[1].id;
+
+    const n0 = createNote({ pitches: [createPitch('C', 4)], baseType: 'quarter' });
+    const n1 = createNote({ pitches: [createPitch('D', 4)], baseType: 'quarter' });
+    const n2 = createNote({ pitches: [createPitch('E', 4)], baseType: 'quarter' });
+    const n3 = createNote({ pitches: [createPitch('F', 4)], baseType: 'quarter' });
+    staff.measures[m0Id].voices[0] = { id: 'voice-m0', events: [n0, n1, n2, n3] };
+
+    const n4 = createNote({ pitches: [createPitch('G', 4)], baseType: 'quarter' });
+    const n5 = createNote({ pitches: [createPitch('A', 4)], baseType: 'quarter' });
+    staff.measures[m1Id].voices[0] = { id: 'voice-m1', events: [n4, n5] };
+
+    // Select n0 in measure 0
+    let sel: Selection = { kind: 'event', id: n0.id };
+    // Extend to n5 in measure 1
+    sel = extendSelection(score, sel, n5.id);
+    expect(sel.kind).toBe('range');
+    if (sel.kind === 'range') {
+      expect(sel.anchorId).toBe(n0.id);
+      expect(sel.focusId).toBe(n5.id);
+      const evs = eventsInRange(score, sel);
+      expect(evs.map((e) => e.id)).toEqual([n0.id, n1.id, n2.id, n3.id, n4.id, n5.id]);
+    }
+  });
 });

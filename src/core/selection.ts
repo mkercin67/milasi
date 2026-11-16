@@ -22,14 +22,22 @@ export interface RangeSelection {
 export function findEventContext(
   score: Score,
   eventId: string
-): { staffId: string; measureId: string; measureIndex: number; voiceId: string; eventIndex: number } | null {
+): {
+  staffId: string;
+  measureId: string;
+  measureIndex: number;
+  voiceId: string;
+  voiceIndex: number;
+  eventIndex: number;
+} | null {
   for (const part of score.parts) {
     for (const staff of part.staves) {
       for (let mIdx = 0; mIdx < score.measures.length; mIdx++) {
         const mDef = score.measures[mIdx];
         const staffMeasure = staff.measures[mDef.id];
         if (!staffMeasure) continue;
-        for (const voice of staffMeasure.voices) {
+        for (let vIdx = 0; vIdx < staffMeasure.voices.length; vIdx++) {
+          const voice = staffMeasure.voices[vIdx];
           const evIdx = voice.events.findIndex((e) => e.id === eventId);
           if (evIdx !== -1) {
             return {
@@ -37,6 +45,7 @@ export function findEventContext(
               measureId: mDef.id,
               measureIndex: mIdx,
               voiceId: voice.id,
+              voiceIndex: vIdx,
               eventIndex: evIdx,
             };
           }
@@ -49,11 +58,12 @@ export function findEventContext(
 
 /**
  * Returns all events in a specific voice across all measures in score reading order.
+ * Resolves by voice ID or by voice index within each measure.
  */
 export function getOrderedVoiceEvents(
   score: Score,
   staffId: string,
-  voiceId: string
+  voiceIndexOrId: number | string = 0
 ): Array<{ event: ScoreEvent; measureId: string; measureIndex: number }> {
   const result: Array<{ event: ScoreEvent; measureId: string; measureIndex: number }> = [];
 
@@ -64,8 +74,13 @@ export function getOrderedVoiceEvents(
         const mDef = score.measures[mIdx];
         const staffMeasure = staff.measures[mDef.id];
         if (!staffMeasure) continue;
-        for (const voice of staffMeasure.voices) {
-          if (voice.id !== voiceId) continue;
+        for (let vIdx = 0; vIdx < staffMeasure.voices.length; vIdx++) {
+          const voice = staffMeasure.voices[vIdx];
+          const matches =
+            typeof voiceIndexOrId === 'number'
+              ? vIdx === voiceIndexOrId
+              : voice.id === voiceIndexOrId || vIdx === 0;
+          if (!matches) continue;
           for (const ev of voice.events) {
             result.push({ event: ev, measureId: mDef.id, measureIndex: mIdx });
           }
@@ -84,7 +99,9 @@ export function eventsInRange(
   score: Score,
   range: RangeSelection
 ): ScoreEvent[] {
-  const ordered = getOrderedVoiceEvents(score, range.staffId, range.voiceId);
+  const anchorCtx = findEventContext(score, range.anchorId);
+  const vIndex = anchorCtx ? anchorCtx.voiceIndex : 0;
+  const ordered = getOrderedVoiceEvents(score, range.staffId, vIndex);
   const anchorIdx = ordered.findIndex((item) => item.event.id === range.anchorId);
   const focusIdx = ordered.findIndex((item) => item.event.id === range.focusId);
 
@@ -121,7 +138,7 @@ export function extendSelection(
 
   if (current.kind === 'event') {
     const anchorCtx = findEventContext(score, current.id);
-    if (!anchorCtx || anchorCtx.staffId !== targetCtx.staffId || anchorCtx.voiceId !== targetCtx.voiceId) {
+    if (!anchorCtx || anchorCtx.staffId !== targetCtx.staffId || anchorCtx.voiceIndex !== targetCtx.voiceIndex) {
       return {
         kind: 'range',
         staffId: targetCtx.staffId,
@@ -133,14 +150,15 @@ export function extendSelection(
     return {
       kind: 'range',
       staffId: targetCtx.staffId,
-      voiceId: targetCtx.voiceId,
+      voiceId: anchorCtx.voiceId,
       anchorId: current.id,
       focusId: targetEventId,
     };
   }
 
   if (current.kind === 'range') {
-    if (current.staffId !== targetCtx.staffId || current.voiceId !== targetCtx.voiceId) {
+    const anchorCtx = findEventContext(score, current.anchorId);
+    if (!anchorCtx || anchorCtx.staffId !== targetCtx.staffId || anchorCtx.voiceIndex !== targetCtx.voiceIndex) {
       return {
         kind: 'range',
         staffId: targetCtx.staffId,

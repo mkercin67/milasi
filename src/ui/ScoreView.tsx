@@ -15,7 +15,7 @@ import { BaseDurationType, NoteEvent, Pitch, Score, ScoreEvent } from '../core/m
 import { layoutScore } from '../layout/layoutScore';
 import { LayoutResult } from '../layout/types';
 import { layoutTies } from '../layout/ties';
-import { RangeSelection } from '../core/selection';
+import { findEventContext, RangeSelection } from '../core/selection';
 import {
   getLedgerLineYs,
   pitchToStaffPosition,
@@ -524,6 +524,7 @@ export const ScoreView: React.FC<ScoreViewProps> = ({
 
     if (e.shiftKey && onExtendSelectionTo) {
       e.preventDefault();
+      suppressNextClickRef.current = true;
       onExtendSelectionTo(hit.eventId);
       dragStateRef.current = null;
       return;
@@ -829,7 +830,8 @@ export const ScoreView: React.FC<ScoreViewProps> = ({
           if (orderedEvents.length > 0) {
             const firstEv = orderedEvents[0];
             const lastEv = orderedEvents[orderedEvents.length - 1];
-            const voiceId = staff.measures[score.measures[0]?.id]?.voices[0]?.id ?? 'v1';
+            const firstCtx = findEventContext(score, firstEv.id);
+            const voiceId = firstCtx?.voiceId ?? staff.measures[score.measures[0]?.id]?.voices[0]?.id ?? 'v1';
             onSelectRange?.({
               staffId: staff.id,
               voiceId,
