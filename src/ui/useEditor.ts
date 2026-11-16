@@ -30,7 +30,7 @@ import {
 } from '../core/input';
 import { durationTicks, measureTicks } from '../core/time';
 import { newId, createEmptyScore } from '../core/factory';
-import { buildSampleScore } from './Demo';
+import { buildSampleScore, createBenchmark64Score } from './Demo';
 import { EditorMode } from './keymap';
 import { layoutScore } from '../layout/layoutScore';
 import { LayoutResult } from '../layout/types';
@@ -53,6 +53,9 @@ function getDefaultStartupScore(): Score {
     const params = new URLSearchParams(window.location.search);
     if (params.get('state') === 'sample') {
       return buildSampleScore('G');
+    }
+    if (params.get('state') === 'benchmark_64') {
+      return createBenchmark64Score();
     }
   }
   return createEmptyScore({

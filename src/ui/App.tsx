@@ -19,7 +19,7 @@ import { I18nProvider, useI18n } from './i18n';
 import { EditorMode, mapKeyEvent } from './keymap';
 import { NewScoreConfig, NewScoreModal } from './NewScoreModal';
 import { buildBeamDemoScore } from './beamDemoScore';
-import { buildSampleScore } from './Demo';
+import { buildSampleScore, createBenchmark64Score } from './Demo';
 import { ScoreView } from './ScoreView';
 import { StatusBar } from './StatusBar';
 import { Toolbar } from './Toolbar';
@@ -453,16 +453,9 @@ const EditorShell: React.FC = () => {
       stateParam === 'benchmark_64'
     ) {
       if (stateParam === 'benchmark_64') {
-        const bScore = createEmptyScore({
-          clef: { sign: 'G', line: 2 },
-          keySig: 0,
-          timeSig: { num: 4, den: 4 },
-          measures: 64,
-        });
+        const bScore = createBenchmark64Score();
         resetScore(bScore);
-        setMode('input');
-        setActiveDuration('quarter');
-        setActiveDots(0);
+        setMode('select');
         return;
       }
       if (stateParam === 'demo_3_4') {
@@ -751,6 +744,7 @@ const EditorShell: React.FC = () => {
             } else {
               selectNext('prev');
             }
+            recordSample('ArrowLeft');
             break;
           case 'select-next':
             if (mode === 'input') {
@@ -758,6 +752,7 @@ const EditorShell: React.FC = () => {
             } else {
               selectNext('next');
             }
+            recordSample('ArrowRight');
             break;
           case 'transpose-semitone-up':
             if (selectedEventId) {

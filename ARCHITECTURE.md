@@ -19,28 +19,29 @@ microtonal pitch, scripting, and publication-quality engraving. Free and open so
    (`tr`)**; English (`en`) is the second language. Hard-coded user-visible strings are a bug.
 8. **Units:** layout coordinates are in *staff spaces* (1 unit = distance between two staff lines).
    Conversion to pixels happens only in the renderer.
+9. **Zero DOM layout reads in handlers:** Event handlers never query `getBoundingClientRect`,
+   `clientWidth`, or computed styles during pointer or keyboard interactions.
 
 ## Tech stack
 
 - TypeScript (strict), Vite, React (UI only), Vitest, immer (immutable updates)
-- Rendering: our own SVG renderer using the **Bravura** SMuFL font (SIL OFL license) and its
-  `bravura_metadata.json` for glyph metrics/anchors
-- Playback: Tone.js
-- Desktop packaging later: Tauri (not in Phase 1)
-- Single package (no monorepo). Boundaries are enforced by folders and the import rules below.
+- Rendering: Custom SVG renderer using embedded **Bravura** SMuFL vector glyph paths (`glyphPaths.ts`)
+  with `<use href="...">` symbols for high-performance zero-FOUC rendering.
+- Playback: Tone.js (encapsulated via `AudioEngine` interface; `FakeEngine` for headless testing).
+- Desktop packaging later: Tauri (Phase 2).
+- Boundaries: Single package enforced by folder structure and strict import rules.
 
 ## Folder layout and import rules
 
 ```
 src/
-  core/      data model, commands, pure helpers          imports: nothing from this project
-  layout/    Score -> LayoutResult (positions in staff spaces)   imports: core
-  render/    LayoutResult -> SVG                          imports: layout, core
-  playback/  Score -> scheduled events, Tone.js player   imports: core
-  io/        JSON load/save, MusicXML                     imports: core
-  ui/        React app, tools, keyboard handling          imports: everything above
-  ui/i18n/   t(key) function, locales/tr.json, locales/en.json (own tiny implementation,
-             no extra dependency; language is stored in settings, default 'tr')
+  core/      data model, factory, commands, pure helpers         imports: nothing from this project
+  layout/    Score -> LayoutResult (staff spaces), beams, cache  imports: core
+  render/    LayoutResult -> SVG, glyph paths                    imports: layout, core
+  playback/  Score -> schedule, AudioEngine, Player              imports: core
+  io/        JSON load/save, schema validation, IndexedDB        imports: core
+  ui/        React app, tools, hooks, keyboard/pointer handling  imports: everything above
+  ui/i18n/   t(key) function, locales/tr.json, locales/en.json   standalone
 tests/       mirrors src/ structure
 ```
 
@@ -54,24 +55,23 @@ Time is measured in integer **ticks**. `PPQ = 960` (ticks per quarter note). Nev
 type Id = string; // uuid
 
 interface Score {
-  schemaVersion: 1;
+  schemaVersion: 1 | 2;
   id: Id;
   meta: { title: string; composer: string };
   parts: Part[];
-  measures: MeasureDef[];            // global measure info shared by all staves
-  overrides: Record<Id, Override>;   // manual layout overrides, keyed by element id
+  measures: MeasureDef[];            // global measure definitions
+  overrides: Record<Id, Override>;   // manual layout overrides keyed by element id
 }
 
 interface MeasureDef {
   id: Id;
   timeSig: { num: number; den: number };
-  keySig: number;                    // -7..7 circle of fifths (custom keys later)
+  keySig: number;                    // -7..7 circle of fifths
   tempo?: { bpm: number; beatUnit: number };
-  // Non-standard measures (aleatoric, free time) later: `kind: 'metered' | 'unmetered'`
 }
 
 interface Part { id: Id; name: string; staves: Staff[]; instrument: string }
-interface Staff { id: Id; clef: Clef; measures: Record<Id, StaffMeasure> } // key = MeasureDef.id
+interface Staff { id: Id; clef: Clef; measures: Record<Id, StaffMeasure> }
 
 interface StaffMeasure { voices: Voice[] }
 interface Voice { id: Id; events: ScoreEvent[] }
@@ -85,92 +85,110 @@ interface BaseEvent {
   dots: number;
   tuplet?: { actual: number; normal: number };
 }
+
 interface NoteEvent extends BaseEvent {
   kind: 'note';
-  pitches: Pitch[];                  // chord = more than one pitch
-  tiedToNext?: boolean;
-  articulations: string[];           // e.g. 'staccato', 'accent'
-  dynamic?: string;                  // e.g. 'mf'
+  pitches: Pitch[];                  // chord = multiple pitches
+  tiedToNext?: boolean;              // pitch-level ties supported in M6a
+  articulations: string[];
+  dynamic?: string;
 }
-interface RestEvent extends BaseEvent { kind: 'rest' }
+
+interface RestEvent extends BaseEvent {
+  kind: 'rest';
+  wholeMeasure?: boolean;
+}
 
 interface Pitch {
   step: 'C'|'D'|'E'|'F'|'G'|'A'|'B';
-  octave: number;                    // scientific: middle C = C4
-  alter: number;                     // semitones; 0, 1, -1, 0.5 (quarter tone), etc.
+  octave: number;
+  alter: number;                     // semitones; 0, 1, -1, 0.5 (quarter tone)
 }
 
 interface Override {
-  dx?: number; dy?: number;          // staff spaces, added on top of automatic position
+  dx?: number;                       // staff spaces horizontal offset
+  dy?: number;                       // staff spaces vertical offset
   scale?: number;
   hidden?: boolean;
 }
 ```
 
-## Commands (src/core/commands.ts)
+## Interaction Model: Three Explicit Modes
 
-```ts
-interface Command { name: string; apply(score: Score): Score } // use immer; return new Score
-class History { do(cmd); undo(); redo(); }
-```
+The editor state operates in three strictly separated modes (`state.mode`):
 
-Every edit (insert note, change pitch, delete, move element, change time signature) is a Command.
+1. **Select Mode (`mode: 'select'`):**
+   - Click note/rest: selects the event.
+   - Click empty staff space: clears selection, places caret.
+   - Vertical pointer drag on note/chord: changes pitch live in 0.5-space steps with visual ledger lines and status bar target pitch; commits one `changePitch` command on release. Horizontal movement is ignored.
+   - Drag on rest: selects only (no pitch change).
+   - Keys: `ArrowUp`/`ArrowDown` (semitone transpose), `Ctrl+Up`/`Down` (octave transpose), `Left`/`Right` (event navigation), `Delete` (convert to rest), `Space` (play/pause).
+   - Shortcut to activate: `KeyV` or `Escape`.
 
-## Layout (src/layout)
+2. **Note Input Mode (`mode: 'input'`):**
+   - Pointer hover: shows ghost note snapped to diatonic pitch (hidden outside staff area).
+   - Click on staff or note: enters note with active duration and pitch.
+   - Keys: letters `A`–`G` enter pitch at cursor; `Digit1`–`5` set duration; `Digit0` enters rest; `Period` toggles dot; `ArrowLeft`/`Right` moves caret.
+   - Shortcut to toggle: `KeyN`.
 
-`layoutScore(score, options) -> LayoutResult` is a pure function.
+3. **Position Mode (`mode: 'position'`):**
+   - Fine engraving adjustments for manual layout overrides (`score.overrides[id]`).
+   - Drag or arrow keys nudge visual position (`dx` / `dy`).
+   - Offset limits:
+     - Notes/chords: `dy` is locked to 0 (pitch defines vertical position; vertical offset is rejected with warning); `dx` is clamped within its measure boundary.
+     - Rests: `dx` is clamped within measure; `dy` is clamped to staff bounds (-4.0 to +4.0 staff spaces).
+   - Shortcut to toggle: `KeyP`.
 
-LayoutResult contains systems, staves, and a flat list of positioned items:
-`{ id, kind: 'glyph'|'line'|'text', x, y, glyph?, ... }` with coordinates in staff spaces.
+## Layout & Per-Measure Caching (src/layout)
 
-Phase 1 layout is intentionally simple:
-- one system per row, wrap measures when width is exceeded
-- horizontal spacing: minimum width per event, widened proportionally to duration
-- stems, flags, beams (simple), ledger lines, accidentals, clef, key and time signatures
-- after automatic placement, apply `score.overrides`
+- `layoutScore(score, options)` is pure and uses a **per-measure layout cache**.
+- When editing a note in Measure 3, only Measure 3 is re-computed; cached system geometry and other measures are reused, maintaining sub-10ms latency on 64-measure scores.
+- Beams are grouped **per measure** via `groupBeams(voiceEvents, timeSig)`:
+  - Notes with baseType eighth, 16th, 32nd can be beamed.
+  - Groups never cross barlines, voices, or beat boundaries (e.g. quarter-note beats in 4/4; dotted-quarter beats in 6/8).
+  - Primary beam connects entire group; secondary beams connect 16th/32nd notes, with fractional stubs pointing inward.
+  - Rendered as crisp SVG `<path>` polygon beams matching SMuFL standard thickness (0.5 staff spaces).
 
-Do not try to build Finale-level automatic engraving in Phase 1. Correct and simple beats clever.
+## Playback Architecture (src/playback)
 
-## Rendering (src/render)
+- **AudioEngine Interface:** Decouples synthesis from scheduling.
+  - `ToneEngine`: Wraps Tone.js `PolySynth` for real browser audio.
+  - `FakeEngine`: Deterministic in-memory log of triggers for headless CI/CD.
+- **Pure Schedule:** `buildSchedule(score, { fromEventId })`:
+  - Translates pitches to MIDI notes and microtonal detune cents (`pitchToMidi`).
+  - Converts ticks to seconds using measure tempo definitions (`tempo.bpm`, `tempo.beatUnit`).
+  - Maps every event to `{ startSeconds, durationSeconds }`.
+- **Player Scheduler:**
+  - Lookahead scheduler running at 100 ms intervals, scheduling notes within a 1.0 s lookahead window.
+  - `atSeconds` in `engine.trigger(note, atSeconds)` represents absolute audio engine clock time (`engine.now() + startSeconds`).
+  - Supports pause/resume with microsecond precision, stop, tempo changes, volume, and mute.
+  - Playhead tracking and visual note highlighting (`.playback-highlight`).
 
-`renderSvg(layout, options) -> string | SVGElement`. Every rendered item carries `data-id` equal to
-the element id so the UI can do hit-testing and selection.
+## File Format & Autosave (src/io)
 
-## Playback (src/playback)
-
-`buildSchedule(score) -> ScheduledNote[]` is pure and unit-tested
-(`{ timeSeconds, durationSeconds, midi, detuneCents, partId, elementId }`).
-Tone.js lives only in `player.ts`. Microtonal alter becomes `detuneCents`.
-
-## Files
-
-Native format: JSON with `schemaVersion`. MusicXML export/import in Milestone 6.
+- **Native Format (`.sfscore`):**
+  ```json
+  {
+    "app": "scoreforge",
+    "savedAt": "2026-11-16T22:00:00.000Z",
+    "score": { "schemaVersion": 1, ... }
+  }
+  ```
+  - Backward compatible: `deserializeScore` accepts both the enveloped format and bare `Score` JSON.
+  - Validated with `validateScore` on load.
+- **Autosave & Recovery:**
+  - Automatically saves dirty scores to IndexedDB with 1-second debounce.
+  - Prompts to restore unsaved work upon crash or restart.
+  - Dirty state indicator in title bar (`*`) and `beforeunload` protection.
 
 ## Localization (src/ui/i18n)
 
-- `t('toolbar.play')` returns the string for the current language; missing key falls back to `en`,
-  then to the key itself (and logs a warning in dev).
-- Keys are grouped: `toolbar.*`, `palette.*`, `dialog.*`, `error.*`, `notation.*`, `shortcut.*`.
-- Notation terms must use correct Turkish music terminology, e.g. treble clef = "Sol anahtarı",
-  bass clef = "Fa anahtarı", measure = "Ölçü", sharp = "Diyez", flat = "Bemol", natural = "Bekar",
-  whole/half/quarter/eighth/16th note = "Birlik/İkilik/Dörtlük/Sekizlik/Onaltılık nota",
-  rest = "Es" (pause), tie = "Bağ", slur = "Legato bağı", tempo = "Tempo", key signature = "Armör",
-  time signature = "Ölçü sayısı", dynamics keep Italian symbols (p, mf, f).
-- Core and layout never contain user-visible text. Only `ui` talks to `t()`.
-- Keyboard shortcuts are based on physical key codes (`event.code`), so they work on Turkish
-  Q and English layouts alike.
+- Zero hard-coded user-facing strings; all UI strings routed through `t(key)`.
+- Default language is Turkish (`tr`), with English (`en`) support.
+- Correct Turkish music terminology: "Sol anahtarı", "Fa anahtarı", "Ölçü", "Diyez", "Bemol", "Bekar", "Birlik/İkilik/Dörtlük/Sekizlik/Onaltılık nota", "Es".
 
-## Phase 1 milestones (strictly in order; stop and report after each)
+## Performance & Engraving Rules
 
-1. **M1 Model + commands + tests.** Model types, factory helpers, History, JSON round-trip, 
-   commands: insertNote, deleteEvent, changePitch, setTimeSig. Full Vitest coverage.
-2. **M2 Layout + SVG render of one staff.** Bravura loaded, clef/key/time, notes, rests, stems,
-   ledger lines, accidentals, barlines. A static demo page rendering a sample score.
-3. **M3 Interaction + i18n.** Add the i18n module (tr/en). Click to select, click on staff to insert note, keyboard input (A–G,
-   1–5 durations, arrows, Delete, Ctrl+Z / Ctrl+Y), drag selected element to set `dx/dy` override.
-4. **M4 Playback.** Play/pause/stop, tempo, current-note highlight.
-5. **M5 Save/load.** JSON download/upload, autosave to IndexedDB.
-6. **M6 MusicXML export and import** (single part first, then multi-part).
-
-Phase 2 (not now): multi-staff systems, parts extraction, tuplets, grace notes, SMuFL custom
-symbols, proportional spacing, scripting API, .musx import, Tauri desktop packaging.
+- Keystroke-to-paint latency target: p95 < 50 ms on 64-measure scores.
+- Zero DOM layout reads (`getBoundingClientRect`, `clientWidth`) during user interactions.
+- Frame budget: 60 fps (16.6 ms per frame), zero long frames (> 50 ms) during playback and navigation.

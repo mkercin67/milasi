@@ -120,6 +120,86 @@ export function buildSampleScore(clefSign: 'G' | 'F'): Score {
   return score;
 }
 
+/**
+ * Builds a 64-measure dense benchmark score filled with sixteenth notes and chords.
+ */
+export function createBenchmark64Score(): Score {
+  const score = createScore({
+    title: 'Benchmark 64 Measures — Sixteenths & Chords',
+    composer: 'ScoreForge Benchmark',
+  });
+
+  const part = createPart({
+    name: 'Violin',
+    clef: { sign: 'G', line: 2 },
+  });
+  score.parts = [part];
+
+  const timeSig = { num: 4, den: 4 };
+
+  const pitchesPatterns = [
+    ['C', 'D', 'E', 'F', 'G', 'A', 'B', 'C'] as const,
+    ['E', 'F', 'G', 'A', 'B', 'C', 'D', 'E'] as const,
+    ['G', 'A', 'B', 'C', 'D', 'E', 'F', 'G'] as const,
+    ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'A'] as const,
+  ];
+
+  for (let m = 0; m < 64; m++) {
+    const mDef = createMeasure(timeSig, 0);
+    score.measures.push(mDef);
+
+    const pat = pitchesPatterns[m % pitchesPatterns.length];
+    const oct = 4;
+    // Beat 1 & 2: 8 sixteenth notes (8 * 240 = 1920 ticks)
+    const sixteenths = pat.map((p, idx) =>
+      createNote({
+        pitches: [createPitch(p, idx >= 7 ? oct + 1 : oct, 0)],
+        baseType: '16th',
+      })
+    );
+
+    // Beat 3: two 16th chords (2 * 240 = 480 ticks) + one 8th chord (480 ticks) = 960 ticks
+    const chord1 = createNote({
+      pitches: [createPitch('C', oct, 0), createPitch('E', oct, 0), createPitch('G', oct, 0)],
+      baseType: '16th',
+    });
+    const chord2 = createNote({
+      pitches: [createPitch('D', oct, 0), createPitch('F', oct, 0), createPitch('A', oct, 0)],
+      baseType: '16th',
+    });
+    const chord3 = createNote({
+      pitches: [createPitch('E', oct, 0), createPitch('G', oct, 0), createPitch('B', oct, 0)],
+      baseType: 'eighth',
+    });
+
+    // Beat 4: four 16th chords (4 * 240 = 960 ticks)
+    const chord4 = createNote({
+      pitches: [createPitch('F', oct, 0), createPitch('A', oct, 0), createPitch('C', oct + 1, 0)],
+      baseType: '16th',
+    });
+    const chord5 = createNote({
+      pitches: [createPitch('G', oct, 0), createPitch('B', oct, 0), createPitch('D', oct + 1, 0)],
+      baseType: '16th',
+    });
+    const chord6 = createNote({
+      pitches: [createPitch('A', oct, 0), createPitch('C', oct + 1, 0), createPitch('E', oct + 1, 0)],
+      baseType: '16th',
+    });
+    const chord7 = createNote({
+      pitches: [createPitch('C', oct, 0), createPitch('E', oct, 0), createPitch('G', oct, 0)],
+      baseType: '16th',
+    });
+
+    const mEvents = [...sixteenths, chord1, chord2, chord3, chord4, chord5, chord6, chord7];
+
+    part.staves[0].measures[mDef.id] = {
+      voices: [{ id: `v1_bm_${m}`, events: mEvents }],
+    };
+  }
+
+  return score;
+}
+
 export const Demo: React.FC = () => {
   const trebleScore = useMemo(() => buildSampleScore('G'), []);
   const bassScore = useMemo(() => buildSampleScore('F'), []);
