@@ -114,6 +114,26 @@ const EditorShell: React.FC = () => {
     changeEventPitch,
     isDirty,
     markClean,
+    selection,
+    selectedRange,
+    rangeEvents: _rangeEvents,
+    selectedEventIds,
+    rangeInfo,
+    setRangeSelection,
+    extendSelectionTo,
+    extendSelectionDirection,
+    selectAllInStaff,
+    deleteSelection,
+    transposeSelection,
+    toggleTieSelection,
+    cycleAccidentalSelection,
+    resetAccidentalSelection,
+    copySelection,
+    cutSelection,
+    pasteClipboard,
+    insertNewMeasure,
+    deleteCurrentMeasure,
+    confirmDeleteMeasure,
   } = useEditor();
 
   const [isNewModalOpen, setIsNewModalOpen] = useState<boolean>(false);
@@ -132,6 +152,19 @@ const EditorShell: React.FC = () => {
   const [hoverPitch, setHoverPitch] = useState<Pitch | null>(null);
   const [hoverInfo, setHoverInfo] = useState<{ pitch: Pitch; measureNumber: number } | null>(null);
   const [dragStatus, setDragStatus] = useState<string | null>(null);
+  const [isDeleteMeasurePromptOpen, setIsDeleteMeasurePromptOpen] = useState<boolean>(false);
+  const [pendingDeleteMeasureIdx, setPendingDeleteMeasureIdx] = useState<number | null>(null);
+
+  const handleDeleteMeasureWithPrompt = useCallback(() => {
+    const res = deleteCurrentMeasure();
+    if (!res) return;
+    if (res.hasNotes) {
+      setPendingDeleteMeasureIdx(res.targetIndex);
+      setIsDeleteMeasurePromptOpen(true);
+    } else {
+      confirmDeleteMeasure(res.targetIndex);
+    }
+  }, [deleteCurrentMeasure, confirmDeleteMeasure]);
 
   // Audio Engine & Scheduler (Milestone 4)
   const [audioEngine] = useState<AudioEngine>(() => {
@@ -591,6 +624,9 @@ const EditorShell: React.FC = () => {
       executeCommand(setOverride(eventId, { dx, dy }));
     };
     window.__getScoreForTest = () => scoreRef.current;
+    (window as any).__resetScoreForTest = (newScore: Score) => resetScore(newScore);
+    (window as any).__buildSampleScore = () => buildSampleScore('G');
+    (window as any).__createBenchmark64Score = () => createBenchmark64Score();
     window.__getEditorStateForTest = () => editorStateRef.current;
     window.__printPerfTable = () => {
       const arr = window.__perf ?? [];
@@ -661,7 +697,11 @@ const EditorShell: React.FC = () => {
           } else if (player.state === 'paused') {
             player.resume();
           } else {
-            player.play(selectedEventId ?? undefined);
+            if (selectedRange) {
+              player.playRange(selectedRange.anchorId, selectedRange.focusId);
+            } else {
+              player.play(selectedEventId ?? undefined);
+            }
           }
         }
         return;
@@ -738,6 +778,42 @@ const EditorShell: React.FC = () => {
           case 'clear-selection':
             selectEvent(null);
             break;
+          case 'select-all':
+            selectAllInStaff();
+            break;
+          case 'copy':
+            copySelection();
+            break;
+          case 'cut':
+            cutSelection();
+            break;
+          case 'paste':
+            pasteClipboard();
+            break;
+          case 'insert-measure':
+            insertNewMeasure();
+            break;
+          case 'delete-measure':
+            handleDeleteMeasureWithPrompt();
+            break;
+          case 'extend-selection-prev':
+            extendSelectionDirection('prev');
+            break;
+          case 'extend-selection-next':
+            extendSelectionDirection('next');
+            break;
+          case 'cycle-accidental-up':
+            cycleAccidentalSelection(1);
+            break;
+          case 'cycle-accidental-down':
+            cycleAccidentalSelection(-1);
+            break;
+          case 'reset-accidental':
+            resetAccidentalSelection();
+            break;
+          case 'toggle-tie':
+            toggleTieSelection();
+            break;
           case 'select-prev':
             if (mode === 'input') {
               moveCursorDirection('prev');
@@ -755,7 +831,10 @@ const EditorShell: React.FC = () => {
             recordSample('ArrowRight');
             break;
           case 'transpose-semitone-up':
-            if (selectedEventId) {
+            if (selection.kind === 'range') {
+              transposeSelection(1);
+              recordSample('ArrowUp');
+            } else if (selectedEventId) {
               if (mode === 'select') {
                 const nextScore = executeCommand(transposeEvent(selectedEventId, 1));
                 const p = findEventPitches(nextScore, selectedEventId);
@@ -765,7 +844,10 @@ const EditorShell: React.FC = () => {
             }
             break;
           case 'transpose-semitone-down':
-            if (selectedEventId) {
+            if (selection.kind === 'range') {
+              transposeSelection(-1);
+              recordSample('ArrowDown');
+            } else if (selectedEventId) {
               if (mode === 'select') {
                 const nextScore = executeCommand(transposeEvent(selectedEventId, -1));
                 const p = findEventPitches(nextScore, selectedEventId);
@@ -775,7 +857,10 @@ const EditorShell: React.FC = () => {
             }
             break;
           case 'transpose-octave-up':
-            if (selectedEventId) {
+            if (selection.kind === 'range') {
+              transposeSelection(12);
+              recordSample('Ctrl+ArrowUp');
+            } else if (selectedEventId) {
               if (mode === 'select') {
                 const nextScore = executeCommand(transposeEvent(selectedEventId, 12));
                 const p = findEventPitches(nextScore, selectedEventId);
@@ -785,7 +870,10 @@ const EditorShell: React.FC = () => {
             }
             break;
           case 'transpose-octave-down':
-            if (selectedEventId) {
+            if (selection.kind === 'range') {
+              transposeSelection(-12);
+              recordSample('Ctrl+ArrowDown');
+            } else if (selectedEventId) {
               if (mode === 'select') {
                 const nextScore = executeCommand(transposeEvent(selectedEventId, -12));
                 const p = findEventPitches(nextScore, selectedEventId);
@@ -801,7 +889,10 @@ const EditorShell: React.FC = () => {
             }
             break;
           case 'convert-to-rest':
-            if (selectedEventId) {
+            if (selection.kind === 'range') {
+              deleteSelection();
+              recordSample('Delete');
+            } else if (selectedEventId) {
               if (mode === 'select') executeCommand(convertToRest(selectedEventId));
               recordSample('Delete');
             }
@@ -954,11 +1045,17 @@ const EditorShell: React.FC = () => {
         onToggleMute={handleToggleMute}
         previewSound={previewSound}
         onTogglePreviewSound={handleTogglePreviewSound}
+        onInsertMeasure={insertNewMeasure}
+        onDeleteMeasure={handleDeleteMeasureWithPrompt}
       />
       <ScoreView
         score={score}
         selectedEventId={selectedEventId}
         onSelectEvent={selectEvent}
+        selectedEventIds={selectedEventIds}
+        selectedRange={selectedRange}
+        onSelectRange={setRangeSelection}
+        onExtendSelectionTo={extendSelectionTo}
         cursor={cursor}
         mode={mode}
         activeDuration={activeDuration}
@@ -980,6 +1077,7 @@ const EditorShell: React.FC = () => {
       />
       <StatusBar
         selection={selectedEventInfo}
+        rangeInfo={rangeInfo}
         mode={mode}
         activeDuration={activeDuration}
         currentMeasureNumber={currentMeasureNumber}
@@ -990,6 +1088,84 @@ const EditorShell: React.FC = () => {
         hoverInfo={hoverInfo}
         dragStatus={dragStatus}
       />
+
+      {/* Delete Measure Confirmation Modal */}
+      {isDeleteMeasurePromptOpen && pendingDeleteMeasureIdx !== null && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          data-testid="modal-delete-measure-confirm"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(15, 23, 42, 0.45)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+          }}
+        >
+          <div
+            style={{
+              backgroundColor: '#ffffff',
+              borderRadius: '8px',
+              padding: '1.5rem',
+              width: '400px',
+              maxWidth: '90vw',
+              boxShadow: '0 20px 25px -5px rgba(0,0,0,0.15)',
+            }}
+          >
+            <h3 style={{ margin: '0 0 0.75rem 0', fontSize: '1.05rem', color: '#0f172a' }}>
+              {t('dialog.deleteMeasure.title')}
+            </h3>
+            <p style={{ margin: '0 0 1.25rem 0', fontSize: '0.9rem', color: '#475569', lineHeight: 1.5 }}>
+              {t('dialog.deleteMeasure.prompt')}
+            </p>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.6rem' }}>
+              <button
+                type="button"
+                data-action="cancel-delete-measure"
+                onClick={() => {
+                  setIsDeleteMeasurePromptOpen(false);
+                  setPendingDeleteMeasureIdx(null);
+                }}
+                style={{
+                  padding: '0.45rem 0.9rem',
+                  fontSize: '0.875rem',
+                  borderRadius: '6px',
+                  border: '1px solid #cbd5e1',
+                  backgroundColor: '#ffffff',
+                  color: '#334155',
+                  cursor: 'pointer',
+                }}
+              >
+                {t('dialog.cancel')}
+              </button>
+              <button
+                type="button"
+                data-action="confirm-delete-measure"
+                onClick={() => {
+                  confirmDeleteMeasure(pendingDeleteMeasureIdx);
+                  setIsDeleteMeasurePromptOpen(false);
+                  setPendingDeleteMeasureIdx(null);
+                }}
+                style={{
+                  padding: '0.45rem 0.9rem',
+                  fontSize: '0.875rem',
+                  fontWeight: 600,
+                  borderRadius: '6px',
+                  border: 'none',
+                  backgroundColor: '#dc2626',
+                  color: '#ffffff',
+                  cursor: 'pointer',
+                }}
+              >
+                {t('dialog.confirm')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <NewScoreModal
         isOpen={isNewModalOpen}

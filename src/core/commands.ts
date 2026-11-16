@@ -7,8 +7,10 @@
 
 import { produce } from 'immer';
 import { Id, NoteEvent, Override, Pitch, RestEvent, Score, ScoreEvent } from './model';
-import { newId } from './factory';
-import { transposeOctave, transposeSemitone } from './pitch';
+import { createMeasure, createRest, newId } from './factory';
+import { getPitchMidi, transposeOctave, transposeSemitone } from './pitch';
+import { measureTicks } from './time';
+import { eventsInRange, RangeSelection } from './selection';
 
 /** Interface for all operations that transform a Score. */
 export interface Command {
@@ -486,4 +488,339 @@ export function setTempo(
   };
 }
 
+/**
+ * Converts all events in the specified range to rests of matching durations.
+ */
+export function deleteRange(range: RangeSelection): Command {
+  return {
+    name: 'Delete Range',
+    apply(score: Score): Score {
+      return produce(score, (draft) => {
+        const toDelete = eventsInRange(score, range);
+        if (toDelete.length === 0) return;
+        const targetIds = new Set(toDelete.map((e) => e.id));
 
+        for (const part of draft.parts) {
+          for (const staff of part.staves) {
+            if (staff.id !== range.staffId) continue;
+            for (const mDef of draft.measures) {
+              const staffMeasure = staff.measures[mDef.id];
+              if (!staffMeasure) continue;
+              for (const voice of staffMeasure.voices) {
+                if (voice.id !== range.voiceId) continue;
+                for (let i = 0; i < voice.events.length; i++) {
+                  const ev = voice.events[i];
+                  if (targetIds.has(ev.id)) {
+                    voice.events[i] = createRest({
+                      baseType: ev.baseType,
+                      duration: ev.duration,
+                      dots: ev.dots,
+                    });
+                    delete draft.overrides[ev.id];
+                  }
+                }
+              }
+            }
+          }
+        }
+      });
+    },
+  };
+}
+
+/**
+ * Transposes all notes in range by semitones, asserting pitches stay within MIDI 21..108.
+ */
+export function transposeRange(range: RangeSelection, semitones: number): Command {
+  return {
+    name: 'Transpose Range',
+    apply(score: Score): Score {
+      const inRangeEvents = eventsInRange(score, range);
+      const noteEvents = inRangeEvents.filter((e): e is NoteEvent => e.kind === 'note');
+
+      // Verify bounds first: refuse if ANY pitch leaves MIDI 21..108
+      for (const note of noteEvents) {
+        for (const p of note.pitches) {
+          const targetMidi = getPitchMidi(p) + semitones;
+          if (targetMidi < 21 || targetMidi > 108) {
+            throw new Error(`Transpose would exceed MIDI bounds (21..108): ${targetMidi}`);
+          }
+        }
+      }
+
+      return produce(score, (draft) => {
+        const targetIds = new Set(noteEvents.map((e) => e.id));
+        const direction = semitones > 0 ? 'up' : 'down';
+        const steps = Math.abs(semitones);
+
+        for (const part of draft.parts) {
+          for (const staff of part.staves) {
+            if (staff.id !== range.staffId) continue;
+            for (const mDef of draft.measures) {
+              const staffMeasure = staff.measures[mDef.id];
+              if (!staffMeasure) continue;
+              for (const voice of staffMeasure.voices) {
+                if (voice.id !== range.voiceId) continue;
+                for (const ev of voice.events) {
+                  if (targetIds.has(ev.id) && ev.kind === 'note') {
+                    ev.pitches = ev.pitches.map((p) => {
+                      let current = p;
+                      for (let s = 0; s < steps; s++) {
+                        current = transposeSemitone(current, direction);
+                      }
+                      return current;
+                    });
+                  }
+                }
+              }
+            }
+          }
+        }
+      });
+    },
+  };
+}
+
+/**
+ * Inserts a new measure after index (or at end).
+ */
+export function insertMeasure(index?: number): Command {
+  return {
+    name: 'Insert Measure',
+    apply(score: Score): Score {
+      return produce(score, (draft) => {
+        const targetIdx = index !== undefined ? index + 1 : draft.measures.length;
+        const refMeasure = draft.measures[Math.max(0, targetIdx - 1)] ?? draft.measures[0];
+        const timeSig = refMeasure ? { ...refMeasure.timeSig } : { num: 4, den: 4 };
+        const keySig = refMeasure ? refMeasure.keySig : 0;
+
+        const newMDef = createMeasure(timeSig, keySig);
+        draft.measures.splice(targetIdx, 0, newMDef);
+
+        const mDuration = measureTicks(timeSig);
+
+        for (const part of draft.parts) {
+          for (const staff of part.staves) {
+            const wholeRest = createRest({
+              baseType: 'whole',
+              duration: mDuration,
+              wholeMeasure: true,
+            });
+            staff.measures[newMDef.id] = {
+              voices: [{ id: newId(), events: [wholeRest] }],
+            };
+          }
+        }
+      });
+    },
+  };
+}
+
+/**
+ * Deletes a measure at index.
+ */
+export function deleteMeasure(index: number): Command {
+  return {
+    name: 'Delete Measure',
+    apply(score: Score): Score {
+      if (score.measures.length <= 1) {
+        throw new Error('Score must have at least 1 measure');
+      }
+      return produce(score, (draft) => {
+        const deletedDef = draft.measures[index];
+        if (!deletedDef) return;
+        draft.measures.splice(index, 1);
+
+        for (const part of draft.parts) {
+          for (const staff of part.staves) {
+            delete staff.measures[deletedDef.id];
+          }
+        }
+      });
+    },
+  };
+}
+
+/**
+ * Toggles tie from note to next matching note in voice.
+ */
+export function toggleTie(eventId: string, pitchIndex: number = 0): Command {
+  return {
+    name: 'Toggle Tie',
+    apply(score: Score): Score {
+      let foundStaffId = null;
+      let foundVoiceId = null;
+      let startMIdx = -1;
+      let startEvIdx = -1;
+      let sourceNote = null;
+
+      for (const part of score.parts) {
+        for (const staff of part.staves) {
+          for (let mIdx = 0; mIdx < score.measures.length; mIdx++) {
+            const mDef = score.measures[mIdx];
+            const sm = staff.measures[mDef.id];
+            if (!sm) continue;
+            for (const v of sm.voices) {
+              const idx = v.events.findIndex((e) => e.id === eventId);
+              if (idx !== -1) {
+                foundStaffId = staff.id;
+                foundVoiceId = v.id;
+                startMIdx = mIdx;
+                startEvIdx = idx;
+                const ev = v.events[idx];
+                if (ev.kind === 'note') sourceNote = ev;
+                break;
+              }
+            }
+          }
+        }
+      }
+
+      if (!sourceNote || !sourceNote.pitches[pitchIndex]) {
+        throw new Error('No matching next note to tie to');
+      }
+
+      const pitchToMatch = sourceNote.pitches[pitchIndex];
+
+      let nextNote = null;
+      let searchDone = false;
+
+      for (const part of score.parts) {
+        for (const staff of part.staves) {
+          if (staff.id !== foundStaffId) continue;
+          for (let mIdx = startMIdx; mIdx < score.measures.length; mIdx++) {
+            const mDef = score.measures[mIdx];
+            const sm = staff.measures[mDef.id];
+            if (!sm) continue;
+            for (const v of sm.voices) {
+              if (v.id !== foundVoiceId) continue;
+              const startI = mIdx === startMIdx ? startEvIdx + 1 : 0;
+              for (let i = startI; i < v.events.length; i++) {
+                const ev = v.events[i];
+                if (ev.kind === 'note') {
+                  nextNote = ev;
+                  searchDone = true;
+                  break;
+                }
+              }
+              if (searchDone) break;
+            }
+            if (searchDone) break;
+          }
+        }
+      }
+
+      if (!nextNote) {
+        throw new Error('No matching next note to tie to');
+      }
+
+      const hasMatchingPitch = nextNote.pitches.some(
+        (p) =>
+          p.step === pitchToMatch.step &&
+          p.octave === pitchToMatch.octave &&
+          p.alter === pitchToMatch.alter
+      );
+
+      if (!hasMatchingPitch) {
+        throw new Error('No matching next note to tie to');
+      }
+
+      return produce(score, (draft) => {
+        for (const part of draft.parts) {
+          for (const staff of part.staves) {
+            for (const mDef of draft.measures) {
+              const sm = staff.measures[mDef.id];
+              if (!sm) continue;
+              for (const v of sm.voices) {
+                for (const ev of v.events) {
+                  if (ev.id === eventId && ev.kind === 'note') {
+                    const p = ev.pitches[pitchIndex];
+                    if (p) {
+                      p.tiedToNext = !p.tiedToNext;
+                      ev.tiedToNext = ev.pitches.some((pi) => pi.tiedToNext);
+                    }
+                    return;
+                  }
+                }
+              }
+            }
+          }
+        }
+      });
+    },
+  };
+}
+
+/**
+ * Modifies accidental alter by delta (-2..+2).
+ */
+export function setExplicitAccidental(eventId: string, delta: number, pitchIndex: number = 0): Command {
+  return {
+    name: 'Set Explicit Accidental',
+    apply(score: Score): Score {
+      return produce(score, (draft) => {
+        for (const part of draft.parts) {
+          for (const staff of part.staves) {
+            for (const mDef of draft.measures) {
+              const sm = staff.measures[mDef.id];
+              if (!sm) continue;
+              for (const v of sm.voices) {
+                for (const ev of v.events) {
+                  if (ev.id === eventId && ev.kind === 'note') {
+                    const p = ev.pitches[pitchIndex];
+                    if (p) {
+                      p.alter = Math.max(-2, Math.min(2, Math.round(p.alter + delta)));
+                    }
+                    return;
+                  }
+                }
+              }
+            }
+          }
+        }
+      });
+    },
+  };
+}
+
+const SHARPS_ORDER: Pitch['step'][] = ['F', 'C', 'G', 'D', 'A', 'E', 'B'];
+const FLATS_ORDER: Pitch['step'][] = ['B', 'E', 'A', 'D', 'G', 'C', 'F'];
+
+/**
+ * Resets accidental to key signature default.
+ */
+export function resetAccidentalToKeySig(eventId: string, pitchIndex: number = 0): Command {
+  return {
+    name: 'Reset Accidental',
+    apply(score: Score): Score {
+      return produce(score, (draft) => {
+        for (const part of draft.parts) {
+          for (const staff of part.staves) {
+            for (const mDef of draft.measures) {
+              const sm = staff.measures[mDef.id];
+              if (!sm) continue;
+              for (const v of sm.voices) {
+                for (const ev of v.events) {
+                  if (ev.id === eventId && ev.kind === 'note') {
+                    const p = ev.pitches[pitchIndex];
+                    if (p) {
+                      const keySig = mDef.keySig;
+                      let defaultAlter = 0;
+                      if (keySig > 0 && SHARPS_ORDER.slice(0, keySig).includes(p.step)) {
+                        defaultAlter = 1;
+                      } else if (keySig < 0 && FLATS_ORDER.slice(0, Math.abs(keySig)).includes(p.step)) {
+                        defaultAlter = -1;
+                      }
+                      p.alter = defaultAlter;
+                    }
+                    return;
+                  }
+                }
+              }
+            }
+          }
+        }
+      });
+    },
+  };
+}

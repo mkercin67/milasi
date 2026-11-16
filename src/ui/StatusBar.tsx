@@ -16,6 +16,7 @@ export interface HoverInfo {
 
 export interface StatusBarProps {
   selection: SelectedEventInfo | null;
+  rangeInfo?: { count: number; startMeasureNumber: number; endMeasureNumber: number } | null;
   mode?: EditorMode;
   activeDuration?: BaseDurationType;
   currentMeasureNumber?: number;
@@ -35,6 +36,7 @@ const MODE_COLORS: Record<EditorMode, { bg: string; fg: string; border: string }
 
 export const StatusBar: React.FC<StatusBarProps> = ({
   selection,
+  rangeInfo = null,
   mode = 'select',
   activeDuration = 'quarter',
   currentMeasureNumber = 1,
@@ -84,6 +86,18 @@ export const StatusBar: React.FC<StatusBarProps> = ({
             measure: currentMeasureNumber,
           })}
           {pointerText}
+        </span>
+      );
+    }
+
+    if (rangeInfo) {
+      const measureText =
+        rangeInfo.startMeasureNumber === rangeInfo.endMeasureNumber
+          ? t('status.measureLabel', { num: rangeInfo.startMeasureNumber })
+          : t('status.measureRangeLabel', { start: rangeInfo.startMeasureNumber, end: rangeInfo.endMeasureNumber });
+      return (
+        <span data-testid="status-range-info" style={{ color: '#1d4ed8', fontWeight: 600 }}>
+          {t('status.rangeSelected', { count: rangeInfo.count, measures: measureText })}
         </span>
       );
     }

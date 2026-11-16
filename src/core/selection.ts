@@ -1,66 +1,219 @@
 /**
- * Pure selection navigation helpers for traversing musical events on a staff.
+ * Core selection helpers and range computations.
  */
 
 import { Score, ScoreEvent } from './model';
 
-/**
- * Returns an ordered array of all events on the given staff across all score measures.
- *
- * Traversal follows score.measures order, then voices, then events.
- *
- * @param score - The score container.
- * @param staffId - Identifier of the staff to inspect.
- * @returns Flat array of all ScoreEvent elements in chronological sequence.
- */
-export function getStaffEventsInOrder(score: Score, staffId: string): ScoreEvent[] {
-  let targetStaff = null;
-  for (const part of score.parts) {
-    for (const staff of part.staves) {
-      if (staff.id === staffId) {
-        targetStaff = staff;
-        break;
-      }
-    }
-    if (targetStaff) break;
-  }
+export type Selection =
+  | { kind: 'none' }
+  | { kind: 'event'; id: string }
+  | { kind: 'range'; staffId: string; voiceId: string; anchorId: string; focusId: string };
 
-  if (!targetStaff) {
-    // If staffId not found directly, pick first available staff
-    targetStaff = score.parts[0]?.staves[0] ?? null;
-  }
-
-  if (!targetStaff) return [];
-
-  const events: ScoreEvent[] = [];
-  for (const mDef of score.measures) {
-    const sm = targetStaff.measures[mDef.id];
-    if (!sm) continue;
-    for (const voice of sm.voices) {
-      for (const ev of voice.events) {
-        events.push(ev);
-      }
-    }
-  }
-
-  return events;
+export interface RangeSelection {
+  staffId: string;
+  voiceId: string;
+  anchorId: string;
+  focusId: string;
 }
 
 /**
- * Checks whether an event with the given ID exists anywhere within the score.
- *
- * @param score - The score container.
- * @param eventId - Identifier of the event to check.
- * @returns True if the event exists in any voice of any staff.
+ * Finds the staff, measure, and voice location of an event by ID.
+ */
+export function findEventContext(
+  score: Score,
+  eventId: string
+): { staffId: string; measureId: string; measureIndex: number; voiceId: string; eventIndex: number } | null {
+  for (const part of score.parts) {
+    for (const staff of part.staves) {
+      for (let mIdx = 0; mIdx < score.measures.length; mIdx++) {
+        const mDef = score.measures[mIdx];
+        const staffMeasure = staff.measures[mDef.id];
+        if (!staffMeasure) continue;
+        for (const voice of staffMeasure.voices) {
+          const evIdx = voice.events.findIndex((e) => e.id === eventId);
+          if (evIdx !== -1) {
+            return {
+              staffId: staff.id,
+              measureId: mDef.id,
+              measureIndex: mIdx,
+              voiceId: voice.id,
+              eventIndex: evIdx,
+            };
+          }
+        }
+      }
+    }
+  }
+  return null;
+}
+
+/**
+ * Returns all events in a specific voice across all measures in score reading order.
+ */
+export function getOrderedVoiceEvents(
+  score: Score,
+  staffId: string,
+  voiceId: string
+): Array<{ event: ScoreEvent; measureId: string; measureIndex: number }> {
+  const result: Array<{ event: ScoreEvent; measureId: string; measureIndex: number }> = [];
+
+  for (const part of score.parts) {
+    for (const staff of part.staves) {
+      if (staff.id !== staffId) continue;
+      for (let mIdx = 0; mIdx < score.measures.length; mIdx++) {
+        const mDef = score.measures[mIdx];
+        const staffMeasure = staff.measures[mDef.id];
+        if (!staffMeasure) continue;
+        for (const voice of staffMeasure.voices) {
+          if (voice.id !== voiceId) continue;
+          for (const ev of voice.events) {
+            result.push({ event: ev, measureId: mDef.id, measureIndex: mIdx });
+          }
+        }
+      }
+    }
+  }
+
+  return result;
+}
+
+/**
+ * Returns all events in the specified range in reading order.
+ */
+export function eventsInRange(
+  score: Score,
+  range: RangeSelection
+): ScoreEvent[] {
+  const ordered = getOrderedVoiceEvents(score, range.staffId, range.voiceId);
+  const anchorIdx = ordered.findIndex((item) => item.event.id === range.anchorId);
+  const focusIdx = ordered.findIndex((item) => item.event.id === range.focusId);
+
+  if (anchorIdx === -1 || focusIdx === -1) {
+    return [];
+  }
+
+  const startIdx = Math.min(anchorIdx, focusIdx);
+  const endIdx = Math.max(anchorIdx, focusIdx);
+
+  return ordered.slice(startIdx, endIdx + 1).map((item) => item.event);
+}
+
+/**
+ * Extends or creates a range selection towards targetEventId.
+ */
+export function extendSelection(
+  score: Score,
+  current: Selection,
+  targetEventId: string
+): Selection {
+  const targetCtx = findEventContext(score, targetEventId);
+  if (!targetCtx) return current;
+
+  if (current.kind === 'none') {
+    return {
+      kind: 'range',
+      staffId: targetCtx.staffId,
+      voiceId: targetCtx.voiceId,
+      anchorId: targetEventId,
+      focusId: targetEventId,
+    };
+  }
+
+  if (current.kind === 'event') {
+    const anchorCtx = findEventContext(score, current.id);
+    if (!anchorCtx || anchorCtx.staffId !== targetCtx.staffId || anchorCtx.voiceId !== targetCtx.voiceId) {
+      return {
+        kind: 'range',
+        staffId: targetCtx.staffId,
+        voiceId: targetCtx.voiceId,
+        anchorId: targetEventId,
+        focusId: targetEventId,
+      };
+    }
+    return {
+      kind: 'range',
+      staffId: targetCtx.staffId,
+      voiceId: targetCtx.voiceId,
+      anchorId: current.id,
+      focusId: targetEventId,
+    };
+  }
+
+  if (current.kind === 'range') {
+    if (current.staffId !== targetCtx.staffId || current.voiceId !== targetCtx.voiceId) {
+      return {
+        kind: 'range',
+        staffId: targetCtx.staffId,
+        voiceId: targetCtx.voiceId,
+        anchorId: targetEventId,
+        focusId: targetEventId,
+      };
+    }
+    return {
+      kind: 'range',
+      staffId: current.staffId,
+      voiceId: current.voiceId,
+      anchorId: current.anchorId,
+      focusId: targetEventId,
+    };
+  }
+
+  return current;
+}
+
+/**
+ * Returns measure range span and event count for a list of events.
+ */
+export function getRangeMeasureSpan(
+  score: Score,
+  events: ScoreEvent[]
+): { startMeasureNumber: number; endMeasureNumber: number; count: number } {
+  if (events.length === 0) {
+    return { startMeasureNumber: 1, endMeasureNumber: 1, count: 0 };
+  }
+
+  const eventIds = new Set(events.map((e) => e.id));
+  let minMeasureNumber = Infinity;
+  let maxMeasureNumber = -Infinity;
+
+  for (const part of score.parts) {
+    for (const staff of part.staves) {
+      for (let mIdx = 0; mIdx < score.measures.length; mIdx++) {
+        const mDef = score.measures[mIdx];
+        const staffMeasure = staff.measures[mDef.id];
+        if (!staffMeasure) continue;
+        for (const voice of staffMeasure.voices) {
+          for (const ev of voice.events) {
+            if (eventIds.has(ev.id)) {
+              const mNum = mIdx + 1;
+              if (mNum < minMeasureNumber) minMeasureNumber = mNum;
+              if (mNum > maxMeasureNumber) maxMeasureNumber = mNum;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  return {
+    startMeasureNumber: minMeasureNumber === Infinity ? 1 : minMeasureNumber,
+    endMeasureNumber: maxMeasureNumber === -Infinity ? 1 : maxMeasureNumber,
+    count: events.length,
+  };
+}
+
+
+/**
+ * Checks whether an event exists in the score.
  */
 export function eventExists(score: Score, eventId: string): boolean {
   for (const part of score.parts) {
     for (const staff of part.staves) {
-      for (const sm of Object.values(staff.measures)) {
-        for (const voice of sm.voices) {
-          if (voice.events.some((ev) => ev.id === eventId)) {
-            return true;
-          }
+      for (const mDef of score.measures) {
+        const sm = staff.measures[mDef.id];
+        if (!sm) continue;
+        for (const v of sm.voices) {
+          if (v.events.some((e) => e.id === eventId)) return true;
         }
       }
     }
@@ -69,13 +222,7 @@ export function eventExists(score: Score, eventId: string): boolean {
 }
 
 /**
- * Calculates the next or previous event ID on a staff relative to a current selection.
- *
- * @param score - The score container.
- * @param staffId - Identifier of the active staff.
- * @param currentId - ID of currently selected event, or null if none selected.
- * @param direction - 'prev' or 'next'.
- * @returns ID of the adjacent event, or null if staff contains no events.
+ * Returns the next or previous event ID in reading order on a staff.
  */
 export function nextEventId(
   score: Score,
@@ -83,21 +230,33 @@ export function nextEventId(
   currentId: string | null,
   direction: 'prev' | 'next'
 ): string | null {
-  const events = getStaffEventsInOrder(score, staffId);
+  const staff = score.parts.flatMap((p) => p.staves).find((s) => s.id === staffId);
+  if (!staff) return null;
+
+  const events: ScoreEvent[] = [];
+  for (const mDef of score.measures) {
+    const sm = staff.measures[mDef.id];
+    if (sm) {
+      for (const v of sm.voices) {
+        events.push(...v.events);
+      }
+    }
+  }
+
   if (events.length === 0) return null;
 
-  if (currentId === null) {
+  if (!currentId) {
     return direction === 'next' ? events[0].id : events[events.length - 1].id;
   }
 
   const idx = events.findIndex((e) => e.id === currentId);
   if (idx === -1) {
-    return events[0].id;
+    return direction === 'next' ? events[0].id : events[events.length - 1].id;
   }
 
   if (direction === 'next') {
-    return idx + 1 < events.length ? events[idx + 1].id : events[idx].id;
+    return idx < events.length - 1 ? events[idx + 1].id : events[idx].id;
   } else {
-    return idx > 0 ? events[idx - 1].id : events[0].id;
+    return idx > 0 ? events[idx - 1].id : events[idx].id;
   }
 }

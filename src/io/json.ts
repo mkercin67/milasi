@@ -15,11 +15,47 @@ export interface ScoreForgeEnvelope {
   score: Score;
 }
 
+export const CURRENT_SCHEMA_VERSION = 2;
+
 /** Migration function signature for schema version upgrades. */
 export type ScoreMigration = (data: unknown) => Score;
 
-/** Registry of schema migrations keyed by source schemaVersion (empty currently for v1). */
-export const migrations: Record<number, ScoreMigration> = {};
+/** Migration from v1 to v2: upgrades schemaVersion to 2 and migrates tiedToNext to pitch level. */
+export function migrateV1ToV2(data: unknown): Score {
+  const score = JSON.parse(JSON.stringify(data)) as any;
+  score.schemaVersion = 2;
+  if (Array.isArray(score.parts)) {
+    for (const part of score.parts) {
+      if (Array.isArray(part.staves)) {
+        for (const staff of part.staves) {
+          if (staff.measures) {
+            for (const m of Object.values(staff.measures) as any[]) {
+              if (Array.isArray(m?.voices)) {
+                for (const v of m.voices) {
+                  if (Array.isArray(v?.events)) {
+                    for (const ev of v.events) {
+                      if (ev.kind === 'note' && Array.isArray(ev.pitches)) {
+                        if (ev.tiedToNext && ev.pitches.length > 0) {
+                          ev.pitches[0].tiedToNext = true;
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  return score as Score;
+}
+
+/** Registry of schema migrations keyed by source schemaVersion. */
+export const migrations: Record<number, ScoreMigration> = {
+  1: migrateV1ToV2,
+};
 
 /**
  * Serializes a Score instance to a JSON string.
@@ -30,15 +66,19 @@ export const migrations: Record<number, ScoreMigration> = {};
  * @returns Serialized JSON string.
  */
 export function serializeScore(score: Score, space?: number, envelope: boolean = true): string {
+  const scorePayload: Score = {
+    ...score,
+    schemaVersion: score.schemaVersion ?? 2,
+  };
   if (envelope) {
     const env: ScoreForgeEnvelope = {
       app: 'scoreforge',
       savedAt: new Date().toISOString(),
-      score,
+      score: scorePayload,
     };
     return JSON.stringify(env, null, space);
   }
-  return JSON.stringify(score, null, space);
+  return JSON.stringify(scorePayload, null, space);
 }
 
 /**
@@ -88,24 +128,20 @@ export function deserializeScore(json: string): Score {
     throw new Error('Unsupported or missing schemaVersion: missing schemaVersion property');
   }
 
-  // Run migrations if a registered migration exists for this version
-  let migratedScore: Score;
-  if (migrations[version]) {
-    migratedScore = migrations[version](scoreObj);
-  } else if (version === 1) {
-    migratedScore = scoreObj as unknown as Score;
-  } else {
+  if (version !== 1 && version !== 2) {
     throw new Error(
-      `Unsupported schemaVersion: ${version}. Expected version 1 or a registered migration.`
+      `Unsupported schemaVersion: ${version}. Expected version 1, 2 or a registered migration.`
     );
   }
 
+  const loadedScore = scoreObj as unknown as Score;
+
   // Validate loaded score structure and durations
-  const problems = validateScore(migratedScore);
+  const problems = validateScore(loadedScore);
   if (problems.length > 0) {
     const details = problems.map((p) => `[${p.code}] ${p.message}`).join('; ');
     throw new Error(`Validation failed on score load: ${details}`);
   }
 
-  return migratedScore;
+  return loadedScore;
 }

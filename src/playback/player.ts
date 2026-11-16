@@ -26,6 +26,7 @@ export class Player {
   private _lastEngineTime: number = 0;
   private _timerId: ReturnType<typeof setInterval> | null = null;
   private _positionListeners: Set<PositionCallback> = new Set();
+  private _stopAtSeconds: number | null = null;
 
   constructor(
     private _score: Score,
@@ -59,7 +60,7 @@ export class Player {
     };
   }
 
-  async play(fromEventId?: string): Promise<void> {
+  async play(fromEventId?: string, stopAtSeconds?: number): Promise<void> {
     if (this._state === 'playing') {
       return;
     }
@@ -70,6 +71,7 @@ export class Player {
 
     await this._engine.ready();
     this._schedule = buildSchedule(this._score, { fromEventId });
+    this._stopAtSeconds = stopAtSeconds !== undefined ? stopAtSeconds : null;
     this._playbackPosition = 0;
     this._nextNoteIndex = 0;
     this._lastEngineTime = this._engine.now();
@@ -77,6 +79,14 @@ export class Player {
 
     this._startTimer();
     this.tick();
+  }
+
+  async playRange(fromEventId: string, toEventId: string): Promise<void> {
+    await this._engine.ready();
+    const tempSched = buildSchedule(this._score, { fromEventId });
+    const toTime = tempSched.eventTimes.get(toEventId);
+    const stopAt = toTime ? toTime.endSeconds : undefined;
+    await this.play(fromEventId, stopAt);
   }
 
   pause(): void {
@@ -138,6 +148,12 @@ export class Player {
     }
 
     this._notifyPosition();
+
+    // Check if range playback has reached stop limit
+    if (this._stopAtSeconds !== null && this._playbackPosition >= this._stopAtSeconds - 1e-4) {
+      this.stop();
+      return;
+    }
 
     // Check if score playback has finished
     if (

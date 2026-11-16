@@ -33,10 +33,10 @@ export function validateScore(score: Score): ValidationProblem[] {
   const problems: ValidationProblem[] = [];
 
   // Schema version check
-  if (score.schemaVersion !== 1) {
+  if (score.schemaVersion !== 1 && score.schemaVersion !== 2) {
     problems.push({
       code: 'invalid-schema-version',
-      message: `Unsupported schema version: ${score.schemaVersion} (expected 1)`,
+      message: `Unsupported schema version: ${score.schemaVersion} (expected 1 or 2)`,
       severity: 'error',
     });
   }

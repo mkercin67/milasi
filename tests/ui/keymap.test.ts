@@ -147,6 +147,23 @@ describe('keymap', () => {
     expect(mapKeyEvent({ code: 'Period' })).toBe('toggle-dot');
   });
 
+  it('maps M6a editing keys: select-all, copy, cut, paste, insert-measure, delete-measure, ties, accidentals', () => {
+    expect(mapKeyEvent({ code: 'KeyA', ctrlKey: true }, 'select')).toBe('select-all');
+    expect(mapKeyEvent({ code: 'KeyC', ctrlKey: true }, 'select')).toBe('copy');
+    expect(mapKeyEvent({ code: 'KeyX', ctrlKey: true }, 'select')).toBe('cut');
+    expect(mapKeyEvent({ code: 'KeyV', ctrlKey: true }, 'select')).toBe('paste');
+    expect(mapKeyEvent({ code: 'KeyB', ctrlKey: true }, 'select')).toBe('insert-measure');
+    expect(mapKeyEvent({ code: 'Delete', ctrlKey: true }, 'select')).toBe('delete-measure');
+
+    expect(mapKeyEvent({ code: 'ArrowLeft', shiftKey: true }, 'select')).toBe('extend-selection-prev');
+    expect(mapKeyEvent({ code: 'ArrowRight', shiftKey: true }, 'select')).toBe('extend-selection-next');
+    expect(mapKeyEvent({ code: 'ArrowUp', shiftKey: true }, 'select')).toBe('cycle-accidental-up');
+    expect(mapKeyEvent({ code: 'ArrowDown', shiftKey: true }, 'select')).toBe('cycle-accidental-down');
+
+    expect(mapKeyEvent({ code: 'KeyT' }, 'select')).toBe('toggle-tie');
+    expect(mapKeyEvent({ code: 'KeyX' }, 'select')).toBe('reset-accidental');
+  });
+
   it('returns null for unrecognized keys', () => {
     expect(mapKeyEvent({ code: 'Space' })).toBeNull();
     expect(mapKeyEvent({ code: 'Tab' })).toBeNull();

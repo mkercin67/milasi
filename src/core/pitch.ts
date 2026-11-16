@@ -55,6 +55,10 @@ const DESCENDING_SPELLINGS: Spelling[] = [
   { step: 'B', alter: 0 },
 ];
 
+export function getPitchMidi(pitch: Pitch): number {
+  return 12 * (pitch.octave + 1) + STEP_SEMITONES[pitch.step] + pitch.alter;
+}
+
 /**
  * Transposes a pitch by one semitone in the specified direction.
  *

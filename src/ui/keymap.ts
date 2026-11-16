@@ -17,6 +17,18 @@ export type UserAction =
   | 'convert-to-rest'
   | 'select-prev'
   | 'select-next'
+  | 'extend-selection-prev'
+  | 'extend-selection-next'
+  | 'select-all'
+  | 'copy'
+  | 'cut'
+  | 'paste'
+  | 'insert-measure'
+  | 'delete-measure'
+  | 'toggle-tie'
+  | 'cycle-accidental-up'
+  | 'cycle-accidental-down'
+  | 'reset-accidental'
   | 'clear-selection'
   | 'undo'
   | 'redo'
@@ -82,7 +94,7 @@ export function mapKeyEvent(
     return null;
   }
 
-  // Undo / Redo / Octave transposition / Reset override
+  // Ctrl / Cmd combinations
   if (isCmdOrCtrl) {
     if (e.code === 'KeyZ') {
       return isShift ? 'redo' : 'undo';
@@ -99,28 +111,22 @@ export function mapKeyEvent(
     if (e.code === 'Digit0') {
       return 'reset-override';
     }
+
+    if (mode === 'select') {
+      if (e.code === 'KeyA') return 'select-all';
+      if (e.code === 'KeyC') return 'copy';
+      if (e.code === 'KeyX') return 'cut';
+      if (e.code === 'KeyV') return 'paste';
+      if (e.code === 'KeyB') return 'insert-measure';
+      if (e.code === 'Delete' || e.code === 'Backspace') return 'delete-measure';
+    } else if (mode === 'input') {
+      if (e.code === 'KeyB') return 'insert-measure';
+      if (e.code === 'KeyV') return 'paste';
+    }
     return null;
   }
 
-  // Explicit mode switches (unmodified)
-  if (!isShift) {
-    if (e.code === 'KeyV') {
-      return 'set-mode-select';
-    }
-    if (e.code === 'KeyN') {
-      return 'toggle-note-input';
-    }
-    if (e.code === 'KeyP') {
-      return 'toggle-position-mode';
-    }
-    if (e.code === 'Escape') {
-      if (mode === 'input') return 'exit-note-input';
-      if (mode === 'position') return 'set-mode-select';
-      return 'clear-selection';
-    }
-  }
-
-  // Position mode arrows & Tab navigation
+  // Position mode arrows & Tab navigation (evaluated before Shift check so Shift+Arrows nudge 1.0)
   if (mode === 'position') {
     const step = isShift ? 1.0 : 0.25;
     if (e.code === 'ArrowLeft') return { type: 'nudge-override', dx: -step, dy: 0 };
@@ -130,10 +136,48 @@ export function mapKeyEvent(
     if (e.code === 'Tab') {
       return isShift ? 'select-prev' : 'select-next';
     }
+    if (isShift) return null;
   }
 
+  // Shift combinations (Selection extension & accidental cycle)
   if (isShift) {
+    if (e.code === 'ArrowLeft') {
+      return 'extend-selection-prev';
+    }
+    if (e.code === 'ArrowRight') {
+      return 'extend-selection-next';
+    }
+    if (e.code === 'ArrowUp') {
+      return 'cycle-accidental-up';
+    }
+    if (e.code === 'ArrowDown') {
+      return 'cycle-accidental-down';
+    }
     return null;
+  }
+
+  // Explicit mode switches (unmodified)
+  if (e.code === 'KeyV') {
+    return 'set-mode-select';
+  }
+  if (e.code === 'KeyN') {
+    return 'toggle-note-input';
+  }
+  if (e.code === 'KeyP') {
+    return 'toggle-position-mode';
+  }
+  if (e.code === 'Escape') {
+    if (mode === 'input') return 'exit-note-input';
+    if (mode === 'position') return 'set-mode-select';
+    return 'clear-selection';
+  }
+
+  // Tie and accidental reset keys
+  if (e.code === 'KeyT') {
+    return 'toggle-tie';
+  }
+  if (e.code === 'KeyX') {
+    return 'reset-accidental';
   }
 
   // Pitch entry (Input mode only)

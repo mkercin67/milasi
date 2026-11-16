@@ -14,6 +14,8 @@ import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useSta
 import { BaseDurationType, NoteEvent, Pitch, Score, ScoreEvent } from '../core/model';
 import { layoutScore } from '../layout/layoutScore';
 import { LayoutResult } from '../layout/types';
+import { layoutTies } from '../layout/ties';
+import { RangeSelection } from '../core/selection';
 import {
   getLedgerLineYs,
   pitchToStaffPosition,
@@ -39,6 +41,10 @@ export interface ScoreViewProps {
   score: Score;
   selectedEventId: string | null;
   onSelectEvent: (eventId: string | null) => void;
+  selectedEventIds?: Set<string>;
+  selectedRange?: RangeSelection | null;
+  onSelectRange?: (range: RangeSelection | null) => void;
+  onExtendSelectionTo?: (targetEventId: string) => void;
   cursor?: ScoreCursor | null;
   mode?: EditorMode;
   activeDuration?: BaseDurationType;
@@ -88,6 +94,10 @@ export const ScoreView: React.FC<ScoreViewProps> = ({
   score,
   selectedEventId,
   onSelectEvent,
+  selectedEventIds,
+  selectedRange: _selectedRange = null,
+  onSelectRange,
+  onExtendSelectionTo,
   cursor = null,
   mode = 'select',
   activeDuration = 'quarter',
@@ -120,6 +130,16 @@ export const ScoreView: React.FC<ScoreViewProps> = ({
     width: 0,
     height: 0,
   });
+
+  // Marquee selection state (Select mode only)
+  const marqueeRef = useRef<{
+    startX: number;
+    startY: number;
+    currentX: number;
+    currentY: number;
+    isMarquee: boolean;
+  } | null>(null);
+  const [marqueeRect, setMarqueeRect] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
 
   // Active drag state for 'select' (pitch) and 'position' (dx/dy)
   const dragStateRef = useRef<{
@@ -199,6 +219,10 @@ export const ScoreView: React.FC<ScoreViewProps> = ({
     return layoutScore(score, { width: availableStaffSpaces });
   }, [score, availableStaffSpaces]);
 
+  const ties = useMemo(() => {
+    return layoutTies(score, layout);
+  }, [score, layout]);
+
   useEffect(() => {
     onLayoutChange?.(layout);
   }, [layout, onLayoutChange]);
@@ -219,6 +243,13 @@ export const ScoreView: React.FC<ScoreViewProps> = ({
     set.add('rest8th');
     set.add('rest16th');
     set.add('rest32nd');
+    for (const sys of layout.systems) {
+      for (const item of sys.items) {
+        if (item.kind === 'glyph' && item.glyph) {
+          set.add(item.glyph);
+        }
+      }
+    }
     for (const item of layout.items) {
       if (item.kind === 'glyph' && item.glyph) {
         set.add(item.glyph);
@@ -478,6 +509,23 @@ export const ScoreView: React.FC<ScoreViewProps> = ({
 
     if (!hit) {
       dragStateRef.current = null;
+      if (mode === 'select') {
+        marqueeRef.current = {
+          startX: e.clientX,
+          startY: e.clientY,
+          currentX: e.clientX,
+          currentY: e.clientY,
+          isMarquee: false,
+        };
+        trySetCapture(e.currentTarget, e.pointerId);
+      }
+      return;
+    }
+
+    if (e.shiftKey && onExtendSelectionTo) {
+      e.preventDefault();
+      onExtendSelectionTo(hit.eventId);
+      dragStateRef.current = null;
       return;
     }
 
@@ -521,6 +569,25 @@ export const ScoreView: React.FC<ScoreViewProps> = ({
   };
 
   const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    // 0. Marquee drag tracking in select mode
+    if (marqueeRef.current) {
+      marqueeRef.current.currentX = e.clientX;
+      marqueeRef.current.currentY = e.clientY;
+      const deltaX = Math.abs(e.clientX - marqueeRef.current.startX);
+      const deltaY = Math.abs(e.clientY - marqueeRef.current.startY);
+      if (!marqueeRef.current.isMarquee && (deltaX > 4 || deltaY > 4)) {
+        marqueeRef.current.isMarquee = true;
+      }
+      if (marqueeRef.current.isMarquee) {
+        const left = Math.min(marqueeRef.current.startX, marqueeRef.current.currentX) - containerRectRef.current.left;
+        const top = Math.min(marqueeRef.current.startY, marqueeRef.current.currentY) - containerRectRef.current.top;
+        const width = Math.abs(marqueeRef.current.currentX - marqueeRef.current.startX);
+        const height = Math.abs(marqueeRef.current.currentY - marqueeRef.current.startY);
+        setMarqueeRect({ x: left, y: top, width, height });
+        return;
+      }
+    }
+
     // 1. Input mode press & hover tracking
     if (mode === 'input') {
       if (inputPressRef.current && !inputPressRef.current.movedPastThreshold) {
@@ -723,6 +790,60 @@ export const ScoreView: React.FC<ScoreViewProps> = ({
   const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
     releaseCapture();
 
+    if (marqueeRef.current) {
+      if (marqueeRef.current.isMarquee) {
+        const { startX, startY, currentX, currentY } = marqueeRef.current;
+        const left = Math.min(startX, currentX) - containerRectRef.current.left;
+        const right = Math.max(startX, currentX) - containerRectRef.current.left;
+        const top = Math.min(startY, currentY) - containerRectRef.current.top;
+        const bottom = Math.max(startY, currentY) - containerRectRef.current.top;
+
+        const intersectingEventIds = new Set<string>();
+        for (const sys of layout.systems) {
+          for (const item of sys.items) {
+            if (item.eventId) {
+              const pxX = item.x * staffSpacePx;
+              const pxY = (sys.y + item.y) * staffSpacePx;
+              if (pxX >= left - 15 && pxX <= right + 15 && pxY >= top - 20 && pxY <= bottom + 20) {
+                intersectingEventIds.add(item.eventId);
+              }
+            }
+          }
+        }
+
+        const staff = score.parts[0]?.staves[0];
+        if (staff && intersectingEventIds.size > 0) {
+          const orderedEvents: ScoreEvent[] = [];
+          for (const mDef of score.measures) {
+            const sm = staff.measures[mDef.id];
+            if (sm) {
+              for (const v of sm.voices) {
+                for (const ev of v.events) {
+                  if (intersectingEventIds.has(ev.id)) {
+                    orderedEvents.push(ev);
+                  }
+                }
+              }
+            }
+          }
+          if (orderedEvents.length > 0) {
+            const firstEv = orderedEvents[0];
+            const lastEv = orderedEvents[orderedEvents.length - 1];
+            const voiceId = staff.measures[score.measures[0]?.id]?.voices[0]?.id ?? 'v1';
+            onSelectRange?.({
+              staffId: staff.id,
+              voiceId,
+              anchorId: firstEv.id,
+              focusId: lastEv.id,
+            });
+          }
+        }
+        suppressNextClickRef.current = true;
+      }
+      marqueeRef.current = null;
+      setMarqueeRect(null);
+    }
+
     if (mode === 'input') {
       const press = inputPressRef.current;
       inputPressRef.current = null;
@@ -766,11 +887,12 @@ export const ScoreView: React.FC<ScoreViewProps> = ({
   };
 
   const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (suppressNextClickRef.current) {
+      suppressNextClickRef.current = false;
+      return;
+    }
+
     if (mode === 'input') {
-      if (suppressNextClickRef.current) {
-        suppressNextClickRef.current = false;
-        return;
-      }
       // Fallback for synthetic DOM click without pointerdown/up
       enterPitchAtPointer(e.clientX, e.clientY);
       return;
@@ -788,7 +910,11 @@ export const ScoreView: React.FC<ScoreViewProps> = ({
     const hit = coords ? hitTestEvent(layout, coords.targetSys.index, coords.sysRelX, coords.sysRelY) : null;
 
     if (hit) {
-      onSelectEvent(hit.eventId);
+      if (e.shiftKey && onExtendSelectionTo) {
+        onExtendSelectionTo(hit.eventId);
+      } else {
+        onSelectEvent(hit.eventId);
+      }
       return;
     }
 
@@ -975,6 +1101,26 @@ export const ScoreView: React.FC<ScoreViewProps> = ({
               }`
             : ''
         }
+        ${
+          selectedEventIds && selectedEventIds.size > 0
+            ? Array.from(selectedEventIds)
+                .map(
+                  (id) => `
+              svg g[data-event-id="${id}"] {
+                fill: #2563eb !important;
+                stroke: #2563eb !important;
+              }
+              svg g[data-event-id="${id}"] text {
+                fill: #2563eb !important;
+              }
+              svg line[data-event-id="${id}"] {
+                stroke: #2563eb !important;
+              }
+            `
+                )
+                .join('\n')
+            : ''
+        }
         svg rect.measure-hit-area {
           fill: transparent !important;
           stroke: none !important;
@@ -1038,6 +1184,32 @@ export const ScoreView: React.FC<ScoreViewProps> = ({
             </defs>
           )}
 
+          {/* Tinted background band for range selection */}
+          {selectedEventIds && selectedEventIds.size > 0 && layout.systems.map((sys) => {
+            const sysItems = sys.items.filter((it) => it.eventId && selectedEventIds.has(it.eventId));
+            if (sysItems.length === 0) return null;
+            const minX = Math.min(...sysItems.map((it) => it.x)) - 0.4;
+            const maxX = Math.max(...sysItems.map((it) => (it.x2 ?? it.x) + 1.2)) + 0.4;
+            const pxX = minX * staffSpacePx;
+            const pxY = (sys.y - 1.5) * staffSpacePx;
+            const widthPx = Math.max(10, (maxX - minX) * staffSpacePx);
+            const heightPx = 7 * staffSpacePx;
+            return (
+              <rect
+                key={`range-band-sys-${sys.index}`}
+                className="score-range-band notranslate"
+                data-testid="range-selection-band"
+                x={pxX}
+                y={pxY}
+                width={widthPx}
+                height={heightPx}
+                rx={4}
+                fill="rgba(37, 99, 235, 0.12)"
+                pointerEvents="none"
+              />
+            );
+          })}
+
           {layout.systems.map((sys) => (
             <SystemView
               key={sys.index}
@@ -1046,6 +1218,40 @@ export const ScoreView: React.FC<ScoreViewProps> = ({
               useTextFallback={useTextFallback}
             />
           ))}
+
+          {/* SVG Ties */}
+          {ties.map((tie) => {
+            const sys = layout.systems[tie.systemIndex];
+            const sysY = sys ? sys.y : 0;
+            return (
+              <path
+                key={tie.id}
+                data-tie-id={tie.id}
+                className="score-tie notranslate"
+                d={tie.d}
+                transform={`translate(0, ${sysY * staffSpacePx}) scale(${staffSpacePx})`}
+                fill="currentColor"
+                pointerEvents="none"
+              />
+            );
+          })}
+
+          {/* Marquee selection rectangle */}
+          {marqueeRect && (
+            <rect
+              className="score-marquee-rect notranslate"
+              data-testid="marquee-selection-box"
+              x={marqueeRect.x}
+              y={marqueeRect.y}
+              width={marqueeRect.width}
+              height={marqueeRect.height}
+              fill="rgba(37, 99, 235, 0.08)"
+              stroke="#2563eb"
+              strokeWidth={1.5}
+              strokeDasharray="4 3"
+              pointerEvents="none"
+            />
+          )}
 
           {/* Playback Playhead Line */}
           {(isPlaying || isPaused) && playhead && (

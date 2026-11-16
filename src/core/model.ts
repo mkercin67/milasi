@@ -11,7 +11,7 @@ export type Id = string;
 
 /** Root score container. */
 export interface Score {
-  schemaVersion: 1;
+  schemaVersion: 1 | 2;
   id: Id;
   meta: {
     title: string;
@@ -112,6 +112,7 @@ export interface Pitch {
   step: PitchStep;
   octave: number; // Scientific pitch notation: C4 = middle C
   alter: number; // Semitone offset: 0 = natural, 1 = sharp, -1 = flat, 0.5 = quarter tone sharp
+  tiedToNext?: boolean; // Tie to next note with identical pitch
 }
 
 /** Manual visual layout overrides in staff spaces. */

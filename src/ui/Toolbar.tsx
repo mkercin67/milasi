@@ -22,6 +22,8 @@ export interface ToolbarProps {
   onSave?: () => void;
   onSaveAs?: () => void;
   onOpenScoreInfo?: () => void;
+  onInsertMeasure?: () => void;
+  onDeleteMeasure?: () => void;
   mode: EditorMode;
   onChangeMode: (mode: EditorMode) => void;
   activeDuration: BaseDurationType;
@@ -74,6 +76,8 @@ export const Toolbar: React.FC<ToolbarProps> = ({
   onSave,
   onSaveAs,
   onOpenScoreInfo,
+  onInsertMeasure,
+  onDeleteMeasure,
   mode,
   onChangeMode,
   activeDuration,
@@ -249,6 +253,50 @@ export const Toolbar: React.FC<ToolbarProps> = ({
             }}
           >
             {t('toolbar.scoreInfo')}
+          </button>
+        )}
+
+        {onInsertMeasure && (
+          <button
+            type="button"
+            data-testid="btn-insert-measure"
+            onClick={handleButtonClick(onInsertMeasure)}
+            onMouseDown={(e) => e.preventDefault()}
+            title={`${t('toolbar.insertMeasure')} (Ctrl+B)`}
+            style={{
+              padding: '0.4rem 0.65rem',
+              fontSize: '0.85rem',
+              fontWeight: 500,
+              color: '#1e293b',
+              backgroundColor: '#f1f5f9',
+              border: '1px solid #cbd5e1',
+              borderRadius: '6px',
+              cursor: 'pointer',
+            }}
+          >
+            + {t('toolbar.insertMeasure')}
+          </button>
+        )}
+
+        {onDeleteMeasure && (
+          <button
+            type="button"
+            data-testid="btn-delete-measure"
+            onClick={handleButtonClick(onDeleteMeasure)}
+            onMouseDown={(e) => e.preventDefault()}
+            title={`${t('toolbar.deleteMeasure')} (Ctrl+Del)`}
+            style={{
+              padding: '0.4rem 0.65rem',
+              fontSize: '0.85rem',
+              fontWeight: 500,
+              color: '#dc2626',
+              backgroundColor: '#fef2f2',
+              border: '1px solid #fecaca',
+              borderRadius: '6px',
+              cursor: 'pointer',
+            }}
+          >
+            - {t('toolbar.deleteMeasure')}
           </button>
         )}
 

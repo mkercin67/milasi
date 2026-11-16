@@ -6,7 +6,23 @@
  */
 
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { Command, History, setOverride, clearOverride, clearAllOverrides, changePitch } from '../core/commands';
+import {
+  Command,
+  History,
+  setOverride,
+  clearOverride,
+  clearAllOverrides,
+  changePitch,
+  deleteRange,
+  transposeRange,
+  insertMeasure,
+  deleteMeasure,
+  toggleTie,
+  setExplicitAccidental,
+  resetAccidentalToKeySig,
+  convertToRest,
+  transposeEvent,
+} from '../core/commands';
 import {
   BaseDurationType,
   NoteEvent,
@@ -15,7 +31,23 @@ import {
   Score,
   ScoreEvent,
 } from '../core/model';
-import { eventExists, nextEventId } from '../core/selection';
+import {
+  Selection,
+  RangeSelection,
+  eventsInRange,
+  extendSelection,
+  getRangeMeasureSpan,
+  findEventContext,
+  eventExists,
+  nextEventId,
+} from '../core/selection';
+import {
+  deserializeClipboard,
+  getMemoryClipboard,
+  pasteEvents,
+  serializeClipboard,
+  setMemoryClipboard,
+} from '../core/clipboard';
 import {
   advanceCursor,
   appendMeasure,
@@ -72,6 +104,7 @@ export function useEditor(initialScore?: Score) {
   const [score, setScore] = useState<Score>(() => historyRef.current.score);
   const [dirtyVersion, setDirtyVersion] = useState<number>(0);
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
+  const [selection, setSelection] = useState<Selection>(() => ({ kind: 'none' }));
 
   // Single source of truth for active editor mode
   const [mode, setModeState] = useState<EditorMode>('select');
@@ -168,7 +201,87 @@ export function useEditor(initialScore?: Score) {
 
   const selectEvent = useCallback((id: string | null) => {
     setSelectedEventId(id);
+    setSelection(id ? { kind: 'event', id } : { kind: 'none' });
   }, []);
+
+  const setRangeSelection = useCallback((range: RangeSelection | null) => {
+    if (range) {
+      setSelection({ kind: 'range', ...range });
+      setSelectedEventId(null);
+    } else {
+      setSelection({ kind: 'none' });
+      setSelectedEventId(null);
+    }
+  }, []);
+
+  const extendSelectionTo = useCallback(
+    (targetEventId: string) => {
+      setSelection((curr) => {
+        const baseSel: Selection =
+          curr.kind !== 'none'
+            ? curr
+            : selectedEventId
+            ? { kind: 'event', id: selectedEventId }
+            : { kind: 'none' };
+        const nextSel = extendSelection(score, baseSel, targetEventId);
+        if (nextSel.kind === 'event') {
+          setSelectedEventId(nextSel.id);
+        } else {
+          setSelectedEventId(null);
+        }
+        return nextSel;
+      });
+    },
+    [score, selectedEventId]
+  );
+
+  const extendSelectionDirection = useCallback(
+    (direction: 'prev' | 'next') => {
+      const staffId = score.parts[0]?.staves[0]?.id;
+      if (!staffId) return;
+      const currentEventId =
+        selection.kind === 'range'
+          ? selection.focusId
+          : selection.kind === 'event'
+          ? selection.id
+          : selectedEventId;
+      if (!currentEventId) return;
+      const nextId = nextEventId(score, staffId, currentEventId, direction);
+      if (nextId) {
+        extendSelectionTo(nextId);
+      }
+    },
+    [score, selection, selectedEventId, extendSelectionTo]
+  );
+
+  const selectAllInStaff = useCallback(() => {
+    const staff = score.parts[0]?.staves[0];
+    if (!staff) return;
+    const allEvents: ScoreEvent[] = [];
+    for (const mDef of score.measures) {
+      const sm = staff.measures[mDef.id];
+      if (sm) {
+        for (const v of sm.voices) {
+          allEvents.push(...v.events);
+        }
+      }
+    }
+    if (allEvents.length > 0) {
+      const firstEv = allEvents[0];
+      const lastEv = allEvents[allEvents.length - 1];
+      const voiceId = staff.measures[score.measures[0]?.id]?.voices[0]?.id;
+      if (voiceId) {
+        setSelection({
+          kind: 'range',
+          staffId: staff.id,
+          voiceId,
+          anchorId: firstEv.id,
+          focusId: lastEv.id,
+        });
+        setSelectedEventId(null);
+      }
+    }
+  }, [score]);
 
   const selectNext = useCallback(
     (direction: 'prev' | 'next') => {
@@ -177,6 +290,7 @@ export function useEditor(initialScore?: Score) {
       const nextId = nextEventId(score, staffId, selectedEventId, direction);
       if (nextId) {
         setSelectedEventId(nextId);
+        setSelection({ kind: 'event', id: nextId });
       }
     },
     [score, selectedEventId]
@@ -552,6 +666,286 @@ export function useEditor(initialScore?: Score) {
     return idx >= 0 ? idx + 1 : 1;
   }, [score, cursor]);
 
+  const selectedRange = useMemo<RangeSelection | null>(
+    () => (selection.kind === 'range' ? selection : null),
+    [selection]
+  );
+
+  const rangeEvents = useMemo<ScoreEvent[]>(
+    () => (selectedRange ? eventsInRange(score, selectedRange) : []),
+    [score, selectedRange]
+  );
+
+  const selectedEventIds = useMemo<Set<string>>(() => {
+    if (selectedRange) return new Set(rangeEvents.map((e) => e.id));
+    if (selectedEventId) return new Set([selectedEventId]);
+    return new Set<string>();
+  }, [selectedRange, rangeEvents, selectedEventId]);
+
+  const rangeInfo = useMemo(() => {
+    if (!selectedRange || rangeEvents.length === 0) return null;
+    return getRangeMeasureSpan(score, rangeEvents);
+  }, [score, selectedRange, rangeEvents]);
+
+  const deleteSelection = useCallback(() => {
+    if (selection.kind === 'range') {
+      executeCommand(deleteRange(selection));
+    } else if (selectedEventId) {
+      executeCommand(convertToRest(selectedEventId));
+    }
+  }, [selection, selectedEventId, executeCommand]);
+
+  const transposeSelection = useCallback(
+    (semitones: number) => {
+      if (selection.kind === 'range') {
+        try {
+          executeCommand(transposeRange(selection, semitones));
+        } catch {
+          triggerRejectedError('Perde MIDI sınırları dışında (21..108)');
+        }
+      } else if (selectedEventId) {
+        try {
+          executeCommand(transposeEvent(selectedEventId, semitones));
+        } catch {
+          triggerRejectedError('Perde MIDI sınırları dışında (21..108)');
+        }
+      }
+    },
+    [selection, selectedEventId, executeCommand, triggerRejectedError]
+  );
+
+  const toggleTieSelection = useCallback(() => {
+    if (selectedEventId) {
+      try {
+        executeCommand(toggleTie(selectedEventId, 0));
+      } catch {
+        triggerRejectedError('Bağlanacak sonraki nota bulunamadı');
+      }
+    } else if (selection.kind === 'range') {
+      try {
+        for (const ev of rangeEvents) {
+          if (ev.kind === 'note') {
+            executeCommand(toggleTie(ev.id, 0));
+          }
+        }
+      } catch {
+        triggerRejectedError('Bağlanacak sonraki nota bulunamadı');
+      }
+    }
+  }, [selectedEventId, selection, rangeEvents, executeCommand, triggerRejectedError]);
+
+  const cycleAccidentalSelection = useCallback(
+    (delta: number) => {
+      if (selectedEventId) {
+        executeCommand(setExplicitAccidental(selectedEventId, delta, 0));
+      } else if (selection.kind === 'range') {
+        for (const ev of rangeEvents) {
+          if (ev.kind === 'note') {
+            executeCommand(setExplicitAccidental(ev.id, delta, 0));
+          }
+        }
+      } else if (mode === 'input' && cursor) {
+        const sm = score.parts[0]?.staves[0]?.measures[cursor.measureId];
+        const v = sm?.voices.find((vo) => vo.id === cursor.voiceId);
+        if (v) {
+          const lastNote = [...v.events].reverse().find((e) => e.kind === 'note');
+          if (lastNote) {
+            executeCommand(setExplicitAccidental(lastNote.id, delta, 0));
+          }
+        }
+      }
+    },
+    [selectedEventId, selection, rangeEvents, mode, cursor, score, executeCommand]
+  );
+
+  const resetAccidentalSelection = useCallback(() => {
+    if (selectedEventId) {
+      executeCommand(resetAccidentalToKeySig(selectedEventId, 0));
+    } else if (selection.kind === 'range') {
+      for (const ev of rangeEvents) {
+        if (ev.kind === 'note') {
+          executeCommand(resetAccidentalToKeySig(ev.id, 0));
+        }
+      }
+    }
+  }, [selectedEventId, selection, rangeEvents, executeCommand]);
+
+  const copySelection = useCallback(() => {
+    let evs: ScoreEvent[] = [];
+    if (selection.kind === 'range') {
+      evs = rangeEvents;
+    } else if (selectedEventInfo) {
+      evs = [selectedEventInfo.event];
+    }
+    if (evs.length > 0) {
+      setMemoryClipboard(evs);
+      if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+        navigator.clipboard.writeText(serializeClipboard(evs)).catch(() => {});
+      }
+    }
+  }, [selection, rangeEvents, selectedEventId, score]);
+
+  const cutSelection = useCallback(() => {
+    copySelection();
+    deleteSelection();
+  }, [copySelection, deleteSelection]);
+
+  const pasteClipboard = useCallback(async () => {
+    let eventsToPaste = getMemoryClipboard();
+    if (typeof navigator !== 'undefined' && navigator.clipboard?.readText) {
+      try {
+        const text = await navigator.clipboard.readText();
+        const deserialized = deserializeClipboard(text);
+        if (deserialized && deserialized.length > 0) {
+          eventsToPaste = deserialized;
+        }
+      } catch {
+        // Fallback to in-memory clipboard
+      }
+    }
+    if (eventsToPaste.length === 0) return;
+
+    const staff = score.parts[0]?.staves[0];
+    if (!staff) return;
+
+    let startMId = score.measures[0]?.id;
+    let startOffset = 0;
+    let voiceId = staff.measures[startMId]?.voices[0]?.id;
+
+    if (selection.kind === 'range') {
+      const firstEv = rangeEvents[0];
+      if (firstEv) {
+        const loc = findEventContext(score, firstEv.id);
+        if (loc) {
+          startMId = loc.measureId;
+          voiceId = loc.voiceId;
+          const sm = staff.measures[startMId];
+          const v = sm?.voices.find((vo) => vo.id === voiceId);
+          if (v) {
+            let t = 0;
+            for (const ev of v.events) {
+              if (ev.id === firstEv.id) {
+                startOffset = t;
+                break;
+              }
+              t += ev.duration;
+            }
+          }
+        }
+      }
+    } else if (selectedEventId) {
+      const loc = findEventContext(score, selectedEventId);
+      if (loc) {
+        startMId = loc.measureId;
+        voiceId = loc.voiceId;
+        const sm = staff.measures[startMId];
+        const v = sm?.voices.find((vo) => vo.id === voiceId);
+        if (v) {
+          let t = 0;
+          for (const ev of v.events) {
+            if (ev.id === selectedEventId) {
+              startOffset = t;
+              break;
+            }
+            t += ev.duration;
+          }
+        }
+      }
+    } else if (cursor) {
+      startMId = cursor.measureId;
+      voiceId = cursor.voiceId;
+      startOffset = cursor.tick;
+    }
+
+    if (startMId && voiceId) {
+      executeCommand({
+        name: 'Paste Events',
+        apply: (s) =>
+          pasteEvents(
+            s,
+            {
+              staffId: staff.id,
+              voiceId,
+              startMeasureId: startMId,
+              startOffsetTicks: startOffset,
+            },
+            eventsToPaste
+          ),
+      });
+    }
+  }, [score, selection, rangeEvents, selectedEventId, cursor, executeCommand]);
+
+  const insertNewMeasure = useCallback(
+    (afterMeasureIndex?: number) => {
+      let targetIdx = afterMeasureIndex;
+      if (targetIdx === undefined) {
+        if (selectedEventId) {
+          const loc = findEventContext(score, selectedEventId);
+          if (loc) targetIdx = loc.measureIndex;
+        } else if (selection.kind === 'range' && rangeEvents.length > 0) {
+          const loc = findEventContext(score, rangeEvents[rangeEvents.length - 1].id);
+          if (loc) targetIdx = loc.measureIndex;
+        } else if (cursor) {
+          const idx = score.measures.findIndex((m) => m.id === cursor.measureId);
+          if (idx !== -1) targetIdx = idx;
+        }
+      }
+      executeCommand(insertMeasure(targetIdx));
+    },
+    [score, selectedEventId, selection, rangeEvents, cursor, executeCommand]
+  );
+
+  const deleteCurrentMeasure = useCallback(
+    (measureIndex?: number): { targetIndex: number; hasNotes: boolean } | null => {
+      if (score.measures.length <= 1) {
+        triggerRejectedError('Eser en az 1 ölçü içermelidir');
+        return null;
+      }
+      let targetIdx = measureIndex;
+      if (targetIdx === undefined) {
+        if (selectedEventId) {
+          const loc = findEventContext(score, selectedEventId);
+          if (loc) targetIdx = loc.measureIndex;
+        } else if (selection.kind === 'range' && rangeEvents.length > 0) {
+          const loc = findEventContext(score, rangeEvents[0].id);
+          if (loc) targetIdx = loc.measureIndex;
+        } else if (cursor) {
+          const idx = score.measures.findIndex((m) => m.id === cursor.measureId);
+          if (idx !== -1) targetIdx = idx;
+        }
+      }
+      if (targetIdx === undefined) targetIdx = score.measures.length - 1;
+
+      const mDef = score.measures[targetIdx];
+      let hasNotes = false;
+      if (mDef) {
+        for (const part of score.parts) {
+          for (const staff of part.staves) {
+            const sm = staff.measures[mDef.id];
+            if (sm) {
+              for (const v of sm.voices) {
+                if (v.events.some((e) => e.kind === 'note')) {
+                  hasNotes = true;
+                  break;
+                }
+              }
+            }
+          }
+        }
+      }
+
+      return { targetIndex: targetIdx, hasNotes };
+    },
+    [score, selectedEventId, selection, rangeEvents, cursor, triggerRejectedError]
+  );
+
+  const confirmDeleteMeasure = useCallback(
+    (idx: number) => {
+      executeCommand(deleteMeasure(idx));
+    },
+    [executeCommand]
+  );
+
   return {
     score,
     isDirty: dirtyVersion >= 0 && historyRef.current.isDirty(),
@@ -598,5 +992,25 @@ export function useEditor(initialScore?: Score) {
     changeEventPitch,
     enterRestAtCursor,
     moveCursorDirection,
+    selection,
+    selectedRange,
+    rangeEvents,
+    selectedEventIds,
+    rangeInfo,
+    setRangeSelection,
+    extendSelectionTo,
+    extendSelectionDirection,
+    selectAllInStaff,
+    deleteSelection,
+    transposeSelection,
+    toggleTieSelection,
+    cycleAccidentalSelection,
+    resetAccidentalSelection,
+    copySelection,
+    cutSelection,
+    pasteClipboard,
+    insertNewMeasure,
+    deleteCurrentMeasure,
+    confirmDeleteMeasure,
   };
 }

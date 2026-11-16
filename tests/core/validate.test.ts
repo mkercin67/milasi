@@ -121,7 +121,7 @@ describe('validateScore', () => {
   it('flags incorrect schemaVersion', () => {
     const score = createScore();
     // Simulate invalid schemaVersion
-    const invalid = { ...score, schemaVersion: 2 } as unknown as Score;
+    const invalid = { ...score, schemaVersion: 99 } as unknown as Score;
     const problems = validateScore(invalid);
     expect(problems.some((p) => p.code === 'invalid-schema-version')).toBe(true);
   });
