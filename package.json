@@ -11,7 +11,8 @@
     "bench": "npm run build && node scripts/bench.mjs",
     "smoke": "npm run build && node scripts/smoke.mjs",
     "typecheck": "tsc --noEmit",
-    "check": "tsc --noEmit && node scripts/checkImports.mjs && eslint src/ && npx knip && npm test && npm run build"
+    "licenses": "node scripts/checkLicenses.mjs",
+    "check": "tsc --noEmit && node scripts/checkImports.mjs && node scripts/checkLicenses.mjs && eslint src/ && npx knip && npm test && npm run build"
   },
   "dependencies": {
     "immer": "^10.1.1",
