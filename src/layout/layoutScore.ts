@@ -621,6 +621,188 @@ export function layoutSingleMeasure(
  * @param options - Layout configuration (width, systemSpacing).
  * @returns Deterministic LayoutResult with coordinates in staff spaces.
  */
+interface HeaderLayoutResult {
+  items: LayoutItem[];
+  height: number;
+}
+
+function computeHeaderLayout(
+  meta: { title?: string; subtitle?: string; composer?: string; arranger?: string } | undefined,
+  targetWidth: number
+): HeaderLayoutResult {
+  const title = meta?.title?.trim() || '';
+  const subtitle = meta?.subtitle?.trim() || '';
+  const composer = meta?.composer?.trim() || '';
+  const arranger = meta?.arranger?.trim() || '';
+
+  if (!title && !subtitle && !composer && !arranger) {
+    return { items: [], height: 0 };
+  }
+
+  const TITLE_FONT_SIZE = 2.2;
+  const SUBTITLE_FONT_SIZE = 1.3;
+  const COMPOSER_FONT_SIZE = 1.2;
+  const ARRANGER_FONT_SIZE = 1.0;
+  const FONT_FAMILY = '"Times New Roman", Times, "Liberation Serif", serif';
+
+  const items: LayoutItem[] = [];
+
+  // Deterministic character width estimation from font size and length
+  const estWidth = (text: string, sz: number) => text.length * sz * 0.52;
+
+  // Title wrapping: wrap to 2 lines if wider than 90% of targetWidth
+  let titleLines: string[] = [];
+  if (title) {
+    const fullW = estWidth(title, TITLE_FONT_SIZE);
+    if (fullW > 0.9 * targetWidth && title.includes(' ')) {
+      const words = title.split(' ');
+      let bestL1 = '';
+      let bestL2 = '';
+      let minDiff = Infinity;
+      for (let i = 1; i < words.length; i++) {
+        const l1 = words.slice(0, i).join(' ');
+        const l2 = words.slice(i).join(' ');
+        const w1 = estWidth(l1, TITLE_FONT_SIZE);
+        const w2 = estWidth(l2, TITLE_FONT_SIZE);
+        if (w1 <= 0.9 * targetWidth && w2 <= 0.9 * targetWidth) {
+          const diff = Math.abs(w1 - w2);
+          if (diff < minDiff) {
+            minDiff = diff;
+            bestL1 = l1;
+            bestL2 = l2;
+          }
+        }
+      }
+      if (bestL1 && bestL2) {
+        titleLines = [bestL1, bestL2];
+      } else {
+        const mid = Math.ceil(words.length / 2);
+        titleLines = [words.slice(0, mid).join(' '), words.slice(mid).join(' ')];
+      }
+    } else {
+      titleLines = [title];
+    }
+  }
+
+  // Check horizontal collision between centered title and right-aligned composer/arranger
+  const maxTitleW =
+    titleLines.length > 0 ? Math.max(...titleLines.map((l) => estWidth(l, TITLE_FONT_SIZE))) : 0;
+  const titleRight = targetWidth / 2 + maxTitleW / 2;
+
+  const composerW = composer ? estWidth(composer, COMPOSER_FONT_SIZE) : 0;
+  const arrangerW = arranger ? estWidth(arranger, ARRANGER_FONT_SIZE) : 0;
+  const rightSideMaxW = Math.max(composerW, arrangerW);
+  const rightSideLeft = targetWidth - rightSideMaxW;
+
+  const horizontalCollision = Boolean(title && rightSideMaxW > 0 && titleRight + 2.0 > rightSideLeft);
+
+  let curY = 1.0; // Margin at top of header
+
+  // Place title lines
+  titleLines.forEach((line, idx) => {
+    items.push({
+      id: idx === 0 ? 'header-title' : `header-title-${idx + 1}`,
+      kind: 'text',
+      text: line,
+      x: targetWidth / 2,
+      y: curY + TITLE_FONT_SIZE,
+      textAnchor: 'middle',
+      fontSize: TITLE_FONT_SIZE,
+      fontWeight: 'bold',
+      fontFamily: FONT_FAMILY,
+    });
+    curY += TITLE_FONT_SIZE * 1.25;
+  });
+
+  if (titleLines.length > 0) {
+    curY += 0.4;
+  }
+
+  // Place subtitle
+  if (subtitle) {
+    items.push({
+      id: 'header-subtitle',
+      kind: 'text',
+      text: subtitle,
+      x: targetWidth / 2,
+      y: curY + SUBTITLE_FONT_SIZE,
+      textAnchor: 'middle',
+      fontSize: SUBTITLE_FONT_SIZE,
+      fontStyle: 'italic',
+      fontFamily: FONT_FAMILY,
+    });
+    curY += SUBTITLE_FONT_SIZE * 1.25 + 0.4;
+  }
+
+  // Place composer and arranger
+  if (horizontalCollision) {
+    // Stack below title and subtitle to prevent overlapping
+    if (composer) {
+      items.push({
+        id: 'header-composer',
+        kind: 'text',
+        text: composer,
+        x: targetWidth,
+        y: curY + COMPOSER_FONT_SIZE,
+        textAnchor: 'end',
+        fontSize: COMPOSER_FONT_SIZE,
+        fontFamily: FONT_FAMILY,
+      });
+      curY += COMPOSER_FONT_SIZE * 1.25;
+    }
+    if (arranger) {
+      items.push({
+        id: 'header-arranger',
+        kind: 'text',
+        text: arranger,
+        x: targetWidth,
+        y: curY + ARRANGER_FONT_SIZE,
+        textAnchor: 'end',
+        fontSize: ARRANGER_FONT_SIZE,
+        fontStyle: 'italic',
+        fontFamily: FONT_FAMILY,
+      });
+      curY += ARRANGER_FONT_SIZE * 1.25;
+    }
+  } else {
+    // Place on right side aligned with top
+    let sideY = 1.0 + (titleLines.length > 0 ? TITLE_FONT_SIZE : 0);
+    if (composer) {
+      items.push({
+        id: 'header-composer',
+        kind: 'text',
+        text: composer,
+        x: targetWidth,
+        y: sideY + (title ? 0 : COMPOSER_FONT_SIZE),
+        textAnchor: 'end',
+        fontSize: COMPOSER_FONT_SIZE,
+        fontFamily: FONT_FAMILY,
+      });
+      sideY += COMPOSER_FONT_SIZE * 1.25;
+    }
+    if (arranger) {
+      items.push({
+        id: 'header-arranger',
+        kind: 'text',
+        text: arranger,
+        x: targetWidth,
+        y: sideY,
+        textAnchor: 'end',
+        fontSize: ARRANGER_FONT_SIZE,
+        fontStyle: 'italic',
+        fontFamily: FONT_FAMILY,
+      });
+      sideY += ARRANGER_FONT_SIZE * 1.25;
+    }
+    curY = Math.max(curY, sideY);
+  }
+
+  return {
+    items,
+    height: curY,
+  };
+}
+
 export function layoutScore(score: Score, options: LayoutOptions = {}): LayoutResult {
   const targetWidth = options.width ?? 70;
   const systemSpacing = options.systemSpacing ?? 10;
@@ -781,12 +963,8 @@ export function layoutScore(score: Score, options: LayoutOptions = {}): LayoutRe
   // Construct LayoutSystem objects (justify non-last systems, do not stretch last system)
   const systems: LayoutSystem[] = [];
 
-  const title = score.meta?.title?.trim() || '';
-  const subtitle = score.meta?.subtitle?.trim() || '';
-  const composer = score.meta?.composer?.trim() || '';
-  const arranger = score.meta?.arranger?.trim() || '';
-  const hasHeader = Boolean(title || subtitle || composer || arranger);
-  const headerHeight = hasHeader ? (subtitle ? 8.5 : 6.5) : 0;
+  const headerLayout = computeHeaderLayout(score.meta, targetWidth);
+  const preliminarySys0Y = headerLayout.height > 0 ? headerLayout.height + staffMarginTop : staffMarginTop;
   const isPickup = Boolean(score.measures[0]?.actualTicks);
 
   for (let sIdx = 0; sIdx < systemPlans.length; sIdx++) {
@@ -795,56 +973,11 @@ export function layoutScore(score: Score, options: LayoutOptions = {}): LayoutRe
     const systemItems: LayoutItem[] = [];
 
     // Header block on first page above system 0
-    if (sIdx === 0 && hasHeader) {
-      if (title) {
+    if (sIdx === 0 && headerLayout.items.length > 0) {
+      for (const hItem of headerLayout.items) {
         systemItems.push({
-          id: 'header-title',
-          kind: 'text',
-          text: title,
-          x: targetWidth / 2,
-          y: -headerHeight + 2.5,
-          textAnchor: 'middle',
-          fontSize: 2.2,
-          fontWeight: 'bold',
-          fontFamily: '"Times New Roman", Times, "Liberation Serif", serif',
-        });
-      }
-      if (subtitle) {
-        systemItems.push({
-          id: 'header-subtitle',
-          kind: 'text',
-          text: subtitle,
-          x: targetWidth / 2,
-          y: -headerHeight + (title ? 4.6 : 2.5),
-          textAnchor: 'middle',
-          fontSize: 1.3,
-          fontStyle: 'italic',
-          fontFamily: '"Times New Roman", Times, "Liberation Serif", serif',
-        });
-      }
-      if (composer) {
-        systemItems.push({
-          id: 'header-composer',
-          kind: 'text',
-          text: composer,
-          x: targetWidth,
-          y: -headerHeight + (arranger ? 5.2 : 6.2),
-          textAnchor: 'end',
-          fontSize: 1.2,
-          fontFamily: '"Times New Roman", Times, "Liberation Serif", serif',
-        });
-      }
-      if (arranger) {
-        systemItems.push({
-          id: 'header-arranger',
-          kind: 'text',
-          text: arranger,
-          x: targetWidth,
-          y: -headerHeight + 6.6,
-          textAnchor: 'end',
-          fontSize: 1.0,
-          fontStyle: 'italic',
-          fontFamily: '"Times New Roman", Times, "Liberation Serif", serif',
+          ...hItem,
+          y: hItem.y - preliminarySys0Y,
         });
       }
     }
@@ -1017,7 +1150,7 @@ export function layoutScore(score: Score, options: LayoutOptions = {}): LayoutRe
     systems.push({
       index: sIdx,
       x: 0,
-      y: sIdx * (systemSpacing + 4) + staffMarginTop + headerHeight,
+      y: sIdx * (systemSpacing + 4) + preliminarySys0Y,
       width: Math.max(staffEndEndX, targetWidth),
       height: 6,
       staves: [staffContainer],
@@ -1218,10 +1351,31 @@ export function layoutScore(score: Score, options: LayoutOptions = {}): LayoutRe
     }
   }
 
+  // Dynamic header clearance: guarantee that system 0 musical items start at least 2 staff spaces below header bottom
+  if (headerLayout.height > 0 && systems.length > 0) {
+    const sys0 = systems[0];
+    const musicalItems = sys0.items.filter((it) => !it.id.startsWith('header-'));
+    const minMusicalY = musicalItems.length > 0 ? Math.min(...musicalItems.map((it) => it.y)) : 0;
+    const neededOffset = Math.max(staffMarginTop, 2.0 - minMusicalY);
+    const finalSys0Y = headerLayout.height + neededOffset;
+    const dy = finalSys0Y - sys0.y;
+    if (dy !== 0) {
+      for (let s = 0; s < systems.length; s++) {
+        systems[s].y += dy;
+      }
+      for (const item of sys0.items) {
+        if (item.id.startsWith('header-')) {
+          item.y -= dy;
+        }
+      }
+    }
+  }
+
   const allItems = systems.flatMap((s) => s.items);
 
   // SVG height fits its content accurately
-  const totalHeight = systems.length * (systemSpacing + 4) + staffMarginTop + staffMarginBottom + headerHeight;
+  const headerExtra = headerLayout.height > 0 && systems.length > 0 ? systems[0].y - staffMarginTop : 0;
+  const totalHeight = systems.length * (systemSpacing + 4) + staffMarginTop + staffMarginBottom + headerExtra;
 
   const maxSysWidth = Math.max(targetWidth, ...systems.map((s) => s.width));
 
