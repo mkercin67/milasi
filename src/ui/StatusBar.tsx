@@ -114,6 +114,14 @@ export const StatusBar: React.FC<StatusBarProps> = ({
     const durationKey = isRest ? `duration.${baseType}.rest` : `duration.${baseType}.note`;
     const durationText = t(durationKey);
 
+    const notationBadges: string[] = [];
+    if (selection.dynamic) notationBadges.push(selection.dynamic);
+    if (selection.articulations && selection.articulations.length > 0) {
+      notationBadges.push(...selection.articulations);
+    }
+    if (selection.hasSlur) notationBadges.push('bağ');
+    const notationText = notationBadges.length > 0 ? ` · ${notationBadges.join(' · ')}` : '';
+
     const overrideBadge = (hasOverride || override) ? (
       <span
         style={{
@@ -145,6 +153,7 @@ export const StatusBar: React.FC<StatusBarProps> = ({
               pitches: pitchesText,
               duration: durationText,
             })}
+            {notationText}
           </span>
           {overrideBadge}
         </span>
@@ -161,6 +170,7 @@ export const StatusBar: React.FC<StatusBarProps> = ({
               pitch: pitchText,
               duration: durationText,
             })}
+            {notationText}
           </span>
           {overrideBadge}
         </span>

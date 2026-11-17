@@ -7,3 +7,5 @@ export * from './pitch';
 export * from './keySignature';
 export * from './accidentals';
 export * from './layoutScore';
+export * from './ties';
+export * from './notations';

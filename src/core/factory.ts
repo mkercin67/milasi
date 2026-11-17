@@ -55,11 +55,11 @@ export interface CreateScoreOptions {
  * Creates an empty Score.
  *
  * @param options - Optional metadata (title and composer).
- * @returns A new Score instance with schemaVersion 2.
+ * @returns A new Score instance with schemaVersion 3.
  */
 export function createScore(options?: CreateScoreOptions): Score {
   return {
-    schemaVersion: 2,
+    schemaVersion: 3,
     id: newId(),
     meta: {
       title: options?.title ?? 'Untitled Score',
@@ -96,6 +96,7 @@ export function createPart(nameOrOptions?: string | CreatePartOptions): Part {
         id: newId(),
         clef: defaultClef,
         measures: {},
+        slurs: [],
       },
     ];
 

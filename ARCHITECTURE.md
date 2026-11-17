@@ -55,7 +55,7 @@ Time is measured in integer **ticks**. `PPQ = 960` (ticks per quarter note). Nev
 type Id = string; // uuid
 
 interface Score {
-  schemaVersion: 1 | 2;
+  schemaVersion: 1 | 2 | 3;
   id: Id;
   meta: { title: string; composer: string };
   parts: Part[];
@@ -71,7 +71,19 @@ interface MeasureDef {
 }
 
 interface Part { id: Id; name: string; staves: Staff[]; instrument: string }
-interface Staff { id: Id; clef: Clef; measures: Record<Id, StaffMeasure> }
+interface Staff {
+  id: Id;
+  clef: Clef;
+  measures: Record<Id, StaffMeasure>;
+  slurs?: Slur[];                    // M6b staff-level slur collection
+}
+
+interface Slur {
+  id: Id;
+  startEventId: Id;
+  endEventId: Id;
+  placement?: 'above' | 'below';
+}
 
 interface StaffMeasure { voices: Voice[] }
 interface Voice { id: Id; events: ScoreEvent[] }
@@ -203,8 +215,9 @@ type Selection =
 - **Schema Versions:**
   - `schemaVersion: 1`: Initial format (M5).
   - `schemaVersion: 2`: Pitch-level ties (`Pitch.tiedToNext`), multi-measure range selections.
+  - `schemaVersion: 3`: Staff-level slurs (`Staff.slurs: Slur[]`), dynamics and articulations.
 - **Progressive Migration:**
-  - `deserializeScore` verifies `schemaVersion` and runs registered migrations sequentially (`v1 -> v2`) in a while loop:
+  - `deserializeScore` verifies `schemaVersion` and runs registered migrations sequentially (`v1 -> v2 -> v3`) in a while loop:
     ```ts
     while (loadedScore.schemaVersion < CURRENT_SCHEMA_VERSION) {
       const migrator = migrations[loadedScore.schemaVersion];
@@ -212,6 +225,54 @@ type Selection =
     }
     ```
   - `migrateV1ToV2` copies legacy event-level `tiedToNext` to all pitches in the note and bumps version to 2.
+  - `migrateV2ToV3` initializes `staff.slurs = []` for every staff and bumps version to 3.
+
+## Dynamics, Articulations & Slurs (Milestone 6b)
+
+### 1. Model & Validation
+- **Dynamics:** `NoteEvent.dynamic?: 'pp' | 'p' | 'mp' | 'mf' | 'f' | 'ff' | 'sfz' | 'fp'`.
+- **Articulations:** `NoteEvent.articulations: Array<'staccato' | 'tenuto' | 'accent' | 'marcato'>`.
+  - Mutually exclusive pair: `accent` and `marcato` exclude each other (applying one automatically replaces the other).
+  - Coexistence: `staccato` and `tenuto` coexist freely.
+- **Slurs:** `Staff.slurs?: Slur[]` where `Slur = { id, startEventId, endEventId, placement?: 'above' | 'below' }`.
+  - Start and end events must exist, be distinct, and chronological.
+
+### 2. Layout & Engraving (src/layout/notations.ts)
+- **Zero DOM Reads:** All layout is pure arithmetic in staff space units.
+- **Dynamics:** Centered horizontally on the notehead, positioned below the staff (`y = 6.5`) by default.
+- **Articulations:** Placed on the notehead side (opposite to stem direction). Stacked outward from the notehead:
+  - Level 1 (closest to notehead): `staccato`, `tenuto`.
+  - Level 2 (further out): `accent`, `marcato`.
+  - Staccato snaps into staff spaces to avoid colliding directly with staff lines.
+- **Slurs:** Rendered as cubic Bezier `<path class="score-slur">` curves.
+  - Control points automatically arch above or below intermediate noteheads by >= 0.5 staff spaces.
+  - Cross-system slurs: When a slur crosses a system break, it splits into two half-slurs with matching `data-slur-id` (`slur-*-part1` and `slur-*-part2`).
+- **Position Mode Overrides:**
+  - Addressable IDs `${eventId}-dynamic` and `${eventId}-artic-${art}` support independent dx/dy nudging in Position mode.
+
+### 3. Playback Integration (src/playback/schedule.ts)
+- **Dynamics Velocities:** `pp` (0.25), `p` (0.40), `mp` (0.55), `mf` (0.70), `f` (0.85), `ff` (1.00), `sfz` (0.95), `fp` (0.85). Default is `0.70`.
+  - Dynamics persist forward in the voice until the next dynamic marking.
+- **Articulations Duration & Velocity:**
+  - `staccato`: Halves sounding duration (minimum 0.05s).
+  - `tenuto`: Full duration (no release gap) with +0.05 velocity boost.
+  - `accent`: +0.15 velocity boost (capped at 1.0).
+  - `marcato`: +0.25 velocity boost (capped at 1.0) and 0.75 duration.
+- **Slur Legato:** Notes under a slur sound for their full duration without release gaps.
+
+### 4. UI & Keymap
+- **Toolbar Notations Panel:**
+  - 8 Dynamics buttons (`pp`..`fp`). Active dynamic highlighted; clicking active dynamic removes it.
+  - 4 Articulation toggle buttons (`staccato`, `tenuto`, `accent`, `marcato`).
+  - Slur toggle button (`Bağ (Slur)`).
+  - Clear notations button (`Temizle`).
+- **Shortcuts:**
+  - `Shift+S`: Toggle slur on range selection.
+  - `Shift+1`..`Shift+8`: Quick-apply dynamics (`pp`..`fp`).
+  - `Period (.)`: Toggle staccato (in Select mode; toggles dot in Input mode).
+  - `Minus (-)`: Toggle tenuto.
+  - `Shift+Period` / `>`: Toggle accent.
+  - `^` / `Shift+6` / `KeyM`: Toggle marcato.
 
 ## File Format & Autosave (src/io)
 

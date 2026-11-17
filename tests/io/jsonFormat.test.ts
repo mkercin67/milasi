@@ -12,7 +12,7 @@ describe('Milestone 5 File Format (src/io/json)', () => {
     expect(typeof parsed.savedAt).toBe('string');
     expect(new Date(parsed.savedAt).toISOString()).toBe(parsed.savedAt);
     expect(parsed.score.meta.title).toBe('Envelope Test');
-    expect(parsed.score.schemaVersion).toBe(2);
+    expect(parsed.score.schemaVersion).toBe(3);
   });
 
   it('deserializeScore accepts both the envelope AND the old bare JSON format', () => {

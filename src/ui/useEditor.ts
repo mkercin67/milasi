@@ -22,9 +22,15 @@ import {
   resetAccidentalToKeySig,
   convertToRest,
   transposeEvent,
+  setDynamic,
+  toggleArticulation,
+  toggleSlur,
+  clearSelectionNotations,
 } from '../core/commands';
 import {
+  ArticulationType,
   BaseDurationType,
+  DynamicType,
   NoteEvent,
   Pitch,
   PitchStep,
@@ -78,6 +84,9 @@ export interface SelectedEventInfo {
   pitches: Pitch[];
   baseType: ScoreEvent['baseType'];
   dots: number;
+  dynamic?: string;
+  articulations?: string[];
+  hasSlur?: boolean;
 }
 
 function getDefaultStartupScore(): Score {
@@ -682,6 +691,10 @@ export function useEditor(initialScore?: Score) {
           const isNote = ev.kind === 'note';
           const isRest = ev.kind === 'rest';
           const pitches = isNote ? (ev as NoteEvent).pitches : [];
+          const noteEv = isNote ? (ev as NoteEvent) : null;
+          const hasSlur = Boolean(
+            staff.slurs?.some((s) => s.startEventId === ev.id || s.endEventId === ev.id)
+          );
           return {
             eventId: ev.id,
             measureNumber: mIdx + 1,
@@ -692,6 +705,9 @@ export function useEditor(initialScore?: Score) {
             pitches,
             baseType: ev.baseType,
             dots: ev.dots,
+            dynamic: noteEv?.dynamic,
+            articulations: noteEv?.articulations ?? [],
+            hasSlur,
           };
         }
       }
@@ -1022,6 +1038,52 @@ export function useEditor(initialScore?: Score) {
     [executeCommand]
   );
 
+  const applyDynamic = useCallback(
+    (dyn: DynamicType | null) => {
+      const curSel = selectionRef.current;
+      if (curSel.kind === 'range' || curSel.kind === 'event') {
+        executeCommand(setDynamic(curSel, dyn));
+      } else if (selectedEventIdRef.current) {
+        executeCommand(setDynamic({ kind: 'event', id: selectedEventIdRef.current }, dyn));
+      }
+    },
+    [executeCommand]
+  );
+
+  const applyArticulation = useCallback(
+    (art: ArticulationType) => {
+      const curSel = selectionRef.current;
+      if (curSel.kind === 'range' || curSel.kind === 'event') {
+        executeCommand(toggleArticulation(curSel, art));
+      } else if (selectedEventIdRef.current) {
+        executeCommand(toggleArticulation({ kind: 'event', id: selectedEventIdRef.current }, art));
+      }
+    },
+    [executeCommand]
+  );
+
+  const applySlur = useCallback(() => {
+    const curSel = selectionRef.current;
+    if (curSel.kind === 'range') {
+      try {
+        executeCommand(toggleSlur(curSel));
+      } catch {
+        triggerRejectedError('Bağ eklenemedi');
+      }
+    } else {
+      triggerRejectedError('Bağ için en az iki nota seçmelisiniz (Shift+Yön Tuşları)');
+    }
+  }, [executeCommand, triggerRejectedError]);
+
+  const clearNotations = useCallback(() => {
+    const curSel = selectionRef.current;
+    if (curSel.kind === 'range' || curSel.kind === 'event') {
+      executeCommand(clearSelectionNotations(curSel));
+    } else if (selectedEventIdRef.current) {
+      executeCommand(clearSelectionNotations({ kind: 'event', id: selectedEventIdRef.current }));
+    }
+  }, [executeCommand]);
+
   return {
     score,
     isDirty: dirtyVersion >= 0 && historyRef.current.isDirty(),
@@ -1088,6 +1150,10 @@ export function useEditor(initialScore?: Score) {
     insertNewMeasure,
     deleteCurrentMeasure,
     confirmDeleteMeasure,
+    applyDynamic,
+    applyArticulation,
+    applySlur,
+    clearNotations,
     getScore: () => scoreRef.current,
     getSelection: () => selectionRef.current,
   };

@@ -36,6 +36,8 @@ export interface LayoutItem {
   beamGroupId?: string;
   /** Ordered event IDs belonging to this beam item (`data-event-ids`). */
   eventIds?: string[];
+  /** Zero-based system index if item is placed relative to a system staff. */
+  systemIndex?: number;
 }
 
 /** Positioned staff container within a system. */

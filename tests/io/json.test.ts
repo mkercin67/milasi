@@ -47,7 +47,7 @@ describe('JSON serialization and deserialization', () => {
     const deserialized = deserializeScore(serialized);
 
     expect(deserialized).toEqual(score);
-    expect(deserialized.schemaVersion).toBe(2);
+    expect(deserialized.schemaVersion).toBe(3);
     expect(deserialized.overrides[note1.id]).toEqual({ dx: 1.5, dy: -2.0, scale: 1.1 });
   });
 

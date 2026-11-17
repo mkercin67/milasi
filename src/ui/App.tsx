@@ -134,6 +134,10 @@ const EditorShell: React.FC = () => {
     insertNewMeasure,
     deleteCurrentMeasure,
     confirmDeleteMeasure,
+    applyDynamic,
+    applyArticulation,
+    applySlur,
+    clearNotations,
   } = useEditor();
 
   const [isNewModalOpen, setIsNewModalOpen] = useState<boolean>(false);
@@ -815,6 +819,14 @@ const EditorShell: React.FC = () => {
           case 'toggle-tie':
             toggleTieSelection();
             break;
+          case 'toggle-slur':
+            applySlur();
+            recordSample('Shift+S');
+            break;
+          case 'clear-notations':
+            clearNotations();
+            recordSample('ClearNotations');
+            break;
           case 'select-prev':
             if (mode === 'input') {
               moveCursorDirection('prev');
@@ -921,6 +933,12 @@ const EditorShell: React.FC = () => {
         } else if (action.type === 'set-duration') {
           setActiveDuration(action.baseType);
           setIsRestSelected(false);
+        } else if (action.type === 'apply-dynamic') {
+          applyDynamic(action.dynamic);
+          recordSample(`Dynamic-${action.dynamic}`);
+        } else if (action.type === 'toggle-articulation') {
+          applyArticulation(action.articulation);
+          recordSample(`Artic-${action.articulation}`);
         } else if (action.type === 'nudge-override') {
           if (selectedEventId && selectedEventInfo) {
             if (action.dy !== 0 && (selectedEventInfo.isNote || selectedEventInfo.isChord)) {
@@ -1058,6 +1076,13 @@ const EditorShell: React.FC = () => {
         onTogglePreviewSound={handleTogglePreviewSound}
         onInsertMeasure={insertNewMeasure}
         onDeleteMeasure={handleDeleteMeasureWithPrompt}
+        activeDynamic={selectedEventInfo?.dynamic}
+        onSelectDynamic={applyDynamic}
+        activeArticulations={selectedEventInfo?.articulations}
+        onToggleArticulation={applyArticulation}
+        hasSlur={selectedEventInfo?.hasSlur}
+        onToggleSlur={applySlur}
+        onClearNotations={clearNotations}
       />
       <ScoreView
         score={score}

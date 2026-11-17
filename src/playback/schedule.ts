@@ -15,6 +15,8 @@ const DYNAMICS_VELOCITY: Record<string, number> = {
   mf: 0.7,
   f: 0.85,
   ff: 1.0,
+  sfz: 0.95,
+  fp: 0.85,
 };
 
 const DEFAULT_TEMPO = { bpm: 120, beatUnit: 1.0 };
@@ -76,6 +78,31 @@ export function buildSchedule(
   // 2. Process each part, staff, and voice
   for (const part of score.parts) {
     for (const staff of part.staves) {
+      // Collect event IDs under slurs on this staff for legato playback
+      const slurredEventIds = new Set<string>();
+      if (staff.slurs && staff.slurs.length > 0) {
+        const staffEvents: string[] = [];
+        for (const mDef of score.measures) {
+          const sm = staff.measures[mDef.id];
+          if (sm) {
+            for (const v of sm.voices) {
+              for (const ev of v.events) {
+                staffEvents.push(ev.id);
+              }
+            }
+          }
+        }
+        for (const slur of staff.slurs) {
+          const startIdx = staffEvents.indexOf(slur.startEventId);
+          const endIdx = staffEvents.indexOf(slur.endEventId);
+          if (startIdx >= 0 && endIdx >= startIdx) {
+            for (let i = startIdx; i <= endIdx; i++) {
+              slurredEventIds.add(staffEvents[i]);
+            }
+          }
+        }
+      }
+
       // Find maximum number of voices across measures
       let maxVoices = 1;
       for (const mDef of score.measures) {
@@ -131,14 +158,27 @@ export function buildSchedule(
 
               let noteVelocity = currentVelocity;
               const hasAccent = ev.articulations?.includes('accent');
+              const hasMarcato = ev.articulations?.includes('marcato');
+              const hasTenuto = ev.articulations?.includes('tenuto');
+              const hasStaccato = ev.articulations?.includes('staccato');
+
               if (hasAccent) {
                 noteVelocity = Math.min(1.0, noteVelocity + 0.15);
+              } else if (hasMarcato) {
+                noteVelocity = Math.min(1.0, noteVelocity + 0.25);
+              }
+              if (hasTenuto) {
+                noteVelocity = Math.min(1.0, noteVelocity + 0.05);
               }
 
-              const hasStaccato = ev.articulations?.includes('staccato');
-              const soundingDuration = hasStaccato
-                ? Math.max(0.05, evDurationSeconds * 0.5)
-                : evDurationSeconds;
+              let soundingDuration = evDurationSeconds;
+              if (hasStaccato) {
+                soundingDuration = Math.max(0.05, evDurationSeconds * 0.5);
+              } else if (hasMarcato) {
+                soundingDuration = Math.max(0.05, evDurationSeconds * 0.75);
+              } else if (slurredEventIds.has(ev.id) || hasTenuto) {
+                soundingDuration = evDurationSeconds;
+              }
 
               // Check if this note continues a tie from previous note
               let tied = false;

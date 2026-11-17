@@ -143,8 +143,69 @@ describe('keymap', () => {
     expect(mapKeyEvent({ code: 'Digit7' })).toEqual({ type: 'set-duration', baseType: 'whole' });
   });
 
-  it('maps Period to toggle-dot', () => {
-    expect(mapKeyEvent({ code: 'Period' })).toBe('toggle-dot');
+  it('maps Period to toggle-dot in input mode and staccato in select mode', () => {
+    expect(mapKeyEvent({ code: 'Period' }, 'input')).toBe('toggle-dot');
+    expect(mapKeyEvent({ code: 'Period' }, 'select')).toEqual({
+      type: 'toggle-articulation',
+      articulation: 'staccato',
+    });
+  });
+
+  it('maps M6b notation keys: Shift+S (slur), Shift+1..8 (dynamics), and articulations', () => {
+    // Slur toggle
+    expect(mapKeyEvent({ code: 'KeyS', shiftKey: true }, 'select')).toBe('toggle-slur');
+
+    // Dynamics Shift+1..8
+    expect(mapKeyEvent({ code: 'Digit1', shiftKey: true }, 'select')).toEqual({
+      type: 'apply-dynamic',
+      dynamic: 'pp',
+    });
+    expect(mapKeyEvent({ code: 'Digit2', shiftKey: true }, 'select')).toEqual({
+      type: 'apply-dynamic',
+      dynamic: 'p',
+    });
+    expect(mapKeyEvent({ code: 'Digit3', shiftKey: true }, 'select')).toEqual({
+      type: 'apply-dynamic',
+      dynamic: 'mp',
+    });
+    expect(mapKeyEvent({ code: 'Digit4', shiftKey: true }, 'select')).toEqual({
+      type: 'apply-dynamic',
+      dynamic: 'mf',
+    });
+    expect(mapKeyEvent({ code: 'Digit5', shiftKey: true }, 'select')).toEqual({
+      type: 'apply-dynamic',
+      dynamic: 'f',
+    });
+    expect(mapKeyEvent({ code: 'Digit6', shiftKey: true }, 'select')).toEqual({
+      type: 'apply-dynamic',
+      dynamic: 'ff',
+    });
+    expect(mapKeyEvent({ code: 'Digit7', shiftKey: true }, 'select')).toEqual({
+      type: 'apply-dynamic',
+      dynamic: 'sfz',
+    });
+    expect(mapKeyEvent({ code: 'Digit8', shiftKey: true }, 'select')).toEqual({
+      type: 'apply-dynamic',
+      dynamic: 'fp',
+    });
+
+    // Articulations
+    expect(mapKeyEvent({ code: 'Minus' }, 'select')).toEqual({
+      type: 'toggle-articulation',
+      articulation: 'tenuto',
+    });
+    expect(mapKeyEvent({ code: 'Period', shiftKey: true }, 'select')).toEqual({
+      type: 'toggle-articulation',
+      articulation: 'accent',
+    });
+    expect(mapKeyEvent({ code: 'Digit6', shiftKey: true, key: '^' }, 'select')).toEqual({
+      type: 'toggle-articulation',
+      articulation: 'marcato',
+    });
+    expect(mapKeyEvent({ code: 'KeyM' }, 'select')).toEqual({
+      type: 'toggle-articulation',
+      articulation: 'marcato',
+    });
   });
 
   it('maps M6a editing keys: select-all, copy, cut, paste, insert-measure, delete-measure, ties, accidentals', () => {

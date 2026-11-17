@@ -11,7 +11,7 @@ export type Id = string;
 
 /** Root score container. */
 export interface Score {
-  schemaVersion: 1 | 2;
+  schemaVersion: 1 | 2 | 3;
   id: Id;
   meta: {
     title: string;
@@ -53,11 +53,32 @@ export interface Part {
   instrument: string;
 }
 
+/** A musical slur connecting two events in the same staff. */
+export interface Slur {
+  id: Id;
+  startEventId: Id;
+  endEventId: Id;
+  placement?: 'above' | 'below';
+}
+
+/** Allowed dynamic markings (Milestone 6b). */
+export type DynamicType = 'pp' | 'p' | 'mp' | 'mf' | 'f' | 'ff' | 'sfz' | 'fp';
+export const ALLOWED_DYNAMICS: ReadonlySet<string> = new Set([
+  'pp', 'p', 'mp', 'mf', 'f', 'ff', 'sfz', 'fp',
+]);
+
+/** Allowed articulation markings (Milestone 6b). */
+export type ArticulationType = 'staccato' | 'tenuto' | 'accent' | 'marcato';
+export const ALLOWED_ARTICULATIONS: ReadonlySet<string> = new Set([
+  'staccato', 'tenuto', 'accent', 'marcato',
+]);
+
 /** A single staff belonging to a part. */
 export interface Staff {
   id: Id;
   clef: Clef;
   measures: Record<Id, StaffMeasure>; // Keyed by MeasureDef.id
+  slurs?: Slur[];
 }
 
 /** Staff contents within a specific measure, containing one or more voices. */

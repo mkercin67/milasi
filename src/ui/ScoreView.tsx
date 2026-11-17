@@ -15,6 +15,8 @@ import { BaseDurationType, NoteEvent, Pitch, Score, ScoreEvent } from '../core/m
 import { layoutScore } from '../layout/layoutScore';
 import { LayoutResult } from '../layout/types';
 import { layoutTies } from '../layout/ties';
+import { layoutArticulations, layoutDynamics, layoutSlurs } from '../layout/notations';
+import { getGlyphChar } from '../render/smufl';
 import { findEventContext, RangeSelection } from '../core/selection';
 import {
   getLedgerLineYs,
@@ -223,6 +225,18 @@ export const ScoreView: React.FC<ScoreViewProps> = ({
     return layoutTies(score, layout);
   }, [score, layout]);
 
+  const slurs = useMemo(() => {
+    return layoutSlurs(score, layout);
+  }, [score, layout]);
+
+  const dynamics = useMemo(() => {
+    return layoutDynamics(score, layout);
+  }, [score, layout]);
+
+  const articulations = useMemo(() => {
+    return layoutArticulations(score, layout);
+  }, [score, layout]);
+
   useEffect(() => {
     onLayoutChange?.(layout);
   }, [layout, onLayoutChange]);
@@ -243,6 +257,24 @@ export const ScoreView: React.FC<ScoreViewProps> = ({
     set.add('rest8th');
     set.add('rest16th');
     set.add('rest32nd');
+    // M6b Dynamics glyphs
+    set.add('dynamicPP');
+    set.add('dynamicPiano');
+    set.add('dynamicMP');
+    set.add('dynamicMF');
+    set.add('dynamicForte');
+    set.add('dynamicFF');
+    set.add('dynamicSforzato');
+    set.add('dynamicFortePiano');
+    // M6b Articulations glyphs
+    set.add('articStaccatoAbove');
+    set.add('articStaccatoBelow');
+    set.add('articTenutoAbove');
+    set.add('articTenutoBelow');
+    set.add('articAccentAbove');
+    set.add('articAccentBelow');
+    set.add('articMarcatoAbove');
+    set.add('articMarcatoBelow');
     for (const sys of layout.systems) {
       for (const item of sys.items) {
         if (item.kind === 'glyph' && item.glyph) {
@@ -1235,6 +1267,99 @@ export const ScoreView: React.FC<ScoreViewProps> = ({
                 fill="currentColor"
                 pointerEvents="none"
               />
+            );
+          })}
+
+          {/* SVG Slurs */}
+          {slurs.map((slur) => {
+            const sys = layout.systems[slur.systemIndex];
+            const sysY = sys ? sys.y : 0;
+            return (
+              <path
+                key={slur.id}
+                data-slur-id={slur.slurId}
+                className="score-slur notranslate"
+                d={slur.d}
+                transform={`translate(0, ${sysY * staffSpacePx}) scale(${staffSpacePx})`}
+                fill="currentColor"
+                pointerEvents="none"
+              />
+            );
+          })}
+
+          {/* SVG Dynamics */}
+          {dynamics.map((item) => {
+            const sys = layout.systems[item.systemIndex ?? 0];
+            const sysY = sys ? sys.y : 0;
+            const pxX = item.x * staffSpacePx;
+            const pxY = (sysY + item.y) * staffSpacePx;
+            const fontSize = staffSpacePx * 4;
+            return (
+              <g
+                key={item.id}
+                className="score-dynamic notranslate"
+                data-event-id={item.eventId}
+                data-dynamic-id={item.id}
+                pointerEvents="none"
+              >
+                {useTextFallback && item.glyph ? (
+                  <text
+                    x={pxX}
+                    y={pxY}
+                    fontSize={fontSize}
+                    fontFamily="Bravura, BravuraText, sans-serif"
+                    textAnchor="start"
+                    dominantBaseline="alphabetic"
+                    fill="currentColor"
+                  >
+                    {getGlyphChar(item.glyph)}
+                  </text>
+                ) : (
+                  <use
+                    href={`#glyph-${item.glyph}`}
+                    transform={`translate(${pxX}, ${pxY}) scale(${scale})`}
+                    fill="currentColor"
+                  />
+                )}
+              </g>
+            );
+          })}
+
+          {/* SVG Articulations */}
+          {articulations.map((item) => {
+            const sys = layout.systems[item.systemIndex ?? 0];
+            const sysY = sys ? sys.y : 0;
+            const pxX = item.x * staffSpacePx;
+            const pxY = (sysY + item.y) * staffSpacePx;
+            const fontSize = staffSpacePx * 4;
+            return (
+              <g
+                key={item.id}
+                className="score-articulation notranslate"
+                data-event-id={item.eventId}
+                data-articulation-id={item.id}
+                pointerEvents="none"
+              >
+                {useTextFallback && item.glyph ? (
+                  <text
+                    x={pxX}
+                    y={pxY}
+                    fontSize={fontSize}
+                    fontFamily="Bravura, BravuraText, sans-serif"
+                    textAnchor="start"
+                    dominantBaseline="alphabetic"
+                    fill="currentColor"
+                  >
+                    {getGlyphChar(item.glyph)}
+                  </text>
+                ) : (
+                  <use
+                    href={`#glyph-${item.glyph}`}
+                    transform={`translate(${pxX}, ${pxY}) scale(${scale})`}
+                    fill="currentColor"
+                  />
+                )}
+              </g>
             );
           })}
 

@@ -5,7 +5,7 @@
  * ensuring identical behavior across QWERTY, Turkish Q, AZERTY, etc.
  */
 
-import { BaseDurationType, PitchStep } from '../core/model';
+import { ArticulationType, BaseDurationType, DynamicType, PitchStep } from '../core/model';
 
 export type EditorMode = 'select' | 'input' | 'position';
 
@@ -26,6 +26,8 @@ export type UserAction =
   | 'insert-measure'
   | 'delete-measure'
   | 'toggle-tie'
+  | 'toggle-slur'
+  | 'clear-notations'
   | 'cycle-accidental-up'
   | 'cycle-accidental-down'
   | 'reset-accidental'
@@ -40,12 +42,15 @@ export type UserAction =
   | 'toggle-dot'
   | 'show-input-off-hint'
   | 'reset-override'
+  | { type: 'apply-dynamic'; dynamic: DynamicType }
+  | { type: 'toggle-articulation'; articulation: ArticulationType }
   | { type: 'nudge-override'; dx: number; dy: number }
   | { type: 'enter-pitch'; letter: PitchStep }
   | { type: 'set-duration'; baseType: BaseDurationType };
 
 export interface KeyEventLike {
   code: string;
+  key?: string;
   ctrlKey?: boolean;
   metaKey?: boolean;
   shiftKey?: boolean;
@@ -139,7 +144,7 @@ export function mapKeyEvent(
     if (isShift) return null;
   }
 
-  // Shift combinations (Selection extension & accidental cycle)
+  // Shift combinations (Selection extension, accidental cycle, notations, dynamics, slurs)
   if (isShift) {
     if (e.code === 'ArrowLeft') {
       return 'extend-selection-prev';
@@ -153,7 +158,50 @@ export function mapKeyEvent(
     if (e.code === 'ArrowDown') {
       return 'cycle-accidental-down';
     }
+
+    // Slur toggle: Shift+S
+    if (e.code === 'KeyS') {
+      return 'toggle-slur';
+    }
+
+    // Dynamics quick-apply: Shift+1..8
+    if (e.code === 'Digit1') return { type: 'apply-dynamic', dynamic: 'pp' };
+    if (e.code === 'Digit2') return { type: 'apply-dynamic', dynamic: 'p' };
+    if (e.code === 'Digit3') return { type: 'apply-dynamic', dynamic: 'mp' };
+    if (e.code === 'Digit4') return { type: 'apply-dynamic', dynamic: 'mf' };
+    if (e.code === 'Digit5') return { type: 'apply-dynamic', dynamic: 'f' };
+    if (e.code === 'Digit6') {
+      if (e.key === '^') return { type: 'toggle-articulation', articulation: 'marcato' };
+      return { type: 'apply-dynamic', dynamic: 'ff' };
+    }
+    if (e.code === 'Digit7') return { type: 'apply-dynamic', dynamic: 'sfz' };
+    if (e.code === 'Digit8') return { type: 'apply-dynamic', dynamic: 'fp' };
+
+    // Accent: > or Shift+Period
+    if (e.code === 'Period' || e.key === '>') {
+      return { type: 'toggle-articulation', articulation: 'accent' };
+    }
+    if (e.key === '^') {
+      return { type: 'toggle-articulation', articulation: 'marcato' };
+    }
+
     return null;
+  }
+
+  // Articulations in Select mode
+  if (mode === 'select') {
+    if (e.code === 'Period') {
+      return { type: 'toggle-articulation', articulation: 'staccato' };
+    }
+    if (e.code === 'Minus') {
+      return { type: 'toggle-articulation', articulation: 'tenuto' };
+    }
+    if (e.code === 'Slash' || e.key === '>') {
+      return { type: 'toggle-articulation', articulation: 'accent' };
+    }
+    if (e.key === '^' || e.code === 'KeyM') {
+      return { type: 'toggle-articulation', articulation: 'marcato' };
+    }
   }
 
   // Explicit mode switches (unmodified)

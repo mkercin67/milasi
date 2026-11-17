@@ -10,7 +10,7 @@ import { Id, NoteEvent, Override, Pitch, RestEvent, Score, ScoreEvent } from './
 import { createMeasure, createRest, newId } from './factory';
 import { getPitchMidi, transposeOctave, transposeSemitone } from './pitch';
 import { measureTicks } from './time';
-import { eventsInRange, RangeSelection } from './selection';
+import { eventsInRange, RangeSelection, Selection } from './selection';
 
 /** Interface for all operations that transform a Score. */
 export interface Command {
@@ -812,6 +812,163 @@ export function resetAccidentalToKeySig(eventId: string, pitchIndex: number = 0)
                       p.alter = defaultAlter;
                     }
                     return;
+                  }
+                }
+              }
+            }
+          }
+        }
+      });
+    },
+  };
+}
+
+function getTargetEventIds(score: Score, target: string | Selection): string[] {
+  if (typeof target === 'string') return [target];
+  if (target.kind === 'event') return [target.id];
+  if (target.kind === 'range') return eventsInRange(score, target).map((e) => e.id);
+  return [];
+}
+
+/** Sets or removes dynamic marking on a note or selection. */
+export function setDynamic(target: string | Selection, dynamic: string | null): Command {
+  return {
+    name: dynamic ? `Set Dynamic ${dynamic}` : 'Clear Dynamic',
+    apply(score: Score): Score {
+      const targetIds = new Set(getTargetEventIds(score, target));
+      if (targetIds.size === 0) return score;
+
+      return produce(score, (draft) => {
+        for (const part of draft.parts) {
+          for (const staff of part.staves) {
+            for (const mDef of draft.measures) {
+              const sm = staff.measures[mDef.id];
+              if (!sm) continue;
+              for (const v of sm.voices) {
+                for (const ev of v.events) {
+                  if (targetIds.has(ev.id) && ev.kind === 'note') {
+                    if (dynamic) {
+                      ev.dynamic = dynamic;
+                    } else {
+                      delete ev.dynamic;
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      });
+    },
+  };
+}
+
+/** Toggles an articulation marking with conflict resolution (accent and marcato exclude each other). */
+export function toggleArticulation(target: string | Selection, articulation: string): Command {
+  return {
+    name: `Toggle Articulation ${articulation}`,
+    apply(score: Score): Score {
+      const targetIds = new Set(getTargetEventIds(score, target));
+      if (targetIds.size === 0) return score;
+
+      return produce(score, (draft) => {
+        for (const part of draft.parts) {
+          for (const staff of part.staves) {
+            for (const mDef of draft.measures) {
+              const sm = staff.measures[mDef.id];
+              if (!sm) continue;
+              for (const v of sm.voices) {
+                for (const ev of v.events) {
+                  if (targetIds.has(ev.id) && ev.kind === 'note') {
+                    if (!ev.articulations) ev.articulations = [];
+                    const idx = ev.articulations.indexOf(articulation);
+                    if (idx >= 0) {
+                      ev.articulations.splice(idx, 1);
+                    } else {
+                      // Conflict resolution: accent and marcato exclude each other
+                      if (articulation === 'accent') {
+                        ev.articulations = ev.articulations.filter((a) => a !== 'marcato');
+                      } else if (articulation === 'marcato') {
+                        ev.articulations = ev.articulations.filter((a) => a !== 'accent');
+                      }
+                      ev.articulations.push(articulation);
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      });
+    },
+  };
+}
+
+/** Toggles a slur over the range selection on a staff. */
+export function toggleSlur(selection: Selection): Command {
+  return {
+    name: 'Toggle Slur',
+    apply(score: Score): Score {
+      if (selection.kind !== 'range') return score;
+      const staffId = selection.staffId;
+      const targetEvents = eventsInRange(score, selection);
+      if (targetEvents.length < 2) return score;
+
+      const firstId = targetEvents[0].id;
+      const lastId = targetEvents[targetEvents.length - 1].id;
+
+      return produce(score, (draft) => {
+        for (const part of draft.parts) {
+          for (const staff of part.staves) {
+            if (staff.id === staffId) {
+              if (!staff.slurs) staff.slurs = [];
+              const existingIdx = staff.slurs.findIndex(
+                (s) =>
+                  (s.startEventId === firstId && s.endEventId === lastId) ||
+                  (s.startEventId === lastId && s.endEventId === firstId)
+              );
+              if (existingIdx >= 0) {
+                staff.slurs.splice(existingIdx, 1);
+              } else {
+                staff.slurs.push({
+                  id: newId(),
+                  startEventId: firstId,
+                  endEventId: lastId,
+                });
+              }
+              return;
+            }
+          }
+        }
+      });
+    },
+  };
+}
+
+/** Clears all dynamics, articulations, and slurs originating on the selection. */
+export function clearSelectionNotations(selection: Selection): Command {
+  return {
+    name: 'Clear Selection Notations',
+    apply(score: Score): Score {
+      const targetIds = new Set(getTargetEventIds(score, selection));
+      if (targetIds.size === 0) return score;
+
+      return produce(score, (draft) => {
+        for (const part of draft.parts) {
+          for (const staff of part.staves) {
+            if (staff.slurs) {
+              staff.slurs = staff.slurs.filter(
+                (s) => !targetIds.has(s.startEventId) && !targetIds.has(s.endEventId)
+              );
+            }
+            for (const mDef of draft.measures) {
+              const sm = staff.measures[mDef.id];
+              if (!sm) continue;
+              for (const v of sm.voices) {
+                for (const ev of v.events) {
+                  if (targetIds.has(ev.id) && ev.kind === 'note') {
+                    delete ev.dynamic;
+                    ev.articulations = [];
                   }
                 }
               }

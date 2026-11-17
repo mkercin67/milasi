@@ -15,7 +15,7 @@ export interface ScoreForgeEnvelope {
   score: Score;
 }
 
-export const CURRENT_SCHEMA_VERSION = 2;
+export const CURRENT_SCHEMA_VERSION = 3;
 
 /** Migration function signature for schema version upgrades. */
 export type ScoreMigration = (data: unknown) => Score;
@@ -54,9 +54,28 @@ export function migrateV1ToV2(data: unknown): Score {
   return score as Score;
 }
 
+/** Migration from v2 to v3: upgrades schemaVersion to 3 and initializes slurs array on staves. */
+export function migrateV2ToV3(data: unknown): Score {
+  const score = JSON.parse(JSON.stringify(data)) as any;
+  score.schemaVersion = 3;
+  if (Array.isArray(score.parts)) {
+    for (const part of score.parts) {
+      if (Array.isArray(part.staves)) {
+        for (const staff of part.staves) {
+          if (!Array.isArray(staff.slurs)) {
+            staff.slurs = [];
+          }
+        }
+      }
+    }
+  }
+  return score as Score;
+}
+
 /** Registry of schema migrations keyed by source schemaVersion. */
 export const migrations: Record<number, ScoreMigration> = {
   1: migrateV1ToV2,
+  2: migrateV2ToV3,
 };
 
 /**
