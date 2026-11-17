@@ -89,7 +89,7 @@ interface BaseEvent {
 interface NoteEvent extends BaseEvent {
   kind: 'note';
   pitches: Pitch[];                  // chord = multiple pitches
-  tiedToNext?: boolean;              // pitch-level ties supported in M6a
+  tiedToNext?: boolean;              // legacy v1 event-level tie, migrated to Pitch.tiedToNext
   articulations: string[];
   dynamic?: string;
 }
@@ -103,6 +103,7 @@ interface Pitch {
   step: 'C'|'D'|'E'|'F'|'G'|'A'|'B';
   octave: number;
   alter: number;                     // semitones; 0, 1, -1, 0.5 (quarter tone)
+  tiedToNext?: boolean;              // Pitch-level tie to matching pitch in next chord/note
 }
 
 interface Override {
@@ -163,6 +164,54 @@ The editor state operates in three strictly separated modes (`state.mode`):
   - `atSeconds` in `engine.trigger(note, atSeconds)` represents absolute audio engine clock time (`engine.now() + startSeconds`).
   - Supports pause/resume with microsecond precision, stop, tempo changes, volume, and mute.
   - Playhead tracking and visual note highlighting (`.playback-highlight`).
+
+## Selection & Editing Model (Milestone 6a)
+
+### 1. Selection Model (`src/core/selection.ts`)
+```ts
+type Selection =
+  | { kind: 'none' }
+  | { kind: 'event'; id: Id }
+  | { kind: 'range'; staffId: Id; voiceId: Id; anchorId: Id; focusId: Id };
+```
+- Contiguous range selections across measures in a single voice.
+- **R3 Voice Identity Rule:** Voice identity in the model is a stable `voiceIndex` (1..4) per staff. While random UUIDs exist on measure-level `voice.id`, cross-measure algorithms (range selection, transpose, delete) match by `voiceIndex` and never compare random UUIDs across measures.
+- Operations:
+  - `Shift+ArrowLeft/Right`: Extends range by 1 event.
+  - `Shift+Click`: Extends range from anchor to clicked event.
+  - Rubber-band / Marquee selection: Drags over events in select mode to select range (geometry computed from layout data without DOM reads).
+  - `Ctrl+A`: Selects entire staff.
+  - `Delete`/`Backspace`: Converts all selected notes in range to rests (one atomic command).
+  - `ArrowUp`/`Down`, `Ctrl+ArrowUp`/`Down`: Transposes all notes in range (clamped to MIDI 21..108).
+
+### 2. Clipboard Model (`src/core/clipboard.ts`)
+- `copyRange(score, sel)` / `serializeClipboard(events)`: Pure clipboard serialization with schema validation.
+- `pasteEvents(score, target, events, placedIds)`:
+  - Pastes clipboard events into voice starting at target measure and tick.
+  - **Barline Splitting:** Notes exceeding measure boundaries are automatically split into tied note segments matching measure durations.
+  - Preserves existing downstream notes after paste insertion end.
+
+### 3. Ties & Accidentals
+- Pitch-level ties: Any pitch in a chord can be tied independently (`Pitch.tiedToNext`).
+- `src/layout/ties.ts`: Generates crescent SVG `<path>` curves. When a tie crosses a system break, it splits into two half-ties:
+  - First half exits to the right of system A (`x2 = measureEndX + 1.0`).
+  - Second half enters from the left of system B (`x1 = clefEndX - 0.5`).
+- Accidental cycling: `Shift+ArrowUp/Down` cycles through natural -> sharp -> double sharp or flat -> double flat; `KeyX` resets note to key signature default.
+
+## File Format & Migrations (src/io)
+
+- **Schema Versions:**
+  - `schemaVersion: 1`: Initial format (M5).
+  - `schemaVersion: 2`: Pitch-level ties (`Pitch.tiedToNext`), multi-measure range selections.
+- **Progressive Migration:**
+  - `deserializeScore` verifies `schemaVersion` and runs registered migrations sequentially (`v1 -> v2`) in a while loop:
+    ```ts
+    while (loadedScore.schemaVersion < CURRENT_SCHEMA_VERSION) {
+      const migrator = migrations[loadedScore.schemaVersion];
+      loadedScore = migrator(loadedScore);
+    }
+    ```
+  - `migrateV1ToV2` copies legacy event-level `tiedToNext` to all pitches in the note and bumps version to 2.
 
 ## File Format & Autosave (src/io)
 

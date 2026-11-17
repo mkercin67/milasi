@@ -45,6 +45,12 @@ Read this file and ARCHITECTURE.md at the start of every session.
 - Duration of a measure in ticks = `num * (4 / den) * PPQ`. Validate voices against it.
 - Treble clef: bottom line is E4. Bass clef: bottom line is G2.
 
+## Permanent Rules (Learned from M6a)
+
+- **R1:** Tests must create their data through the SAME path the app uses (New dialog / `createEmptyScore` / real keystrokes), never through hand-built fixtures that differ from it. Multi-measure and multi-system cases are mandatory for anything that moves across measures.
+- **R2:** Keyboard and pointer handlers read state through a single source (a ref updated synchronously on every state change, or a reducer with `getState()`). No handler may capture state in a closure that can go stale.
+- **R3:** Voice identity in the model is a stable `voiceIndex` (1..4) per staff, identical across measures; random IDs may exist but are never compared across measures.
+
 ## Things you must not do
 
 - Do not copy code, icons, fonts, or text from Finale, Dorico, Sibelius, or MuseScore.

@@ -35,8 +35,10 @@ export function migrateV1ToV2(data: unknown): Score {
                   if (Array.isArray(v?.events)) {
                     for (const ev of v.events) {
                       if (ev.kind === 'note' && Array.isArray(ev.pitches)) {
-                        if (ev.tiedToNext && ev.pitches.length > 0) {
-                          ev.pitches[0].tiedToNext = true;
+                        if (ev.tiedToNext) {
+                          for (const p of ev.pitches) {
+                            p.tiedToNext = true;
+                          }
                         }
                       }
                     }
@@ -128,13 +130,24 @@ export function deserializeScore(json: string): Score {
     throw new Error('Unsupported or missing schemaVersion: missing schemaVersion property');
   }
 
-  if (version !== 1 && version !== 2) {
-    throw new Error(
-      `Unsupported schemaVersion: ${version}. Expected version 1, 2 or a registered migration.`
-    );
+  let loadedScore = scoreObj as unknown as Score;
+
+  // Run migrations forward until current schema version
+  while ((loadedScore.schemaVersion as number) < CURRENT_SCHEMA_VERSION) {
+    const migrator = migrations[loadedScore.schemaVersion];
+    if (!migrator) {
+      throw new Error(
+        `Unsupported schemaVersion: ${loadedScore.schemaVersion}. Expected version 1, 2 or a registered migration.`
+      );
+    }
+    loadedScore = migrator(loadedScore);
   }
 
-  const loadedScore = scoreObj as unknown as Score;
+  if (loadedScore.schemaVersion !== CURRENT_SCHEMA_VERSION) {
+    throw new Error(
+      `Unsupported schemaVersion: ${loadedScore.schemaVersion}. Expected version up to ${CURRENT_SCHEMA_VERSION}.`
+    );
+  }
 
   // Validate loaded score structure and durations
   const problems = validateScore(loadedScore);

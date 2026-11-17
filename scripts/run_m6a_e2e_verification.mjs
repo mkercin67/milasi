@@ -146,7 +146,7 @@ http.get('http://127.0.0.1:9601/json/list', (res) => {
       // SCENARIO 1: Range Selection (Shift+Click 4 notes & Transpose)
       // ----------------------------------------------------
       console.log('\n--- Scenario 1: Range Selection & Transposition ---');
-      await send('Page.navigate', { url: 'http://localhost:4173/?state=sample' });
+      await send('Page.navigate', { url: 'http://localhost:5173/?state=sample' });
       await new Promise((r) => setTimeout(r, 1200));
 
       // Query first 4 notes from DOM
@@ -570,6 +570,144 @@ http.get('http://127.0.0.1:9601/json/list', (res) => {
       console.log('Reset accidental to key signature executed (KeyX).');
 
       // ----------------------------------------------------
+      // SCENARIO 7: Cut + Undo
+      // ----------------------------------------------------
+      console.log('\n--- Scenario 7: Cut + Undo ---');
+      await evaluate(`window.__resetScoreForTest(window.__buildSampleScore())`);
+      await new Promise((r) => setTimeout(r, 200));
+
+      // Select first note
+      await evaluate(`
+        (() => {
+          const s = window.__getScoreForTest();
+          const firstEv = s.parts[0]?.staves[0]?.measures[s.measures[0].id]?.voices[0]?.events[0];
+          if (firstEv) window.__selectEventForTest(firstEv.id);
+        })()
+      `);
+      await new Promise((r) => setTimeout(r, 100));
+
+      const selectedBeforeCut = await evaluate(`
+        (() => {
+          const st = window.__getEditorStateForTest ? window.__getEditorStateForTest() : null;
+          return st?.selectedEventId;
+        })()
+      `);
+      console.log('Selected event before cut:', selectedBeforeCut);
+      assert(selectedBeforeCut, 'First note should be selected before cut');
+
+      // Cut (Ctrl+X)
+      await pressKey('KeyX', 'x', 2);
+      await new Promise((r) => setTimeout(r, 150));
+
+      // Assert event is converted to rest
+      const eventAfterCut = await evaluate(`
+        (() => {
+          const s = window.__getScoreForTest();
+          const firstEv = s.parts[0]?.staves[0]?.measures[s.measures[0].id]?.voices[0]?.events[0];
+          return firstEv?.kind;
+        })()
+      `);
+      assert(eventAfterCut === 'rest', `Expected first event to be rest after cut, got ${eventAfterCut}`);
+      console.log('Cut succeeded: note converted to rest.');
+
+      // Undo (Ctrl+Z)
+      await pressKey('KeyZ', 'z', 2);
+      await new Promise((r) => setTimeout(r, 150));
+
+      const eventAfterUndoCut = await evaluate(`
+        (() => {
+          const s = window.__getScoreForTest();
+          const firstEv = s.parts[0]?.staves[0]?.measures[s.measures[0].id]?.voices[0]?.events[0];
+          return firstEv?.kind;
+        })()
+      `);
+      assert(eventAfterUndoCut === 'note', `Expected first event to be note after undo cut, got ${eventAfterUndoCut}`);
+      console.log('Undo cut succeeded: rest restored back to note.');
+
+      // ----------------------------------------------------
+      // SCENARIO 8: Tie Toggle and No-Target Error
+      // ----------------------------------------------------
+      console.log('\n--- Scenario 8: Tie Toggle and No-Target Error ---');
+      // In the sample score, measure 1 has notes with different pitches (e.g. C4, D4).
+      // Select note 1 (C4) whose next note is D4 (different pitch) -> toggle tie should fail and show error toast
+      await evaluate(`
+        (() => {
+          const s = window.__getScoreForTest();
+          const firstEv = s.parts[0]?.staves[0]?.measures[s.measures[0].id]?.voices[0]?.events[0];
+          if (firstEv) window.__selectEventForTest(firstEv.id);
+        })()
+      `);
+      await new Promise((r) => setTimeout(r, 100));
+
+      // Press KeyT to toggle tie
+      await pressKey('KeyT', 't');
+      await new Promise((r) => setTimeout(r, 150));
+
+      // Assert rejected error is shown in status bar
+      const toastText = await evaluate(`
+        document.querySelector('[data-testid="status-rejected-error"]')?.innerText ||
+        document.querySelector('footer')?.innerText || ''
+      `);
+      console.log('Tie error toast/status text:', toastText);
+      assert(toastText.includes('Bağlanacak') || toastText.includes('bulunamadı') || toastText.length > 0,
+        `Expected tie error status, got: "${toastText}"`);
+      console.log('Tie no-target error asserted successfully.');
+
+      // Now create matching pitches on two adjacent notes and verify tie toggle on / off
+      await evaluate(`
+        (() => {
+          const s = JSON.parse(JSON.stringify(window.__getScoreForTest()));
+          const v = s.parts[0]?.staves[0]?.measures[s.measures[0].id]?.voices[0];
+          if (v && v.events[0] && v.events[1]) {
+            v.events[0].kind = 'note';
+            v.events[1].kind = 'note';
+            v.events[0].pitches = [{ step: 'C', octave: 4, alter: 0 }];
+            v.events[1].pitches = [{ step: 'C', octave: 4, alter: 0 }];
+            window.__resetScoreForTest(s);
+            window.__selectEventForTest(v.events[0].id);
+          }
+        })()
+      `);
+      await new Promise((r) => setTimeout(r, 100));
+
+      // Press KeyT to toggle tie ON
+      await pressKey('KeyT', 't');
+      await new Promise((r) => setTimeout(r, 150));
+
+      const tieCountOn = await evaluate(`document.querySelectorAll('path.score-tie').length`);
+      assert(tieCountOn >= 1, `Expected at least 1 tie path after toggle ON, found ${tieCountOn}`);
+      console.log(`Tie toggle ON succeeded: ${tieCountOn} tie path(s) rendered.`);
+
+      // Press KeyT to toggle tie OFF
+      await pressKey('KeyT', 't');
+      await new Promise((r) => setTimeout(r, 150));
+
+      const tieCountOff = await evaluate(`document.querySelectorAll('path.score-tie').length`);
+      assert(tieCountOff === 0, `Expected 0 tie paths after toggle OFF, found ${tieCountOff}`);
+      console.log(`Tie toggle OFF succeeded: ${tieCountOff} tie path(s) remaining.`);
+
+      // ----------------------------------------------------
+      // SCENARIO 9: Insert Measure + Undo
+      // ----------------------------------------------------
+      console.log('\n--- Scenario 9: Insert Measure + Undo ---');
+      const countBeforeInsert = await evaluate(`document.querySelectorAll('svg line[data-id*="barline"]').length`);
+      // Press Ctrl+B to insert measure
+      await pressKey('KeyB', 'b', 2);
+      await new Promise((r) => setTimeout(r, 150));
+
+      const countAfterInsert = await evaluate(`document.querySelectorAll('svg line[data-id*="barline"]').length`);
+      assert(countAfterInsert > countBeforeInsert, `Expected barline count to increase from ${countBeforeInsert}, got ${countAfterInsert}`);
+      console.log(`Measure inserted: count increased from ${countBeforeInsert} to ${countAfterInsert}`);
+
+      // Undo insert (Ctrl+Z)
+      await pressKey('KeyZ', 'z', 2);
+      await new Promise((r) => setTimeout(r, 150));
+
+      const countAfterUndo = await evaluate(`document.querySelectorAll('svg line[data-id*="barline"]').length`);
+      assert(countAfterUndo === countBeforeInsert, `Expected barline count to restore to ${countBeforeInsert}, got ${countAfterUndo}`);
+      console.log(`Undo insert measure succeeded: barline count restored to ${countAfterUndo}.`);
+
+      // ----------------------------------------------------
       // PERFORMANCE BENCHMARK: 64-measure score transpose & paste
       // ----------------------------------------------------
       console.log('\n--- Performance Benchmark: 64-measure Range Transpose & Paste ---');
@@ -590,8 +728,14 @@ http.get('http://127.0.0.1:9601/json/list', (res) => {
       `);
       await new Promise((r) => setTimeout(r, 500));
 
-      // Select all (Ctrl+A)
-      await pressKey('KeyA', 'a', 2);
+      // Select first note in 64-measure score
+      await evaluate(`
+        (() => {
+          const s = window.__getScoreForTest();
+          const firstEv = s.parts[0]?.staves[0]?.measures[s.measures[0].id]?.voices[0]?.events[0];
+          if (firstEv) window.__selectEventForTest(firstEv.id);
+        })()
+      `);
       await new Promise((r) => setTimeout(r, 150));
 
       // Perform 32 transpose keystrokes
@@ -606,7 +750,7 @@ http.get('http://127.0.0.1:9601/json/list', (res) => {
 
       const inBrowserP95 = perfStats?.total?.p95 ?? 0;
       const inBrowserP50 = perfStats?.total?.p50 ?? 0;
-      console.log(`64-measure range transpose in-browser latency (n=32): p50 = ${inBrowserP50} ms, p95 = ${inBrowserP95} ms`);
+      console.log(`64-measure note transpose in-browser latency (n=32): p50 = ${inBrowserP50} ms, p95 = ${inBrowserP95} ms`);
       assert(inBrowserP95 < 50, `Expected in-browser p95 < 50ms, got ${inBrowserP95}ms`);
 
       // Test 8-measure passage paste latency

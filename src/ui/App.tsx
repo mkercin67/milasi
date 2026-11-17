@@ -624,6 +624,7 @@ const EditorShell: React.FC = () => {
       executeCommand(setOverride(eventId, { dx, dy }));
     };
     window.__getScoreForTest = () => scoreRef.current;
+    (window as any).__selectEventForTest = (id: string | null) => selectEvent(id);
     (window as any).__resetScoreForTest = (newScore: Score) => resetScore(newScore);
     (window as any).__buildSampleScore = () => buildSampleScore('G');
     (window as any).__createBenchmark64Score = () => createBenchmark64Score();

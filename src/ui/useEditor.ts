@@ -126,6 +126,16 @@ export function useEditor(initialScore?: Score) {
 
   const lastEnteredPitchRef = useRef<Pitch | null>(null);
 
+  // Synchronous State Refs (R2: Anti-Stale-Closure Architecture)
+  const scoreRef = useRef<Score>(score);
+  scoreRef.current = score;
+  const selectionRef = useRef<Selection>({ kind: 'none' });
+  const selectedEventIdRef = useRef<string | null>(null);
+  const cursorRef = useRef<ScoreCursor | null>(cursor);
+  cursorRef.current = cursor;
+  const rangeEventsRef = useRef<ScoreEvent[]>([]);
+  const selectedEventInfoRef = useRef<SelectedEventInfo | null>(null);
+
   const [rejectedError, setRejectedError] = useState<string | null>(null);
   const errorTimerRef = useRef<number | null>(null);
 
@@ -166,6 +176,7 @@ export function useEditor(initialScore?: Score) {
 
   const executeCommand = useCallback((cmd: Command) => {
     const nextScore = historyRef.current.do(cmd);
+    scoreRef.current = nextScore;
     setScore(nextScore);
     setDirtyVersion((v) => v + 1);
     return nextScore;
@@ -174,6 +185,7 @@ export function useEditor(initialScore?: Score) {
   const undo = useCallback(() => {
     const prevScore = historyRef.current.undo();
     if (prevScore) {
+      scoreRef.current = prevScore;
       setScore(prevScore);
       setDirtyVersion((v) => v + 1);
       setSelectedEventId((curr) => (curr && eventExists(prevScore, curr) ? curr : null));
@@ -188,6 +200,7 @@ export function useEditor(initialScore?: Score) {
   const redo = useCallback(() => {
     const nextScore = historyRef.current.redo();
     if (nextScore) {
+      scoreRef.current = nextScore;
       setScore(nextScore);
       setDirtyVersion((v) => v + 1);
       setSelectedEventId((curr) => (curr && eventExists(nextScore, curr) ? curr : null));
@@ -200,15 +213,25 @@ export function useEditor(initialScore?: Score) {
   }, []);
 
   const selectEvent = useCallback((id: string | null) => {
+    selectedEventIdRef.current = id;
+    const newSel: Selection = id ? { kind: 'event', id } : { kind: 'none' };
+    selectionRef.current = newSel;
+    rangeEventsRef.current = [];
     setSelectedEventId(id);
-    setSelection(id ? { kind: 'event', id } : { kind: 'none' });
+    setSelection(newSel);
   }, []);
 
   const setRangeSelection = useCallback((range: RangeSelection | null) => {
+    selectedEventIdRef.current = null;
     if (range) {
-      setSelection({ kind: 'range', ...range });
+      const newSel: Selection = { kind: 'range', ...range };
+      selectionRef.current = newSel;
+      rangeEventsRef.current = eventsInRange(scoreRef.current, range);
+      setSelection(newSel);
       setSelectedEventId(null);
     } else {
+      selectionRef.current = { kind: 'none' };
+      rangeEventsRef.current = [];
       setSelection({ kind: 'none' });
       setSelectedEventId(null);
     }
@@ -216,23 +239,31 @@ export function useEditor(initialScore?: Score) {
 
   const extendSelectionTo = useCallback(
     (targetEventId: string) => {
-      setSelection((curr) => {
-        const baseSel: Selection =
-          curr.kind !== 'none'
-            ? curr
-            : selectedEventId
-            ? { kind: 'event', id: selectedEventId }
-            : { kind: 'none' };
-        const nextSel = extendSelection(score, baseSel, targetEventId);
-        if (nextSel.kind === 'event') {
-          setSelectedEventId(nextSel.id);
-        } else {
-          setSelectedEventId(null);
-        }
-        return nextSel;
-      });
+      const curScore = scoreRef.current;
+      const baseSel: Selection =
+        selectionRef.current.kind !== 'none'
+          ? selectionRef.current
+          : selectedEventIdRef.current
+          ? { kind: 'event', id: selectedEventIdRef.current }
+          : { kind: 'none' };
+      const nextSel = extendSelection(curScore, baseSel, targetEventId);
+      selectionRef.current = nextSel;
+      if (nextSel.kind === 'event') {
+        selectedEventIdRef.current = nextSel.id;
+        rangeEventsRef.current = [];
+        setSelectedEventId(nextSel.id);
+      } else if (nextSel.kind === 'range') {
+        selectedEventIdRef.current = null;
+        rangeEventsRef.current = eventsInRange(curScore, nextSel);
+        setSelectedEventId(null);
+      } else {
+        selectedEventIdRef.current = null;
+        rangeEventsRef.current = [];
+        setSelectedEventId(null);
+      }
+      setSelection(nextSel);
     },
-    [score, selectedEventId]
+    []
   );
 
   const extendSelectionDirection = useCallback(
@@ -257,10 +288,11 @@ export function useEditor(initialScore?: Score) {
   );
 
   const selectAllInStaff = useCallback(() => {
-    const staff = score.parts[0]?.staves[0];
+    const curScore = scoreRef.current;
+    const staff = curScore.parts[0]?.staves[0];
     if (!staff) return;
     const allEvents: ScoreEvent[] = [];
-    for (const mDef of score.measures) {
+    for (const mDef of curScore.measures) {
       const sm = staff.measures[mDef.id];
       if (sm) {
         for (const v of sm.voices) {
@@ -271,19 +303,24 @@ export function useEditor(initialScore?: Score) {
     if (allEvents.length > 0) {
       const firstEv = allEvents[0];
       const lastEv = allEvents[allEvents.length - 1];
-      const voiceId = staff.measures[score.measures[0]?.id]?.voices[0]?.id;
+      const firstCtx = findEventContext(curScore, firstEv.id);
+      const voiceId = firstCtx?.voiceId ?? staff.measures[curScore.measures[0]?.id]?.voices[0]?.id;
       if (voiceId) {
-        setSelection({
+        const nextSel: Selection = {
           kind: 'range',
           staffId: staff.id,
           voiceId,
           anchorId: firstEv.id,
           focusId: lastEv.id,
-        });
+        };
+        selectionRef.current = nextSel;
+        selectedEventIdRef.current = null;
+        rangeEventsRef.current = eventsInRange(curScore, nextSel);
+        setSelection(nextSel);
         setSelectedEventId(null);
       }
     }
-  }, [score]);
+  }, []);
 
   const selectNext = useCallback(
     (direction: 'prev' | 'next') => {
@@ -689,26 +726,26 @@ export function useEditor(initialScore?: Score) {
     return getRangeMeasureSpan(score, rangeEvents);
   }, [score, selectedRange, rangeEvents]);
 
-  const scoreRef = useRef(score);
-  scoreRef.current = score;
-  const selectionRef = useRef(selection);
   selectionRef.current = selection;
-  const selectedEventIdRef = useRef(selectedEventId);
   selectedEventIdRef.current = selectedEventId;
-  const cursorRef = useRef(cursor);
-  cursorRef.current = cursor;
-  const rangeEventsRef = useRef(rangeEvents);
   rangeEventsRef.current = rangeEvents;
-  const selectedEventInfoRef = useRef(selectedEventInfo);
   selectedEventInfoRef.current = selectedEventInfo;
 
   const deleteSelection = useCallback(() => {
-    if (selection.kind === 'range') {
-      executeCommand(deleteRange(selection));
-    } else if (selectedEventId) {
-      executeCommand(convertToRest(selectedEventId));
+    const curSel = selectionRef.current;
+    if (curSel.kind === 'range') {
+      executeCommand(deleteRange(curSel));
+      selectionRef.current = { kind: 'none' };
+      rangeEventsRef.current = [];
+      setSelection({ kind: 'none' });
+    } else if (selectedEventIdRef.current) {
+      executeCommand(convertToRest(selectedEventIdRef.current));
+      selectedEventIdRef.current = null;
+      selectionRef.current = { kind: 'none' };
+      setSelectedEventId(null);
+      setSelection({ kind: 'none' });
     }
-  }, [selection, selectedEventId, executeCommand]);
+  }, [executeCommand]);
 
   const transposeSelection = useCallback(
     (semitones: number) => {
@@ -1051,5 +1088,7 @@ export function useEditor(initialScore?: Score) {
     insertNewMeasure,
     deleteCurrentMeasure,
     confirmDeleteMeasure,
+    getScore: () => scoreRef.current,
+    getSelection: () => selectionRef.current,
   };
 }

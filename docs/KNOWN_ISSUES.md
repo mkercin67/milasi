@@ -23,3 +23,8 @@ This document lists known constraints and architectural trade-offs in the curren
 - **Status:** Browser Security Standard.
 - **Details:** Browsers restrict audio playback until an explicit user gesture (e.g. click, keypress) has occurred.
 - **Handling:** Tone.js audio context starts automatically on first user click or spacebar transport action.
+
+## 5. Measure-Level Voice Identifiers vs. Voice Index
+- **Status:** Model Design Note.
+- **Details:** In `Score`, each `StaffMeasure` contains `voices: Voice[]` where each voice has a local `id`. Cross-measure operations rely on the voice's zero-based `voiceIndex` (1..4) to maintain continuity across barlines rather than comparing voice UUIDs.
+

@@ -507,7 +507,6 @@ export function deleteRange(range: RangeSelection): Command {
               const staffMeasure = staff.measures[mDef.id];
               if (!staffMeasure) continue;
               for (const voice of staffMeasure.voices) {
-                if (voice.id !== range.voiceId) continue;
                 for (let i = 0; i < voice.events.length; i++) {
                   const ev = voice.events[i];
                   if (targetIds.has(ev.id)) {
@@ -560,7 +559,6 @@ export function transposeRange(range: RangeSelection, semitones: number): Comman
               const staffMeasure = staff.measures[mDef.id];
               if (!staffMeasure) continue;
               for (const voice of staffMeasure.voices) {
-                if (voice.id !== range.voiceId) continue;
                 for (const ev of voice.events) {
                   if (targetIds.has(ev.id) && ev.kind === 'note') {
                     ev.pitches = ev.pitches.map((p) => {
