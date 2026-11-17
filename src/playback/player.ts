@@ -196,12 +196,26 @@ export class Player {
     }
 
     const activeEventIds: string[] = [];
-    for (const [eventId, time] of this._schedule.eventTimes.entries()) {
-      if (
-        this._playbackPosition >= time.startSeconds - 1e-6 &&
-        this._playbackPosition < time.endSeconds - 1e-6
-      ) {
-        activeEventIds.push(eventId);
+    if (this._schedule.eventRanges && this._schedule.eventRanges.size > 0) {
+      for (const [eventId, ranges] of this._schedule.eventRanges.entries()) {
+        for (const time of ranges) {
+          if (
+            this._playbackPosition >= time.startSeconds - 1e-6 &&
+            this._playbackPosition < time.endSeconds - 1e-6
+          ) {
+            activeEventIds.push(eventId);
+            break;
+          }
+        }
+      }
+    } else {
+      for (const [eventId, time] of this._schedule.eventTimes.entries()) {
+        if (
+          this._playbackPosition >= time.startSeconds - 1e-6 &&
+          this._playbackPosition < time.endSeconds - 1e-6
+        ) {
+          activeEventIds.push(eventId);
+        }
       }
     }
 

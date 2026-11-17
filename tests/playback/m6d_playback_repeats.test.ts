@@ -4,6 +4,8 @@ import { expandRepeats } from '../../src/playback/repeats';
 import { buildSchedule } from '../../src/playback/schedule';
 import { validateScore } from '../../src/core/validate';
 import { setTempo } from '../../src/core/commands';
+import { FakeEngine } from '../../src/playback/fakeEngine';
+import { Player } from '../../src/playback/player';
 
 describe('Milestone 6d: Repeats Playback and Validation Specs', () => {
   it('FAILING-FIRST: reference score expands to measures 1..4 twice and 5..8 twice (16 measures total)', () => {
@@ -70,5 +72,38 @@ describe('Milestone 6d: Repeats Playback and Validation Specs', () => {
     const issues = validateScore(score);
     const hasNestedError = issues.some((iss) => iss.message.includes('nested repeat') || iss.code === 'nested-repeat');
     expect(hasNestedError).toBe(true);
+  });
+
+  it('FAILING-FIRST: highlights activeEventIds on BOTH pass 1 and pass 2 when repeated', async () => {
+    const score = createEmptyScore({ numMeasures: 2, timeSig: { num: 2, den: 4 } });
+    (score.measures[1] as any).repeatEnd = true;
+
+    const n1 = createNote({ pitches: [createPitch('C', 4, 0)], baseType: 'quarter' });
+    const n2 = createNote({ pitches: [createPitch('D', 4, 0)], baseType: 'quarter' });
+    score.parts[0].staves[0].measures[score.measures[0].id].voices[0].events = [n1, n2];
+
+    const engine = new FakeEngine({ manualClock: true });
+    const player = new Player(score, engine);
+
+    const positions: Array<{ seconds: number; activeEventIds: string[] }> = [];
+    player.onPosition((pos) => {
+      positions.push({ seconds: pos.seconds, activeEventIds: [...pos.activeEventIds] });
+    });
+
+    await player.play();
+
+    // Advance to 0.25s (during first pass of note n1: 0.0s to 0.5s)
+    engine.advanceTime(0.25);
+    player.tick();
+
+    const pass1Pos = positions[positions.length - 1];
+    expect(pass1Pos.activeEventIds).toContain(n1.id);
+
+    // Advance to 2.25s (during second pass of note n1: 2.0s to 2.5s)
+    engine.advanceTime(2.0);
+    player.tick();
+
+    const pass2Pos = positions[positions.length - 1];
+    expect(pass2Pos.activeEventIds).toContain(n1.id);
   });
 });

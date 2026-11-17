@@ -28,6 +28,7 @@ export interface ScheduleResult {
   totalSeconds: number;
   measureStarts: MeasureStartTime[];
   eventTimes: Map<string, { startSeconds: number; endSeconds: number }>;
+  eventRanges?: Map<string, Array<{ startSeconds: number; endSeconds: number }>>;
 }
 
 export interface BuildScheduleOptions {

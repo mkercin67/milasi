@@ -87,6 +87,7 @@ export function buildSchedule(
 
   const rawTotalSeconds = accumulatedSeconds;
   const eventTimes = new Map<string, { startSeconds: number; endSeconds: number }>();
+  const eventRanges = new Map<string, Array<{ startSeconds: number; endSeconds: number }>>();
   const scheduledNotes: ScheduledNote[] = [];
 
   // 2. Process each part, staff, and voice
@@ -155,10 +156,19 @@ export function buildSchedule(
             const evDurationSeconds = ev.duration * secondsPerTick;
             const evEndSeconds = evStartSeconds + evDurationSeconds;
 
-            eventTimes.set(ev.id, {
+            const existingRanges = eventRanges.get(ev.id) ?? [];
+            existingRanges.push({
               startSeconds: evStartSeconds,
               endSeconds: evEndSeconds,
             });
+            eventRanges.set(ev.id, existingRanges);
+
+            if (!eventTimes.has(ev.id)) {
+              eventTimes.set(ev.id, {
+                startSeconds: evStartSeconds,
+                endSeconds: evEndSeconds,
+              });
+            }
 
             currentTick += ev.duration;
 
@@ -294,11 +304,25 @@ export function buildSchedule(
       });
     }
 
+    const adjustedEventRanges = new Map<string, Array<{ startSeconds: number; endSeconds: number }>>();
+    for (const [id, ranges] of eventRanges.entries()) {
+      const shifted = ranges
+        .filter((r) => r.endSeconds >= offset - 1e-6)
+        .map((r) => ({
+          startSeconds: Math.max(0, r.startSeconds - offset),
+          endSeconds: Math.max(0, r.endSeconds - offset),
+        }));
+      if (shifted.length > 0) {
+        adjustedEventRanges.set(id, shifted);
+      }
+    }
+
     return {
       notes: filteredNotes,
       totalSeconds: Math.max(0, rawTotalSeconds - offset),
       measureStarts: adjustedMeasureStarts,
       eventTimes: adjustedEventTimes,
+      eventRanges: adjustedEventRanges,
     };
   }
 
@@ -307,5 +331,6 @@ export function buildSchedule(
     totalSeconds: rawTotalSeconds,
     measureStarts,
     eventTimes,
+    eventRanges,
   };
 }
