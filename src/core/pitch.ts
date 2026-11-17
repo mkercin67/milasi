@@ -59,6 +59,28 @@ export function getPitchMidi(pitch: Pitch): number {
   return 12 * (pitch.octave + 1) + STEP_SEMITONES[pitch.step] + pitch.alter;
 }
 
+const KEY_SIG_SHARP_STEPS: Pitch['step'][] = ['F', 'C', 'G', 'D', 'A', 'E', 'B'];
+const KEY_SIG_FLAT_STEPS: Pitch['step'][] = ['B', 'E', 'A', 'D', 'G', 'C', 'F'];
+
+/**
+ * Returns the default alteration for a pitch step according to the key signature.
+ *
+ * @param step - Pitch step letter.
+ * @param keySig - Circle of fifths value (-7..7).
+ * @returns Semitone alteration (-1, 0, or 1).
+ */
+export function getKeySignatureAlter(step: Pitch['step'], keySig: number): number {
+  if (keySig > 0) {
+    const sharps = KEY_SIG_SHARP_STEPS.slice(0, Math.min(keySig, 7));
+    return sharps.includes(step) ? 1 : 0;
+  }
+  if (keySig < 0) {
+    const flats = KEY_SIG_FLAT_STEPS.slice(0, Math.min(Math.abs(keySig), 7));
+    return flats.includes(step) ? -1 : 0;
+  }
+  return 0;
+}
+
 /**
  * Transposes a pitch by one semitone in the specified direction.
  *

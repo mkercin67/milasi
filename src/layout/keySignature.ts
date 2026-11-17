@@ -202,21 +202,4 @@ export function getKeySignatureChangeAccidentals(
   return result;
 }
 
-/**
- * Returns the default alter for a pitch step according to the key signature.
- *
- * @param step - Pitch step letter.
- * @param keySig - Circle of fifths value.
- * @returns Semitone alteration (-1, 0, or 1).
- */
-export function getKeySignatureAlter(step: PitchStep, keySig: number): number {
-  if (keySig > 0) {
-    const sharps = SHARP_STEPS.slice(0, Math.min(keySig, 7));
-    return sharps.includes(step) ? 1 : 0;
-  }
-  if (keySig < 0) {
-    const flats = FLAT_STEPS.slice(0, Math.min(Math.abs(keySig), 7));
-    return flats.includes(step) ? -1 : 0;
-  }
-  return 0;
-}
+export { getKeySignatureAlter } from '../core/pitch';

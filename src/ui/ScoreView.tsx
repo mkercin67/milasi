@@ -10,114 +10,21 @@
  *             (dx inside measure, dy inside [-1, 5] glyph band), 0.25 snap (Shift = no snap).
  */
 
-import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { BaseDurationType, NoteEvent, Pitch, Score, ScoreEvent } from '../core/model';
+import React, { useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import { layoutScore } from '../layout/layoutScore';
-import { LayoutResult } from '../layout/types';
 import { layoutTies } from '../layout/ties';
 import { layoutArticulations, layoutDynamics, layoutSlurs } from '../layout/notations';
-import { getGlyphChar } from '../render/smufl';
-import { findEventContext, RangeSelection } from '../core/selection';
-import {
-  getLedgerLineYs,
-  pitchToStaffPosition,
-  staffPositionToY,
-  yToStaffPosition,
-} from '../layout/pitch';
-import {
-  clampOverrideOffset,
-  getSystemMeasureBounds,
-  hitTestEvent,
-  isDragPastThreshold,
-  snapDragOffset,
-  xToCursor,
-} from '../layout/mouse';
 import { getGlyphPath, UNITS_PER_EM } from '../render/glyphPaths.generated';
 import { SystemView } from './SystemView';
-import { formatPitchName, useI18n } from './i18n';
-import { ScoreCursor } from '../core/input';
+import { useI18n } from './i18n';
 import { computeCursorPosition } from '../layout/cursor';
-import { EditorMode } from './keymap';
+import { ScoreViewProps } from './scoreView/types';
+import { SystemPlaceholder } from './scoreView/SystemPlaceholder';
+import { useScoreVirtualization } from './scoreView/useScoreVirtualization';
+import { useScoreInteractions } from './scoreView/useScoreInteractions';
+import { ScoreSvgLayers } from './scoreView/ScoreSvgLayers';
 
-export interface ScoreViewProps {
-  score: Score;
-  selectedEventId: string | null;
-  onSelectEvent: (eventId: string | null) => void;
-  selectedEventIds?: Set<string>;
-  selectedRange?: RangeSelection | null;
-  onSelectRange?: (range: RangeSelection | null) => void;
-  onExtendSelectionTo?: (targetEventId: string) => void;
-  cursor?: ScoreCursor | null;
-  mode?: EditorMode;
-  activeDuration?: BaseDurationType;
-  onSelectMeasure?: (measureId: string, tick?: number) => void;
-  onEnterPitchDirect?: (pitch: Pitch, customCursor?: ScoreCursor) => void;
-  onApplyOverride?: (eventId: string, dx: number, dy: number, accumulate?: boolean) => void;
-  onChangePitch?: (eventId: string, pitches: Pitch[]) => void;
-  onHoverPitch?: (pitch: Pitch | null) => void;
-  onHoverInfo?: (info: { pitch: Pitch; measureNumber: number } | null) => void;
-  onDragStatus?: (status: string | null) => void;
-  onLayoutChange?: (layout: LayoutResult) => void;
-  isPlaying?: boolean;
-  isPaused?: boolean;
-  activePlaybackEventIds?: string[];
-  playbackSeconds?: number;
-  onPreviewPitches?: (pitches: Pitch[]) => void;
-  onOpenScoreInfo?: () => void;
-}
-
-interface GhostNoteData {
-  pitch: Pitch;
-  sysIndex: number;
-  sysY: number;
-  x: number;
-  y: number;
-  glyph: string;
-  ledgerYs: number[];
-}
-
-const SystemPlaceholder: React.FC<{
-  index: number;
-  y: number;
-  height: number;
-  totalWidthPx: number;
-  staffSpacePx: number;
-}> = React.memo(({ index, y, height, totalWidthPx, staffSpacePx }) => {
-  return (
-    <g
-      data-system-index={index}
-      data-system-placeholder="true"
-      className="score-system-placeholder notranslate"
-      transform={`translate(0, ${y * staffSpacePx})`}
-    >
-      <rect
-        x={0}
-        y={0}
-        width={totalWidthPx}
-        height={height * staffSpacePx}
-        fill="transparent"
-        pointerEvents="none"
-      />
-    </g>
-  );
-});
-
-function findEventLocation(
-  score: Score,
-  eventId: string
-): { event: ScoreEvent; measureId: string } | null {
-  for (const p of score.parts) {
-    for (const st of p.staves) {
-      for (const mId of Object.keys(st.measures)) {
-        const ev = st.measures[mId].voices[0]?.events.find((it) => it.id === eventId);
-        if (ev) {
-          return { event: ev, measureId: mId };
-        }
-      }
-    }
-  }
-  return null;
-}
+export { type ScoreViewProps } from './scoreView/types';
 
 export const ScoreView: React.FC<ScoreViewProps> = ({
   score,
@@ -151,60 +58,10 @@ export const ScoreView: React.FC<ScoreViewProps> = ({
   const cardRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   const dragOverlayRef = useRef<SVGGElement>(null);
-  const [containerWidthPx, setContainerWidthPx] = useState<number>(1000);
+  const cursorLineRef = useRef<SVGLineElement>(null);
 
-  // Cached SVG bounding rect (updated on mount, enter, scroll, resize, zoom — never inside pointermove/keydown)
-  const containerRectRef = useRef<{ left: number; top: number; width: number; height: number }>({
-    left: 0,
-    top: 0,
-    width: 0,
-    height: 0,
-  });
-
-  // Marquee selection state (Select mode only)
-  const marqueeRef = useRef<{
-    startX: number;
-    startY: number;
-    currentX: number;
-    currentY: number;
-    isMarquee: boolean;
-  } | null>(null);
-  const [marqueeRect, setMarqueeRect] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
-
-  // Active drag state for 'select' (pitch) and 'position' (dx/dy)
-  const dragStateRef = useRef<{
-    dragMode: 'select' | 'position';
-    startX: number;
-    startY: number;
-    eventId: string;
-    isNote: boolean;
-    isRest: boolean;
-    measureId: string;
-    originalPitches: Pitch[];
-    startStepPositions: number[];
-    isDragging: boolean;
-    dx: number;
-    dy: number;
-    stepDelta: number;
-    targetPitches: Pitch[];
-  } | null>(null);
-
-  // Pointer press state for 'input' click vs >4px move
-  const inputPressRef = useRef<{
-    startX: number;
-    startY: number;
-    movedPastThreshold: boolean;
-  } | null>(null);
-
-  const captureRef = useRef<{ el: HTMLElement; pointerId: number } | null>(null);
-  const dragRafIdRef = useRef<number | null>(null);
-  const hasDraggedRef = useRef<boolean>(false);
-  const suppressNextClickRef = useRef<boolean>(false);
-  const [isDraggingState, setIsDraggingState] = useState<boolean>(false);
-
-  // Ghost note state (Input mode only)
-  const [ghostNote, setGhostNote] = useState<GhostNoteData | null>(null);
-  const lastHoverPitchRef = useRef<Pitch | null>(null);
+  const staffSpacePx = 10 * zoom;
+  const scale = staffSpacePx / (UNITS_PER_EM / 4);
 
   const useTextFallback = useMemo(() => {
     if (typeof window === 'undefined') return false;
@@ -212,117 +69,77 @@ export const ScoreView: React.FC<ScoreViewProps> = ({
     return params.has('text') || params.get('renderer') === 'text';
   }, []);
 
-  const updateContainerRect = useCallback(() => {
-    if (!svgRef.current) return;
-    const rect = svgRef.current.getBoundingClientRect();
-    containerRectRef.current = {
-      left: rect.left,
-      top: rect.top,
-      width: rect.width,
-      height: rect.height,
-    };
-  }, []);
+  const initialWidth = 1000;
+  const initialSpaces = Math.max(25, Math.floor(initialWidth / staffSpacePx));
 
-  useEffect(() => {
-    const el = cardRef.current;
-    if (!el) return;
-
-    const observer = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        const w = entry.contentRect.width;
-        if (w > 0) {
-          setContainerWidthPx(w);
-          updateContainerRect();
-        }
-      }
-    });
-
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [updateContainerRect]);
-
-  const staffSpacePx = 10 * zoom;
-  const scale = staffSpacePx / (UNITS_PER_EM / 4);
-  const availableStaffSpaces = Math.max(25, Math.floor(containerWidthPx / staffSpacePx));
-
-  const [viewportScroll, setViewportScroll] = useState<{ scrollTop: number; clientHeight: number }>({
-    scrollTop: 0,
-    clientHeight: 0,
-  });
-
-  const scrollRafRef = useRef<number | null>(null);
-
-  useEffect(() => {
-    if (containerRef.current) {
-      setViewportScroll({
-        scrollTop: containerRef.current.scrollTop,
-        clientHeight: containerRef.current.clientHeight,
-      });
-    }
-  }, []);
-
-  useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-    const ro = new ResizeObserver(() => {
-      setViewportScroll({
-        scrollTop: el.scrollTop,
-        clientHeight: el.clientHeight,
-      });
-    });
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, []);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    (window as any).__setVirtualViewportForTest = (scrollTop: number, clientHeight: number) => {
-      setViewportScroll({ scrollTop, clientHeight });
-    };
-    return () => {
-      delete (window as any).__setVirtualViewportForTest;
-    };
-  }, []);
+  const [availableSpaces, setAvailableSpaces] = React.useState<number>(initialSpaces);
 
   const layout = useMemo(() => {
-    return layoutScore(score, { width: availableStaffSpaces });
-  }, [score, availableStaffSpaces]);
+    return layoutScore(score, { width: availableSpaces });
+  }, [score, availableSpaces]);
 
-  const visibleSystemIndices = useMemo(() => {
-    // If clientHeight is 0 (e.g. Node/jsdom tests) or score is small, render all systems
-    if (viewportScroll.clientHeight <= 0 || layout.systems.length <= 3) {
-      return new Set<number>(layout.systems.map((s) => s.index));
-    }
+  useEffect(() => {
+    onLayoutChange?.(layout);
+  }, [layout, onLayoutChange]);
 
-    const container = containerRef.current;
-    const svg = svgRef.current;
-    let svgTopInContainer = 0;
-    if (container && svg) {
-      const cRect = container.getBoundingClientRect();
-      const sRect = svg.getBoundingClientRect();
-      svgTopInContainer = sRect.top - cRect.top + container.scrollTop;
-    }
-
-    const visibleTopPx = viewportScroll.scrollTop - svgTopInContainer;
-    const bufferPx = Math.max(viewportScroll.clientHeight, 600); // 1 screen above & below
-    const minVisibleY = (visibleTopPx - bufferPx) / staffSpacePx;
-    const maxVisibleY = (visibleTopPx + viewportScroll.clientHeight + bufferPx) / staffSpacePx;
-
-    const visible = new Set<number>();
+  // Map eventId to layout coordinates for fast, zero-DOM-read playhead and highlighting
+  const eventLayoutMap = useMemo(() => {
+    const map = new Map<string, { x: number; sysIndex: number; sysY: number }>();
     for (const sys of layout.systems) {
-      const sysTop = sys.y;
-      const sysBottom = sys.y + sys.height;
-      if (sysBottom >= minVisibleY && sysTop <= maxVisibleY) {
-        visible.add(sys.index);
+      for (const item of sys.items) {
+        if (item.eventId && !map.has(item.eventId)) {
+          map.set(item.eventId, { x: item.x, sysIndex: sys.index, sysY: sys.y });
+        }
       }
     }
+    return map;
+  }, [layout]);
 
-    if (visible.size === 0 && layout.systems.length > 0) {
-      visible.add(layout.systems[0].index);
+  const lastPlayheadRef = useRef<{ x: number; y1: number; y2: number; sysIndex: number } | null>(null);
+
+  const playhead = useMemo(() => {
+    if (!isPlaying && !isPaused) {
+      lastPlayheadRef.current = null;
+      return null;
     }
+    if (activePlaybackEventIds && activePlaybackEventIds.length > 0) {
+      for (const id of activePlaybackEventIds) {
+        const loc = eventLayoutMap.get(id);
+        if (loc) {
+          const res = {
+            x: loc.x * staffSpacePx,
+            y1: (loc.sysY - 1) * staffSpacePx,
+            y2: (loc.sysY + 5) * staffSpacePx,
+            sysIndex: loc.sysIndex,
+          };
+          lastPlayheadRef.current = res;
+          return res;
+        }
+      }
+    }
+    return lastPlayheadRef.current;
+  }, [isPlaying, isPaused, activePlaybackEventIds, eventLayoutMap, staffSpacePx]);
 
-    return visible;
-  }, [viewportScroll, layout.systems, staffSpacePx]);
+  const {
+    containerWidthPx,
+    containerRectRef,
+    updateContainerRect,
+    visibleSystemIndices,
+    handleContainerScroll,
+  } = useScoreVirtualization({
+    cardRef,
+    containerRef,
+    svgRef,
+    layout,
+    staffSpacePx,
+    isPlaying,
+    playhead,
+  });
+
+  useEffect(() => {
+    const spaces = Math.max(25, Math.floor(containerWidthPx / staffSpacePx));
+    setAvailableSpaces(spaces);
+  }, [containerWidthPx, staffSpacePx]);
 
   const ties = useMemo(() => {
     return layoutTies(score, layout);
@@ -355,15 +172,6 @@ export const ScoreView: React.FC<ScoreViewProps> = ({
   const visibleArticulations = useMemo(() => {
     return articulations.filter((a) => visibleSystemIndices.has(a.systemIndex ?? 0));
   }, [articulations, visibleSystemIndices]);
-
-  useEffect(() => {
-    onLayoutChange?.(layout);
-  }, [layout, onLayoutChange]);
-
-  // Refresh cached rect when layout size or zoom changes
-  useLayoutEffect(() => {
-    updateContainerRect();
-  }, [layout.width, layout.height, staffSpacePx, updateContainerRect]);
 
   const usedGlyphs = useMemo(() => {
     const set = new Set<string>();
@@ -407,14 +215,12 @@ export const ScoreView: React.FC<ScoreViewProps> = ({
       }
     }
     return Array.from(set);
-  }, [layout.items]);
+  }, [layout.items, layout.systems]);
 
   const cursorPos = useMemo(() => {
     if (!isInputMode || !cursor) return null;
     return computeCursorPosition(layout, score, cursor);
   }, [layout, score, cursor, isInputMode]);
-
-  const cursorLineRef = useRef<SVGLineElement>(null);
 
   useLayoutEffect(() => {
     if (!isInputMode || !cursorPos || !cursorLineRef.current) return;
@@ -442,688 +248,39 @@ export const ScoreView: React.FC<ScoreViewProps> = ({
     }
   }, [cursorPos, staffSpacePx, isInputMode]);
 
-  const releaseCapture = useCallback(() => {
-    if (captureRef.current) {
-      const { el, pointerId } = captureRef.current;
-      try {
-        if (typeof el.releasePointerCapture === 'function') {
-          el.releasePointerCapture(pointerId);
-        }
-      } catch {
-        // Ignore if capture already released
-      }
-      captureRef.current = null;
-    }
-  }, []);
-
-  const clearDragFeedback = useCallback(() => {
-    if (dragOverlayRef.current) {
-      dragOverlayRef.current.innerHTML = '';
-    }
-  }, []);
-
-  const cancelActiveInteractions = useCallback(() => {
-    if (dragRafIdRef.current) {
-      cancelAnimationFrame(dragRafIdRef.current);
-      dragRafIdRef.current = null;
-    }
-    if (dragStateRef.current) {
-      const eventId = dragStateRef.current.eventId;
-      const groupEl = svgRef.current?.querySelector(`g[data-event-id="${eventId}"]`) as HTMLElement | null;
-      if (groupEl) groupEl.style.opacity = '1';
-    }
-    clearDragFeedback();
-    onDragStatus?.(null);
-    dragStateRef.current = null;
-    inputPressRef.current = null;
-    setIsDraggingState(false);
-    releaseCapture();
-  }, [clearDragFeedback, onDragStatus, releaseCapture]);
-
-  // Clear ghost note & active drags whenever mode changes
-  useEffect(() => {
-    if (mode !== 'input') {
-      setGhostNote(null);
-      lastHoverPitchRef.current = null;
-      onHoverPitch?.(null);
-      onHoverInfo?.(null);
-    }
-    cancelActiveInteractions();
-  }, [mode, onHoverPitch, onHoverInfo, cancelActiveInteractions]);
-
-  // Cancel active drag on Escape or window blur (no command emitted)
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.code === 'Escape' && dragStateRef.current?.isDragging) {
-        e.preventDefault();
-        e.stopImmediatePropagation();
-        cancelActiveInteractions();
-      }
-    };
-    const handleBlur = () => {
-      cancelActiveInteractions();
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    window.addEventListener('blur', handleBlur);
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('blur', handleBlur);
-    };
-  }, [cancelActiveInteractions]);
-
-  const getPointerSystemCoords = (clientX: number, clientY: number) => {
-    const relX = (clientX - containerRectRef.current.left) / staffSpacePx;
-    const relY = (clientY - containerRectRef.current.top) / staffSpacePx;
-
-    let targetSys = layout.systems[0] ?? null;
-    let minDist = Infinity;
-    for (const sys of layout.systems) {
-      const dist = Math.abs(relY - (sys.y + 2));
-      if (dist < minDist) {
-        minDist = dist;
-        targetSys = sys;
-      }
-    }
-    if (!targetSys) return null;
-    return {
-      relX,
-      relY,
-      targetSys,
-      sysRelX: relX - targetSys.x,
-      sysRelY: relY - targetSys.y,
-    };
-  };
-
-  const isInsideStaffArea = (
-    coords: { relX: number; targetSys: { x: number; width: number }; sysRelY: number }
-  ) => {
-    return (
-      coords.relX >= coords.targetSys.x &&
-      coords.relX <= coords.targetSys.x + coords.targetSys.width &&
-      coords.sysRelY >= -2.5 &&
-      coords.sysRelY <= 6.5
-    );
-  };
-
-  const enterPitchAtPointer = (clientX: number, clientY: number) => {
-    if (!onEnterPitchDirect) return;
-    const coords = getPointerSystemCoords(clientX, clientY);
-    if (!coords || !isInsideStaffArea(coords)) return;
-
-    const { targetSys, sysRelX, sysRelY } = coords;
-    const clef = score.parts[0]?.staves[0]?.clef ?? { sign: 'G', line: 2 };
-    const clickedCursor = xToCursor(layout, targetSys.index, sysRelX, score);
-    const mDef = score.measures.find((m) => m.id === clickedCursor?.measureId) ?? score.measures[0];
-    const keySig = mDef?.keySig ?? 0;
-    const clickedPitch = yToStaffPosition(clef, sysRelY, keySig);
-
-    if (clickedCursor) {
-      const sId = score.parts[0]?.staves[0]?.id;
-      const staff = score.parts[0]?.staves[0];
-      const sm = staff?.measures[clickedCursor.measureId];
-      const vId = sm?.voices[0]?.id;
-      if (sId && vId) {
-        onEnterPitchDirect(clickedPitch, {
-          staffId: sId,
-          voiceId: vId,
-          measureId: clickedCursor.measureId,
-          tick: clickedCursor.tick,
-        });
-      }
-    }
-  };
-
-  const renderManualDragFeedback = (eventId: string, dx: number, dy: number) => {
-    if (!dragOverlayRef.current || !svgRef.current) return;
-    const groupEl = svgRef.current.querySelector(`g[data-event-id="${eventId}"]`);
-    if (!groupEl) return;
-    const tx = dx * staffSpacePx;
-    const ty = dy * staffSpacePx;
-    dragOverlayRef.current.innerHTML = `<g transform="translate(${tx}, ${ty})">${groupEl.innerHTML}</g>`;
-  };
-
-  const renderPitchDragFeedback = (
-    eventId: string,
-    stepDelta: number,
-    startStepPositions: number[]
-  ) => {
-    if (!dragOverlayRef.current || !svgRef.current) return;
-    const groupEl = svgRef.current.querySelector(`g[data-event-id="${eventId}"]`);
-    if (!groupEl) return;
-
-    const ty = -stepDelta * 0.5 * staffSpacePx;
-    const targetSys =
-      layout.systems.find((sys) => sys.items.some((it) => it.eventId === eventId)) ?? layout.systems[0];
-    const noteItem = layout.items.find((it) => it.eventId === eventId && it.kind === 'glyph');
-
-    let ledgerSvg = '';
-    if (noteItem && targetSys) {
-      for (const sp of startStepPositions.map((s) => s + stepDelta)) {
-        const lYs = getLedgerLineYs(sp);
-        for (const ly of lYs) {
-          const lyPx = (targetSys.y + ly) * staffSpacePx;
-          const lx1 = (targetSys.x + noteItem.x - 0.4) * staffSpacePx;
-          const lx2 = (targetSys.x + noteItem.x + 1.18 + 0.4) * staffSpacePx;
-          ledgerSvg += `<line x1="${lx1}" y1="${lyPx}" x2="${lx2}" y2="${lyPx}" stroke="#2563eb" stroke-width="${0.16 * staffSpacePx}" stroke-linecap="butt" />`;
-        }
-      }
-    }
-
-    dragOverlayRef.current.innerHTML = `<g transform="translate(0, ${ty})">${groupEl.innerHTML}</g>${ledgerSvg}`;
-  };
-
-  const handlePointerEnter = () => {
-    updateContainerRect();
-  };
-
-  const handlePointerLeave = () => {
-    setGhostNote(null);
-    lastHoverPitchRef.current = null;
-    onHoverPitch?.(null);
-    onHoverInfo?.(null);
-  };
-
-  const trySetCapture = (target: HTMLElement, pointerId: number) => {
-    try {
-      if (typeof target.setPointerCapture === 'function') {
-        target.setPointerCapture(pointerId);
-        captureRef.current = { el: target, pointerId };
-      }
-    } catch {
-      // Ignore synthetic events without active pointerId
-    }
-  };
-
-  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (e.button !== 0) return;
-    suppressNextClickRef.current = false;
-    hasDraggedRef.current = false;
-
-    if (containerRectRef.current.width === 0) {
-      updateContainerRect();
-    }
-
-    // Input mode: never modify score on pointerdown, never hide existing notes
-    if (mode === 'input') {
-      inputPressRef.current = {
-        startX: e.clientX,
-        startY: e.clientY,
-        movedPastThreshold: false,
-      };
-      trySetCapture(e.currentTarget, e.pointerId);
-      dragStateRef.current = null;
-      return;
-    }
-
-    const coords = getPointerSystemCoords(e.clientX, e.clientY);
-    const hit = coords ? hitTestEvent(layout, coords.targetSys.index, coords.sysRelX, coords.sysRelY) : null;
-
-    if (!hit) {
-      dragStateRef.current = null;
-      if (mode === 'select') {
-        marqueeRef.current = {
-          startX: e.clientX,
-          startY: e.clientY,
-          currentX: e.clientX,
-          currentY: e.clientY,
-          isMarquee: false,
-        };
-        trySetCapture(e.currentTarget, e.pointerId);
-      }
-      return;
-    }
-
-    if (e.shiftKey && onExtendSelectionTo) {
-      e.preventDefault();
-      suppressNextClickRef.current = true;
-      onExtendSelectionTo(hit.eventId);
-      dragStateRef.current = null;
-      return;
-    }
-
-    const loc = findEventLocation(score, hit.eventId);
-    if (!loc) {
-      dragStateRef.current = null;
-      return;
-    }
-
-    const isNote = loc.event.kind === 'note';
-    const isRest = loc.event.kind === 'rest';
-
-    // Lyrics mode: click selects the event for lyrics entry (no drag)
-    if (mode === 'lyrics') {
-      onSelectEvent(hit.eventId);
-      dragStateRef.current = null;
-      return;
-    }
-
-    // Select mode: drag on rest = select only (no drag)
-    if (mode === 'select' && isRest) {
-      onSelectEvent(hit.eventId);
-      dragStateRef.current = null;
-      return;
-    }
-
-    const clef = score.parts[0]?.staves[0]?.clef ?? { sign: 'G', line: 2 };
-    const originalPitches = isNote ? (loc.event as NoteEvent).pitches : [];
-    const startStepPositions = originalPitches.map((p) => pitchToStaffPosition(p, clef));
-
-    dragStateRef.current = {
-      dragMode: mode,
-      startX: e.clientX,
-      startY: e.clientY,
-      eventId: hit.eventId,
-      isNote,
-      isRest,
-      measureId: loc.measureId,
-      originalPitches,
-      startStepPositions,
-      isDragging: false,
-      dx: 0,
-      dy: 0,
-      stepDelta: 0,
-      targetPitches: originalPitches,
-    };
-    trySetCapture(e.currentTarget, e.pointerId);
-  };
-
-  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
-    // 0. Marquee drag tracking in select mode
-    if (marqueeRef.current) {
-      marqueeRef.current.currentX = e.clientX;
-      marqueeRef.current.currentY = e.clientY;
-      const deltaX = Math.abs(e.clientX - marqueeRef.current.startX);
-      const deltaY = Math.abs(e.clientY - marqueeRef.current.startY);
-      if (!marqueeRef.current.isMarquee && (deltaX > 4 || deltaY > 4)) {
-        marqueeRef.current.isMarquee = true;
-      }
-      if (marqueeRef.current.isMarquee) {
-        const left = Math.min(marqueeRef.current.startX, marqueeRef.current.currentX) - containerRectRef.current.left;
-        const top = Math.min(marqueeRef.current.startY, marqueeRef.current.currentY) - containerRectRef.current.top;
-        const width = Math.abs(marqueeRef.current.currentX - marqueeRef.current.startX);
-        const height = Math.abs(marqueeRef.current.currentY - marqueeRef.current.startY);
-        setMarqueeRect({ x: left, y: top, width, height });
-        return;
-      }
-    }
-
-    // 1. Input mode press & hover tracking
-    if (mode === 'input') {
-      if (inputPressRef.current && !inputPressRef.current.movedPastThreshold) {
-        const dxPx = e.clientX - inputPressRef.current.startX;
-        const dyPx = e.clientY - inputPressRef.current.startY;
-        if (isDragPastThreshold(dxPx, dyPx, 4)) {
-          inputPressRef.current.movedPastThreshold = true;
-        }
-      }
-
-      const coords = getPointerSystemCoords(e.clientX, e.clientY);
-      if (!coords || !isInsideStaffArea(coords)) {
-        setGhostNote(null);
-        lastHoverPitchRef.current = null;
-        onHoverPitch?.(null);
-        onHoverInfo?.(null);
-        return;
-      }
-
-      const { targetSys, sysRelX: systemRelX, sysRelY: systemRelY } = coords;
-      const clef = score.parts[0]?.staves[0]?.clef ?? { sign: 'G', line: 2 };
-      const targetCursor = xToCursor(layout, targetSys.index, systemRelX, score);
-      const mDef = score.measures.find((m) => m.id === targetCursor?.measureId) ?? score.measures[0];
-      const keySig = mDef?.keySig ?? 0;
-
-      const hoveredPitch = yToStaffPosition(clef, systemRelY, keySig);
-      const hoveredMeasureIdx = score.measures.findIndex((m) => m.id === targetCursor?.measureId);
-      const hoveredMeasureNumber = hoveredMeasureIdx >= 0 ? hoveredMeasureIdx + 1 : 1;
-
-      if (
-        !lastHoverPitchRef.current ||
-        lastHoverPitchRef.current.step !== hoveredPitch.step ||
-        lastHoverPitchRef.current.octave !== hoveredPitch.octave ||
-        lastHoverPitchRef.current.alter !== hoveredPitch.alter
-      ) {
-        lastHoverPitchRef.current = hoveredPitch;
-        onHoverPitch?.(hoveredPitch);
-        onHoverInfo?.({ pitch: hoveredPitch, measureNumber: hoveredMeasureNumber });
-      }
-
-      const stepPos = pitchToStaffPosition(hoveredPitch, clef);
-      const snappedY = staffPositionToY(stepPos);
-      const ledgerYs = getLedgerLineYs(stepPos);
-
-      const glyph =
-        activeDuration === 'whole'
-          ? 'noteheadWhole'
-          : activeDuration === 'half'
-          ? 'noteheadHalf'
-          : 'noteheadBlack';
-
-      let ghostX = cursorPos && cursorPos.systemIndex === targetSys.index ? cursorPos.x : systemRelX;
-      if (targetCursor) {
-        const sId = score.parts[0]?.staves[0]?.id;
-        const staff = score.parts[0]?.staves[0];
-        const sm = staff?.measures[targetCursor.measureId];
-        const vId = sm?.voices[0]?.id;
-        if (sId && vId) {
-          const computed = computeCursorPosition(layout, score, {
-            staffId: sId,
-            voiceId: vId,
-            measureId: targetCursor.measureId,
-            tick: targetCursor.tick,
-          });
-          if (computed && computed.systemIndex === targetSys.index) {
-            ghostX = computed.x;
-          }
-        }
-      }
-
-      setGhostNote({
-        pitch: hoveredPitch,
-        sysIndex: targetSys.index,
-        sysY: targetSys.y,
-        x: ghostX,
-        y: snappedY,
-        glyph,
-        ledgerYs,
-      });
-      return;
-    }
-
-    // 2. Active drag in 'select' or 'position' mode
-    if (!dragStateRef.current) return;
-
-    const deltaPxX = e.clientX - dragStateRef.current.startX;
-    const deltaPxY = e.clientY - dragStateRef.current.startY;
-
-    if (!dragStateRef.current.isDragging && isDragPastThreshold(deltaPxX, deltaPxY, 4)) {
-      dragStateRef.current.isDragging = true;
-      setIsDraggingState(true);
-      hasDraggedRef.current = true;
-      onSelectEvent(dragStateRef.current.eventId);
-
-      const groupEl = svgRef.current?.querySelector(
-        `g[data-event-id="${dragStateRef.current.eventId}"]`
-      ) as HTMLElement | null;
-      if (groupEl) {
-        groupEl.style.opacity = '0.3';
-      }
-    }
-
-    if (!dragStateRef.current.isDragging) return;
-
-    const { dragMode, eventId, isNote, isRest, measureId, startStepPositions } = dragStateRef.current;
-
-    if (dragMode === 'select' && isNote && startStepPositions.length > 0) {
-      // Vertical pitch change in 0.5-space steps; horizontal movement ignored
-      const clef = score.parts[0]?.staves[0]?.clef ?? { sign: 'G', line: 2 };
-      const mDef = score.measures.find((m) => m.id === measureId) ?? score.measures[0];
-      const keySig = mDef?.keySig ?? 0;
-
-      const deltaYSpaces = deltaPxY / staffSpacePx;
-      const stepDelta = Math.round(-deltaYSpaces * 2);
-
-      const minSp = Math.min(...startStepPositions);
-      const maxSp = Math.max(...startStepPositions);
-      const clampedStepDelta = Math.max(-3 - minSp, Math.min(11 - maxSp, stepDelta));
-
-      const targetPitches = startStepPositions.map((sp) =>
-        yToStaffPosition(clef, staffPositionToY(sp + clampedStepDelta), keySig)
-      );
-      if (dragStateRef.current.stepDelta !== clampedStepDelta) {
-        onPreviewPitches?.(targetPitches);
-      }
-      dragStateRef.current.stepDelta = clampedStepDelta;
-      dragStateRef.current.targetPitches = targetPitches;
-
-      const pitchName = targetPitches
-        .map((p) => formatPitchName(p, noteNameStyle, language))
-        .join(', ');
-      onDragStatus?.(pitchName);
-
-      if (!dragRafIdRef.current) {
-        dragRafIdRef.current = requestAnimationFrame(() => {
-          dragRafIdRef.current = null;
-          if (!dragStateRef.current?.isDragging) return;
-          renderPitchDragFeedback(dragStateRef.current.eventId, clampedStepDelta, startStepPositions);
-        });
-      }
-      return;
-    }
-
-    if (dragMode === 'position') {
-      // Position mode: dx only on notes/chords, dx + dy on rests; snap 0.25 unless Shift held
-      const rawDeltaDx = deltaPxX / staffSpacePx;
-      const rawDeltaDy = isRest ? deltaPxY / staffSpacePx : 0;
-      const snappedDeltaDx = snapDragOffset(rawDeltaDx, Boolean(e.shiftKey));
-      const snappedDeltaDy = isRest ? snapDragOffset(rawDeltaDy, Boolean(e.shiftKey)) : 0;
-
-      const targetSys = layout.systems.find((s) => s.items.some((it) => it.eventId === eventId));
-      const eventItems = targetSys ? targetSys.items.filter((it) => it.eventId === eventId) : [];
-      const mBounds = targetSys
-        ? getSystemMeasureBounds(targetSys).find((b) => b.measureId === measureId)
-        : undefined;
-      const existingApplied = layout.appliedOverrides?.[eventId] ?? { dx: 0, dy: 0 };
-
-      const targetRawDx = existingApplied.dx + snappedDeltaDx;
-      const targetRawDy = isRest ? existingApplied.dy + snappedDeltaDy : 0;
-
-      let finalTotalDx = targetRawDx;
-      let finalTotalDy = targetRawDy;
-      let isAtLimit = false;
-
-      if (mBounds && eventItems.length > 0) {
-        const clamped = clampOverrideOffset(
-          eventItems,
-          mBounds,
-          targetRawDx,
-          targetRawDy,
-          isRest,
-          existingApplied.dx,
-          existingApplied.dy
-        );
-        finalTotalDx = clamped.dx;
-        finalTotalDy = clamped.dy;
-        isAtLimit = clamped.isAtLimit;
-      }
-
-      dragStateRef.current.dx = finalTotalDx;
-      dragStateRef.current.dy = finalTotalDy;
-
-      const visDx = finalTotalDx - existingApplied.dx;
-      const visDy = finalTotalDy - existingApplied.dy;
-
-      const limitSuffix = isAtLimit ? ` · ${t('status.offsetLimit')}` : '';
-      const statusStr = `dx ${finalTotalDx.toFixed(2)} · dy ${finalTotalDy.toFixed(2)}${limitSuffix}`;
-      onDragStatus?.(statusStr);
-
-      if (!dragRafIdRef.current) {
-        dragRafIdRef.current = requestAnimationFrame(() => {
-          dragRafIdRef.current = null;
-          if (!dragStateRef.current?.isDragging) return;
-          renderManualDragFeedback(dragStateRef.current.eventId, visDx, visDy);
-        });
-      }
-    }
-  };
-
-  const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
-    releaseCapture();
-
-    if (marqueeRef.current) {
-      if (marqueeRef.current.isMarquee) {
-        const { startX, startY, currentX, currentY } = marqueeRef.current;
-        const left = Math.min(startX, currentX) - containerRectRef.current.left;
-        const right = Math.max(startX, currentX) - containerRectRef.current.left;
-        const top = Math.min(startY, currentY) - containerRectRef.current.top;
-        const bottom = Math.max(startY, currentY) - containerRectRef.current.top;
-
-        const intersectingEventIds = new Set<string>();
-        for (const sys of layout.systems) {
-          for (const item of sys.items) {
-            if (item.eventId) {
-              const pxX = item.x * staffSpacePx;
-              const pxY = (sys.y + item.y) * staffSpacePx;
-              if (pxX >= left - 15 && pxX <= right + 15 && pxY >= top - 20 && pxY <= bottom + 20) {
-                intersectingEventIds.add(item.eventId);
-              }
-            }
-          }
-        }
-
-        const staff = score.parts[0]?.staves[0];
-        if (staff && intersectingEventIds.size > 0) {
-          const orderedEvents: ScoreEvent[] = [];
-          for (const mDef of score.measures) {
-            const sm = staff.measures[mDef.id];
-            if (sm) {
-              for (const v of sm.voices) {
-                for (const ev of v.events) {
-                  if (intersectingEventIds.has(ev.id)) {
-                    orderedEvents.push(ev);
-                  }
-                }
-              }
-            }
-          }
-          if (orderedEvents.length > 0) {
-            const firstEv = orderedEvents[0];
-            const lastEv = orderedEvents[orderedEvents.length - 1];
-            const firstCtx = findEventContext(score, firstEv.id);
-            const voiceId = firstCtx?.voiceId ?? staff.measures[score.measures[0]?.id]?.voices[0]?.id ?? 'v1';
-            onSelectRange?.({
-              staffId: staff.id,
-              voiceId,
-              anchorId: firstEv.id,
-              focusId: lastEv.id,
-            });
-          }
-        }
-        suppressNextClickRef.current = true;
-      }
-      marqueeRef.current = null;
-      setMarqueeRect(null);
-    }
-
-    if (mode === 'input') {
-      const press = inputPressRef.current;
-      inputPressRef.current = null;
-      suppressNextClickRef.current = true;
-      if (press && !press.movedPastThreshold && !isDragPastThreshold(e.clientX - press.startX, e.clientY - press.startY, 4)) {
-        enterPitchAtPointer(e.clientX, e.clientY);
-      }
-      return;
-    }
-
-    if (dragRafIdRef.current) {
-      cancelAnimationFrame(dragRafIdRef.current);
-      dragRafIdRef.current = null;
-    }
-
-    if (dragStateRef.current?.isDragging) {
-      const { dragMode, eventId, isNote, dx, dy, stepDelta, targetPitches } = dragStateRef.current;
-      const groupEl = svgRef.current?.querySelector(`g[data-event-id="${eventId}"]`) as HTMLElement | null;
-      if (groupEl) groupEl.style.opacity = '1';
-      clearDragFeedback();
-      onDragStatus?.(null);
-
-      if (dragMode === 'select' && isNote) {
-        if (stepDelta !== 0 && targetPitches.length > 0) {
-          onChangePitch?.(eventId, targetPitches);
-        }
-      } else if (dragMode === 'position') {
-        const existingApplied = layout.appliedOverrides?.[eventId] ?? { dx: 0, dy: 0 };
-        if (dx !== existingApplied.dx || dy !== existingApplied.dy) {
-          onApplyOverride?.(eventId, dx, dy, false);
-        }
-      }
-    }
-
-    setIsDraggingState(false);
-    dragStateRef.current = null;
-  };
-
-  const handlePointerCancel = () => {
-    cancelActiveInteractions();
-  };
-
-  const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (suppressNextClickRef.current) {
-      suppressNextClickRef.current = false;
-      return;
-    }
-
-    if (mode === 'input') {
-      // Fallback for synthetic DOM click without pointerdown/up
-      enterPitchAtPointer(e.clientX, e.clientY);
-      return;
-    }
-
-    if (hasDraggedRef.current) {
-      hasDraggedRef.current = false;
-      return;
-    }
-
-    if (containerRectRef.current.width === 0) {
-      updateContainerRect();
-    }
-    const coords = getPointerSystemCoords(e.clientX, e.clientY);
-    const hit = coords ? hitTestEvent(layout, coords.targetSys.index, coords.sysRelX, coords.sysRelY) : null;
-
-    if (hit) {
-      if (e.shiftKey && onExtendSelectionTo) {
-        onExtendSelectionTo(hit.eventId);
-      } else {
-        onSelectEvent(hit.eventId);
-      }
-      return;
-    }
-
-    if (mode === 'select' && coords && onSelectMeasure) {
-      const found = xToCursor(layout, coords.targetSys.index, coords.sysRelX, score);
-      if (found) {
-        onSelectMeasure(found.measureId, found.tick);
-      }
-    }
-    onSelectEvent(null);
-  };
-
-  // Map eventId to layout coordinates for fast, zero-DOM-read playhead and highlighting
-  const eventLayoutMap = useMemo(() => {
-    const map = new Map<string, { x: number; sysIndex: number; sysY: number }>();
-    for (const sys of layout.systems) {
-      for (const item of sys.items) {
-        if (item.eventId && !map.has(item.eventId)) {
-          map.set(item.eventId, { x: item.x, sysIndex: sys.index, sysY: sys.y });
-        }
-      }
-    }
-    return map;
-  }, [layout]);
-
-  const lastPlayheadRef = useRef<{ x: number; y1: number; y2: number; sysIndex: number } | null>(null);
-
-  const playhead = useMemo(() => {
-    if (!isPlaying && !isPaused) {
-      lastPlayheadRef.current = null;
-      return null;
-    }
-    if (activePlaybackEventIds && activePlaybackEventIds.length > 0) {
-      for (const id of activePlaybackEventIds) {
-        const loc = eventLayoutMap.get(id);
-        if (loc) {
-          const res = {
-            x: loc.x * staffSpacePx,
-            y1: (loc.sysY - 1) * staffSpacePx,
-            y2: (loc.sysY + 5) * staffSpacePx,
-            sysIndex: loc.sysIndex,
-          };
-          lastPlayheadRef.current = res;
-          return res;
-        }
-      }
-    }
-    return lastPlayheadRef.current;
-  }, [isPlaying, isPaused, activePlaybackEventIds, eventLayoutMap, staffSpacePx]);
+  const {
+    ghostNote,
+    marqueeRect,
+    isDraggingState,
+    handlers,
+  } = useScoreInteractions({
+    score,
+    layout,
+    staffSpacePx,
+    zoom,
+    mode,
+    activeDuration,
+    cursor,
+    cursorPos,
+    noteNameStyle,
+    language,
+    t,
+    containerRectRef,
+    updateContainerRect,
+    svgRef,
+    dragOverlayRef,
+    onSelectEvent,
+    onSelectRange,
+    onExtendSelectionTo,
+    onSelectMeasure,
+    onEnterPitchDirect,
+    onApplyOverride,
+    onChangePitch,
+    onHoverPitch,
+    onHoverInfo,
+    onDragStatus,
+    onPreviewPitches,
+  });
 
   // Dynamic green playback highlighting via DOM class and attributes without full React re-render
   const prevHighlightedIdsRef = useRef<Set<string>>(new Set());
@@ -1171,66 +328,19 @@ export const ScoreView: React.FC<ScoreViewProps> = ({
     }
   }, [isPlaying, isPaused]);
 
-  // Auto-scroll to keep active system visible, paused for 3s if user scrolls
-  const lastAutoScrollSysRef = useRef<number>(-1);
-  const userScrollPauseUntilRef = useRef<number>(0);
-  const isProgrammaticScrollRef = useRef<boolean>(false);
-
-  useEffect(() => {
-    if (!isPlaying || !playhead) return;
-    if (playhead.sysIndex === lastAutoScrollSysRef.current) return;
-
-    const now = performance.now();
-    if (now < userScrollPauseUntilRef.current) return;
-
-    lastAutoScrollSysRef.current = playhead.sysIndex;
-
-    if (containerRef.current) {
-      const sys = layout.systems[playhead.sysIndex];
-      if (sys) {
-        const targetScrollTop = Math.max(0, (sys.y - 1.5) * staffSpacePx);
-        isProgrammaticScrollRef.current = true;
-        containerRef.current.scrollTo({ top: targetScrollTop, behavior: 'smooth' });
-        setTimeout(() => {
-          isProgrammaticScrollRef.current = false;
-        }, 500);
-      }
-    }
-  }, [playhead, isPlaying, layout, staffSpacePx]);
-
-  const handleContainerScroll = () => {
-    updateContainerRect();
-    if (!isProgrammaticScrollRef.current) {
-      userScrollPauseUntilRef.current = performance.now() + 3000;
-    }
-    if (containerRef.current) {
-      const top = containerRef.current.scrollTop;
-      const height = containerRef.current.clientHeight;
-      if (scrollRafRef.current === null) {
-        scrollRafRef.current = requestAnimationFrame(() => {
-          scrollRafRef.current = null;
-          setViewportScroll((prev) => {
-            if (prev.scrollTop === top && prev.clientHeight === height) return prev;
-            return { scrollTop: top, clientHeight: height };
-          });
-        });
-      }
-    }
-  };
-
   const totalWidthPx = layout.width * staffSpacePx;
   const totalHeightPx = layout.height * staffSpacePx;
 
   return (
     <div
       ref={containerRef}
-      onClick={handleClick}
-      onPointerDown={handlePointerDown}
-      onPointerMove={handlePointerMove}
-      onPointerUp={handlePointerUp}
-      onPointerCancel={handlePointerCancel}
-      onPointerEnter={handlePointerEnter}
-      onPointerLeave={handlePointerLeave}
+      onClick={handlers.handleClick}
+      onPointerDown={handlers.handlePointerDown}
+      onPointerMove={handlers.handlePointerMove}
+      onPointerUp={handlers.handlePointerUp}
+      onPointerCancel={handlers.handlePointerCancel}
+      onPointerEnter={handlers.handlePointerEnter}
+      onPointerLeave={handlers.handlePointerLeave}
       onScroll={handleContainerScroll}
       onContextMenu={(e) => e.preventDefault()}
       className="notranslate"
@@ -1358,33 +468,6 @@ export const ScoreView: React.FC<ScoreViewProps> = ({
             </defs>
           )}
 
-          {/* Tinted background band for range selection */}
-          {selectedEventIds && selectedEventIds.size > 0 && layout.systems.map((sys) => {
-            if (!visibleSystemIndices.has(sys.index)) return null;
-            const sysItems = sys.items.filter((it) => it.eventId && selectedEventIds.has(it.eventId));
-            if (sysItems.length === 0) return null;
-            const minX = Math.min(...sysItems.map((it) => it.x)) - 0.4;
-            const maxX = Math.max(...sysItems.map((it) => (it.x2 ?? it.x) + 1.2)) + 0.4;
-            const pxX = minX * staffSpacePx;
-            const pxY = (sys.y - 1.5) * staffSpacePx;
-            const widthPx = Math.max(10, (maxX - minX) * staffSpacePx);
-            const heightPx = 7 * staffSpacePx;
-            return (
-              <rect
-                key={`range-band-sys-${sys.index}`}
-                className="score-range-band notranslate"
-                data-testid="range-selection-band"
-                x={pxX}
-                y={pxY}
-                width={widthPx}
-                height={heightPx}
-                rx={4}
-                fill="rgba(37, 99, 235, 0.12)"
-                pointerEvents="none"
-              />
-            );
-          })}
-
           {layout.systems.map((sys) => {
             const isVisible = visibleSystemIndices.has(sys.index);
             if (!isVisible) {
@@ -1410,194 +493,29 @@ export const ScoreView: React.FC<ScoreViewProps> = ({
             );
           })}
 
-          {/* SVG Ties */}
-          {visibleTies.map((tie) => {
-            const sys = layout.systems[tie.systemIndex];
-            const sysY = sys ? sys.y : 0;
-            return (
-              <path
-                key={tie.id}
-                data-tie-id={tie.id}
-                className="score-tie notranslate"
-                d={tie.d}
-                transform={`translate(0, ${sysY * staffSpacePx}) scale(${staffSpacePx})`}
-                fill="currentColor"
-                pointerEvents="none"
-              />
-            );
-          })}
-
-          {/* SVG Slurs */}
-          {visibleSlurs.map((slur) => {
-            const sys = layout.systems[slur.systemIndex];
-            const sysY = sys ? sys.y : 0;
-            return (
-              <path
-                key={slur.id}
-                data-slur-id={slur.slurId}
-                className="score-slur notranslate"
-                d={slur.d}
-                transform={`translate(0, ${sysY * staffSpacePx}) scale(${staffSpacePx})`}
-                fill="currentColor"
-                pointerEvents="none"
-              />
-            );
-          })}
-
-          {/* SVG Dynamics */}
-          {visibleDynamics.map((item) => {
-            const sysIdx = item.systemIndex ?? 0;
-            const sys = layout.systems[sysIdx];
-            const sysY = sys ? sys.y : 0;
-            const pxX = item.x * staffSpacePx;
-            const pxY = (sysY + item.y) * staffSpacePx;
-            const fontSize = staffSpacePx * 4;
-            return (
-              <g
-                key={item.id}
-                className="score-dynamic notranslate"
-                data-event-id={item.eventId}
-                data-dynamic-id={item.id}
-                data-dynamic-type={item.type}
-                pointerEvents="none"
-              >
-                {useTextFallback && item.glyph ? (
-                  <text
-                    x={pxX}
-                    y={pxY}
-                    fontSize={fontSize}
-                    fontFamily="Bravura, BravuraText, sans-serif"
-                    textAnchor="start"
-                    dominantBaseline="alphabetic"
-                    fill="currentColor"
-                  >
-                    {getGlyphChar(item.glyph)}
-                  </text>
-                ) : (
-                  <use
-                    href={`#glyph-${item.glyph}`}
-                    transform={`translate(${pxX}, ${pxY}) scale(${scale})`}
-                    fill="currentColor"
-                  />
-                )}
-              </g>
-            );
-          })}
-
-          {/* SVG Articulations */}
-          {visibleArticulations.map((item) => {
-            const sysIdx = item.systemIndex ?? 0;
-            const sys = layout.systems[sysIdx];
-            const sysY = sys ? sys.y : 0;
-            const pxX = item.x * staffSpacePx;
-            const pxY = (sysY + item.y) * staffSpacePx;
-            const fontSize = staffSpacePx * 4;
-            return (
-              <g
-                key={item.id}
-                className="score-articulation notranslate"
-                data-event-id={item.eventId}
-                data-articulation-id={item.id}
-                data-articulation-type={item.type}
-                pointerEvents="none"
-              >
-                {useTextFallback && item.glyph ? (
-                  <text
-                    x={pxX}
-                    y={pxY}
-                    fontSize={fontSize}
-                    fontFamily="Bravura, BravuraText, sans-serif"
-                    textAnchor="start"
-                    dominantBaseline="alphabetic"
-                    fill="currentColor"
-                  >
-                    {getGlyphChar(item.glyph)}
-                  </text>
-                ) : (
-                  <use
-                    href={`#glyph-${item.glyph}`}
-                    transform={`translate(${pxX}, ${pxY}) scale(${scale})`}
-                    fill="currentColor"
-                  />
-                )}
-              </g>
-            );
-          })}
-
-          {/* Marquee selection rectangle */}
-          {marqueeRect && (
-            <rect
-              className="score-marquee-rect notranslate"
-              data-testid="marquee-selection-box"
-              x={marqueeRect.x}
-              y={marqueeRect.y}
-              width={marqueeRect.width}
-              height={marqueeRect.height}
-              fill="rgba(37, 99, 235, 0.08)"
-              stroke="#2563eb"
-              strokeWidth={1.5}
-              strokeDasharray="4 3"
-              pointerEvents="none"
-            />
-          )}
-
-          {/* Playback Playhead Line */}
-          {(isPlaying || isPaused) && playhead && (
-            <line
-              data-testid="playback-playhead"
-              className="score-playback-playhead notranslate"
-              x1={playhead.x}
-              y1={playhead.y1}
-              x2={playhead.x}
-              y2={playhead.y2}
-              stroke="#16a34a"
-              strokeWidth={2}
-              opacity={0.85}
-              pointerEvents="none"
-            />
-          )}
-
-          {/* Persistent cursor overlay inside the SVG */}
-          {isInputMode && cursorPos && (
-            <line
-              ref={cursorLineRef}
-              className="score-input-cursor notranslate"
-              x1={cursorPos.x * staffSpacePx}
-              y1={cursorPos.y1 * staffSpacePx}
-              x2={cursorPos.x * staffSpacePx}
-              y2={cursorPos.y2 * staffSpacePx}
-              stroke="#2563eb"
-              strokeWidth={2}
-            />
-          )}
-
-          {/* Semi-transparent ghost note overlay (Input mode only, hidden outside staff or while dragging) */}
-          {isInputMode && ghostNote && !isDraggingState && (
-            <g className="score-ghost-note notranslate" pointerEvents="none">
-              {ghostNote.ledgerYs.map((ly) => (
-                <line
-                  key={`ghost-ledger-${ly}`}
-                  x1={(ghostNote.x - 0.4) * staffSpacePx}
-                  y1={(ghostNote.sysY + ly) * staffSpacePx}
-                  x2={(ghostNote.x + 1.6) * staffSpacePx}
-                  y2={(ghostNote.sysY + ly) * staffSpacePx}
-                  stroke="#2563eb"
-                  strokeWidth={1.6 * zoom}
-                  opacity={0.45}
-                  strokeLinecap="butt"
-                />
-              ))}
-              <use
-                href={`#glyph-${ghostNote.glyph}`}
-                transform={`translate(${ghostNote.x * staffSpacePx}, ${(ghostNote.sysY + ghostNote.y) * staffSpacePx}) scale(${scale})`}
-                fill="#2563eb"
-                opacity={0.45}
-              />
-            </g>
-          )}
-
-          {/* Live drag feedback overlay */}
-          <g ref={dragOverlayRef} className="score-drag-overlay notranslate" pointerEvents="none" />
+          <ScoreSvgLayers
+            layout={layout}
+            selectedEventIds={selectedEventIds}
+            visibleSystemIndices={visibleSystemIndices}
+            staffSpacePx={staffSpacePx}
+            scale={scale}
+            zoom={zoom}
+            useTextFallback={useTextFallback}
+            visibleTies={visibleTies}
+            visibleSlurs={visibleSlurs}
+            visibleDynamics={visibleDynamics}
+            visibleArticulations={visibleArticulations}
+            marqueeRect={marqueeRect}
+            isPlaying={isPlaying}
+            isPaused={isPaused}
+            playhead={playhead}
+            isInputMode={isInputMode}
+            cursorPos={cursorPos}
+            cursorLineRef={cursorLineRef}
+            ghostNote={ghostNote}
+            isDraggingState={isDraggingState}
+            dragOverlayRef={dragOverlayRef}
+          />
         </svg>
       </div>
     </div>

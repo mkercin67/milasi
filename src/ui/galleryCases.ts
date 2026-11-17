@@ -73,7 +73,7 @@ export function getGalleryCases(): GalleryCase[] {
       title: 'B. Accidental Rules & Naturals',
       description: 'Same-measure repeat, barline reset, natural cancellations.',
       build: () => {
-        let score = createEmptyScore({
+        const score = createEmptyScore({
           title: 'B. Accidental Rules',
           clef: { sign: 'G', line: 2 },
           keySig: 0,

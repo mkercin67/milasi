@@ -17,7 +17,7 @@ import {
 } from './model';
 import { createMeasure, createNote, createRest, newId } from './factory';
 import { durationTicks, measureTicks, PPQ } from './time';
-import { getKeySignatureAlter } from '../layout/keySignature';
+import { getKeySignatureAlter } from './pitch';
 import { Command } from './commands';
 
 export type RestSpanType = BaseDurationType | 'wholeMeasure';

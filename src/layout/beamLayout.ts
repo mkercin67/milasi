@@ -8,7 +8,7 @@
 
 import { BaseDurationType } from '../core/model';
 import { PPQ } from '../core/time';
-import { getEngravingDefault } from '../render/smufl';
+import { getEngravingDefault } from './smufl';
 import { getBeamLevelCount } from './beams';
 import { LayoutItem, StemDirection } from './types';
 

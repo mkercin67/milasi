@@ -11,7 +11,7 @@
     "bench": "npm run build && node scripts/bench.mjs",
     "smoke": "npm run build && node scripts/smoke.mjs",
     "typecheck": "tsc --noEmit",
-    "check": "npm run typecheck && npm test && npm run build"
+    "check": "tsc --noEmit && node scripts/checkImports.mjs && eslint src/ && npx knip && npm test && npm run build"
   },
   "dependencies": {
     "immer": "^10.1.1",
@@ -24,9 +24,13 @@
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
     "@vitejs/plugin-react": "^4.3.4",
+    "eslint": "^10.15.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "knip": "^6.45.1",
     "opentype.js": "^2.0.0",
     "playwright": "^1.65.1",
     "typescript": "^5.6.3",
+    "typescript-eslint": "^8.73.0",
     "vite": "^5.4.11",
     "vitest": "^2.1.8"
   }

@@ -1,4 +1,3 @@
-import React, { useMemo } from 'react';
 import {
   createEmptyScore,
   createMeasure,
@@ -9,8 +8,6 @@ import {
   createScore,
 } from '../core/factory';
 import { Score } from '../core/model';
-import { layoutScore } from '../layout/layoutScore';
-import { renderSvgToString } from '../render/renderSvg';
 
 /**
  * Builds a comprehensive test score exercising all Milestone 2 layout requirements.
@@ -274,74 +271,5 @@ export function createBenchmarkFullFeaturedScore(measureCount: number = 64): Sco
   return score;
 }
 
-export const Demo: React.FC = () => {
-  const trebleScore = useMemo(() => buildSampleScore('G'), []);
-  const bassScore = useMemo(() => buildSampleScore('F'), []);
 
-  // System width set to 82 staff spaces to wrap 5 measures into 2 justified systems
-  const trebleLayout = useMemo(() => layoutScore(trebleScore, { width: 82 }), [trebleScore]);
-  const bassLayout = useMemo(() => layoutScore(bassScore, { width: 82 }), [bassScore]);
 
-  const trebleSvg = useMemo(
-    () => renderSvgToString(trebleLayout, { staffSpacePx: 11, color: '#111827' }),
-    [trebleLayout]
-  );
-  const bassSvg = useMemo(
-    () => renderSvgToString(bassLayout, { staffSpacePx: 11, color: '#111827' }),
-    [bassLayout]
-  );
-
-  return (
-    <div style={{ fontFamily: 'sans-serif', padding: '24px', backgroundColor: '#f9fafb' }}>
-      <header style={{ marginBottom: '24px' }}>
-        <h1 style={{ fontSize: '28px', margin: '0 0 8px 0', color: '#111827' }}>
-          ScoreForge — Milestone 2 Engraving Demo
-        </h1>
-        <p style={{ color: '#4b5563', margin: 0 }}>
-          SVG layout and rendering with Bravura SMuFL font. Displays clefs, G major armör,
-          rising scale, dotted rhythms, rests, chord with second, ledger lines, accidental
-          natural cancellation, and 2-system wrapping.
-        </p>
-      </header>
-
-      <section
-        style={{
-          backgroundColor: '#ffffff',
-          borderRadius: '8px',
-          padding: '20px',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-          marginBottom: '32px',
-        }}
-      >
-        <h2 style={{ fontSize: '20px', margin: '0 0 16px 0', color: '#1f2937' }}>
-          1. Treble Clef (Sol Anahtarı) — 2 Systems Wrapped
-        </h2>
-        <div
-          id="treble-demo-container"
-          dangerouslySetInnerHTML={{ __html: trebleSvg }}
-          style={{ overflowX: 'auto' }}
-        />
-      </section>
-
-      <section
-        style={{
-          backgroundColor: '#ffffff',
-          borderRadius: '8px',
-          padding: '20px',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-        }}
-      >
-        <h2 style={{ fontSize: '20px', margin: '0 0 16px 0', color: '#1f2937' }}>
-          2. Bass Clef (Fa Anahtarı) — 2 Systems Wrapped
-        </h2>
-        <div
-          id="bass-demo-container"
-          dangerouslySetInnerHTML={{ __html: bassSvg }}
-          style={{ overflowX: 'auto' }}
-        />
-      </section>
-    </div>
-  );
-};
-
-export default Demo;
