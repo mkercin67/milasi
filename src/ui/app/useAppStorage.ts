@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Score } from '../../core/model';
 import { deserializeScore, serializeScore } from '../../io/json';
-import { loadAutosave, saveAutosave } from '../../io/storage';
+import { AutosaveRecord, loadAutosave, loadAutosaveHistory, saveAutosave } from '../../io/storage';
 import { useI18n } from '../i18n';
 
 export interface UseAppStorageParams {
@@ -23,6 +23,7 @@ export function useAppStorage({
   const [pendingAction, setPendingAction] = useState<(() => void) | null>(null);
   const [isRestorePromptOpen, setIsRestorePromptOpen] = useState<boolean>(false);
   const [restoreData, setRestoreData] = useState<{ score: Score; savedAt: number } | null>(null);
+  const [historyVersions, setHistoryVersions] = useState<AutosaveRecord[]>([]);
   const [statusToast, setStatusToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -46,6 +47,7 @@ export function useAppStorage({
         await saveAutosave(score);
         const dt = performance.now() - t0;
         (window as any).__scoreforge_last_autosave_ms = dt;
+        loadAutosaveHistory().then(setHistoryVersions);
       } catch (err) {
         console.warn('Autosave error:', err);
       }
@@ -61,6 +63,7 @@ export function useAppStorage({
       if (record && record.score) {
         setRestoreData({ score: record.score, savedAt: typeof record.savedAt === 'string' ? new Date(record.savedAt).getTime() : record.savedAt });
         setIsRestorePromptOpen(true);
+        loadAutosaveHistory().then(setHistoryVersions);
       }
     };
 
@@ -72,6 +75,7 @@ export function useAppStorage({
         if (record && record.score) {
           setRestoreData({ score: record.score, savedAt: typeof record.savedAt === 'string' ? new Date(record.savedAt).getTime() : record.savedAt });
           setIsRestorePromptOpen(true);
+          loadAutosaveHistory().then(setHistoryVersions);
         }
       })
       .catch((e) => console.warn('Could not check autosave:', e));
@@ -169,6 +173,13 @@ export function useAppStorage({
     [resetScore, markClean, t]
   );
 
+  const handleSelectHistoryVersion = useCallback((record: AutosaveRecord) => {
+    setRestoreData({
+      score: record.score,
+      savedAt: typeof record.savedAt === 'string' ? new Date(record.savedAt).getTime() : record.savedAt,
+    });
+  }, []);
+
   return {
     fileInputRef,
     statusToast,
@@ -181,6 +192,8 @@ export function useAppStorage({
     setIsRestorePromptOpen,
     restoreData,
     setRestoreData,
+    historyVersions,
+    handleSelectHistoryVersion,
     handleSave,
     handleOpenClick,
     handleFileChange,

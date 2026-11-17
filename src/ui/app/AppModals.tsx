@@ -13,6 +13,7 @@ import {
   SessionRestoreConfirm,
   UnsavedConfirm,
 } from './modals/ConfirmModals';
+import { AutosaveRecord } from '../../io/storage';
 import { SelectedEventInfo } from './types';
 import { useI18n } from '../i18n';
 
@@ -96,6 +97,8 @@ export interface AppModalsProps {
   setIsRestorePromptOpen: (open: boolean) => void;
   restoreData: { score: Score; savedAt: number } | null;
   setRestoreData: (data: { score: Score; savedAt: number } | null) => void;
+  historyVersions?: AutosaveRecord[];
+  onSelectHistoryVersion?: (record: AutosaveRecord) => void;
   resetScore: (score: Score) => void;
   markClean: () => void;
   clearAutosave: () => Promise<void>;
@@ -176,6 +179,8 @@ export const AppModals: React.FC<AppModalsProps> = ({
   setIsRestorePromptOpen,
   restoreData,
   setRestoreData,
+  historyVersions,
+  onSelectHistoryVersion,
   resetScore,
   markClean,
   clearAutosave,
@@ -302,6 +307,8 @@ export const AppModals: React.FC<AppModalsProps> = ({
       <SessionRestoreConfirm
         isOpen={isRestorePromptOpen}
         restoreData={restoreData}
+        historyVersions={historyVersions}
+        onSelectVersion={onSelectHistoryVersion}
         onDiscard={async () => {
           await clearAutosave();
           setIsRestorePromptOpen(false);
