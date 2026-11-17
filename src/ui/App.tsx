@@ -2626,7 +2626,17 @@ const EditorShell: React.FC = () => {
   );
 };
 
+import { RegressionGallery } from './RegressionGallery';
+
 export const App: React.FC = () => {
+  const isGallery =
+    typeof window !== 'undefined' &&
+    new URLSearchParams(window.location.search).get('state') === 'gallery';
+
+  if (isGallery) {
+    return <RegressionGallery />;
+  }
+
   return (
     <I18nProvider>
       <EditorShell />
