@@ -18,10 +18,11 @@ export interface SystemViewProps {
   system: LayoutSystem;
   staffSpacePx: number;
   useTextFallback?: boolean;
+  onOpenScoreInfo?: () => void;
 }
 
 export const SystemView: React.FC<SystemViewProps> = React.memo(
-  ({ system, staffSpacePx, useTextFallback = false }) => {
+  ({ system, staffSpacePx, useTextFallback = false, onOpenScoreInfo }) => {
     const fontSize = staffSpacePx * 4;
     const scale = staffSpacePx / (UNITS_PER_EM / 4);
 
@@ -166,6 +167,33 @@ export const SystemView: React.FC<SystemViewProps> = React.memo(
             transform={`translate(${pxX}, ${pxY}) scale(${scale})`}
             fill="currentColor"
           />
+        );
+      }
+
+      if (item.kind === 'text' && item.text) {
+        const sz = item.fontSize ? item.fontSize * staffSpacePx : staffSpacePx * 1.5;
+        const isHeader = item.id.startsWith('header-');
+        return (
+          <text
+            key={item.id}
+            data-id={item.id}
+            data-event-id={item.eventId}
+            x={pxX}
+            y={pxY}
+            fill="currentColor"
+            textAnchor={item.textAnchor}
+            fontFamily={item.fontFamily ?? '"Times New Roman", Times, "Liberation Serif", serif'}
+            fontSize={`${sz}px`}
+            fontWeight={item.fontWeight ? String(item.fontWeight) : undefined}
+            fontStyle={item.fontStyle}
+            style={{
+              cursor: isHeader ? 'pointer' : undefined,
+              userSelect: 'none',
+            }}
+            onClick={isHeader ? onOpenScoreInfo : undefined}
+          >
+            {item.text}
+          </text>
         );
       }
 

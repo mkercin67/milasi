@@ -28,3 +28,9 @@ This document lists known constraints and architectural trade-offs in the curren
 - **Status:** Model Design Note.
 - **Details:** In `Score`, each `StaffMeasure` contains `voices: Voice[]` where each voice has a local `id`. Cross-measure operations rely on the voice's zero-based `voiceIndex` (1..4) to maintain continuity across barlines rather than comparing voice UUIDs.
 
+## 6. Score Structure Elements (Milestone 6c)
+- **Status:** Implemented in Milestone 6c.
+- **Details:** Supports header text (title, subtitle, composer, arranger), tempo text markings (e.g. "Allegro vivace ♩ = 120"), mid-score key signature changes with cancellation naturals, mid-score time signatures, pickup measures (anacrusis), and barlines (single, double, final).
+- **Scope Limits:** Repeats, volta brackets (1st/2nd endings), rehearsal marks, D.S./coda navigation, multi-staff systems, and lyrics are deferred to subsequent milestones.
+
+

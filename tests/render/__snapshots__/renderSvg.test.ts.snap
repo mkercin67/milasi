@@ -9,6 +9,8 @@ exports[`renderSvg > renderSvgToString snapshot of the M3d beam demo score (treb
     <path id="glyph-noteheadBlack" d="M97 125C186 125 295 43 295-42C295-93 255-125 198-125C88-125 0-44 0 42C0 94 43 125 97 125" />
     <path id="glyph-rest8th" d="M134-107C134-144 104-174 67-174C30-174 0-144 0-107C0-86 12-68 27-56C36-50 45-45 55-43C63-41 72-39 81-39C95-39 109-42 120-46C134-50 143-54 156-61C158-62 160-62 161-62C165-62 166-58 166-53C166-50 166-46 165-42C162-27 90 172 72 238C72 250 95 251 101 251C112 251 126 249 136 241C139 239 237-112 237-112C241-130 246-146 247-151C247-161 237-166 235-167C233-167 230-167 224-163C217-157 167-97 134-97" />
     <path id="glyph-timeSig4" d="M362 74L362-140C362-148 361-157 350-157C341-157 336-155 330-148L235-33C231-28 226-22 226-10L226 74L91 74C171 6 331-221 334-232C334-234 335-235 335-237C335-245 328-251 320-251C311-251 270-249 252-249C234-249 189-251 181-251C172-251 158-248 158-232C158-108 60 31 30 73L24 81C24 82 23 83 23 84C21 88 20 92 20 95C20 105 28 112 40 112L226 112L226 175C226 202 204 210 186 210C170 210 163 219 163 229C163 239 167 250 182 250L395 250C405 250 415 243 415 229C415 215 403 209 393 209C383 209 362 203 362 171L362 112L435 112C445 112 450 105 450 93C450 81 446 74 435 74" />
+    <path id="glyph-timeSig6" d="M260-100C272-88 289-83 305-83C313-83 322-85 330-87C361-95 385-127 385-159C385-163 385-166 384-170C379-203 351-227 321-238C297-248 268-251 242-251C166-250 95-213 59-145C37-103 20-50 20-3L20 1C21 47 29 99 51 139C72 177 106 218 145 235C170 246 200 249 225 249C270 249 320 242 356 213C391 185 414 140 414 95C414 39 384 5 352-19C325-39 294-50 263-50C231-50 198-38 172-15C170-13 168-13 166-13C160-13 157-21 157-37C160-222 219-227 240-227C260-227 273-222 273-212C273-198 254-186 248-174C243-165 241-155 241-145C241-130 246-115 256-104C257-102 259-101 260-100M222-2C254-2 281 48 281 110C281 172 254 222 222 222C190 222 164 172 164 110C164 48 190-2 222-2" />
+    <path id="glyph-timeSig8" d="M334-36C370-59 394-92 394-142C394-244 247-259 220-259C104-259 25-206 25-122C25-53 64-16 112 11C60 36 20 69 20 132C20 219 110 259 209 259C309 259 416 216 416 81C416 21 381-12 334-36M282-59C202-87 117-104 117-167C117-209 174-230 218-230C250-230 335-214 335-144C335-104 315-78 282-59M205 226C138 226 77 192 77 127C77 87 112 50 156 33C229 65 303 86 303 152C303 192 272 226 205 226" />
   </defs>
   <g data-system-index="0">
     <line data-id="sys-0-staffline-4" x1="0" y1="110" x2="820" y2="110" stroke="currentColor" stroke-width="1.3" stroke-linecap="butt" />
@@ -56,6 +58,7 @@ exports[`renderSvg > renderSvgToString snapshot of the M3d beam demo score (treb
     <line data-id="sys-1-staffline-2" x1="0" y1="230" x2="820" y2="230" stroke="currentColor" stroke-width="1.3" stroke-linecap="butt" />
     <line data-id="sys-1-staffline-1" x1="0" y1="220" x2="820" y2="220" stroke="currentColor" stroke-width="1.3" stroke-linecap="butt" />
     <line data-id="sys-1-staffline-0" x1="0" y1="210" x2="820" y2="210" stroke="currentColor" stroke-width="1.3" stroke-linecap="butt" />
+    <text data-id="sys-1-measure-number" x="0" y="198" fill="currentColor" font-family="&quot;Times New Roman&quot;, Times, &quot;Liberation Serif&quot;, serif" font-size="11px" font-weight="bold" font-style="italic">2</text>
     <line data-id="sys-1-sys-start-barline" x1="0" y1="210" x2="0" y2="250" stroke="currentColor" stroke-width="1.6" stroke-linecap="butt" />
     <use data-id="sys-1-clef-0.4" href="#glyph-gClef" transform="translate(4, 240) scale(0.04)" fill="currentColor" />
     <use data-id="STATIC-ID" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(45.338975878121026, 250) scale(0.04)" fill="currentColor" />
@@ -106,6 +109,7 @@ exports[`renderSvg > renderSvgToString snapshot of the M3d beam demo score (treb
     <line data-id="sys-2-staffline-2" x1="0" y1="370" x2="820" y2="370" stroke="currentColor" stroke-width="1.3" stroke-linecap="butt" />
     <line data-id="sys-2-staffline-1" x1="0" y1="360" x2="820" y2="360" stroke="currentColor" stroke-width="1.3" stroke-linecap="butt" />
     <line data-id="sys-2-staffline-0" x1="0" y1="350" x2="820" y2="350" stroke="currentColor" stroke-width="1.3" stroke-linecap="butt" />
+    <text data-id="sys-2-measure-number" x="0" y="338" fill="currentColor" font-family="&quot;Times New Roman&quot;, Times, &quot;Liberation Serif&quot;, serif" font-size="11px" font-weight="bold" font-style="italic">3</text>
     <line data-id="sys-2-sys-start-barline" x1="0" y1="350" x2="0" y2="390" stroke="currentColor" stroke-width="1.6" stroke-linecap="butt" />
     <use data-id="sys-2-clef-0.4" href="#glyph-gClef" transform="translate(4, 380) scale(0.04)" fill="currentColor" />
     <use data-id="STATIC-ID" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(40.574537540805224, 400) scale(0.04)" fill="currentColor" />
@@ -175,80 +179,84 @@ exports[`renderSvg > renderSvgToString snapshot of the M3d beam demo score (treb
     <line data-id="sys-3-staffline-2" x1="0" y1="510" x2="820" y2="510" stroke="currentColor" stroke-width="1.3" stroke-linecap="butt" />
     <line data-id="sys-3-staffline-1" x1="0" y1="500" x2="820" y2="500" stroke="currentColor" stroke-width="1.3" stroke-linecap="butt" />
     <line data-id="sys-3-staffline-0" x1="0" y1="490" x2="820" y2="490" stroke="currentColor" stroke-width="1.3" stroke-linecap="butt" />
+    <text data-id="sys-3-measure-number" x="0" y="478" fill="currentColor" font-family="&quot;Times New Roman&quot;, Times, &quot;Liberation Serif&quot;, serif" font-size="11px" font-weight="bold" font-style="italic">5</text>
     <line data-id="sys-3-sys-start-barline" x1="0" y1="490" x2="0" y2="530" stroke="currentColor" stroke-width="1.6" stroke-linecap="butt" />
     <use data-id="sys-3-clef-0.4" href="#glyph-gClef" transform="translate(4, 520) scale(0.04)" fill="currentColor" />
-    <use data-id="STATIC-ID" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(40.81431767337808, 525) scale(0.04)" fill="currentColor" />
-    <line data-id="STATIC-ID-stem" data-event-id="STATIC-ID" x1="53.81543624161074" y1="523.32" x2="53.81543624161074" y2="476.65333333333336" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
-    <use data-id="STATIC-ID" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(84.88590604026845, 500) scale(0.04)" fill="currentColor" />
-    <line data-id="STATIC-ID-stem" data-event-id="STATIC-ID" x1="97.88702460850111" y1="498.32" x2="97.88702460850111" y2="473.32" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
-    <use data-id="STATIC-ID" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(128.95749440715883, 515) scale(0.04)" fill="currentColor" />
-    <line data-id="STATIC-ID-stem" data-event-id="STATIC-ID" x1="141.9586129753915" y1="513.32" x2="141.9586129753915" y2="469.9866666666667" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
-    <use data-id="STATIC-ID" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(173.02908277404921, 505) scale(0.04)" fill="currentColor" />
-    <line data-id="STATIC-ID-stem" data-event-id="STATIC-ID" x1="186.03020134228188" y1="503.32" x2="186.03020134228188" y2="466.65333333333336" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
-    <use data-id="STATIC-ID" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(217.1006711409396, 520) scale(0.04)" fill="currentColor" />
-    <line data-id="STATIC-ID-stem" data-event-id="STATIC-ID" x1="217.1006711409396" y1="521.68" x2="217.1006711409396" y2="550" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
-    <use data-id="STATIC-ID" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(266.6812080536913, 500) scale(0.04)" fill="currentColor" />
-    <line data-id="STATIC-ID-stem" data-event-id="STATIC-ID" x1="266.6812080536913" y1="501.68" x2="266.6812080536913" y2="540" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
-    <use data-id="STATIC-ID" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(316.26174496644296, 530) scale(0.04)" fill="currentColor" />
-    <use data-id="STATIC-ID-pitch-1" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(316.26174496644296, 520) scale(0.04)" fill="currentColor" />
-    <use data-id="STATIC-ID-pitch-2" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(316.26174496644296, 510) scale(0.04)" fill="currentColor" />
-    <line data-id="STATIC-ID-stem" data-event-id="STATIC-ID" x1="329.2628635346756" y1="528.32" x2="329.2628635346756" y2="473.75" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
-    <use data-id="STATIC-ID" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(365.8422818791946, 525) scale(0.04)" fill="currentColor" />
-    <use data-id="STATIC-ID-pitch-1" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(365.8422818791946, 515) scale(0.04)" fill="currentColor" />
-    <use data-id="STATIC-ID-pitch-2" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(365.8422818791946, 505) scale(0.04)" fill="currentColor" />
-    <line data-id="STATIC-ID-stem" data-event-id="STATIC-ID" x1="378.84340044742726" y1="523.32" x2="378.84340044742726" y2="471.25" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
-    <use data-id="STATIC-ID" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(415.4228187919463, 520) scale(0.04)" fill="currentColor" />
-    <use data-id="STATIC-ID-pitch-1" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(415.4228187919463, 510) scale(0.04)" fill="currentColor" />
-    <use data-id="STATIC-ID-pitch-2" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(415.4228187919463, 500) scale(0.04)" fill="currentColor" />
-    <line data-id="STATIC-ID-stem" data-event-id="STATIC-ID" x1="415.4228187919463" y1="501.68" x2="415.4228187919463" y2="553.75" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
-    <use data-id="STATIC-ID" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(465.00335570469804, 515) scale(0.04)" fill="currentColor" />
-    <use data-id="STATIC-ID-pitch-1" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(465.00335570469804, 505) scale(0.04)" fill="currentColor" />
-    <use data-id="STATIC-ID-pitch-2" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(465.00335570469804, 495) scale(0.04)" fill="currentColor" />
-    <line data-id="STATIC-ID-stem" data-event-id="STATIC-ID" x1="465.00335570469804" y1="496.68" x2="465.00335570469804" y2="551.25" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
-    <line data-id="barline-STATIC-ID" x1="512.3803131991052" y1="490" x2="512.3803131991052" y2="530" stroke="currentColor" stroke-width="1.6" stroke-linecap="butt" />
-    <use data-id="STATIC-ID" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(522.9574944071588, 520) scale(0.04)" fill="currentColor" />
-    <line data-id="STATIC-ID-stem" data-event-id="STATIC-ID" x1="535.9586129753915" y1="518.32" x2="535.9586129753915" y2="482.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
-    <use data-id="STATIC-ID" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(572.5380313199106, 515) scale(0.04)" fill="currentColor" />
-    <line data-id="STATIC-ID-stem" data-event-id="STATIC-ID" x1="585.5391498881432" y1="513.32" x2="585.5391498881432" y2="480" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
-    <use data-id="STATIC-ID" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(622.1185682326623, 510) scale(0.04)" fill="currentColor" />
-    <line data-id="STATIC-ID-stem" data-event-id="STATIC-ID" x1="635.1196868008949" y1="508.32" x2="635.1196868008949" y2="477.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
-    <use data-id="STATIC-ID" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(671.6991051454138, 505) scale(0.04)" fill="currentColor" />
-    <line data-id="STATIC-ID-stem" data-event-id="STATIC-ID" x1="671.6991051454138" y1="506.68" x2="671.6991051454138" y2="537.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
-    <use data-id="STATIC-ID" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(721.2796420581656, 500) scale(0.04)" fill="currentColor" />
-    <line data-id="STATIC-ID-stem" data-event-id="STATIC-ID" x1="721.2796420581656" y1="501.68" x2="721.2796420581656" y2="535" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
-    <use data-id="STATIC-ID" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(770.8601789709172, 495) scale(0.04)" fill="currentColor" />
-    <line data-id="STATIC-ID-stem" data-event-id="STATIC-ID" x1="770.8601789709172" y1="496.68" x2="770.8601789709172" y2="532.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
+    <use data-id="STATIC-ID" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(40.55127509495388, 525) scale(0.04)" fill="currentColor" />
+    <line data-id="STATIC-ID-stem" data-event-id="STATIC-ID" x1="53.16440586001085" y1="523.32" x2="53.16440586001085" y2="476.65333333333336" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
+    <use data-id="STATIC-ID" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(83.30765056972326, 500) scale(0.04)" fill="currentColor" />
+    <line data-id="STATIC-ID-stem" data-event-id="STATIC-ID" x1="95.92078133478024" y1="498.32" x2="95.92078133478024" y2="473.32" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
+    <use data-id="STATIC-ID" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(126.06402604449269, 515) scale(0.04)" fill="currentColor" />
+    <line data-id="STATIC-ID-stem" data-event-id="STATIC-ID" x1="138.67715680954964" y1="513.32" x2="138.67715680954964" y2="469.9866666666667" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
+    <use data-id="STATIC-ID" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(168.82040151926208, 505) scale(0.04)" fill="currentColor" />
+    <line data-id="STATIC-ID-stem" data-event-id="STATIC-ID" x1="181.43353228431906" y1="503.32" x2="181.43353228431906" y2="466.65333333333336" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
+    <use data-id="STATIC-ID" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(211.5767769940315, 520) scale(0.04)" fill="currentColor" />
+    <line data-id="STATIC-ID-stem" data-event-id="STATIC-ID" x1="211.5767769940315" y1="521.68" x2="211.5767769940315" y2="550" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
+    <use data-id="STATIC-ID" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(259.6776994031471, 500) scale(0.04)" fill="currentColor" />
+    <line data-id="STATIC-ID-stem" data-event-id="STATIC-ID" x1="259.6776994031471" y1="501.68" x2="259.6776994031471" y2="540" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
+    <use data-id="STATIC-ID" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(307.7786218122626, 530) scale(0.04)" fill="currentColor" />
+    <use data-id="STATIC-ID-pitch-1" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(307.7786218122626, 520) scale(0.04)" fill="currentColor" />
+    <use data-id="STATIC-ID-pitch-2" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(307.7786218122626, 510) scale(0.04)" fill="currentColor" />
+    <line data-id="STATIC-ID-stem" data-event-id="STATIC-ID" x1="320.3917525773196" y1="528.32" x2="320.3917525773196" y2="473.75" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
+    <use data-id="STATIC-ID" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(355.8795442213783, 525) scale(0.04)" fill="currentColor" />
+    <use data-id="STATIC-ID-pitch-1" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(355.8795442213783, 515) scale(0.04)" fill="currentColor" />
+    <use data-id="STATIC-ID-pitch-2" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(355.8795442213783, 505) scale(0.04)" fill="currentColor" />
+    <line data-id="STATIC-ID-stem" data-event-id="STATIC-ID" x1="368.4926749864352" y1="523.32" x2="368.4926749864352" y2="471.25" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
+    <use data-id="STATIC-ID" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(403.98046663049377, 520) scale(0.04)" fill="currentColor" />
+    <use data-id="STATIC-ID-pitch-1" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(403.98046663049377, 510) scale(0.04)" fill="currentColor" />
+    <use data-id="STATIC-ID-pitch-2" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(403.98046663049377, 500) scale(0.04)" fill="currentColor" />
+    <line data-id="STATIC-ID-stem" data-event-id="STATIC-ID" x1="403.98046663049377" y1="501.68" x2="403.98046663049377" y2="553.75" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
+    <use data-id="STATIC-ID" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(452.08138903960935, 515) scale(0.04)" fill="currentColor" />
+    <use data-id="STATIC-ID-pitch-1" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(452.08138903960935, 505) scale(0.04)" fill="currentColor" />
+    <use data-id="STATIC-ID-pitch-2" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(452.08138903960935, 495) scale(0.04)" fill="currentColor" />
+    <line data-id="STATIC-ID-stem" data-event-id="STATIC-ID" x1="452.08138903960935" y1="496.68" x2="452.08138903960935" y2="551.25" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
+    <line data-id="barline-STATIC-ID" x1="498.0444926749865" y1="490" x2="498.0444926749865" y2="530" stroke="currentColor" stroke-width="1.6" stroke-linecap="butt" />
+    <use data-id="timesig-num-0" href="#glyph-timeSig6" transform="translate(499.7547476939772, 500) scale(0.04)" fill="currentColor" />
+    <use data-id="timesig-den-0" href="#glyph-timeSig8" transform="translate(499.7547476939772, 520) scale(0.04)" fill="currentColor" />
+    <use data-id="STATIC-ID" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(531.8220293000543, 520) scale(0.04)" fill="currentColor" />
+    <line data-id="STATIC-ID-stem" data-event-id="STATIC-ID" x1="544.4351600651113" y1="518.32" x2="544.4351600651113" y2="482.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
+    <use data-id="STATIC-ID" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(579.9229517091699, 515) scale(0.04)" fill="currentColor" />
+    <line data-id="STATIC-ID-stem" data-event-id="STATIC-ID" x1="592.5360824742268" y1="513.32" x2="592.5360824742268" y2="480" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
+    <use data-id="STATIC-ID" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(628.0238741182854, 510) scale(0.04)" fill="currentColor" />
+    <line data-id="STATIC-ID-stem" data-event-id="STATIC-ID" x1="640.6370048833423" y1="508.32" x2="640.6370048833423" y2="477.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
+    <use data-id="STATIC-ID" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(676.1247965274009, 505) scale(0.04)" fill="currentColor" />
+    <line data-id="STATIC-ID-stem" data-event-id="STATIC-ID" x1="676.1247965274009" y1="506.68" x2="676.1247965274009" y2="537.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
+    <use data-id="STATIC-ID" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(724.2257189365165, 500) scale(0.04)" fill="currentColor" />
+    <line data-id="STATIC-ID-stem" data-event-id="STATIC-ID" x1="724.2257189365165" y1="501.68" x2="724.2257189365165" y2="535" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
+    <use data-id="STATIC-ID" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(772.3266413456321, 495) scale(0.04)" fill="currentColor" />
+    <line data-id="STATIC-ID-stem" data-event-id="STATIC-ID" x1="772.3266413456321" y1="496.68" x2="772.3266413456321" y2="532.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
     <line data-id="barline-STATIC-ID" x1="818.4000000000001" y1="490" x2="818.4000000000001" y2="530" stroke="currentColor" stroke-width="1.6" stroke-linecap="butt" />
-    <path data-id="beam-STATIC-ID-0-lvl1" data-beam-group="beam-STATIC-ID-0" data-event-ids="STATIC-ID,STATIC-ID,STATIC-ID,STATIC-ID" data-beam-level="1" class="scoreforge-beam" d="M 53.21543624161074 476.6987140439932 L 186.63020134228188 466.60795262267345 L 186.63020134228188 471.60795262267345 L 53.21543624161074 481.6987140439932 Z" fill="currentColor" stroke="none" />
-    <path data-id="beam-STATIC-ID-0-lvl2-0-3" data-beam-group="beam-STATIC-ID-0" data-event-ids="STATIC-ID,STATIC-ID,STATIC-ID,STATIC-ID" data-beam-level="2" class="scoreforge-beam" d="M 53.21543624161074 484.1987140439932 L 186.63020134228188 474.10795262267345 L 186.63020134228188 479.10795262267345 L 53.21543624161074 489.1987140439932 Z" fill="currentColor" stroke="none" />
-    <path data-id="beam-STATIC-ID-1-lvl1" data-beam-group="beam-STATIC-ID-1" data-event-ids="STATIC-ID,STATIC-ID" data-beam-level="1" class="scoreforge-beam" d="M 216.5006711409396 550.1210152284264 L 267.2812080536913 539.8789847715736 L 267.2812080536913 534.8789847715736 L 216.5006711409396 545.1210152284264 Z" fill="currentColor" stroke="none" />
-    <path data-id="beam-STATIC-ID-2-lvl1" data-beam-group="beam-STATIC-ID-2" data-event-ids="STATIC-ID,STATIC-ID" data-beam-level="1" class="scoreforge-beam" d="M 328.6628635346756 473.7802538071066 L 379.4434004474273 471.2197461928934 L 379.4434004474273 476.2197461928934 L 328.6628635346756 478.7802538071066 Z" fill="currentColor" stroke="none" />
-    <path data-id="beam-STATIC-ID-3-lvl1" data-beam-group="beam-STATIC-ID-3" data-event-ids="STATIC-ID,STATIC-ID" data-beam-level="1" class="scoreforge-beam" d="M 414.8228187919463 553.7802538071066 L 465.60335570469806 551.2197461928934 L 465.60335570469806 546.2197461928934 L 414.8228187919463 548.7802538071066 Z" fill="currentColor" stroke="none" />
-    <path data-id="beam-STATIC-ID-0-lvl1" data-beam-group="beam-STATIC-ID-0" data-event-ids="STATIC-ID,STATIC-ID,STATIC-ID" data-beam-level="1" class="scoreforge-beam" d="M 535.3586129753915 482.5302538071066 L 635.7196868008949 477.4697461928934 L 635.7196868008949 482.4697461928934 L 535.3586129753915 487.5302538071066 Z" fill="currentColor" stroke="none" />
-    <path data-id="beam-STATIC-ID-1-lvl1" data-beam-group="beam-STATIC-ID-1" data-event-ids="STATIC-ID,STATIC-ID,STATIC-ID" data-beam-level="1" class="scoreforge-beam" d="M 671.0991051454139 537.5302538071066 L 771.4601789709172 532.4697461928934 L 771.4601789709172 527.4697461928934 L 671.0991051454139 532.5302538071066 Z" fill="currentColor" stroke="none" />
-    <rect class="event-hit-area" data-event-id="STATIC-ID" x="35.81431767337808" y="471.65333333333336" width="23.00111856823266" height="63.34666666666667" fill="transparent" pointer-events="all" style="cursor: pointer;" />
-    <rect class="event-hit-area" data-event-id="STATIC-ID" x="79.88590604026845" y="468.32" width="23.00111856823266" height="41.68" fill="transparent" pointer-events="all" style="cursor: pointer;" />
-    <rect class="event-hit-area" data-event-id="STATIC-ID" x="123.95749440715883" y="464.9866666666667" width="23.00111856823266" height="60.013333333333335" fill="transparent" pointer-events="all" style="cursor: pointer;" />
-    <rect class="event-hit-area" data-event-id="STATIC-ID" x="168.02908277404921" y="461.65333333333336" width="23.001118568232677" height="53.34666666666667" fill="transparent" pointer-events="all" style="cursor: pointer;" />
-    <rect class="event-hit-area" data-event-id="STATIC-ID" x="212.1006711409396" y="505" width="21.999999999999993" height="50" fill="transparent" pointer-events="all" style="cursor: pointer;" />
-    <rect class="event-hit-area" data-event-id="STATIC-ID" x="261.6812080536913" y="485" width="21.999999999999993" height="60" fill="transparent" pointer-events="all" style="cursor: pointer;" />
-    <rect class="event-hit-area" data-event-id="STATIC-ID" x="311.26174496644296" y="468.75" width="23.00111856823264" height="71.25" fill="transparent" pointer-events="all" style="cursor: pointer;" />
-    <rect class="event-hit-area" data-event-id="STATIC-ID" x="360.8422818791946" y="466.25" width="23.00111856823264" height="68.75" fill="transparent" pointer-events="all" style="cursor: pointer;" />
-    <rect class="event-hit-area" data-event-id="STATIC-ID" x="410.4228187919463" y="485" width="22.00000000000003" height="73.75" fill="transparent" pointer-events="all" style="cursor: pointer;" />
-    <rect class="event-hit-area" data-event-id="STATIC-ID" x="460.00335570469804" y="480" width="22.00000000000003" height="76.25" fill="transparent" pointer-events="all" style="cursor: pointer;" />
-    <rect class="event-hit-area" data-event-id="STATIC-ID" x="517.9574944071588" y="477.5" width="23.00111856823264" height="52.5" fill="transparent" pointer-events="all" style="cursor: pointer;" />
-    <rect class="event-hit-area" data-event-id="STATIC-ID" x="567.5380313199106" y="475" width="23.00111856823264" height="50" fill="transparent" pointer-events="all" style="cursor: pointer;" />
-    <rect class="event-hit-area" data-event-id="STATIC-ID" x="617.1185682326623" y="472.5" width="23.00111856823264" height="47.5" fill="transparent" pointer-events="all" style="cursor: pointer;" />
-    <rect class="event-hit-area" data-event-id="STATIC-ID" x="666.6991051454138" y="490" width="22.00000000000003" height="52.5" fill="transparent" pointer-events="all" style="cursor: pointer;" />
-    <rect class="event-hit-area" data-event-id="STATIC-ID" x="716.2796420581656" y="485" width="22.00000000000003" height="55" fill="transparent" pointer-events="all" style="cursor: pointer;" />
-    <rect class="event-hit-area" data-event-id="STATIC-ID" x="765.8601789709172" y="480" width="22.00000000000003" height="57.5" fill="transparent" pointer-events="all" style="cursor: pointer;" />
+    <path data-id="beam-STATIC-ID-0-lvl1" data-beam-group="beam-STATIC-ID-0" data-event-ids="STATIC-ID,STATIC-ID,STATIC-ID,STATIC-ID" data-beam-level="1" class="scoreforge-beam" d="M 52.56440586001085 476.7001099830795 L 182.03353228431905 466.60655668358714 L 182.03353228431905 471.60655668358714 L 52.56440586001085 481.7001099830795 Z" fill="currentColor" stroke="none" />
+    <path data-id="beam-STATIC-ID-0-lvl2-0-3" data-beam-group="beam-STATIC-ID-0" data-event-ids="STATIC-ID,STATIC-ID,STATIC-ID,STATIC-ID" data-beam-level="2" class="scoreforge-beam" d="M 52.56440586001085 484.2001099830795 L 182.03353228431905 474.10655668358714 L 182.03353228431905 479.10655668358714 L 52.56440586001085 489.2001099830795 Z" fill="currentColor" stroke="none" />
+    <path data-id="beam-STATIC-ID-1-lvl1" data-beam-group="beam-STATIC-ID-1" data-event-ids="STATIC-ID,STATIC-ID" data-beam-level="1" class="scoreforge-beam" d="M 210.9767769940315 550.1247377326565 L 260.27769940314704 539.8752622673435 L 260.27769940314704 534.8752622673435 L 210.9767769940315 545.1247377326565 Z" fill="currentColor" stroke="none" />
+    <path data-id="beam-STATIC-ID-2-lvl1" data-beam-group="beam-STATIC-ID-2" data-event-ids="STATIC-ID,STATIC-ID" data-beam-level="1" class="scoreforge-beam" d="M 319.79175257731964 473.78118443316407 L 369.0926749864352 471.21881556683593 L 369.0926749864352 476.21881556683593 L 319.79175257731964 478.78118443316407 Z" fill="currentColor" stroke="none" />
+    <path data-id="beam-STATIC-ID-3-lvl1" data-beam-group="beam-STATIC-ID-3" data-event-ids="STATIC-ID,STATIC-ID" data-beam-level="1" class="scoreforge-beam" d="M 403.38046663049374 553.7811844331641 L 452.68138903960937 551.2188155668359 L 452.68138903960937 546.2188155668359 L 403.38046663049374 548.7811844331641 Z" fill="currentColor" stroke="none" />
+    <path data-id="beam-STATIC-ID-0-lvl1" data-beam-group="beam-STATIC-ID-0" data-event-ids="STATIC-ID,STATIC-ID,STATIC-ID" data-beam-level="1" class="scoreforge-beam" d="M 543.8351600651113 482.53118443316407 L 641.2370048833424 477.46881556683593 L 641.2370048833424 482.46881556683593 L 543.8351600651113 487.53118443316407 Z" fill="currentColor" stroke="none" />
+    <path data-id="beam-STATIC-ID-1-lvl1" data-beam-group="beam-STATIC-ID-1" data-event-ids="STATIC-ID,STATIC-ID,STATIC-ID" data-beam-level="1" class="scoreforge-beam" d="M 675.5247965274009 537.5311844331641 L 772.9266413456321 532.4688155668359 L 772.9266413456321 527.4688155668359 L 675.5247965274009 532.5311844331641 Z" fill="currentColor" stroke="none" />
+    <rect class="event-hit-area" data-event-id="STATIC-ID" x="35.55127509495388" y="471.65333333333336" width="22.613130765056972" height="63.34666666666667" fill="transparent" pointer-events="all" style="cursor: pointer;" />
+    <rect class="event-hit-area" data-event-id="STATIC-ID" x="78.30765056972326" y="468.32" width="22.613130765056972" height="41.68" fill="transparent" pointer-events="all" style="cursor: pointer;" />
+    <rect class="event-hit-area" data-event-id="STATIC-ID" x="121.06402604449269" y="464.9866666666667" width="22.613130765056955" height="60.013333333333335" fill="transparent" pointer-events="all" style="cursor: pointer;" />
+    <rect class="event-hit-area" data-event-id="STATIC-ID" x="163.82040151926208" y="461.65333333333336" width="22.613130765056972" height="53.34666666666667" fill="transparent" pointer-events="all" style="cursor: pointer;" />
+    <rect class="event-hit-area" data-event-id="STATIC-ID" x="206.5767769940315" y="505" width="21.999999999999993" height="50" fill="transparent" pointer-events="all" style="cursor: pointer;" />
+    <rect class="event-hit-area" data-event-id="STATIC-ID" x="254.67769940314707" y="485" width="21.999999999999993" height="60" fill="transparent" pointer-events="all" style="cursor: pointer;" />
+    <rect class="event-hit-area" data-event-id="STATIC-ID" x="302.7786218122626" y="468.75" width="22.613130765057008" height="71.25" fill="transparent" pointer-events="all" style="cursor: pointer;" />
+    <rect class="event-hit-area" data-event-id="STATIC-ID" x="350.8795442213783" y="466.25" width="22.613130765056937" height="68.75" fill="transparent" pointer-events="all" style="cursor: pointer;" />
+    <rect class="event-hit-area" data-event-id="STATIC-ID" x="398.98046663049377" y="485" width="22.00000000000003" height="73.75" fill="transparent" pointer-events="all" style="cursor: pointer;" />
+    <rect class="event-hit-area" data-event-id="STATIC-ID" x="447.08138903960935" y="480" width="22.00000000000003" height="76.25" fill="transparent" pointer-events="all" style="cursor: pointer;" />
+    <rect class="event-hit-area" data-event-id="STATIC-ID" x="526.8220293000543" y="477.5" width="22.613130765057008" height="52.5" fill="transparent" pointer-events="all" style="cursor: pointer;" />
+    <rect class="event-hit-area" data-event-id="STATIC-ID" x="574.9229517091699" y="475" width="22.613130765056937" height="50" fill="transparent" pointer-events="all" style="cursor: pointer;" />
+    <rect class="event-hit-area" data-event-id="STATIC-ID" x="623.0238741182854" y="472.5" width="22.613130765056937" height="47.5" fill="transparent" pointer-events="all" style="cursor: pointer;" />
+    <rect class="event-hit-area" data-event-id="STATIC-ID" x="671.1247965274009" y="490" width="22.00000000000003" height="52.5" fill="transparent" pointer-events="all" style="cursor: pointer;" />
+    <rect class="event-hit-area" data-event-id="STATIC-ID" x="719.2257189365165" y="485" width="22.00000000000003" height="55" fill="transparent" pointer-events="all" style="cursor: pointer;" />
+    <rect class="event-hit-area" data-event-id="STATIC-ID" x="767.3266413456321" y="480" width="22.00000000000003" height="57.5" fill="transparent" pointer-events="all" style="cursor: pointer;" />
   </g>
   <g data-system-index="4">
-    <line data-id="sys-4-staffline-4" x1="0" y1="670" x2="614.6" y2="670" stroke="currentColor" stroke-width="1.3" stroke-linecap="butt" />
-    <line data-id="sys-4-staffline-3" x1="0" y1="660" x2="614.6" y2="660" stroke="currentColor" stroke-width="1.3" stroke-linecap="butt" />
-    <line data-id="sys-4-staffline-2" x1="0" y1="650" x2="614.6" y2="650" stroke="currentColor" stroke-width="1.3" stroke-linecap="butt" />
-    <line data-id="sys-4-staffline-1" x1="0" y1="640" x2="614.6" y2="640" stroke="currentColor" stroke-width="1.3" stroke-linecap="butt" />
-    <line data-id="sys-4-staffline-0" x1="0" y1="630" x2="614.6" y2="630" stroke="currentColor" stroke-width="1.3" stroke-linecap="butt" />
+    <line data-id="sys-4-staffline-4" x1="0" y1="670" x2="636.6" y2="670" stroke="currentColor" stroke-width="1.3" stroke-linecap="butt" />
+    <line data-id="sys-4-staffline-3" x1="0" y1="660" x2="636.6" y2="660" stroke="currentColor" stroke-width="1.3" stroke-linecap="butt" />
+    <line data-id="sys-4-staffline-2" x1="0" y1="650" x2="636.6" y2="650" stroke="currentColor" stroke-width="1.3" stroke-linecap="butt" />
+    <line data-id="sys-4-staffline-1" x1="0" y1="640" x2="636.6" y2="640" stroke="currentColor" stroke-width="1.3" stroke-linecap="butt" />
+    <line data-id="sys-4-staffline-0" x1="0" y1="630" x2="636.6" y2="630" stroke="currentColor" stroke-width="1.3" stroke-linecap="butt" />
+    <text data-id="sys-4-measure-number" x="0" y="618" fill="currentColor" font-family="&quot;Times New Roman&quot;, Times, &quot;Liberation Serif&quot;, serif" font-size="11px" font-weight="bold" font-style="italic">7</text>
     <line data-id="sys-4-sys-start-barline" x1="0" y1="630" x2="0" y2="670" stroke="currentColor" stroke-width="1.6" stroke-linecap="butt" />
     <use data-id="sys-4-clef-0.4" href="#glyph-gClef" transform="translate(4, 660) scale(0.04)" fill="currentColor" />
     <use data-id="STATIC-ID" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(40, 660) scale(0.04)" fill="currentColor" />
@@ -262,35 +270,37 @@ exports[`renderSvg > renderSvgToString snapshot of the M3d beam demo score (treb
     <line data-id="STATIC-ID-stem" data-event-id="STATIC-ID" x1="220" y1="646.6800000000001" x2="220" y2="681.25" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
     <use data-id="STATIC-ID" data-event-id="STATIC-ID" href="#glyph-rest8th" transform="translate(265, 650) scale(0.04)" fill="currentColor" />
     <line data-id="barline-STATIC-ID" x1="308" y1="630" x2="308" y2="670" stroke="currentColor" stroke-width="1.6" stroke-linecap="butt" />
-    <use data-id="STATIC-ID" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(317.6, 645) scale(0.04)" fill="currentColor" />
-    <line data-id="STATIC-ID-stem" data-event-id="STATIC-ID" x1="317.6" y1="646.6800000000001" x2="317.6" y2="680" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
-    <use data-id="STATIC-ID" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(372.59999999999997, 650) scale(0.04)" fill="currentColor" />
-    <line data-id="STATIC-ID-stem" data-event-id="STATIC-ID" x1="372.59999999999997" y1="651.6800000000001" x2="372.59999999999997" y2="685" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
-    <use data-id="STATIC-ID-flag" data-event-id="STATIC-ID" href="#glyph-flag8thDown" transform="translate(372.59999999999997, 685) scale(0.04)" fill="currentColor" />
-    <use data-id="STATIC-ID" data-event-id="STATIC-ID" href="#glyph-rest8th" transform="translate(417.6, 650) scale(0.04)" fill="currentColor" />
-    <use data-id="STATIC-ID" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(462.6, 660) scale(0.04)" fill="currentColor" />
-    <line data-id="STATIC-ID-stem" data-event-id="STATIC-ID" x1="474.4" y1="658.3199999999999" x2="474.4" y2="623.75" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
-    <use data-id="STATIC-ID" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(507.6, 655) scale(0.04)" fill="currentColor" />
-    <line data-id="STATIC-ID-stem" data-event-id="STATIC-ID" x1="519.4" y1="653.3199999999999" x2="519.4" y2="621.25" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
-    <use data-id="STATIC-ID" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(552.6, 650) scale(0.04)" fill="currentColor" />
-    <line data-id="STATIC-ID-stem" data-event-id="STATIC-ID" x1="552.6" y1="651.6800000000001" x2="552.6" y2="685" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
-    <line data-id="barline-STATIC-ID-thin" x1="605.6" y1="630" x2="605.6" y2="670" stroke="currentColor" stroke-width="1.6" stroke-linecap="butt" />
-    <line data-id="barline-STATIC-ID-thick" x1="609.6" y1="630" x2="609.6" y2="670" stroke="currentColor" stroke-width="5" stroke-linecap="butt" />
+    <use data-id="timesig-num-0" href="#glyph-timeSig4" transform="translate(309.6, 640) scale(0.04)" fill="currentColor" />
+    <use data-id="timesig-den-0" href="#glyph-timeSig4" transform="translate(309.6, 660) scale(0.04)" fill="currentColor" />
+    <use data-id="STATIC-ID" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(339.6, 645) scale(0.04)" fill="currentColor" />
+    <line data-id="STATIC-ID-stem" data-event-id="STATIC-ID" x1="339.6" y1="646.6800000000001" x2="339.6" y2="680" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
+    <use data-id="STATIC-ID" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(394.6, 650) scale(0.04)" fill="currentColor" />
+    <line data-id="STATIC-ID-stem" data-event-id="STATIC-ID" x1="394.6" y1="651.6800000000001" x2="394.6" y2="685" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
+    <use data-id="STATIC-ID-flag" data-event-id="STATIC-ID" href="#glyph-flag8thDown" transform="translate(394.6, 685) scale(0.04)" fill="currentColor" />
+    <use data-id="STATIC-ID" data-event-id="STATIC-ID" href="#glyph-rest8th" transform="translate(439.6, 650) scale(0.04)" fill="currentColor" />
+    <use data-id="STATIC-ID" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(484.6, 660) scale(0.04)" fill="currentColor" />
+    <line data-id="STATIC-ID-stem" data-event-id="STATIC-ID" x1="496.4" y1="658.3199999999999" x2="496.4" y2="623.75" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
+    <use data-id="STATIC-ID" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(529.6, 655) scale(0.04)" fill="currentColor" />
+    <line data-id="STATIC-ID-stem" data-event-id="STATIC-ID" x1="541.4" y1="653.3199999999999" x2="541.4" y2="621.25" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
+    <use data-id="STATIC-ID" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(574.6, 650) scale(0.04)" fill="currentColor" />
+    <line data-id="STATIC-ID-stem" data-event-id="STATIC-ID" x1="574.6" y1="651.6800000000001" x2="574.6" y2="685" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
+    <line data-id="barline-STATIC-ID-thin" x1="627.6" y1="630" x2="627.6" y2="670" stroke="currentColor" stroke-width="1.6" stroke-linecap="butt" />
+    <line data-id="barline-STATIC-ID-thick" x1="631.6" y1="630" x2="631.6" y2="670" stroke="currentColor" stroke-width="5" stroke-linecap="butt" />
     <path data-id="beam-STATIC-ID-0-lvl1" data-beam-group="beam-STATIC-ID-0" data-event-ids="STATIC-ID,STATIC-ID" data-beam-level="1" class="scoreforge-beam" d="M 51.2 623.7833333333333 L 97.4 621.2166666666667 L 97.4 626.2166666666667 L 51.2 628.7833333333333 Z" fill="currentColor" stroke="none" />
     <path data-id="beam-STATIC-ID-1-lvl1" data-beam-group="beam-STATIC-ID-1" data-event-ids="STATIC-ID,STATIC-ID" data-beam-level="1" class="scoreforge-beam" d="M 174.4 683.7833333333333 L 220.6 681.2166666666667 L 220.6 676.2166666666667 L 174.4 678.7833333333333 Z" fill="currentColor" stroke="none" />
-    <path data-id="beam-STATIC-ID-0-lvl1" data-beam-group="beam-STATIC-ID-0" data-event-ids="STATIC-ID,STATIC-ID" data-beam-level="1" class="scoreforge-beam" d="M 473.79999999999995 623.7833333333333 L 520 621.2166666666667 L 520 626.2166666666667 L 473.79999999999995 628.7833333333333 Z" fill="currentColor" stroke="none" />
+    <path data-id="beam-STATIC-ID-0-lvl1" data-beam-group="beam-STATIC-ID-0" data-event-ids="STATIC-ID,STATIC-ID" data-beam-level="1" class="scoreforge-beam" d="M 495.79999999999995 623.7833333333333 L 542 621.2166666666667 L 542 626.2166666666667 L 495.79999999999995 628.7833333333333 Z" fill="currentColor" stroke="none" />
     <rect class="event-hit-area" data-event-id="STATIC-ID" x="35" y="618.75" width="22" height="51.25" fill="transparent" pointer-events="all" style="cursor: pointer;" />
     <rect class="event-hit-area" data-event-id="STATIC-ID" x="80" y="616.25" width="21.999999999999993" height="48.75" fill="transparent" pointer-events="all" style="cursor: pointer;" />
     <rect class="event-hit-area" data-event-id="STATIC-ID" x="125" y="635" width="21.999999999999993" height="25" fill="transparent" pointer-events="all" style="cursor: pointer;" />
     <rect class="event-hit-area" data-event-id="STATIC-ID" x="170" y="635" width="21.999999999999993" height="53.75" fill="transparent" pointer-events="all" style="cursor: pointer;" />
     <rect class="event-hit-area" data-event-id="STATIC-ID" x="215" y="630" width="21.999999999999993" height="56.25" fill="transparent" pointer-events="all" style="cursor: pointer;" />
     <rect class="event-hit-area" data-event-id="STATIC-ID" x="260" y="635" width="21.999999999999993" height="25" fill="transparent" pointer-events="all" style="cursor: pointer;" />
-    <rect class="event-hit-area" data-event-id="STATIC-ID" x="312.6" y="630" width="21.999999999999993" height="55" fill="transparent" pointer-events="all" style="cursor: pointer;" />
-    <rect class="event-hit-area" data-event-id="STATIC-ID" x="367.59999999999997" y="635" width="22.00000000000003" height="60" fill="transparent" pointer-events="all" style="cursor: pointer;" />
-    <rect class="event-hit-area" data-event-id="STATIC-ID" x="412.6" y="635" width="22.00000000000003" height="25" fill="transparent" pointer-events="all" style="cursor: pointer;" />
-    <rect class="event-hit-area" data-event-id="STATIC-ID" x="457.6" y="618.75" width="22.00000000000003" height="51.25" fill="transparent" pointer-events="all" style="cursor: pointer;" />
-    <rect class="event-hit-area" data-event-id="STATIC-ID" x="502.6" y="616.25" width="22.00000000000003" height="48.75" fill="transparent" pointer-events="all" style="cursor: pointer;" />
-    <rect class="event-hit-area" data-event-id="STATIC-ID" x="547.6" y="635" width="22.00000000000003" height="55" fill="transparent" pointer-events="all" style="cursor: pointer;" />
+    <rect class="event-hit-area" data-event-id="STATIC-ID" x="334.6" y="630" width="22.00000000000003" height="55" fill="transparent" pointer-events="all" style="cursor: pointer;" />
+    <rect class="event-hit-area" data-event-id="STATIC-ID" x="389.6" y="635" width="22.00000000000003" height="60" fill="transparent" pointer-events="all" style="cursor: pointer;" />
+    <rect class="event-hit-area" data-event-id="STATIC-ID" x="434.6" y="635" width="22.00000000000003" height="25" fill="transparent" pointer-events="all" style="cursor: pointer;" />
+    <rect class="event-hit-area" data-event-id="STATIC-ID" x="479.6" y="618.75" width="22.00000000000003" height="51.25" fill="transparent" pointer-events="all" style="cursor: pointer;" />
+    <rect class="event-hit-area" data-event-id="STATIC-ID" x="524.6" y="616.25" width="22.00000000000003" height="48.75" fill="transparent" pointer-events="all" style="cursor: pointer;" />
+    <rect class="event-hit-area" data-event-id="STATIC-ID" x="569.6" y="635" width="22.00000000000003" height="55" fill="transparent" pointer-events="all" style="cursor: pointer;" />
   </g>
 </svg>"
 `;
@@ -304,6 +314,8 @@ exports[`renderSvg > renderSvgToString snapshot of the M3d beam demo score (treb
     <path id="glyph-noteheadBlack" d="M97 125C186 125 295 43 295-42C295-93 255-125 198-125C88-125 0-44 0 42C0 94 43 125 97 125" />
     <path id="glyph-rest8th" d="M134-107C134-144 104-174 67-174C30-174 0-144 0-107C0-86 12-68 27-56C36-50 45-45 55-43C63-41 72-39 81-39C95-39 109-42 120-46C134-50 143-54 156-61C158-62 160-62 161-62C165-62 166-58 166-53C166-50 166-46 165-42C162-27 90 172 72 238C72 250 95 251 101 251C112 251 126 249 136 241C139 239 237-112 237-112C241-130 246-146 247-151C247-161 237-166 235-167C233-167 230-167 224-163C217-157 167-97 134-97" />
     <path id="glyph-timeSig4" d="M362 74L362-140C362-148 361-157 350-157C341-157 336-155 330-148L235-33C231-28 226-22 226-10L226 74L91 74C171 6 331-221 334-232C334-234 335-235 335-237C335-245 328-251 320-251C311-251 270-249 252-249C234-249 189-251 181-251C172-251 158-248 158-232C158-108 60 31 30 73L24 81C24 82 23 83 23 84C21 88 20 92 20 95C20 105 28 112 40 112L226 112L226 175C226 202 204 210 186 210C170 210 163 219 163 229C163 239 167 250 182 250L395 250C405 250 415 243 415 229C415 215 403 209 393 209C383 209 362 203 362 171L362 112L435 112C445 112 450 105 450 93C450 81 446 74 435 74" />
+    <path id="glyph-timeSig6" d="M260-100C272-88 289-83 305-83C313-83 322-85 330-87C361-95 385-127 385-159C385-163 385-166 384-170C379-203 351-227 321-238C297-248 268-251 242-251C166-250 95-213 59-145C37-103 20-50 20-3L20 1C21 47 29 99 51 139C72 177 106 218 145 235C170 246 200 249 225 249C270 249 320 242 356 213C391 185 414 140 414 95C414 39 384 5 352-19C325-39 294-50 263-50C231-50 198-38 172-15C170-13 168-13 166-13C160-13 157-21 157-37C160-222 219-227 240-227C260-227 273-222 273-212C273-198 254-186 248-174C243-165 241-155 241-145C241-130 246-115 256-104C257-102 259-101 260-100M222-2C254-2 281 48 281 110C281 172 254 222 222 222C190 222 164 172 164 110C164 48 190-2 222-2" />
+    <path id="glyph-timeSig8" d="M334-36C370-59 394-92 394-142C394-244 247-259 220-259C104-259 25-206 25-122C25-53 64-16 112 11C60 36 20 69 20 132C20 219 110 259 209 259C309 259 416 216 416 81C416 21 381-12 334-36M282-59C202-87 117-104 117-167C117-209 174-230 218-230C250-230 335-214 335-144C335-104 315-78 282-59M205 226C138 226 77 192 77 127C77 87 112 50 156 33C229 65 303 86 303 152C303 192 272 226 205 226" />
   </defs>
   <g data-system-index="0">
     <line data-id="sys-0-staffline-4" x1="0" y1="110" x2="820" y2="110" stroke="currentColor" stroke-width="1.3" stroke-linecap="butt" />
@@ -351,6 +363,7 @@ exports[`renderSvg > renderSvgToString snapshot of the M3d beam demo score (treb
     <line data-id="sys-1-staffline-2" x1="0" y1="230" x2="820" y2="230" stroke="currentColor" stroke-width="1.3" stroke-linecap="butt" />
     <line data-id="sys-1-staffline-1" x1="0" y1="220" x2="820" y2="220" stroke="currentColor" stroke-width="1.3" stroke-linecap="butt" />
     <line data-id="sys-1-staffline-0" x1="0" y1="210" x2="820" y2="210" stroke="currentColor" stroke-width="1.3" stroke-linecap="butt" />
+    <text data-id="sys-1-measure-number" x="0" y="198" fill="currentColor" font-family="&quot;Times New Roman&quot;, Times, &quot;Liberation Serif&quot;, serif" font-size="11px" font-weight="bold" font-style="italic">2</text>
     <line data-id="sys-1-sys-start-barline" x1="0" y1="210" x2="0" y2="250" stroke="currentColor" stroke-width="1.6" stroke-linecap="butt" />
     <use data-id="sys-1-clef-0.4" href="#glyph-fClef" transform="translate(4, 220) scale(0.04)" fill="currentColor" />
     <use data-id="STATIC-ID" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(45.338975878121026, 260) scale(0.04)" fill="currentColor" />
@@ -402,6 +415,7 @@ exports[`renderSvg > renderSvgToString snapshot of the M3d beam demo score (treb
     <line data-id="sys-2-staffline-2" x1="0" y1="370" x2="820" y2="370" stroke="currentColor" stroke-width="1.3" stroke-linecap="butt" />
     <line data-id="sys-2-staffline-1" x1="0" y1="360" x2="820" y2="360" stroke="currentColor" stroke-width="1.3" stroke-linecap="butt" />
     <line data-id="sys-2-staffline-0" x1="0" y1="350" x2="820" y2="350" stroke="currentColor" stroke-width="1.3" stroke-linecap="butt" />
+    <text data-id="sys-2-measure-number" x="0" y="338" fill="currentColor" font-family="&quot;Times New Roman&quot;, Times, &quot;Liberation Serif&quot;, serif" font-size="11px" font-weight="bold" font-style="italic">3</text>
     <line data-id="sys-2-sys-start-barline" x1="0" y1="350" x2="0" y2="390" stroke="currentColor" stroke-width="1.6" stroke-linecap="butt" />
     <use data-id="sys-2-clef-0.4" href="#glyph-fClef" transform="translate(4, 360) scale(0.04)" fill="currentColor" />
     <use data-id="STATIC-ID" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(40.574537540805224, 410) scale(0.04)" fill="currentColor" />
@@ -477,81 +491,85 @@ exports[`renderSvg > renderSvgToString snapshot of the M3d beam demo score (treb
     <line data-id="sys-3-staffline-2" x1="0" y1="510" x2="820" y2="510" stroke="currentColor" stroke-width="1.3" stroke-linecap="butt" />
     <line data-id="sys-3-staffline-1" x1="0" y1="500" x2="820" y2="500" stroke="currentColor" stroke-width="1.3" stroke-linecap="butt" />
     <line data-id="sys-3-staffline-0" x1="0" y1="490" x2="820" y2="490" stroke="currentColor" stroke-width="1.3" stroke-linecap="butt" />
+    <text data-id="sys-3-measure-number" x="0" y="478" fill="currentColor" font-family="&quot;Times New Roman&quot;, Times, &quot;Liberation Serif&quot;, serif" font-size="11px" font-weight="bold" font-style="italic">5</text>
     <line data-id="sys-3-sys-start-barline" x1="0" y1="490" x2="0" y2="530" stroke="currentColor" stroke-width="1.6" stroke-linecap="butt" />
     <use data-id="sys-3-clef-0.4" href="#glyph-fClef" transform="translate(4, 500) scale(0.04)" fill="currentColor" />
-    <use data-id="STATIC-ID" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(40.81431767337808, 535) scale(0.04)" fill="currentColor" />
-    <line data-id="STATIC-ID-stem" data-event-id="STATIC-ID" x1="53.81543624161074" y1="533.32" x2="53.81543624161074" y2="486.65333333333336" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
-    <use data-id="STATIC-ID" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(84.88590604026845, 510) scale(0.04)" fill="currentColor" />
-    <line data-id="STATIC-ID-stem" data-event-id="STATIC-ID" x1="97.88702460850111" y1="508.32" x2="97.88702460850111" y2="483.32" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
-    <use data-id="STATIC-ID" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(128.95749440715883, 525) scale(0.04)" fill="currentColor" />
-    <line data-id="STATIC-ID-stem" data-event-id="STATIC-ID" x1="141.9586129753915" y1="523.32" x2="141.9586129753915" y2="479.9866666666667" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
-    <use data-id="STATIC-ID" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(173.02908277404921, 515) scale(0.04)" fill="currentColor" />
-    <line data-id="STATIC-ID-stem" data-event-id="STATIC-ID" x1="186.03020134228188" y1="513.32" x2="186.03020134228188" y2="476.65333333333336" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
-    <use data-id="STATIC-ID" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(217.1006711409396, 530) scale(0.04)" fill="currentColor" />
-    <line data-id="STATIC-ID-stem" data-event-id="STATIC-ID" x1="230.10178970917224" y1="528.32" x2="230.10178970917224" y2="490" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
-    <use data-id="STATIC-ID" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(266.6812080536913, 510) scale(0.04)" fill="currentColor" />
-    <line data-id="STATIC-ID-stem" data-event-id="STATIC-ID" x1="279.68232662192395" y1="508.32" x2="279.68232662192395" y2="480" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
-    <use data-id="STATIC-ID" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(316.26174496644296, 540) scale(0.04)" fill="currentColor" />
-    <line data-id="STATIC-ID-ledger-0-5" data-event-id="STATIC-ID" x1="312.26174496644296" y1="540" x2="332.0617449664429" y2="540" stroke="currentColor" stroke-width="1.6" stroke-linecap="butt" />
-    <use data-id="STATIC-ID-pitch-1" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(316.26174496644296, 530) scale(0.04)" fill="currentColor" />
-    <use data-id="STATIC-ID-pitch-2" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(316.26174496644296, 520) scale(0.04)" fill="currentColor" />
-    <line data-id="STATIC-ID-stem" data-event-id="STATIC-ID" x1="329.2628635346756" y1="538.32" x2="329.2628635346756" y2="483.75" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
-    <use data-id="STATIC-ID" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(365.8422818791946, 535) scale(0.04)" fill="currentColor" />
-    <use data-id="STATIC-ID-pitch-1" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(365.8422818791946, 525) scale(0.04)" fill="currentColor" />
-    <use data-id="STATIC-ID-pitch-2" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(365.8422818791946, 515) scale(0.04)" fill="currentColor" />
-    <line data-id="STATIC-ID-stem" data-event-id="STATIC-ID" x1="378.84340044742726" y1="533.32" x2="378.84340044742726" y2="481.25" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
-    <use data-id="STATIC-ID" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(415.4228187919463, 530) scale(0.04)" fill="currentColor" />
-    <use data-id="STATIC-ID-pitch-1" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(415.4228187919463, 520) scale(0.04)" fill="currentColor" />
-    <use data-id="STATIC-ID-pitch-2" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(415.4228187919463, 510) scale(0.04)" fill="currentColor" />
-    <line data-id="STATIC-ID-stem" data-event-id="STATIC-ID" x1="428.42393736017897" y1="528.32" x2="428.42393736017897" y2="473.75" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
-    <use data-id="STATIC-ID" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(465.00335570469804, 525) scale(0.04)" fill="currentColor" />
-    <use data-id="STATIC-ID-pitch-1" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(465.00335570469804, 515) scale(0.04)" fill="currentColor" />
-    <use data-id="STATIC-ID-pitch-2" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(465.00335570469804, 505) scale(0.04)" fill="currentColor" />
-    <line data-id="STATIC-ID-stem" data-event-id="STATIC-ID" x1="478.0044742729307" y1="523.32" x2="478.0044742729307" y2="471.25" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
-    <line data-id="barline-STATIC-ID" x1="512.3803131991052" y1="490" x2="512.3803131991052" y2="530" stroke="currentColor" stroke-width="1.6" stroke-linecap="butt" />
-    <use data-id="STATIC-ID" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(522.9574944071588, 530) scale(0.04)" fill="currentColor" />
-    <line data-id="STATIC-ID-stem" data-event-id="STATIC-ID" x1="535.9586129753915" y1="528.32" x2="535.9586129753915" y2="492.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
-    <use data-id="STATIC-ID" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(572.5380313199106, 525) scale(0.04)" fill="currentColor" />
-    <line data-id="STATIC-ID-stem" data-event-id="STATIC-ID" x1="585.5391498881432" y1="523.32" x2="585.5391498881432" y2="490" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
-    <use data-id="STATIC-ID" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(622.1185682326623, 520) scale(0.04)" fill="currentColor" />
-    <line data-id="STATIC-ID-stem" data-event-id="STATIC-ID" x1="635.1196868008949" y1="518.32" x2="635.1196868008949" y2="487.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
-    <use data-id="STATIC-ID" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(671.6991051454138, 515) scale(0.04)" fill="currentColor" />
-    <line data-id="STATIC-ID-stem" data-event-id="STATIC-ID" x1="671.6991051454138" y1="516.68" x2="671.6991051454138" y2="547.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
-    <use data-id="STATIC-ID" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(721.2796420581656, 510) scale(0.04)" fill="currentColor" />
-    <line data-id="STATIC-ID-stem" data-event-id="STATIC-ID" x1="721.2796420581656" y1="511.68" x2="721.2796420581656" y2="545" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
-    <use data-id="STATIC-ID" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(770.8601789709172, 505) scale(0.04)" fill="currentColor" />
-    <line data-id="STATIC-ID-stem" data-event-id="STATIC-ID" x1="770.8601789709172" y1="506.68" x2="770.8601789709172" y2="542.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
+    <use data-id="STATIC-ID" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(40.55127509495388, 535) scale(0.04)" fill="currentColor" />
+    <line data-id="STATIC-ID-stem" data-event-id="STATIC-ID" x1="53.16440586001085" y1="533.32" x2="53.16440586001085" y2="486.65333333333336" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
+    <use data-id="STATIC-ID" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(83.30765056972326, 510) scale(0.04)" fill="currentColor" />
+    <line data-id="STATIC-ID-stem" data-event-id="STATIC-ID" x1="95.92078133478024" y1="508.32" x2="95.92078133478024" y2="483.32" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
+    <use data-id="STATIC-ID" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(126.06402604449269, 525) scale(0.04)" fill="currentColor" />
+    <line data-id="STATIC-ID-stem" data-event-id="STATIC-ID" x1="138.67715680954964" y1="523.32" x2="138.67715680954964" y2="479.9866666666667" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
+    <use data-id="STATIC-ID" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(168.82040151926208, 515) scale(0.04)" fill="currentColor" />
+    <line data-id="STATIC-ID-stem" data-event-id="STATIC-ID" x1="181.43353228431906" y1="513.32" x2="181.43353228431906" y2="476.65333333333336" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
+    <use data-id="STATIC-ID" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(211.5767769940315, 530) scale(0.04)" fill="currentColor" />
+    <line data-id="STATIC-ID-stem" data-event-id="STATIC-ID" x1="224.18990775908844" y1="528.32" x2="224.18990775908844" y2="490" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
+    <use data-id="STATIC-ID" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(259.6776994031471, 510) scale(0.04)" fill="currentColor" />
+    <line data-id="STATIC-ID-stem" data-event-id="STATIC-ID" x1="272.290830168204" y1="508.32" x2="272.290830168204" y2="480" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
+    <use data-id="STATIC-ID" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(307.7786218122626, 540) scale(0.04)" fill="currentColor" />
+    <line data-id="STATIC-ID-ledger-0-5" data-event-id="STATIC-ID" x1="303.7786218122626" y1="540" x2="323.5786218122626" y2="540" stroke="currentColor" stroke-width="1.6" stroke-linecap="butt" />
+    <use data-id="STATIC-ID-pitch-1" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(307.7786218122626, 530) scale(0.04)" fill="currentColor" />
+    <use data-id="STATIC-ID-pitch-2" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(307.7786218122626, 520) scale(0.04)" fill="currentColor" />
+    <line data-id="STATIC-ID-stem" data-event-id="STATIC-ID" x1="320.3917525773196" y1="538.32" x2="320.3917525773196" y2="483.75" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
+    <use data-id="STATIC-ID" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(355.8795442213783, 535) scale(0.04)" fill="currentColor" />
+    <use data-id="STATIC-ID-pitch-1" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(355.8795442213783, 525) scale(0.04)" fill="currentColor" />
+    <use data-id="STATIC-ID-pitch-2" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(355.8795442213783, 515) scale(0.04)" fill="currentColor" />
+    <line data-id="STATIC-ID-stem" data-event-id="STATIC-ID" x1="368.4926749864352" y1="533.32" x2="368.4926749864352" y2="481.25" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
+    <use data-id="STATIC-ID" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(403.98046663049377, 530) scale(0.04)" fill="currentColor" />
+    <use data-id="STATIC-ID-pitch-1" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(403.98046663049377, 520) scale(0.04)" fill="currentColor" />
+    <use data-id="STATIC-ID-pitch-2" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(403.98046663049377, 510) scale(0.04)" fill="currentColor" />
+    <line data-id="STATIC-ID-stem" data-event-id="STATIC-ID" x1="416.5935973955507" y1="528.32" x2="416.5935973955507" y2="473.75" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
+    <use data-id="STATIC-ID" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(452.08138903960935, 525) scale(0.04)" fill="currentColor" />
+    <use data-id="STATIC-ID-pitch-1" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(452.08138903960935, 515) scale(0.04)" fill="currentColor" />
+    <use data-id="STATIC-ID-pitch-2" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(452.08138903960935, 505) scale(0.04)" fill="currentColor" />
+    <line data-id="STATIC-ID-stem" data-event-id="STATIC-ID" x1="464.6945198046663" y1="523.32" x2="464.6945198046663" y2="471.25" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
+    <line data-id="barline-STATIC-ID" x1="498.0444926749865" y1="490" x2="498.0444926749865" y2="530" stroke="currentColor" stroke-width="1.6" stroke-linecap="butt" />
+    <use data-id="timesig-num-0" href="#glyph-timeSig6" transform="translate(499.7547476939772, 500) scale(0.04)" fill="currentColor" />
+    <use data-id="timesig-den-0" href="#glyph-timeSig8" transform="translate(499.7547476939772, 520) scale(0.04)" fill="currentColor" />
+    <use data-id="STATIC-ID" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(531.8220293000543, 530) scale(0.04)" fill="currentColor" />
+    <line data-id="STATIC-ID-stem" data-event-id="STATIC-ID" x1="544.4351600651113" y1="528.32" x2="544.4351600651113" y2="492.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
+    <use data-id="STATIC-ID" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(579.9229517091699, 525) scale(0.04)" fill="currentColor" />
+    <line data-id="STATIC-ID-stem" data-event-id="STATIC-ID" x1="592.5360824742268" y1="523.32" x2="592.5360824742268" y2="490" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
+    <use data-id="STATIC-ID" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(628.0238741182854, 520) scale(0.04)" fill="currentColor" />
+    <line data-id="STATIC-ID-stem" data-event-id="STATIC-ID" x1="640.6370048833423" y1="518.32" x2="640.6370048833423" y2="487.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
+    <use data-id="STATIC-ID" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(676.1247965274009, 515) scale(0.04)" fill="currentColor" />
+    <line data-id="STATIC-ID-stem" data-event-id="STATIC-ID" x1="676.1247965274009" y1="516.68" x2="676.1247965274009" y2="547.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
+    <use data-id="STATIC-ID" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(724.2257189365165, 510) scale(0.04)" fill="currentColor" />
+    <line data-id="STATIC-ID-stem" data-event-id="STATIC-ID" x1="724.2257189365165" y1="511.68" x2="724.2257189365165" y2="545" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
+    <use data-id="STATIC-ID" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(772.3266413456321, 505) scale(0.04)" fill="currentColor" />
+    <line data-id="STATIC-ID-stem" data-event-id="STATIC-ID" x1="772.3266413456321" y1="506.68" x2="772.3266413456321" y2="542.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
     <line data-id="barline-STATIC-ID" x1="818.4000000000001" y1="490" x2="818.4000000000001" y2="530" stroke="currentColor" stroke-width="1.6" stroke-linecap="butt" />
-    <path data-id="beam-STATIC-ID-0-lvl1" data-beam-group="beam-STATIC-ID-0" data-event-ids="STATIC-ID,STATIC-ID,STATIC-ID,STATIC-ID" data-beam-level="1" class="scoreforge-beam" d="M 53.21543624161074 486.6987140439932 L 186.63020134228188 476.60795262267345 L 186.63020134228188 481.60795262267345 L 53.21543624161074 491.6987140439932 Z" fill="currentColor" stroke="none" />
-    <path data-id="beam-STATIC-ID-0-lvl2-0-3" data-beam-group="beam-STATIC-ID-0" data-event-ids="STATIC-ID,STATIC-ID,STATIC-ID,STATIC-ID" data-beam-level="2" class="scoreforge-beam" d="M 53.21543624161074 494.1987140439932 L 186.63020134228188 484.10795262267345 L 186.63020134228188 489.10795262267345 L 53.21543624161074 499.1987140439932 Z" fill="currentColor" stroke="none" />
-    <path data-id="beam-STATIC-ID-1-lvl1" data-beam-group="beam-STATIC-ID-1" data-event-ids="STATIC-ID,STATIC-ID" data-beam-level="1" class="scoreforge-beam" d="M 229.50178970917224 490.1210152284264 L 280.2823266219239 479.8789847715736 L 280.2823266219239 484.8789847715736 L 229.50178970917224 495.1210152284264 Z" fill="currentColor" stroke="none" />
-    <path data-id="beam-STATIC-ID-2-lvl1" data-beam-group="beam-STATIC-ID-2" data-event-ids="STATIC-ID,STATIC-ID" data-beam-level="1" class="scoreforge-beam" d="M 328.6628635346756 483.7802538071066 L 379.4434004474273 481.2197461928934 L 379.4434004474273 486.2197461928934 L 328.6628635346756 488.7802538071066 Z" fill="currentColor" stroke="none" />
-    <path data-id="beam-STATIC-ID-3-lvl1" data-beam-group="beam-STATIC-ID-3" data-event-ids="STATIC-ID,STATIC-ID" data-beam-level="1" class="scoreforge-beam" d="M 427.82393736017895 473.7802538071066 L 478.6044742729307 471.2197461928934 L 478.6044742729307 476.2197461928934 L 427.82393736017895 478.7802538071066 Z" fill="currentColor" stroke="none" />
-    <path data-id="beam-STATIC-ID-0-lvl1" data-beam-group="beam-STATIC-ID-0" data-event-ids="STATIC-ID,STATIC-ID,STATIC-ID" data-beam-level="1" class="scoreforge-beam" d="M 535.3586129753915 492.5302538071066 L 635.7196868008949 487.4697461928934 L 635.7196868008949 492.4697461928934 L 535.3586129753915 497.5302538071066 Z" fill="currentColor" stroke="none" />
-    <path data-id="beam-STATIC-ID-1-lvl1" data-beam-group="beam-STATIC-ID-1" data-event-ids="STATIC-ID,STATIC-ID,STATIC-ID" data-beam-level="1" class="scoreforge-beam" d="M 671.0991051454139 547.5302538071066 L 771.4601789709172 542.4697461928934 L 771.4601789709172 537.4697461928934 L 671.0991051454139 542.5302538071066 Z" fill="currentColor" stroke="none" />
-    <rect class="event-hit-area" data-event-id="STATIC-ID" x="35.81431767337808" y="481.65333333333336" width="23.00111856823266" height="63.34666666666667" fill="transparent" pointer-events="all" style="cursor: pointer;" />
-    <rect class="event-hit-area" data-event-id="STATIC-ID" x="79.88590604026845" y="478.32" width="23.00111856823266" height="41.68" fill="transparent" pointer-events="all" style="cursor: pointer;" />
-    <rect class="event-hit-area" data-event-id="STATIC-ID" x="123.95749440715883" y="474.9866666666667" width="23.00111856823266" height="60.013333333333335" fill="transparent" pointer-events="all" style="cursor: pointer;" />
-    <rect class="event-hit-area" data-event-id="STATIC-ID" x="168.02908277404921" y="471.65333333333336" width="23.001118568232677" height="53.34666666666667" fill="transparent" pointer-events="all" style="cursor: pointer;" />
-    <rect class="event-hit-area" data-event-id="STATIC-ID" x="212.1006711409396" y="485" width="23.00111856823264" height="55" fill="transparent" pointer-events="all" style="cursor: pointer;" />
-    <rect class="event-hit-area" data-event-id="STATIC-ID" x="261.6812080536913" y="475" width="23.00111856823264" height="45" fill="transparent" pointer-events="all" style="cursor: pointer;" />
-    <rect class="event-hit-area" data-event-id="STATIC-ID" x="307.26174496644296" y="478.75" width="29.79999999999997" height="71.25" fill="transparent" pointer-events="all" style="cursor: pointer;" />
-    <rect class="event-hit-area" data-event-id="STATIC-ID" x="360.8422818791946" y="476.25" width="23.00111856823264" height="68.75" fill="transparent" pointer-events="all" style="cursor: pointer;" />
-    <rect class="event-hit-area" data-event-id="STATIC-ID" x="410.4228187919463" y="468.75" width="23.00111856823264" height="71.25" fill="transparent" pointer-events="all" style="cursor: pointer;" />
-    <rect class="event-hit-area" data-event-id="STATIC-ID" x="460.00335570469804" y="466.25" width="23.00111856823264" height="68.75" fill="transparent" pointer-events="all" style="cursor: pointer;" />
-    <rect class="event-hit-area" data-event-id="STATIC-ID" x="517.9574944071588" y="487.5" width="23.00111856823264" height="52.5" fill="transparent" pointer-events="all" style="cursor: pointer;" />
-    <rect class="event-hit-area" data-event-id="STATIC-ID" x="567.5380313199106" y="485" width="23.00111856823264" height="50" fill="transparent" pointer-events="all" style="cursor: pointer;" />
-    <rect class="event-hit-area" data-event-id="STATIC-ID" x="617.1185682326623" y="482.5" width="23.00111856823264" height="47.5" fill="transparent" pointer-events="all" style="cursor: pointer;" />
-    <rect class="event-hit-area" data-event-id="STATIC-ID" x="666.6991051454138" y="500" width="22.00000000000003" height="52.5" fill="transparent" pointer-events="all" style="cursor: pointer;" />
-    <rect class="event-hit-area" data-event-id="STATIC-ID" x="716.2796420581656" y="495" width="22.00000000000003" height="55" fill="transparent" pointer-events="all" style="cursor: pointer;" />
-    <rect class="event-hit-area" data-event-id="STATIC-ID" x="765.8601789709172" y="490" width="22.00000000000003" height="57.5" fill="transparent" pointer-events="all" style="cursor: pointer;" />
+    <path data-id="beam-STATIC-ID-0-lvl1" data-beam-group="beam-STATIC-ID-0" data-event-ids="STATIC-ID,STATIC-ID,STATIC-ID,STATIC-ID" data-beam-level="1" class="scoreforge-beam" d="M 52.56440586001085 486.7001099830795 L 182.03353228431905 476.60655668358714 L 182.03353228431905 481.60655668358714 L 52.56440586001085 491.7001099830795 Z" fill="currentColor" stroke="none" />
+    <path data-id="beam-STATIC-ID-0-lvl2-0-3" data-beam-group="beam-STATIC-ID-0" data-event-ids="STATIC-ID,STATIC-ID,STATIC-ID,STATIC-ID" data-beam-level="2" class="scoreforge-beam" d="M 52.56440586001085 494.2001099830795 L 182.03353228431905 484.10655668358714 L 182.03353228431905 489.10655668358714 L 52.56440586001085 499.2001099830795 Z" fill="currentColor" stroke="none" />
+    <path data-id="beam-STATIC-ID-1-lvl1" data-beam-group="beam-STATIC-ID-1" data-event-ids="STATIC-ID,STATIC-ID" data-beam-level="1" class="scoreforge-beam" d="M 223.58990775908848 490.1247377326565 L 272.890830168204 479.8752622673435 L 272.890830168204 484.8752622673435 L 223.58990775908848 495.1247377326565 Z" fill="currentColor" stroke="none" />
+    <path data-id="beam-STATIC-ID-2-lvl1" data-beam-group="beam-STATIC-ID-2" data-event-ids="STATIC-ID,STATIC-ID" data-beam-level="1" class="scoreforge-beam" d="M 319.79175257731964 483.78118443316407 L 369.0926749864352 481.21881556683593 L 369.0926749864352 486.21881556683593 L 319.79175257731964 488.78118443316407 Z" fill="currentColor" stroke="none" />
+    <path data-id="beam-STATIC-ID-3-lvl1" data-beam-group="beam-STATIC-ID-3" data-event-ids="STATIC-ID,STATIC-ID" data-beam-level="1" class="scoreforge-beam" d="M 415.9935973955507 473.78118443316407 L 465.2945198046663 471.21881556683593 L 465.2945198046663 476.21881556683593 L 415.9935973955507 478.78118443316407 Z" fill="currentColor" stroke="none" />
+    <path data-id="beam-STATIC-ID-0-lvl1" data-beam-group="beam-STATIC-ID-0" data-event-ids="STATIC-ID,STATIC-ID,STATIC-ID" data-beam-level="1" class="scoreforge-beam" d="M 543.8351600651113 492.53118443316407 L 641.2370048833424 487.46881556683593 L 641.2370048833424 492.46881556683593 L 543.8351600651113 497.53118443316407 Z" fill="currentColor" stroke="none" />
+    <path data-id="beam-STATIC-ID-1-lvl1" data-beam-group="beam-STATIC-ID-1" data-event-ids="STATIC-ID,STATIC-ID,STATIC-ID" data-beam-level="1" class="scoreforge-beam" d="M 675.5247965274009 547.5311844331641 L 772.9266413456321 542.4688155668359 L 772.9266413456321 537.4688155668359 L 675.5247965274009 542.5311844331641 Z" fill="currentColor" stroke="none" />
+    <rect class="event-hit-area" data-event-id="STATIC-ID" x="35.55127509495388" y="481.65333333333336" width="22.613130765056972" height="63.34666666666667" fill="transparent" pointer-events="all" style="cursor: pointer;" />
+    <rect class="event-hit-area" data-event-id="STATIC-ID" x="78.30765056972326" y="478.32" width="22.613130765056972" height="41.68" fill="transparent" pointer-events="all" style="cursor: pointer;" />
+    <rect class="event-hit-area" data-event-id="STATIC-ID" x="121.06402604449269" y="474.9866666666667" width="22.613130765056955" height="60.013333333333335" fill="transparent" pointer-events="all" style="cursor: pointer;" />
+    <rect class="event-hit-area" data-event-id="STATIC-ID" x="163.82040151926208" y="471.65333333333336" width="22.613130765056972" height="53.34666666666667" fill="transparent" pointer-events="all" style="cursor: pointer;" />
+    <rect class="event-hit-area" data-event-id="STATIC-ID" x="206.5767769940315" y="485" width="22.613130765056972" height="55" fill="transparent" pointer-events="all" style="cursor: pointer;" />
+    <rect class="event-hit-area" data-event-id="STATIC-ID" x="254.67769940314707" y="475" width="22.613130765056937" height="45" fill="transparent" pointer-events="all" style="cursor: pointer;" />
+    <rect class="event-hit-area" data-event-id="STATIC-ID" x="298.7786218122626" y="478.75" width="29.79999999999997" height="71.25" fill="transparent" pointer-events="all" style="cursor: pointer;" />
+    <rect class="event-hit-area" data-event-id="STATIC-ID" x="350.8795442213783" y="476.25" width="22.613130765056937" height="68.75" fill="transparent" pointer-events="all" style="cursor: pointer;" />
+    <rect class="event-hit-area" data-event-id="STATIC-ID" x="398.98046663049377" y="468.75" width="22.613130765056937" height="71.25" fill="transparent" pointer-events="all" style="cursor: pointer;" />
+    <rect class="event-hit-area" data-event-id="STATIC-ID" x="447.08138903960935" y="466.25" width="22.613130765056937" height="68.75" fill="transparent" pointer-events="all" style="cursor: pointer;" />
+    <rect class="event-hit-area" data-event-id="STATIC-ID" x="526.8220293000543" y="487.5" width="22.613130765057008" height="52.5" fill="transparent" pointer-events="all" style="cursor: pointer;" />
+    <rect class="event-hit-area" data-event-id="STATIC-ID" x="574.9229517091699" y="485" width="22.613130765056937" height="50" fill="transparent" pointer-events="all" style="cursor: pointer;" />
+    <rect class="event-hit-area" data-event-id="STATIC-ID" x="623.0238741182854" y="482.5" width="22.613130765056937" height="47.5" fill="transparent" pointer-events="all" style="cursor: pointer;" />
+    <rect class="event-hit-area" data-event-id="STATIC-ID" x="671.1247965274009" y="500" width="22.00000000000003" height="52.5" fill="transparent" pointer-events="all" style="cursor: pointer;" />
+    <rect class="event-hit-area" data-event-id="STATIC-ID" x="719.2257189365165" y="495" width="22.00000000000003" height="55" fill="transparent" pointer-events="all" style="cursor: pointer;" />
+    <rect class="event-hit-area" data-event-id="STATIC-ID" x="767.3266413456321" y="490" width="22.00000000000003" height="57.5" fill="transparent" pointer-events="all" style="cursor: pointer;" />
   </g>
   <g data-system-index="4">
-    <line data-id="sys-4-staffline-4" x1="0" y1="670" x2="614.6" y2="670" stroke="currentColor" stroke-width="1.3" stroke-linecap="butt" />
-    <line data-id="sys-4-staffline-3" x1="0" y1="660" x2="614.6" y2="660" stroke="currentColor" stroke-width="1.3" stroke-linecap="butt" />
-    <line data-id="sys-4-staffline-2" x1="0" y1="650" x2="614.6" y2="650" stroke="currentColor" stroke-width="1.3" stroke-linecap="butt" />
-    <line data-id="sys-4-staffline-1" x1="0" y1="640" x2="614.6" y2="640" stroke="currentColor" stroke-width="1.3" stroke-linecap="butt" />
-    <line data-id="sys-4-staffline-0" x1="0" y1="630" x2="614.6" y2="630" stroke="currentColor" stroke-width="1.3" stroke-linecap="butt" />
+    <line data-id="sys-4-staffline-4" x1="0" y1="670" x2="636.6" y2="670" stroke="currentColor" stroke-width="1.3" stroke-linecap="butt" />
+    <line data-id="sys-4-staffline-3" x1="0" y1="660" x2="636.6" y2="660" stroke="currentColor" stroke-width="1.3" stroke-linecap="butt" />
+    <line data-id="sys-4-staffline-2" x1="0" y1="650" x2="636.6" y2="650" stroke="currentColor" stroke-width="1.3" stroke-linecap="butt" />
+    <line data-id="sys-4-staffline-1" x1="0" y1="640" x2="636.6" y2="640" stroke="currentColor" stroke-width="1.3" stroke-linecap="butt" />
+    <line data-id="sys-4-staffline-0" x1="0" y1="630" x2="636.6" y2="630" stroke="currentColor" stroke-width="1.3" stroke-linecap="butt" />
+    <text data-id="sys-4-measure-number" x="0" y="618" fill="currentColor" font-family="&quot;Times New Roman&quot;, Times, &quot;Liberation Serif&quot;, serif" font-size="11px" font-weight="bold" font-style="italic">7</text>
     <line data-id="sys-4-sys-start-barline" x1="0" y1="630" x2="0" y2="670" stroke="currentColor" stroke-width="1.6" stroke-linecap="butt" />
     <use data-id="sys-4-clef-0.4" href="#glyph-fClef" transform="translate(4, 640) scale(0.04)" fill="currentColor" />
     <use data-id="STATIC-ID" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(40, 670) scale(0.04)" fill="currentColor" />
@@ -565,35 +583,37 @@ exports[`renderSvg > renderSvgToString snapshot of the M3d beam demo score (treb
     <line data-id="STATIC-ID-stem" data-event-id="STATIC-ID" x1="231.8" y1="653.3199999999999" x2="231.8" y2="621.25" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
     <use data-id="STATIC-ID" data-event-id="STATIC-ID" href="#glyph-rest8th" transform="translate(265, 650) scale(0.04)" fill="currentColor" />
     <line data-id="barline-STATIC-ID" x1="308" y1="630" x2="308" y2="670" stroke="currentColor" stroke-width="1.6" stroke-linecap="butt" />
-    <use data-id="STATIC-ID" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(317.6, 655) scale(0.04)" fill="currentColor" />
-    <line data-id="STATIC-ID-stem" data-event-id="STATIC-ID" x1="329.4" y1="653.3199999999999" x2="329.4" y2="620" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
-    <use data-id="STATIC-ID" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(372.59999999999997, 660) scale(0.04)" fill="currentColor" />
-    <line data-id="STATIC-ID-stem" data-event-id="STATIC-ID" x1="384.4" y1="658.3199999999999" x2="384.4" y2="625" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
-    <use data-id="STATIC-ID-flag" data-event-id="STATIC-ID" href="#glyph-flag8thUp" transform="translate(384.4, 625) scale(0.04)" fill="currentColor" />
-    <use data-id="STATIC-ID" data-event-id="STATIC-ID" href="#glyph-rest8th" transform="translate(417.6, 650) scale(0.04)" fill="currentColor" />
-    <use data-id="STATIC-ID" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(462.6, 670) scale(0.04)" fill="currentColor" />
-    <line data-id="STATIC-ID-stem" data-event-id="STATIC-ID" x1="474.4" y1="668.3199999999999" x2="474.4" y2="633.75" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
-    <use data-id="STATIC-ID" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(507.6, 665) scale(0.04)" fill="currentColor" />
-    <line data-id="STATIC-ID-stem" data-event-id="STATIC-ID" x1="519.4" y1="663.3199999999999" x2="519.4" y2="631.25" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
-    <use data-id="STATIC-ID" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(552.6, 660) scale(0.04)" fill="currentColor" />
-    <line data-id="STATIC-ID-stem" data-event-id="STATIC-ID" x1="564.4" y1="658.3199999999999" x2="564.4" y2="625" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
-    <line data-id="barline-STATIC-ID-thin" x1="605.6" y1="630" x2="605.6" y2="670" stroke="currentColor" stroke-width="1.6" stroke-linecap="butt" />
-    <line data-id="barline-STATIC-ID-thick" x1="609.6" y1="630" x2="609.6" y2="670" stroke="currentColor" stroke-width="5" stroke-linecap="butt" />
+    <use data-id="timesig-num-0" href="#glyph-timeSig4" transform="translate(309.6, 640) scale(0.04)" fill="currentColor" />
+    <use data-id="timesig-den-0" href="#glyph-timeSig4" transform="translate(309.6, 660) scale(0.04)" fill="currentColor" />
+    <use data-id="STATIC-ID" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(339.6, 655) scale(0.04)" fill="currentColor" />
+    <line data-id="STATIC-ID-stem" data-event-id="STATIC-ID" x1="351.4" y1="653.3199999999999" x2="351.4" y2="620" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
+    <use data-id="STATIC-ID" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(394.6, 660) scale(0.04)" fill="currentColor" />
+    <line data-id="STATIC-ID-stem" data-event-id="STATIC-ID" x1="406.4" y1="658.3199999999999" x2="406.4" y2="625" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
+    <use data-id="STATIC-ID-flag" data-event-id="STATIC-ID" href="#glyph-flag8thUp" transform="translate(406.4, 625) scale(0.04)" fill="currentColor" />
+    <use data-id="STATIC-ID" data-event-id="STATIC-ID" href="#glyph-rest8th" transform="translate(439.6, 650) scale(0.04)" fill="currentColor" />
+    <use data-id="STATIC-ID" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(484.6, 670) scale(0.04)" fill="currentColor" />
+    <line data-id="STATIC-ID-stem" data-event-id="STATIC-ID" x1="496.4" y1="668.3199999999999" x2="496.4" y2="633.75" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
+    <use data-id="STATIC-ID" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(529.6, 665) scale(0.04)" fill="currentColor" />
+    <line data-id="STATIC-ID-stem" data-event-id="STATIC-ID" x1="541.4" y1="663.3199999999999" x2="541.4" y2="631.25" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
+    <use data-id="STATIC-ID" data-event-id="STATIC-ID" href="#glyph-noteheadBlack" transform="translate(574.6, 660) scale(0.04)" fill="currentColor" />
+    <line data-id="STATIC-ID-stem" data-event-id="STATIC-ID" x1="586.4" y1="658.3199999999999" x2="586.4" y2="625" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
+    <line data-id="barline-STATIC-ID-thin" x1="627.6" y1="630" x2="627.6" y2="670" stroke="currentColor" stroke-width="1.6" stroke-linecap="butt" />
+    <line data-id="barline-STATIC-ID-thick" x1="631.6" y1="630" x2="631.6" y2="670" stroke="currentColor" stroke-width="5" stroke-linecap="butt" />
     <path data-id="beam-STATIC-ID-0-lvl1" data-beam-group="beam-STATIC-ID-0" data-event-ids="STATIC-ID,STATIC-ID" data-beam-level="1" class="scoreforge-beam" d="M 51.2 633.7833333333333 L 97.4 631.2166666666667 L 97.4 636.2166666666667 L 51.2 638.7833333333333 Z" fill="currentColor" stroke="none" />
     <path data-id="beam-STATIC-ID-1-lvl1" data-beam-group="beam-STATIC-ID-1" data-event-ids="STATIC-ID,STATIC-ID" data-beam-level="1" class="scoreforge-beam" d="M 186.20000000000002 623.7833333333333 L 232.39999999999998 621.2166666666667 L 232.39999999999998 626.2166666666667 L 186.20000000000002 628.7833333333333 Z" fill="currentColor" stroke="none" />
-    <path data-id="beam-STATIC-ID-0-lvl1" data-beam-group="beam-STATIC-ID-0" data-event-ids="STATIC-ID,STATIC-ID" data-beam-level="1" class="scoreforge-beam" d="M 473.79999999999995 633.7833333333333 L 520 631.2166666666667 L 520 636.2166666666667 L 473.79999999999995 638.7833333333333 Z" fill="currentColor" stroke="none" />
+    <path data-id="beam-STATIC-ID-0-lvl1" data-beam-group="beam-STATIC-ID-0" data-event-ids="STATIC-ID,STATIC-ID" data-beam-level="1" class="scoreforge-beam" d="M 495.79999999999995 633.7833333333333 L 542 631.2166666666667 L 542 636.2166666666667 L 495.79999999999995 638.7833333333333 Z" fill="currentColor" stroke="none" />
     <rect class="event-hit-area" data-event-id="STATIC-ID" x="35" y="628.75" width="22" height="51.25" fill="transparent" pointer-events="all" style="cursor: pointer;" />
     <rect class="event-hit-area" data-event-id="STATIC-ID" x="80" y="626.25" width="21.999999999999993" height="48.75" fill="transparent" pointer-events="all" style="cursor: pointer;" />
     <rect class="event-hit-area" data-event-id="STATIC-ID" x="125" y="635" width="21.999999999999993" height="25" fill="transparent" pointer-events="all" style="cursor: pointer;" />
     <rect class="event-hit-area" data-event-id="STATIC-ID" x="170" y="618.75" width="21.999999999999993" height="51.25" fill="transparent" pointer-events="all" style="cursor: pointer;" />
     <rect class="event-hit-area" data-event-id="STATIC-ID" x="215" y="616.25" width="21.999999999999993" height="48.75" fill="transparent" pointer-events="all" style="cursor: pointer;" />
     <rect class="event-hit-area" data-event-id="STATIC-ID" x="260" y="635" width="21.999999999999993" height="25" fill="transparent" pointer-events="all" style="cursor: pointer;" />
-    <rect class="event-hit-area" data-event-id="STATIC-ID" x="312.6" y="615" width="21.999999999999993" height="50" fill="transparent" pointer-events="all" style="cursor: pointer;" />
-    <rect class="event-hit-area" data-event-id="STATIC-ID" x="367.59999999999997" y="610" width="33.800000000000026" height="60" fill="transparent" pointer-events="all" style="cursor: pointer;" />
-    <rect class="event-hit-area" data-event-id="STATIC-ID" x="412.6" y="635" width="22.00000000000003" height="25" fill="transparent" pointer-events="all" style="cursor: pointer;" />
-    <rect class="event-hit-area" data-event-id="STATIC-ID" x="457.6" y="628.75" width="22.00000000000003" height="51.25" fill="transparent" pointer-events="all" style="cursor: pointer;" />
-    <rect class="event-hit-area" data-event-id="STATIC-ID" x="502.6" y="626.25" width="22.00000000000003" height="48.75" fill="transparent" pointer-events="all" style="cursor: pointer;" />
-    <rect class="event-hit-area" data-event-id="STATIC-ID" x="547.6" y="620" width="22.00000000000003" height="50" fill="transparent" pointer-events="all" style="cursor: pointer;" />
+    <rect class="event-hit-area" data-event-id="STATIC-ID" x="334.6" y="615" width="22.00000000000003" height="50" fill="transparent" pointer-events="all" style="cursor: pointer;" />
+    <rect class="event-hit-area" data-event-id="STATIC-ID" x="389.6" y="610" width="33.800000000000026" height="60" fill="transparent" pointer-events="all" style="cursor: pointer;" />
+    <rect class="event-hit-area" data-event-id="STATIC-ID" x="434.6" y="635" width="22.00000000000003" height="25" fill="transparent" pointer-events="all" style="cursor: pointer;" />
+    <rect class="event-hit-area" data-event-id="STATIC-ID" x="479.6" y="628.75" width="22.00000000000003" height="51.25" fill="transparent" pointer-events="all" style="cursor: pointer;" />
+    <rect class="event-hit-area" data-event-id="STATIC-ID" x="524.6" y="626.25" width="22.00000000000003" height="48.75" fill="transparent" pointer-events="all" style="cursor: pointer;" />
+    <rect class="event-hit-area" data-event-id="STATIC-ID" x="569.6" y="620" width="22.00000000000003" height="50" fill="transparent" pointer-events="all" style="cursor: pointer;" />
   </g>
 </svg>"
 `;
@@ -673,6 +693,7 @@ exports[`renderSvg > renderSvgToString snapshot of the demo score 1`] = `
     <line data-id="sys-1-staffline-2" x1="0" y1="230" x2="509.6" y2="230" stroke="currentColor" stroke-width="1.3" stroke-linecap="butt" />
     <line data-id="sys-1-staffline-1" x1="0" y1="220" x2="509.6" y2="220" stroke="currentColor" stroke-width="1.3" stroke-linecap="butt" />
     <line data-id="sys-1-staffline-0" x1="0" y1="210" x2="509.6" y2="210" stroke="currentColor" stroke-width="1.3" stroke-linecap="butt" />
+    <text data-id="sys-1-measure-number" x="0" y="198" fill="currentColor" font-family="&quot;Times New Roman&quot;, Times, &quot;Liberation Serif&quot;, serif" font-size="11px" font-weight="bold" font-style="italic">4</text>
     <line data-id="sys-1-sys-start-barline" x1="0" y1="210" x2="0" y2="250" stroke="currentColor" stroke-width="1.6" stroke-linecap="butt" />
     <use data-id="sys-1-clef-0.4" href="#glyph-gClef" transform="translate(4, 240) scale(0.04)" fill="currentColor" />
     <use data-id="sys-1-keysig-0" href="#glyph-accidentalSharp" transform="translate(31.999999999999996, 210) scale(0.04)" fill="currentColor" />

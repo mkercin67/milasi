@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { deserializeScore } from '../../src/io/json';
+import { CURRENT_SCHEMA_VERSION, deserializeScore } from '../../src/io/json';
 
 describe('M6a: SchemaVersion 1 Migration (v1 -> v2)', () => {
   const v1ScoreCore = {
@@ -88,7 +88,7 @@ describe('M6a: SchemaVersion 1 Migration (v1 -> v2)', () => {
 
     const loaded = deserializeScore(envelopedV1);
 
-    expect(loaded.schemaVersion).toBe(3);
+    expect(loaded.schemaVersion).toBe(CURRENT_SCHEMA_VERSION);
     expect(loaded.meta.title).toBe('M5 Legacy Score');
 
     const firstEvent = loaded.parts[0].staves[0].measures['m1'].voices[0].events[0];
@@ -112,7 +112,7 @@ describe('M6a: SchemaVersion 1 Migration (v1 -> v2)', () => {
 
     const loaded = deserializeScore(bareV1);
 
-    expect(loaded.schemaVersion).toBe(3);
+    expect(loaded.schemaVersion).toBe(CURRENT_SCHEMA_VERSION);
     expect(loaded.meta.title).toBe('M5 Legacy Score');
 
     const firstEvent = loaded.parts[0].staves[0].measures['m1'].voices[0].events[0];

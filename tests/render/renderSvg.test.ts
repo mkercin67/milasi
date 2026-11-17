@@ -7,7 +7,7 @@ import { buildBeamDemoScore } from '../../src/ui/beamDemoScore';
 
 describe('renderSvg', () => {
   it('renders SVG string containing data-id attributes and staff lines', () => {
-    const score = createScore({ title: 'SVG Test' });
+    const score = createScore({ title: '', composer: '' });
     const measure = createMeasure();
     const part = createPart('Flute');
     score.measures.push(measure);
@@ -25,7 +25,7 @@ describe('renderSvg', () => {
     expect(svgStr).toContain(`data-id="${note.id}"`);
     expect(svgStr).toContain('data-id="sys-0-staffline-0"');
     expect(svgStr).toContain('href="#glyph-');
-    expect(svgStr).not.toContain('<text');
+    expect(svgStr).not.toContain('class="scoreforge-glyph"');
     expect(svgStr).toContain('</svg>');
 
     // A/B test query flag ?text fallback mode
@@ -99,9 +99,11 @@ describe('renderSvg', () => {
 
   it('renderSvgToString snapshot of the demo score', () => {
     const score = buildSampleScore('G');
+    score.meta.title = '';
+    score.meta.composer = '';
     const layout = layoutScore(score, { width: 82 });
     const svgStr = renderSvgToString(layout, { staffSpacePx: 10 });
-    expect(svgStr).not.toContain('<text');
+    expect(svgStr).not.toContain('class="scoreforge-glyph"');
 
     // Normalize random UUIDs so snapshot is completely deterministic
     const normalized = svgStr.replace(
@@ -116,17 +118,23 @@ describe('renderSvg', () => {
     const normalize = (s: string) =>
       s.replace(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi, 'STATIC-ID');
 
-    const trebleSvg = renderSvgToString(layoutScore(buildBeamDemoScore('G'), { width: 82 }), {
+    const trebleScore = buildBeamDemoScore('G');
+    trebleScore.meta.title = '';
+    trebleScore.meta.composer = '';
+    const trebleSvg = renderSvgToString(layoutScore(trebleScore, { width: 82 }), {
       staffSpacePx: 10,
     });
-    expect(trebleSvg).not.toContain('<text');
+    expect(trebleSvg).not.toContain('class="scoreforge-glyph"');
     expect(trebleSvg).toContain('class="scoreforge-beam"');
     expect(normalize(trebleSvg)).toMatchSnapshot();
 
-    const bassSvg = renderSvgToString(layoutScore(buildBeamDemoScore('F'), { width: 82 }), {
+    const bassScore = buildBeamDemoScore('F');
+    bassScore.meta.title = '';
+    bassScore.meta.composer = '';
+    const bassSvg = renderSvgToString(layoutScore(bassScore, { width: 82 }), {
       staffSpacePx: 10,
     });
-    expect(bassSvg).not.toContain('<text');
+    expect(bassSvg).not.toContain('class="scoreforge-glyph"');
     expect(bassSvg).toContain('class="scoreforge-beam"');
     expect(normalize(bassSvg)).toMatchSnapshot();
   });

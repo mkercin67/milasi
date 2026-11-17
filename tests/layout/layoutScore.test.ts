@@ -262,7 +262,7 @@ describe('layoutScore', () => {
         for (const sys of layout.systems) {
           const barlines = sys.items.filter((it) => it.id.includes('barline'));
           expect(barlines.length).toBeGreaterThan(0);
-          const maxItemX = Math.max(...sys.items.map((it) => it.x));
+          const maxItemX = Math.max(...sys.items.filter((it) => it.kind !== 'text').map((it) => it.x));
           const maxBarlineX = Math.max(...barlines.map((it) => it.x));
           // The barline is at the very end of the system
           expect(maxBarlineX).toBeCloseTo(maxItemX, 1);

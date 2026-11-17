@@ -15,7 +15,7 @@ export interface ScoreForgeEnvelope {
   score: Score;
 }
 
-export const CURRENT_SCHEMA_VERSION = 3;
+export const CURRENT_SCHEMA_VERSION = 4;
 
 /** Migration function signature for schema version upgrades. */
 export type ScoreMigration = (data: unknown) => Score;
@@ -72,10 +72,30 @@ export function migrateV2ToV3(data: unknown): Score {
   return score as Score;
 }
 
+/** Migration from v3 to v4: upgrades schemaVersion to 4 and initializes metadata & barlines. */
+export function migrateV3ToV4(data: unknown): Score {
+  const score = JSON.parse(JSON.stringify(data)) as any;
+  score.schemaVersion = 4;
+  if (score.meta) {
+    score.meta.subtitle = score.meta.subtitle ?? '';
+    score.meta.arranger = score.meta.arranger ?? '';
+  }
+  if (Array.isArray(score.measures)) {
+    for (let i = 0; i < score.measures.length; i++) {
+      const m = score.measures[i];
+      if (m && !m.endBarline) {
+        m.endBarline = i === score.measures.length - 1 ? 'final' : 'single';
+      }
+    }
+  }
+  return score as Score;
+}
+
 /** Registry of schema migrations keyed by source schemaVersion. */
 export const migrations: Record<number, ScoreMigration> = {
   1: migrateV1ToV2,
   2: migrateV2ToV3,
+  3: migrateV3ToV4,
 };
 
 /**

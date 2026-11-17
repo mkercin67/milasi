@@ -279,6 +279,8 @@ describe('beamLayout geometry and layoutScore integration (Section B)', () => {
     const b1 = createNote({ pitches: [createPitch('C', 5, 0)], baseType: 'eighth' });
     const b2 = createNote({ pitches: [createPitch('D', 5, 0)], baseType: 'eighth' });
     const { score } = makeBeamScore([q, r, single8, b1, b2]);
+    score.meta.title = '';
+    score.meta.composer = '';
 
     const layout = layoutScore(score, { width: 80 });
     const svg = renderSvgToString(layout);

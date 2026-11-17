@@ -258,6 +258,20 @@ function renderItemToSvgElement(
     text.setAttribute('x', pxX.toString());
     text.setAttribute('y', pxY.toString());
     text.setAttribute('fill', 'currentColor');
+    if (item.textAnchor) {
+      text.setAttribute('text-anchor', item.textAnchor);
+    }
+    if (item.fontFamily) {
+      text.setAttribute('font-family', item.fontFamily);
+    }
+    const sz = item.fontSize ? item.fontSize * staffSpacePx : staffSpacePx * 1.5;
+    text.setAttribute('font-size', `${sz}px`);
+    if (item.fontWeight) {
+      text.setAttribute('font-weight', String(item.fontWeight));
+    }
+    if (item.fontStyle) {
+      text.setAttribute('font-style', item.fontStyle);
+    }
     text.textContent = item.text;
     return text;
   }
@@ -367,7 +381,13 @@ export function renderSvgToString(
           elementsXml += `    <use data-id="${item.id}"${eventAttr} href="#glyph-${item.glyph}" transform="translate(${pxX}, ${pxY}) scale(${scale})" fill="currentColor" />\n`;
         }
       } else if (item.kind === 'text' && item.text) {
-        elementsXml += `    <text data-id="${item.id}"${eventAttr} x="${pxX}" y="${pxY}" fill="currentColor">${item.text}</text>\n`;
+        const anchorAttr = item.textAnchor ? ` text-anchor="${item.textAnchor}"` : '';
+        const fontAttr = item.fontFamily ? ` font-family="${item.fontFamily.replace(/"/g, '&quot;')}"` : '';
+        const sz = item.fontSize ? item.fontSize * staffSpacePx : staffSpacePx * 1.5;
+        const sizeAttr = ` font-size="${sz}px"`;
+        const weightAttr = item.fontWeight ? ` font-weight="${item.fontWeight}"` : '';
+        const styleAttr = item.fontStyle ? ` font-style="${item.fontStyle}"` : '';
+        elementsXml += `    <text data-id="${item.id}"${eventAttr} x="${pxX}" y="${pxY}" fill="currentColor"${anchorAttr}${fontAttr}${sizeAttr}${weightAttr}${styleAttr}>${item.text}</text>\n`;
       }
     }
 

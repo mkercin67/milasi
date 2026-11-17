@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { createMeasure, createNote, createPart, createPitch, createScore } from '../../src/core/factory';
-import { deserializeScore, migrations, serializeScore, ScoreForgeEnvelope } from '../../src/io/json';
+import {
+  CURRENT_SCHEMA_VERSION,
+  deserializeScore,
+  migrations,
+  serializeScore,
+  ScoreForgeEnvelope,
+} from '../../src/io/json';
 
 describe('Milestone 5 File Format (src/io/json)', () => {
   it('serializes to native .sfscore envelope with app="scoreforge", savedAt ISO string, and score', () => {
@@ -12,7 +18,7 @@ describe('Milestone 5 File Format (src/io/json)', () => {
     expect(typeof parsed.savedAt).toBe('string');
     expect(new Date(parsed.savedAt).toISOString()).toBe(parsed.savedAt);
     expect(parsed.score.meta.title).toBe('Envelope Test');
-    expect(parsed.score.schemaVersion).toBe(3);
+    expect(parsed.score.schemaVersion).toBe(CURRENT_SCHEMA_VERSION);
   });
 
   it('deserializeScore accepts both the envelope AND the old bare JSON format', () => {

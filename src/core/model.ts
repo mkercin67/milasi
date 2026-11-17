@@ -11,16 +11,21 @@ export type Id = string;
 
 /** Root score container. */
 export interface Score {
-  schemaVersion: 1 | 2 | 3;
+  schemaVersion: 1 | 2 | 3 | 4;
   id: Id;
   meta: {
     title: string;
     composer: string;
+    subtitle?: string;
+    arranger?: string;
   };
   parts: Part[];
   measures: MeasureDef[];
   overrides: Record<Id, Override>;
 }
+
+/** Supported barline types for measure endings. */
+export type BarlineType = 'single' | 'double' | 'final';
 
 /** Global measure definition shared by all staves across parts. */
 export interface MeasureDef {
@@ -33,7 +38,10 @@ export interface MeasureDef {
   tempo?: {
     bpm: number;
     beatUnit: number;
+    tempoText?: string;
   };
+  actualTicks?: number; // Optional custom duration in ticks (e.g. pickup/anacrusis measures)
+  endBarline?: BarlineType;
 }
 
 /** Supported clef sign symbols. */

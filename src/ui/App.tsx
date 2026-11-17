@@ -6,9 +6,19 @@
  */
 
 import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { convertToRest, setOverride, transposeEvent, setScoreMetadata, setTempo } from '../core/commands';
-import { createEmptyScore } from '../core/factory';
-import { Pitch, Score } from '../core/model';
+import {
+  convertToRest,
+  setOverride,
+  transposeEvent,
+  setScoreMetadata,
+  setTempo,
+  setKeySignature,
+  setTimeSignature,
+  setPickup,
+  setEndBarline,
+} from '../core/commands';
+import { createEmptyScore, createRest } from '../core/factory';
+import { BarlineType, Pitch, Score } from '../core/model';
 import { ScoreCursor } from '../core/input';
 import { serializeScore, deserializeScore } from '../io/json';
 import { saveAutosave, loadAutosave, clearAutosave } from '../io/storage';
@@ -143,7 +153,28 @@ const EditorShell: React.FC = () => {
   const [isNewModalOpen, setIsNewModalOpen] = useState<boolean>(false);
   const [isScoreInfoOpen, setIsScoreInfoOpen] = useState<boolean>(false);
   const [scoreTitleInput, setScoreTitleInput] = useState<string>(score.meta.title || '');
+  const [scoreSubtitleInput, setScoreSubtitleInput] = useState<string>(score.meta.subtitle || '');
   const [scoreComposerInput, setScoreComposerInput] = useState<string>(score.meta.composer || '');
+  const [scoreArrangerInput, setScoreArrangerInput] = useState<string>(score.meta.arranger || '');
+
+  // M6c Modals State
+  const [isKeySigModalOpen, setIsKeySigModalOpen] = useState<boolean>(false);
+  const [keySigInput, setKeySigInput] = useState<number>(0);
+  const [keySigScope, setKeySigScope] = useState<'from-here' | 'score'>('from-here');
+
+  const [isTimeSigModalOpen, setIsTimeSigModalOpen] = useState<boolean>(false);
+  const [timeSigStrInput, setTimeSigStrInput] = useState<string>('4/4');
+  const [timeSigScope, setTimeSigScope] = useState<'from-here' | 'score'>('from-here');
+
+  const [isTempoModalOpen, setIsTempoModalOpen] = useState<boolean>(false);
+  const [tempoBpmInput, setTempoBpmInput] = useState<number>(120);
+  const [tempoBeatUnitInput, setTempoBeatUnitInput] = useState<number>(1.0);
+  const [tempoTextInput, setTempoTextInput] = useState<string>('');
+
+  const [isBarlineModalOpen, setIsBarlineModalOpen] = useState<boolean>(false);
+  const [barlineInput, setBarlineInput] = useState<BarlineType>('single');
+  const [isPickupBarline, setIsPickupBarline] = useState<boolean>(false);
+  const [pickupTicksInput, setPickupTicksInput] = useState<number>(960);
   const [isUnsavedPromptOpen, setIsUnsavedPromptOpen] = useState<boolean>(false);
   const [pendingAction, setPendingAction] = useState<(() => void) | null>(null);
   const [isRestorePromptOpen, setIsRestorePromptOpen] = useState<boolean>(false);
@@ -431,15 +462,122 @@ const EditorShell: React.FC = () => {
   }, [resetScore, markClean, t]);
 
   const handleSaveScoreInfo = useCallback(() => {
-    executeCommand(setScoreMetadata(scoreTitleInput, scoreComposerInput));
+    executeCommand(
+      setScoreMetadata({
+        title: scoreTitleInput,
+        subtitle: scoreSubtitleInput,
+        composer: scoreComposerInput,
+        arranger: scoreArrangerInput,
+      })
+    );
     setIsScoreInfoOpen(false);
-  }, [executeCommand, scoreTitleInput, scoreComposerInput]);
+  }, [executeCommand, scoreTitleInput, scoreSubtitleInput, scoreComposerInput, scoreArrangerInput]);
 
   const handleOpenScoreInfo = useCallback(() => {
     setScoreTitleInput(score.meta.title || '');
+    setScoreSubtitleInput(score.meta.subtitle || '');
     setScoreComposerInput(score.meta.composer || '');
+    setScoreArrangerInput(score.meta.arranger || '');
     setIsScoreInfoOpen(true);
-  }, [score.meta.title, score.meta.composer]);
+  }, [score.meta.title, score.meta.subtitle, score.meta.composer, score.meta.arranger]);
+
+  const handleOpenKeySigModal = useCallback(() => {
+    const targetMeasure =
+      score.measures.find((m) => m.id === selectedEventInfo?.measureId) ?? score.measures[0];
+    setKeySigInput(targetMeasure?.keySig ?? 0);
+    setIsKeySigModalOpen(true);
+  }, [score.measures, selectedEventInfo?.measureId]);
+
+  const handleApplyKeySig = useCallback(() => {
+    const targetMeasure =
+      score.measures.find((m) => m.id === selectedEventInfo?.measureId) ?? score.measures[0];
+    if (targetMeasure) {
+      executeCommand(setKeySignature(targetMeasure.id, keySigInput, keySigScope));
+    }
+    setIsKeySigModalOpen(false);
+  }, [executeCommand, keySigInput, keySigScope, score.measures, selectedEventInfo?.measureId]);
+
+  const handleOpenTimeSigModal = useCallback(() => {
+    const targetMeasure =
+      score.measures.find((m) => m.id === selectedEventInfo?.measureId) ?? score.measures[0];
+    if (targetMeasure) {
+      setTimeSigStrInput(`${targetMeasure.timeSig.num}/${targetMeasure.timeSig.den}`);
+    }
+    setIsTimeSigModalOpen(true);
+  }, [score.measures, selectedEventInfo?.measureId]);
+
+  const handleApplyTimeSig = useCallback(() => {
+    const targetMeasure =
+      score.measures.find((m) => m.id === selectedEventInfo?.measureId) ?? score.measures[0];
+    if (targetMeasure) {
+      const parts = timeSigStrInput.split('/').map((s) => parseInt(s, 10));
+      if (parts.length === 2 && parts[0] > 0 && parts[1] > 0) {
+        executeCommand(
+          setTimeSignature(targetMeasure.id, { num: parts[0], den: parts[1] }, timeSigScope)
+        );
+      }
+    }
+    setIsTimeSigModalOpen(false);
+  }, [executeCommand, score.measures, selectedEventInfo?.measureId, timeSigScope, timeSigStrInput]);
+
+  const handleOpenTempoModal = useCallback(() => {
+    const targetMeasure =
+      score.measures.find((m) => m.id === selectedEventInfo?.measureId) ?? score.measures[0];
+    setTempoBpmInput(targetMeasure?.tempo?.bpm ?? 120);
+    setTempoBeatUnitInput(targetMeasure?.tempo?.beatUnit ?? 1.0);
+    setTempoTextInput(targetMeasure?.tempo?.tempoText ?? '');
+    setIsTempoModalOpen(true);
+  }, [score.measures, selectedEventInfo?.measureId]);
+
+  const handleApplyTempo = useCallback(() => {
+    const targetMeasure =
+      score.measures.find((m) => m.id === selectedEventInfo?.measureId) ?? score.measures[0];
+    if (targetMeasure) {
+      executeCommand(
+        setTempo(targetMeasure.id, {
+          bpm: tempoBpmInput,
+          beatUnit: tempoBeatUnitInput,
+          tempoText: tempoTextInput,
+        })
+      );
+    }
+    setIsTempoModalOpen(false);
+  }, [
+    executeCommand,
+    score.measures,
+    selectedEventInfo?.measureId,
+    tempoBeatUnitInput,
+    tempoBpmInput,
+    tempoTextInput,
+  ]);
+
+  const handleOpenBarlineModal = useCallback(() => {
+    const targetMeasure =
+      score.measures.find((m) => m.id === selectedEventInfo?.measureId) ?? score.measures[0];
+    setBarlineInput(targetMeasure?.endBarline ?? 'single');
+    setIsPickupBarline(Boolean(targetMeasure?.actualTicks));
+    setPickupTicksInput(targetMeasure?.actualTicks ?? 960);
+    setIsBarlineModalOpen(true);
+  }, [score.measures, selectedEventInfo?.measureId]);
+
+  const handleApplyBarline = useCallback(() => {
+    const targetMeasure =
+      score.measures.find((m) => m.id === selectedEventInfo?.measureId) ?? score.measures[0];
+    if (targetMeasure) {
+      executeCommand(setEndBarline(targetMeasure.id, barlineInput));
+      if (targetMeasure.id === score.measures[0].id) {
+        executeCommand(setPickup(targetMeasure.id, isPickupBarline ? pickupTicksInput : null));
+      }
+    }
+    setIsBarlineModalOpen(false);
+  }, [
+    barlineInput,
+    executeCommand,
+    isPickupBarline,
+    pickupTicksInput,
+    score.measures,
+    selectedEventInfo?.measureId,
+  ]);
 
   const handleCreateNewScore = (config: NewScoreConfig) => {
     const t0 = performance.now();
@@ -449,6 +587,21 @@ const EditorShell: React.FC = () => {
       timeSig: config.timeSig,
       measures: config.measures,
     });
+    if (config.isPickup && config.pickupDurationTicks) {
+      fresh.measures[0].actualTicks = config.pickupDurationTicks;
+      const m0Id = fresh.measures[0].id;
+      fresh.parts[0].staves[0].measures[m0Id].voices[0].events = [
+        createRest({
+          baseType:
+            config.pickupDurationTicks === 480
+              ? 'eighth'
+              : config.pickupDurationTicks === 1920
+              ? 'half'
+              : 'quarter',
+          duration: config.pickupDurationTicks,
+        }),
+      ];
+    }
     resetScore(fresh);
     setMode('select');
     const elapsed = performance.now() - t0;
@@ -628,6 +781,7 @@ const EditorShell: React.FC = () => {
       executeCommand(setOverride(eventId, { dx, dy }));
     };
     window.__getScoreForTest = () => scoreRef.current;
+    (window as any).__executeCommandForTest = (cmd: (score: Score) => Score) => executeCommand(cmd);
     (window as any).__selectEventForTest = (id: string | null) => selectEvent(id);
     (window as any).__resetScoreForTest = (newScore: Score) => resetScore(newScore);
     (window as any).__buildSampleScore = () => buildSampleScore('G');
@@ -1093,6 +1247,10 @@ const EditorShell: React.FC = () => {
         hasSlur={selectedEventInfo?.hasSlur}
         onToggleSlur={applySlur}
         onClearNotations={clearNotations}
+        onOpenKeySig={handleOpenKeySigModal}
+        onOpenTimeSig={handleOpenTimeSigModal}
+        onOpenTempo={handleOpenTempoModal}
+        onOpenBarline={handleOpenBarlineModal}
       />
       <ScoreView
         score={score}
@@ -1109,6 +1267,7 @@ const EditorShell: React.FC = () => {
         onEnterPitchDirect={handleEnterPitchDirect}
         onApplyOverride={applyEventOverride}
         onChangePitch={handleChangePitch}
+        onOpenScoreInfo={handleOpenScoreInfo}
         isPlaying={isPlaying}
         isPaused={isPaused}
         activePlaybackEventIds={activePlaybackEventIds}
@@ -1361,8 +1520,27 @@ const EditorShell: React.FC = () => {
               </label>
               <input
                 type="text"
+                data-testid="input-score-title"
                 value={scoreTitleInput}
                 onChange={(e) => setScoreTitleInput(e.target.value)}
+                style={{
+                  padding: '0.45rem 0.65rem',
+                  fontSize: '0.9rem',
+                  border: '1px solid #cbd5e1',
+                  borderRadius: '6px',
+                  outline: 'none',
+                }}
+              />
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+              <label style={{ fontSize: '0.85rem', color: '#475569', fontWeight: 500 }}>
+                {t('dialog.scoreInfo.subtitle')}
+              </label>
+              <input
+                type="text"
+                data-testid="input-score-subtitle"
+                value={scoreSubtitleInput}
+                onChange={(e) => setScoreSubtitleInput(e.target.value)}
                 style={{
                   padding: '0.45rem 0.65rem',
                   fontSize: '0.9rem',
@@ -1378,8 +1556,27 @@ const EditorShell: React.FC = () => {
               </label>
               <input
                 type="text"
+                data-testid="input-score-composer"
                 value={scoreComposerInput}
                 onChange={(e) => setScoreComposerInput(e.target.value)}
+                style={{
+                  padding: '0.45rem 0.65rem',
+                  fontSize: '0.9rem',
+                  border: '1px solid #cbd5e1',
+                  borderRadius: '6px',
+                  outline: 'none',
+                }}
+              />
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+              <label style={{ fontSize: '0.85rem', color: '#475569', fontWeight: 500 }}>
+                {t('dialog.scoreInfo.arranger')}
+              </label>
+              <input
+                type="text"
+                data-testid="input-score-arranger"
+                value={scoreArrangerInput}
+                onChange={(e) => setScoreArrangerInput(e.target.value)}
                 style={{
                   padding: '0.45rem 0.65rem',
                   fontSize: '0.9rem',
@@ -1407,6 +1604,7 @@ const EditorShell: React.FC = () => {
               </button>
               <button
                 type="button"
+                data-testid="btn-save-score-info"
                 onClick={handleSaveScoreInfo}
                 style={{
                   padding: '0.45rem 0.9rem',
@@ -1420,6 +1618,528 @@ const EditorShell: React.FC = () => {
                 }}
               >
                 {t('dialog.scoreInfo.save')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Key Signature Modal */}
+      {isKeySigModalOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          data-testid="modal-keysig"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(15, 23, 42, 0.45)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+          }}
+        >
+          <div
+            style={{
+              backgroundColor: '#ffffff',
+              borderRadius: '8px',
+              padding: '1.5rem',
+              width: '380px',
+              maxWidth: '90vw',
+              boxShadow: '0 20px 25px -5px rgba(0,0,0,0.15)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '1rem',
+            }}
+          >
+            <h3 style={{ margin: 0, fontSize: '1.1rem', color: '#0f172a' }}>{t('dialog.keySig.title')}</h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+              <label htmlFor="keysig-dialog-select" style={{ fontSize: '0.85rem', color: '#475569', fontWeight: 500 }}>
+                {t('notation.keySignature')}
+              </label>
+              <select
+                id="keysig-dialog-select"
+                value={keySigInput}
+                onChange={(e) => setKeySigInput(parseInt(e.target.value, 10))}
+                style={{
+                  padding: '0.45rem 0.65rem',
+                  fontSize: '0.9rem',
+                  border: '1px solid #cbd5e1',
+                  borderRadius: '6px',
+                  outline: 'none',
+                  backgroundColor: '#ffffff',
+                }}
+              >
+                <option value="-7">Do♭ Majör / La♭ Minör (7♭)</option>
+                <option value="-6">Sol♭ Majör / Mi♭ Minör (6♭)</option>
+                <option value="-5">Re♭ Majör / Si♭ Minör (5♭)</option>
+                <option value="-4">La♭ Majör / Fa Minör (4♭)</option>
+                <option value="-3">Mi♭ Majör / Do Minör (3♭)</option>
+                <option value="-2">Si♭ Majör / Sol Minör (2♭)</option>
+                <option value="-1">Fa Majör / Re Minör (1♭)</option>
+                <option value="0">Do Majör / La Minör (0)</option>
+                <option value="1">Sol Majör / Mi Minör (1♯)</option>
+                <option value="2">Re Majör / Si Minör (2♯)</option>
+                <option value="3">La Majör / Fa# Minör (3♯)</option>
+                <option value="4">Mi Majör / Do# Minör (4♯)</option>
+                <option value="5">Si Majör / Sol# Minör (5♯)</option>
+                <option value="6">Fa# Majör / Re# Minör (6♯)</option>
+                <option value="7">Do# Majör / La# Minör (7♯)</option>
+              </select>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+              <label style={{ fontSize: '0.85rem', color: '#475569', fontWeight: 500 }}>Kapsam</label>
+              <div style={{ display: 'flex', gap: '0.75rem' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.85rem', cursor: 'pointer' }}>
+                  <input
+                    type="radio"
+                    name="keysig-scope"
+                    checked={keySigScope === 'from-here'}
+                    onChange={() => setKeySigScope('from-here')}
+                  />
+                  {t('dialog.keySig.scopeFromHere')}
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.85rem', cursor: 'pointer' }}>
+                  <input
+                    type="radio"
+                    name="keysig-scope"
+                    checked={keySigScope === 'score'}
+                    onChange={() => setKeySigScope('score')}
+                  />
+                  {t('dialog.keySig.scopeScore')}
+                </label>
+              </div>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.6rem', marginTop: '0.5rem' }}>
+              <button
+                type="button"
+                onClick={() => setIsKeySigModalOpen(false)}
+                style={{
+                  padding: '0.45rem 0.9rem',
+                  fontSize: '0.875rem',
+                  borderRadius: '6px',
+                  border: '1px solid #cbd5e1',
+                  backgroundColor: '#ffffff',
+                  color: '#334155',
+                  cursor: 'pointer',
+                }}
+              >
+                {t('dialog.cancel')}
+              </button>
+              <button
+                type="button"
+                data-testid="btn-apply-keysig"
+                onClick={handleApplyKeySig}
+                style={{
+                  padding: '0.45rem 0.9rem',
+                  fontSize: '0.875rem',
+                  fontWeight: 600,
+                  borderRadius: '6px',
+                  border: 'none',
+                  backgroundColor: '#2563eb',
+                  color: '#ffffff',
+                  cursor: 'pointer',
+                }}
+              >
+                {t('dialog.keySig.apply')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Time Signature Modal */}
+      {isTimeSigModalOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          data-testid="modal-timesig"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(15, 23, 42, 0.45)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+          }}
+        >
+          <div
+            style={{
+              backgroundColor: '#ffffff',
+              borderRadius: '8px',
+              padding: '1.5rem',
+              width: '380px',
+              maxWidth: '90vw',
+              boxShadow: '0 20px 25px -5px rgba(0,0,0,0.15)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '1rem',
+            }}
+          >
+            <h3 style={{ margin: 0, fontSize: '1.1rem', color: '#0f172a' }}>{t('dialog.timeSig.title')}</h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+              <label htmlFor="timesig-dialog-select" style={{ fontSize: '0.85rem', color: '#475569', fontWeight: 500 }}>
+                {t('notation.timeSignature')}
+              </label>
+              <select
+                id="timesig-dialog-select"
+                value={['2/4', '3/4', '4/4', '6/8', '2/2', '3/8', '5/4', '7/8'].includes(timeSigStrInput) ? timeSigStrInput : 'custom'}
+                onChange={(e) => {
+                  if (e.target.value !== 'custom') {
+                    setTimeSigStrInput(e.target.value);
+                  }
+                }}
+                style={{
+                  padding: '0.45rem 0.65rem',
+                  fontSize: '0.9rem',
+                  border: '1px solid #cbd5e1',
+                  borderRadius: '6px',
+                  outline: 'none',
+                  backgroundColor: '#ffffff',
+                }}
+              >
+                <option value="4/4">4/4</option>
+                <option value="3/4">3/4</option>
+                <option value="2/4">2/4</option>
+                <option value="6/8">6/8</option>
+                <option value="2/2">2/2</option>
+                <option value="3/8">3/8</option>
+                <option value="5/4">5/4</option>
+                <option value="7/8">7/8</option>
+              </select>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+              <label style={{ fontSize: '0.85rem', color: '#475569', fontWeight: 500 }}>Kapsam</label>
+              <div style={{ display: 'flex', gap: '0.75rem' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.85rem', cursor: 'pointer' }}>
+                  <input
+                    type="radio"
+                    name="timesig-scope"
+                    checked={timeSigScope === 'from-here'}
+                    onChange={() => setTimeSigScope('from-here')}
+                  />
+                  {t('dialog.timeSig.scopeFromHere')}
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.85rem', cursor: 'pointer' }}>
+                  <input
+                    type="radio"
+                    name="timesig-scope"
+                    checked={timeSigScope === 'score'}
+                    onChange={() => setTimeSigScope('score')}
+                  />
+                  {t('dialog.timeSig.scopeScore')}
+                </label>
+              </div>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.6rem', marginTop: '0.5rem' }}>
+              <button
+                type="button"
+                onClick={() => setIsTimeSigModalOpen(false)}
+                style={{
+                  padding: '0.45rem 0.9rem',
+                  fontSize: '0.875rem',
+                  borderRadius: '6px',
+                  border: '1px solid #cbd5e1',
+                  backgroundColor: '#ffffff',
+                  color: '#334155',
+                  cursor: 'pointer',
+                }}
+              >
+                {t('dialog.cancel')}
+              </button>
+              <button
+                type="button"
+                data-testid="btn-apply-timesig"
+                onClick={handleApplyTimeSig}
+                style={{
+                  padding: '0.45rem 0.9rem',
+                  fontSize: '0.875rem',
+                  fontWeight: 600,
+                  borderRadius: '6px',
+                  border: 'none',
+                  backgroundColor: '#2563eb',
+                  color: '#ffffff',
+                  cursor: 'pointer',
+                }}
+              >
+                {t('dialog.timeSig.apply')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Tempo Modal */}
+      {isTempoModalOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          data-testid="modal-tempo"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(15, 23, 42, 0.45)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+          }}
+        >
+          <div
+            style={{
+              backgroundColor: '#ffffff',
+              borderRadius: '8px',
+              padding: '1.5rem',
+              width: '380px',
+              maxWidth: '90vw',
+              boxShadow: '0 20px 25px -5px rgba(0,0,0,0.15)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '1rem',
+            }}
+          >
+            <h3 style={{ margin: 0, fontSize: '1.1rem', color: '#0f172a' }}>{t('dialog.tempo.title')}</h3>
+            <div style={{ display: 'flex', gap: '1rem' }}>
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                <label htmlFor="tempo-bpm-input" style={{ fontSize: '0.85rem', color: '#475569', fontWeight: 500 }}>
+                  {t('dialog.tempo.bpm')} (20..300)
+                </label>
+                <input
+                  id="tempo-bpm-input"
+                  type="number"
+                  min={20}
+                  max={300}
+                  value={tempoBpmInput}
+                  onChange={(e) => setTempoBpmInput(parseInt(e.target.value, 10) || 120)}
+                  style={{
+                    padding: '0.45rem 0.65rem',
+                    fontSize: '0.9rem',
+                    border: '1px solid #cbd5e1',
+                    borderRadius: '6px',
+                    outline: 'none',
+                  }}
+                />
+              </div>
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                <label htmlFor="tempo-unit-select" style={{ fontSize: '0.85rem', color: '#475569', fontWeight: 500 }}>
+                  {t('dialog.tempo.beatUnit')}
+                </label>
+                <select
+                  id="tempo-unit-select"
+                  value={tempoBeatUnitInput}
+                  onChange={(e) => setTempoBeatUnitInput(parseFloat(e.target.value))}
+                  style={{
+                    padding: '0.45rem 0.65rem',
+                    fontSize: '0.9rem',
+                    border: '1px solid #cbd5e1',
+                    borderRadius: '6px',
+                    outline: 'none',
+                    backgroundColor: '#ffffff',
+                  }}
+                >
+                  <option value="1">♩ Dörtlük (1.0)</option>
+                  <option value="1.5">♩. Noktalı Dörtlük (1.5)</option>
+                  <option value="0.5">♪ Sekizlik (0.5)</option>
+                  <option value="2">𝅗 İkilik (2.0)</option>
+                </select>
+              </div>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+              <label htmlFor="tempo-prefix-input" style={{ fontSize: '0.85rem', color: '#475569', fontWeight: 500 }}>
+                {t('dialog.tempo.prefix')}
+              </label>
+              <input
+                id="tempo-prefix-input"
+                type="text"
+                placeholder="Örn: Allegro, Andante, Moderato"
+                value={tempoTextInput}
+                onChange={(e) => setTempoTextInput(e.target.value)}
+                style={{
+                  padding: '0.45rem 0.65rem',
+                  fontSize: '0.9rem',
+                  border: '1px solid #cbd5e1',
+                  borderRadius: '6px',
+                  outline: 'none',
+                }}
+              />
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.6rem', marginTop: '0.5rem' }}>
+              <button
+                type="button"
+                onClick={() => setIsTempoModalOpen(false)}
+                style={{
+                  padding: '0.45rem 0.9rem',
+                  fontSize: '0.875rem',
+                  borderRadius: '6px',
+                  border: '1px solid #cbd5e1',
+                  backgroundColor: '#ffffff',
+                  color: '#334155',
+                  cursor: 'pointer',
+                }}
+              >
+                {t('dialog.cancel')}
+              </button>
+              <button
+                type="button"
+                data-testid="btn-apply-tempo"
+                onClick={handleApplyTempo}
+                style={{
+                  padding: '0.45rem 0.9rem',
+                  fontSize: '0.875rem',
+                  fontWeight: 600,
+                  borderRadius: '6px',
+                  border: 'none',
+                  backgroundColor: '#2563eb',
+                  color: '#ffffff',
+                  cursor: 'pointer',
+                }}
+              >
+                {t('dialog.tempo.apply')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Barline & Pickup Modal */}
+      {isBarlineModalOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          data-testid="modal-barline"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(15, 23, 42, 0.45)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+          }}
+        >
+          <div
+            style={{
+              backgroundColor: '#ffffff',
+              borderRadius: '8px',
+              padding: '1.5rem',
+              width: '380px',
+              maxWidth: '90vw',
+              boxShadow: '0 20px 25px -5px rgba(0,0,0,0.15)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '1rem',
+            }}
+          >
+            <h3 style={{ margin: 0, fontSize: '1.1rem', color: '#0f172a' }}>{t('dialog.barline.title')}</h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <label style={{ fontSize: '0.85rem', color: '#475569', fontWeight: 500 }}>
+                {t('toolbar.barline')}
+              </label>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', cursor: 'pointer' }}>
+                  <input
+                    type="radio"
+                    name="barline-type"
+                    checked={barlineInput === 'single'}
+                    onChange={() => setBarlineInput('single')}
+                  />
+                  {t('dialog.barline.single')}
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', cursor: 'pointer' }}>
+                  <input
+                    type="radio"
+                    name="barline-type"
+                    checked={barlineInput === 'double'}
+                    onChange={() => setBarlineInput('double')}
+                  />
+                  {t('dialog.barline.double')}
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', cursor: 'pointer' }}>
+                  <input
+                    type="radio"
+                    name="barline-type"
+                    checked={barlineInput === 'final'}
+                    onChange={() => setBarlineInput('final')}
+                  />
+                  {t('dialog.barline.final')}
+                </label>
+              </div>
+            </div>
+
+            {/* Pickup measure option for measure 1 */}
+            {(selectedEventInfo?.measureId === score.measures[0]?.id || !selectedEventInfo) && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', borderTop: '1px solid #f1f5f9', paddingTop: '0.75rem' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', fontWeight: 500, color: '#334155', cursor: 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    checked={isPickupBarline}
+                    onChange={(e) => setIsPickupBarline(e.target.checked)}
+                    style={{ accentColor: '#2563eb' }}
+                  />
+                  {t('dialog.newScore.pickup')}
+                </label>
+                {isPickupBarline && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', paddingLeft: '1.5rem' }}>
+                    <label htmlFor="barline-pickup-select" style={{ fontSize: '0.8rem', color: '#64748b' }}>
+                      {t('dialog.newScore.pickupLength')}:
+                    </label>
+                    <select
+                      id="barline-pickup-select"
+                      value={pickupTicksInput}
+                      onChange={(e) => setPickupTicksInput(parseInt(e.target.value, 10))}
+                      style={{
+                        padding: '0.35rem 0.6rem',
+                        fontSize: '0.85rem',
+                        borderRadius: '6px',
+                        border: '1px solid #cbd5e1',
+                        backgroundColor: '#ffffff',
+                        color: '#1e293b',
+                      }}
+                    >
+                      <option value="960">1/4 (960 tick)</option>
+                      <option value="480">1/8 (480 tick)</option>
+                      <option value="1440">3/8 (1440 tick)</option>
+                      <option value="1920">1/2 (1920 tick)</option>
+                    </select>
+                  </div>
+                )}
+              </div>
+            )}
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.6rem', marginTop: '0.5rem' }}>
+              <button
+                type="button"
+                onClick={() => setIsBarlineModalOpen(false)}
+                style={{
+                  padding: '0.45rem 0.9rem',
+                  fontSize: '0.875rem',
+                  borderRadius: '6px',
+                  border: '1px solid #cbd5e1',
+                  backgroundColor: '#ffffff',
+                  color: '#334155',
+                  cursor: 'pointer',
+                }}
+              >
+                {t('dialog.cancel')}
+              </button>
+              <button
+                type="button"
+                data-testid="btn-apply-barline"
+                onClick={handleApplyBarline}
+                style={{
+                  padding: '0.45rem 0.9rem',
+                  fontSize: '0.875rem',
+                  fontWeight: 600,
+                  borderRadius: '6px',
+                  border: 'none',
+                  backgroundColor: '#2563eb',
+                  color: '#ffffff',
+                  cursor: 'pointer',
+                }}
+              >
+                {t('dialog.barline.apply')}
               </button>
             </div>
           </div>

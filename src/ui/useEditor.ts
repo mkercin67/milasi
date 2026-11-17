@@ -77,6 +77,7 @@ import { clampEventOverrideInLayout } from '../layout/mouse';
 export interface SelectedEventInfo {
   eventId: string;
   measureNumber: number;
+  measureId?: string;
   event: ScoreEvent;
   isNote: boolean;
   isChord: boolean;
@@ -698,6 +699,7 @@ export function useEditor(initialScore?: Score) {
           return {
             eventId: ev.id,
             measureNumber: mIdx + 1,
+            measureId: mDef.id,
             event: ev,
             isNote,
             isChord: pitches.length > 1,

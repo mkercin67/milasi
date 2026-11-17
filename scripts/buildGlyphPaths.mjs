@@ -43,6 +43,7 @@ const whitelist = new Set([
   'articTenutoAbove', 'articTenutoBelow',
   'articAccentAbove', 'articAccentBelow',
   'articMarcatoAbove', 'articMarcatoBelow',
+  'metNoteQuarterUp', 'metNote8thUp', 'metNoteHalfUp', 'metAugmentationDot',
 ]);
 
 // Scan src directory for glyph mentions

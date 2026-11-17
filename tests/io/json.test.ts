@@ -8,7 +8,7 @@ import {
   createRest,
   createScore,
 } from '../../src/core/factory';
-import { deserializeScore, serializeScore } from '../../src/io/json';
+import { CURRENT_SCHEMA_VERSION, deserializeScore, serializeScore } from '../../src/io/json';
 
 describe('JSON serialization and deserialization', () => {
   it('performs lossless round-trip equality on complete score', () => {
@@ -47,7 +47,7 @@ describe('JSON serialization and deserialization', () => {
     const deserialized = deserializeScore(serialized);
 
     expect(deserialized).toEqual(score);
-    expect(deserialized.schemaVersion).toBe(3);
+    expect(deserialized.schemaVersion).toBe(CURRENT_SCHEMA_VERSION);
     expect(deserialized.overrides[note1.id]).toEqual({ dx: 1.5, dy: -2.0, scale: 1.1 });
   });
 

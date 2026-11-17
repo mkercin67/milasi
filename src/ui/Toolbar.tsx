@@ -55,6 +55,11 @@ export interface ToolbarProps {
   hasSlur?: boolean;
   onToggleSlur?: () => void;
   onClearNotations?: () => void;
+  // M6c Structure Modals
+  onOpenKeySig?: () => void;
+  onOpenTimeSig?: () => void;
+  onOpenTempo?: () => void;
+  onOpenBarline?: () => void;
 }
 
 const DYNAMICS: { type: DynamicType; label: string; shortcut: string }[] = [
@@ -135,6 +140,10 @@ export const Toolbar: React.FC<ToolbarProps> = ({
   hasSlur = false,
   onToggleSlur,
   onClearNotations,
+  onOpenKeySig,
+  onOpenTimeSig,
+  onOpenTempo,
+  onOpenBarline,
 }) => {
   const { t, language, setLanguage, noteNameStyle, setNoteNameStyle, zoom, setZoom } = useI18n();
 
@@ -275,6 +284,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
         {onOpenScoreInfo && (
           <button
             type="button"
+            data-testid="btn-score-info"
             onClick={handleButtonClick(onOpenScoreInfo)}
             onMouseDown={(e) => e.preventDefault()}
             title={t('toolbar.scoreInfo')}
@@ -290,6 +300,94 @@ export const Toolbar: React.FC<ToolbarProps> = ({
             }}
           >
             {t('toolbar.scoreInfo')}
+          </button>
+        )}
+
+        {onOpenKeySig && (
+          <button
+            type="button"
+            data-testid="btn-key-sig"
+            onClick={handleButtonClick(onOpenKeySig)}
+            onMouseDown={(e) => e.preventDefault()}
+            title={t('toolbar.keySig')}
+            style={{
+              padding: '0.4rem 0.65rem',
+              fontSize: '0.85rem',
+              fontWeight: 500,
+              color: '#1e293b',
+              backgroundColor: '#f1f5f9',
+              border: '1px solid #cbd5e1',
+              borderRadius: '6px',
+              cursor: 'pointer',
+            }}
+          >
+            ♯♭ {t('toolbar.keySig')}
+          </button>
+        )}
+
+        {onOpenTimeSig && (
+          <button
+            type="button"
+            data-testid="btn-time-sig"
+            onClick={handleButtonClick(onOpenTimeSig)}
+            onMouseDown={(e) => e.preventDefault()}
+            title={t('toolbar.timeSig')}
+            style={{
+              padding: '0.4rem 0.65rem',
+              fontSize: '0.85rem',
+              fontWeight: 500,
+              color: '#1e293b',
+              backgroundColor: '#f1f5f9',
+              border: '1px solid #cbd5e1',
+              borderRadius: '6px',
+              cursor: 'pointer',
+            }}
+          >
+            𝄴 {t('toolbar.timeSig')}
+          </button>
+        )}
+
+        {onOpenTempo && (
+          <button
+            type="button"
+            data-testid="btn-tempo"
+            onClick={handleButtonClick(onOpenTempo)}
+            onMouseDown={(e) => e.preventDefault()}
+            title={t('toolbar.tempo')}
+            style={{
+              padding: '0.4rem 0.65rem',
+              fontSize: '0.85rem',
+              fontWeight: 500,
+              color: '#1e293b',
+              backgroundColor: '#f1f5f9',
+              border: '1px solid #cbd5e1',
+              borderRadius: '6px',
+              cursor: 'pointer',
+            }}
+          >
+            ♩= {t('toolbar.tempo')}
+          </button>
+        )}
+
+        {onOpenBarline && (
+          <button
+            type="button"
+            data-testid="btn-barline"
+            onClick={handleButtonClick(onOpenBarline)}
+            onMouseDown={(e) => e.preventDefault()}
+            title={t('toolbar.barline')}
+            style={{
+              padding: '0.4rem 0.65rem',
+              fontSize: '0.85rem',
+              fontWeight: 500,
+              color: '#1e293b',
+              backgroundColor: '#f1f5f9',
+              border: '1px solid #cbd5e1',
+              borderRadius: '6px',
+              cursor: 'pointer',
+            }}
+          >
+            𝄀𝄂 {t('toolbar.barline')}
           </button>
         )}
 

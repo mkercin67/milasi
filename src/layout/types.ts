@@ -22,6 +22,11 @@ export interface LayoutItem {
   y: number;
   glyph?: string;
   text?: string;
+  textAnchor?: 'start' | 'middle' | 'end';
+  fontFamily?: string;
+  fontSize?: number;
+  fontWeight?: string | number;
+  fontStyle?: string;
   x2?: number;
   y2?: number;
   thickness?: number;

@@ -5,7 +5,7 @@
  * such as verifying voice durations against measure time signatures.
  */
 
-import { ALLOWED_ARTICULATIONS, ALLOWED_DYNAMICS, Id, Score } from './model';
+import { ALLOWED_ARTICULATIONS, ALLOWED_DYNAMICS, Id, MeasureDef, Score } from './model';
 import { measureTicks } from './time';
 
 /** Severity level of a validation problem. */
@@ -32,17 +32,22 @@ export interface ValidationProblem {
 export function validateScore(score: Score): ValidationProblem[] {
   const problems: ValidationProblem[] = [];
 
-  // Schema version check (1, 2, or 3)
-  if (score.schemaVersion !== 1 && score.schemaVersion !== 2 && score.schemaVersion !== 3) {
+  // Schema version check (1, 2, 3, or 4)
+  if (
+    score.schemaVersion !== 1 &&
+    score.schemaVersion !== 2 &&
+    score.schemaVersion !== 3 &&
+    score.schemaVersion !== 4
+  ) {
     problems.push({
       code: 'invalid-schema-version',
-      message: `Unsupported schema version: ${score.schemaVersion} (expected 1, 2, or 3)`,
+      message: `Unsupported schema version: ${score.schemaVersion} (expected 1, 2, 3, or 4)`,
       severity: 'error',
     });
   }
 
   // Measure map for quick lookup
-  const measureMap = new Map<Id, { num: number; den: number }>();
+  const measureMap = new Map<Id, MeasureDef>();
 
   // Validate measure definitions
   for (const mDef of score.measures) {
@@ -53,17 +58,24 @@ export function validateScore(score: Score): ValidationProblem[] {
         severity: 'error',
         measureId: mDef.id,
       });
-    } else {
-      measureMap.set(mDef.id, mDef.timeSig);
     }
+    if (mDef.endBarline && !['single', 'double', 'final'].includes(mDef.endBarline)) {
+      problems.push({
+        code: 'invalid-barline',
+        message: `Measure ${mDef.id} has invalid endBarline: ${mDef.endBarline}`,
+        severity: 'error',
+        measureId: mDef.id,
+      });
+    }
+    measureMap.set(mDef.id, mDef);
   }
 
   // Validate parts, staves, measures, and voices
   for (const part of score.parts) {
     for (const staff of part.staves) {
       for (const [measureId, staffMeasure] of Object.entries(staff.measures)) {
-        const timeSig = measureMap.get(measureId);
-        if (!timeSig) {
+        const mDef = measureMap.get(measureId);
+        if (!mDef) {
           problems.push({
             code: 'orphaned-measure',
             message: `Staff measure references non-existent measure definition: ${measureId}`,
@@ -75,7 +87,7 @@ export function validateScore(score: Score): ValidationProblem[] {
           continue;
         }
 
-        const expectedTicks = measureTicks(timeSig);
+        const expectedTicks = mDef.actualTicks ?? measureTicks(mDef.timeSig);
 
         for (const voice of staffMeasure.voices) {
           let voiceTicks = 0;

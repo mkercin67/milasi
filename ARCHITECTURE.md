@@ -55,9 +55,14 @@ Time is measured in integer **ticks**. `PPQ = 960` (ticks per quarter note). Nev
 type Id = string; // uuid
 
 interface Score {
-  schemaVersion: 1 | 2 | 3;
+  schemaVersion: 1 | 2 | 3 | 4;
   id: Id;
-  meta: { title: string; composer: string };
+  meta: {
+    title: string;
+    composer: string;
+    subtitle?: string;
+    arranger?: string;
+  };
   parts: Part[];
   measures: MeasureDef[];            // global measure definitions
   overrides: Record<Id, Override>;   // manual layout overrides keyed by element id
@@ -67,7 +72,13 @@ interface MeasureDef {
   id: Id;
   timeSig: { num: number; den: number };
   keySig: number;                    // -7..7 circle of fifths
-  tempo?: { bpm: number; beatUnit: number };
+  tempo?: {
+    bpm: number;
+    beatUnit: number;
+    tempoText?: string;
+  };
+  actualTicks?: number;              // pickup/anacrusis measure duration in ticks
+  endBarline?: 'single' | 'double' | 'final';
 }
 
 interface Part { id: Id; name: string; staves: Staff[]; instrument: string }
@@ -292,22 +303,55 @@ type Selection =
 - **Voice Index Rule (R3):**
   - Voice continuity across barlines relies on stable `voiceIndex` (1..4) within `StaffMeasure.voices`, not measure-local voice UUIDs.
 
+## Score Structure & Engraving (Milestone 6c)
+
+- **Header Block:**
+  - Placed on the first page above system 0.
+  - Fields: centered `title` (large ~22px bold), centered `subtitle` (smaller ~13px italic), right-aligned `composer` (~12px regular), right-aligned `arranger` (~10px italic).
+  - Empty fields take zero vertical or horizontal space.
+  - Serif font stack: `"Times New Roman", Times, "Liberation Serif", serif`.
+  - Clicking anywhere on the header block opens the "Eser bilgileri" dialog.
+- **SVG `<text>` Element Rule:**
+  - SVG `<text>` elements are STRICTLY restricted to:
+    1. Header block (title, subtitle, composer, arranger)
+    2. Tempo text prefixes (e.g. "Allegro vivace") and tempo BPM string (" = 120")
+    3. System measure numbers
+    4. (Future) Lyrics and annotations
+  - Musical notation itself (noteheads, stems, beams, ties, slurs, accidentals, clefs, time signatures, rests, flags, dynamics, articulations, barlines) is strictly `<text>`-free and rendered via SMuFL path symbols or geometry.
+- **Tempo Markings:**
+  - Positioned above the staff at measure start.
+  - Formatted with optional text prefix (e.g. "Allegro vivace"), followed by SMuFL metronome note glyph (`metNoteQuarterUp`, `metNote8thUp`, `metNoteHalfUp`), followed by `" = BPM"`.
+- **Mid-Score Key Signatures & Cancellation Naturals:**
+  - Key signatures can change at any measure mid-score.
+  - When moving from sharps/flats to fewer sharps/flats or opposite accidental families, Gould-standard cancellation naturals are laid out first for removed accidentals, followed by new key signature accidentals.
+  - Natural accidentals on notes in the measure are re-tracked without re-spelling existing pitches.
+- **Mid-Score Time Signatures & Pickup Measures:**
+  - Time signatures can change at any measure.
+  - Pickup measures (anacrusis) define `MeasureDef.actualTicks`.
+  - Pickup measure is unnumbered (measure 0).
+  - Beaming within pickup measures offsets beat calculation to align with measure end barline.
+- **Barlines & System Measure Numbers:**
+  - Supported barline types: `single`, `double`, `final`.
+  - Default: last measure is `final` (thin + thick line), other measures are `single`.
+  - Systems after system 0 display their beginning measure number above the staff.
+
 ## File Format, Schema Migrations & Autosave (src/io)
 
 - **Schema Versions & Migrations:**
+  - `schemaVersion: 4`: Score structure (subtitle, arranger in meta, actualTicks, endBarline, tempoText in MeasureDef).
   - `schemaVersion: 3`: Staff-level slurs (`Staff.slurs`) and per-event dynamics / articulations.
   - `schemaVersion: 2`: Per-pitch ties (`Pitch.tiedToNext`).
   - `schemaVersion: 1`: Legacy event-level ties (`NoteEvent.tiedToNext`).
-  - Automatic chained migration: `v1 -> v2 -> v3` and `v2 -> v3` on file load.
+  - Automatic chained migration: `v1 -> v2 -> v3 -> v4` on file load.
 - **Native Format (`.sfscore`):**
   ```json
   {
     "app": "scoreforge",
     "savedAt": "2026-11-17T12:00:00.000Z",
-    "score": { "schemaVersion": 3, ... }
+    "score": { "schemaVersion": 4, ... }
   }
   ```
-  - Backward compatible: `deserializeScore` accepts both enveloped and bare JSON for v1, v2, and v3.
+  - Backward compatible: `deserializeScore` accepts both enveloped and bare JSON for v1, v2, v3, and v4.
   - Validated with `validateScore` on load.
 - **Autosave & Recovery:**
   - Automatically saves dirty scores to IndexedDB with 1-second debounce.

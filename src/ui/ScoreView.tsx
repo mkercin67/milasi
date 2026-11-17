@@ -63,6 +63,7 @@ export interface ScoreViewProps {
   activePlaybackEventIds?: string[];
   playbackSeconds?: number;
   onPreviewPitches?: (pitches: Pitch[]) => void;
+  onOpenScoreInfo?: () => void;
 }
 
 interface GhostNoteData {
@@ -115,6 +116,7 @@ export const ScoreView: React.FC<ScoreViewProps> = ({
   isPaused = false,
   activePlaybackEventIds = [],
   onPreviewPitches,
+  onOpenScoreInfo,
 }) => {
   const { t, zoom, noteNameStyle, language } = useI18n();
   const isInputMode = mode === 'input';
@@ -1250,6 +1252,7 @@ export const ScoreView: React.FC<ScoreViewProps> = ({
               system={sys}
               staffSpacePx={staffSpacePx}
               useTextFallback={useTextFallback}
+              onOpenScoreInfo={onOpenScoreInfo}
             />
           ))}
 

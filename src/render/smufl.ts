@@ -5,8 +5,8 @@
  * No codepoints are hard-coded.
  */
 
-import glyphNamesData from '../../public/fonts/glyphnames.json';
-import bravuraMetadata from '../../public/fonts/bravura_metadata.json';
+import glyphNamesData from '../fonts/glyphnames.json';
+import bravuraMetadata from '../fonts/bravura_metadata.json';
 
 interface GlyphEntry {
   codepoint: string;

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { deserializeScore } from '../../src/io/json';
+import { CURRENT_SCHEMA_VERSION, deserializeScore } from '../../src/io/json';
 
 describe('Milestone 6b: Schema Migrations (v1 -> v2 -> v3)', () => {
   it('migrates a v2 score to v3: initializes staff.slurs as empty array', () => {
@@ -45,7 +45,7 @@ describe('Milestone 6b: Schema Migrations (v1 -> v2 -> v3)', () => {
     };
 
     const loaded = deserializeScore(JSON.stringify(v2Score));
-    expect(loaded.schemaVersion).toBe(3);
+    expect(loaded.schemaVersion).toBe(CURRENT_SCHEMA_VERSION);
     expect(loaded.parts[0].staves[0].slurs).toEqual([]);
   });
 
@@ -93,7 +93,7 @@ describe('Milestone 6b: Schema Migrations (v1 -> v2 -> v3)', () => {
     };
 
     const loaded = deserializeScore(JSON.stringify(v1Score));
-    expect(loaded.schemaVersion).toBe(3);
+    expect(loaded.schemaVersion).toBe(CURRENT_SCHEMA_VERSION);
     const firstNote = loaded.parts[0].staves[0].measures['m1'].voices[0].events[0] as any;
     expect(firstNote.pitches[0].tiedToNext).toBe(true);
     expect(loaded.parts[0].staves[0].slurs).toEqual([]);

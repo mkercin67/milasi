@@ -26,9 +26,9 @@ describe('factory helpers', () => {
     expect(pMicro).toEqual({ step: 'E', octave: 4, alter: 0.5 });
   });
 
-  it('creates an empty Score with schemaVersion 3', () => {
+  it('creates an empty Score with current schemaVersion', () => {
     const score = createScore({ title: 'Sonata', composer: 'Beethoven' });
-    expect(score.schemaVersion).toBe(3);
+    expect(score.schemaVersion).toBe(4);
     expect(score.meta.title).toBe('Sonata');
     expect(score.meta.composer).toBe('Beethoven');
     expect(score.parts).toEqual([]);

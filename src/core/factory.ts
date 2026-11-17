@@ -3,6 +3,7 @@
  */
 
 import {
+  BarlineType,
   BaseDurationType,
   Clef,
   Id,
@@ -49,21 +50,25 @@ export function createPitch(step: PitchStep, octave: number, alter: number = 0):
 export interface CreateScoreOptions {
   title?: string;
   composer?: string;
+  subtitle?: string;
+  arranger?: string;
 }
 
 /**
  * Creates an empty Score.
  *
- * @param options - Optional metadata (title and composer).
- * @returns A new Score instance with schemaVersion 3.
+ * @param options - Optional metadata (title, composer, subtitle, arranger).
+ * @returns A new Score instance with schemaVersion 4.
  */
 export function createScore(options?: CreateScoreOptions): Score {
   return {
-    schemaVersion: 3,
+    schemaVersion: 4,
     id: newId(),
     meta: {
       title: options?.title ?? 'Untitled Score',
       composer: options?.composer ?? 'Anonymous',
+      subtitle: options?.subtitle ?? '',
+      arranger: options?.arranger ?? '',
     },
     parts: [],
     measures: [],
@@ -119,13 +124,17 @@ export function createPart(nameOrOptions?: string | CreatePartOptions): Part {
 export function createMeasure(
   timeSig: { num: number; den: number } = { num: 4, den: 4 },
   keySig: number = 0,
-  tempo?: { bpm: number; beatUnit: number }
+  tempo?: { bpm: number; beatUnit: number; tempoText?: string },
+  actualTicks?: number,
+  endBarline?: BarlineType
 ): MeasureDef {
   return {
     id: newId(),
     timeSig: { ...timeSig },
     keySig,
     tempo: tempo ? { ...tempo } : undefined,
+    actualTicks,
+    endBarline,
   };
 }
 
@@ -205,10 +214,13 @@ export function createRest(options?: CreateRestOptions): RestEvent {
 export interface CreateEmptyScoreOptions {
   title?: string;
   composer?: string;
+  subtitle?: string;
+  arranger?: string;
   clef?: Clef;
   keySig?: number;
   timeSig?: { num: number; den: number };
   measures?: number;
+  numMeasures?: number;
 }
 
 /**
@@ -221,7 +233,7 @@ export function createEmptyScore(options: CreateEmptyScoreOptions = {}): Score {
   const clef = options.clef ?? { sign: 'G', line: 2 };
   const keySig = options.keySig ?? 0;
   const timeSig = options.timeSig ?? { num: 4, den: 4 };
-  const numMeasures = options.measures ?? 8;
+  const numMeasures = options.measures ?? options.numMeasures ?? 8;
 
   const score = createScore({
     title: options.title ?? 'Untitled Score',
@@ -237,7 +249,8 @@ export function createEmptyScore(options: CreateEmptyScoreOptions = {}): Score {
   const mDuration = measureTicks(timeSig);
 
   for (let i = 0; i < numMeasures; i++) {
-    const mDef = createMeasure(timeSig, keySig);
+    const isLast = i === numMeasures - 1;
+    const mDef = createMeasure(timeSig, keySig, undefined, undefined, isLast ? 'final' : 'single');
     score.measures.push(mDef);
 
     const wholeRest = createRest({

@@ -6,7 +6,17 @@
  */
 
 import { produce } from 'immer';
-import { Id, NoteEvent, Override, Pitch, RestEvent, Score, ScoreEvent } from './model';
+import {
+  BarlineType,
+  Id,
+  MeasureDef,
+  NoteEvent,
+  Override,
+  Pitch,
+  RestEvent,
+  Score,
+  ScoreEvent,
+} from './model';
 import { createMeasure, createRest, newId } from './factory';
 import { getPitchMidi, transposeOctave, transposeSemitone } from './pitch';
 import { measureTicks } from './time';
@@ -409,19 +419,126 @@ export function convertToRest(eventId: Id): Command {
 
 
 /**
- * Creates a command to update score metadata (title and composer).
+ * Creates a command to update score metadata (title, subtitle, composer, arranger).
  *
- * @param title - Score title.
- * @param composer - Composer name.
+ * @param titleOrMeta - Score title string or metadata object.
+ * @param composerParam - Optional composer name if titleOrMeta is a string.
  * @returns An executable Command.
  */
-export function setScoreMetadata(title: string, composer: string = ''): Command {
+export function setScoreMetadata(
+  titleOrMeta: string | { title: string; subtitle?: string; composer?: string; arranger?: string },
+  composerParam: string = ''
+): Command {
   return {
     name: 'setScoreMetadata',
     apply(score: Score): Score {
       return produce(score, (draft) => {
-        draft.meta.title = title;
-        draft.meta.composer = composer;
+        if (typeof titleOrMeta === 'object' && titleOrMeta !== null) {
+          draft.meta.title = titleOrMeta.title;
+          draft.meta.composer = titleOrMeta.composer ?? '';
+          draft.meta.subtitle = titleOrMeta.subtitle ?? '';
+          draft.meta.arranger = titleOrMeta.arranger ?? '';
+        } else {
+          draft.meta.title = titleOrMeta;
+          draft.meta.composer = composerParam;
+        }
+      });
+    },
+  };
+}
+
+/**
+ * Changes key signature on a specific measure onwards ('from-here') or across the entire score ('score').
+ */
+export function setKeySignature(
+  fromMeasureId: Id,
+  keySig: number,
+  scope: 'score' | 'from-here' = 'from-here'
+): Command {
+  return {
+    name: 'setKeySignature',
+    apply(score: Score): Score {
+      return produce(score, (draft) => {
+        const clamped = Math.max(-7, Math.min(7, Math.round(keySig)));
+        const targetIdx = draft.measures.findIndex((m) => m.id === fromMeasureId);
+        if (targetIdx === -1) return;
+        if (scope === 'score') {
+          for (const m of draft.measures) {
+            m.keySig = clamped;
+          }
+        } else {
+          for (let i = targetIdx; i < draft.measures.length; i++) {
+            draft.measures[i].keySig = clamped;
+          }
+        }
+      });
+    },
+  };
+}
+
+/**
+ * Changes time signature on a specific measure onwards ('from-here') or across the entire score ('score').
+ */
+export function setTimeSignature(
+  fromMeasureId: Id,
+  timeSig: { num: number; den: number },
+  scope: 'score' | 'from-here' = 'from-here'
+): Command {
+  return {
+    name: 'setTimeSignature',
+    apply(score: Score): Score {
+      return produce(score, (draft) => {
+        if (timeSig.num <= 0 || timeSig.den <= 0) return;
+        const targetIdx = draft.measures.findIndex((m) => m.id === fromMeasureId);
+        if (targetIdx === -1) return;
+        const newSig = { num: Math.round(timeSig.num), den: Math.round(timeSig.den) };
+        if (scope === 'score') {
+          for (const m of draft.measures) {
+            m.timeSig = { ...newSig };
+          }
+        } else {
+          for (let i = targetIdx; i < draft.measures.length; i++) {
+            draft.measures[i].timeSig = { ...newSig };
+          }
+        }
+      });
+    },
+  };
+}
+
+/**
+ * Marks or unmarks a measure as a pickup / anacrusis measure with custom duration in ticks.
+ */
+export function setPickup(measureId: Id, actualTicks: number | null): Command {
+  return {
+    name: 'setPickup',
+    apply(score: Score): Score {
+      return produce(score, (draft) => {
+        const m = draft.measures.find((meas) => meas.id === measureId);
+        if (m) {
+          if (actualTicks !== null && actualTicks > 0) {
+            m.actualTicks = Math.round(actualTicks);
+          } else {
+            delete m.actualTicks;
+          }
+        }
+      });
+    },
+  };
+}
+
+/**
+ * Sets the ending barline type ('single' | 'double' | 'final') for a measure.
+ */
+export function setEndBarline(measureId: Id, barline: BarlineType): Command {
+  return {
+    name: 'setEndBarline',
+    apply(score: Score): Score {
+      return produce(score, (draft) => {
+        const m = draft.measures.find((meas) => meas.id === measureId);
+        if (m) {
+          m.endBarline = barline;
+        }
       });
     },
   };
@@ -477,20 +594,27 @@ export function transposeEvent(eventId: Id, semitones: number): Command {
 }
 
 /**
- * Sets the tempo on a measure (typically measure 0).
+ * Sets the tempo on a measure by index or ID.
  */
 export function setTempo(
-  measureIndex: number,
-  tempo: { bpm: number; beatUnit?: number }
+  measureIndexOrId: number | Id,
+  tempo: { bpm: number; beatUnit?: number; tempoText?: string }
 ): Command {
   return {
     name: 'Set Tempo',
     apply(score: Score): Score {
       return produce(score, (draft) => {
-        if (draft.measures[measureIndex]) {
-          draft.measures[measureIndex].tempo = {
+        let m: MeasureDef | undefined;
+        if (typeof measureIndexOrId === 'number') {
+          m = draft.measures[measureIndexOrId];
+        } else {
+          m = draft.measures.find((meas) => meas.id === measureIndexOrId);
+        }
+        if (m) {
+          m.tempo = {
             bpm: Math.max(20, Math.min(300, Math.round(tempo.bpm))),
-            beatUnit: tempo.beatUnit ?? draft.measures[measureIndex].tempo?.beatUnit ?? 1.0,
+            beatUnit: tempo.beatUnit ?? m.tempo?.beatUnit ?? 1.0,
+            tempoText: tempo.tempoText?.trim() || undefined,
           };
         }
       });

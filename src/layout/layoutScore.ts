@@ -21,7 +21,11 @@ import { PPQ } from '../core/time';
 import { MeasureAccidentalTracker } from './accidentals';
 import { computeBeamGroupGeometry, getBeamGroupStemDirection, BeamStemInput } from './beamLayout';
 import { groupBeams } from './beams';
-import { getKeySignatureAccidentals, getKeySignatureAlter } from './keySignature';
+import {
+  getKeySignatureAccidentals,
+  getKeySignatureAlter,
+  getKeySignatureChangeAccidentals,
+} from './keySignature';
 import { getLedgerLineYs, getStemDirection, pitchToStaffPosition, staffPositionToY } from './pitch';
 import { clampOverrideOffset, getSystemMeasureBounds, SystemMeasureBounds } from './mouse';
 import {
@@ -47,6 +51,9 @@ export const THICK_BARLINE_THICKNESS = 0.5;
  * Returns estimated layout width for a single item in staff spaces.
  */
 export function getItemWidth(item: LayoutItem): number {
+  if (item.kind === 'text') {
+    return 0;
+  }
   if (item.kind === 'beam' && item.points && item.points.length > 0) {
     const maxX = Math.max(...item.points.map((p) => p.x));
     return Math.max(0, maxX - item.x);
@@ -149,11 +156,16 @@ export function layoutSingleMeasure(
   mDef: MeasureDef,
   clef: Clef,
   isFirstMeasure: boolean,
-  isLastMeasure: boolean
+  isLastMeasure: boolean,
+  prevMDef?: MeasureDef
 ): MeasureLayoutChunk {
   measureLayoutCacheStats.calls++;
 
-  const cacheKey = `${mDef.id}_${mDef.keySig}_${mDef.timeSig.num}/${mDef.timeSig.den}_${clef.sign}${clef.line}_${isFirstMeasure}_${isLastMeasure}`;
+  const prevKey = prevMDef
+    ? `${prevMDef.keySig}_${prevMDef.timeSig.num}/${prevMDef.timeSig.den}`
+    : 'none';
+  const barlineType = mDef.endBarline ?? (isLastMeasure ? 'final' : 'single');
+  const cacheKey = `${mDef.id}_${mDef.keySig}_${mDef.timeSig.num}/${mDef.timeSig.den}_${clef.sign}${clef.line}_${isFirstMeasure}_${isLastMeasure}_${prevKey}_${mDef.actualTicks ?? 'full'}_${barlineType}`;
 
   if (staffMeasure) {
     const existing = measureChunkCache.get(staffMeasure);
@@ -174,9 +186,12 @@ export function layoutSingleMeasure(
   const beamGroupsRaw = groupBeams(events, mDef.timeSig);
   const noteStepsMap = new Map<string, number[]>();
   const startTickMap = new Map<string, number>();
+  const fullTicks = (mDef.timeSig.num * 4 * PPQ) / mDef.timeSig.den;
+  const pickupOffset =
+    mDef.actualTicks && mDef.actualTicks < fullTicks ? fullTicks - mDef.actualTicks : 0;
   let runningTick = 0;
   for (const ev of events) {
-    startTickMap.set(ev.id, runningTick);
+    startTickMap.set(ev.id, runningTick + pickupOffset);
     runningTick += ev.duration;
     if (ev.kind === 'note') {
       const sortedSteps = [...ev.pitches]
@@ -211,8 +226,43 @@ export function layoutSingleMeasure(
     });
   }
 
-  // Time signature in first measure
+  // Key signature change mid-score
+  if (!isFirstMeasure && prevMDef && prevMDef.keySig !== mDef.keySig) {
+    const keyChangeAccidentals = getKeySignatureChangeAccidentals(
+      prevMDef.keySig,
+      mDef.keySig,
+      clef
+    );
+    let curKeyX = relX;
+    for (let i = 0; i < keyChangeAccidentals.length; i++) {
+      const acc = keyChangeAccidentals[i];
+      measureItems.push({
+        item: {
+          id: `keychange-${mDef.id}-${i}`,
+          kind: 'glyph',
+          glyph: acc.glyph,
+          x: curKeyX,
+          y: acc.y,
+        },
+      });
+      curKeyX += 1.1;
+    }
+    if (keyChangeAccidentals.length > 0) {
+      relX = curKeyX + 0.4;
+    }
+  }
+
+  // Time signature in first measure or mid-score time signature change
   if (isFirstMeasure) {
+    const tsLayout = createTimeSigItems(relX, mDef.timeSig);
+    for (const item of tsLayout.items) {
+      measureItems.push({ item });
+    }
+    relX += tsLayout.width;
+  } else if (
+    prevMDef &&
+    (prevMDef.timeSig.num !== mDef.timeSig.num || prevMDef.timeSig.den !== mDef.timeSig.den)
+  ) {
     const tsLayout = createTimeSigItems(relX, mDef.timeSig);
     for (const item of tsLayout.items) {
       measureItems.push({ item });
@@ -481,7 +531,7 @@ export function layoutSingleMeasure(
   const barlineX = relX + 0.6;
   let barlineItemIndex = measureItems.length;
 
-  if (isLastMeasure) {
+  if (barlineType === 'final') {
     measureItems.push({
       item: {
         id: `barline-${mDef.id}-thin`,
@@ -505,6 +555,30 @@ export function layoutSingleMeasure(
       },
     });
     relX = barlineX + 0.4 + THICK_BARLINE_THICKNESS;
+  } else if (barlineType === 'double') {
+    measureItems.push({
+      item: {
+        id: `barline-${mDef.id}-1`,
+        kind: 'line',
+        x: barlineX,
+        y: 0,
+        x2: barlineX,
+        y2: 4,
+        thickness: BARLINE_THICKNESS,
+      },
+    });
+    measureItems.push({
+      item: {
+        id: `barline-${mDef.id}-2`,
+        kind: 'line',
+        x: barlineX + 0.35,
+        y: 0,
+        x2: barlineX + 0.35,
+        y2: 4,
+        thickness: BARLINE_THICKNESS,
+      },
+    });
+    relX = barlineX + 0.35 + BARLINE_THICKNESS;
   } else {
     measureItems.push({
       item: {
@@ -600,27 +674,29 @@ export function layoutScore(score: Score, options: LayoutOptions = {}): LayoutRe
 
   for (let mIdx = 0; mIdx < score.measures.length; mIdx++) {
     const mDef = score.measures[mIdx];
+    const prevMDef = mIdx > 0 ? score.measures[mIdx - 1] : undefined;
     const isFirstMeasure = mIdx === 0;
     const isLastMeasure = mIdx === score.measures.length - 1;
     const staffMeasure = staff?.measures[mDef.id];
     measureChunks.push(
-      layoutSingleMeasure(staffMeasure, mDef, clef, isFirstMeasure, isLastMeasure)
+      layoutSingleMeasure(staffMeasure, mDef, clef, isFirstMeasure, isLastMeasure, prevMDef)
     );
   }
 
   // Pack measures into systems with width check
-  // Pack measures into systems with width check
   interface SystemPlan {
     measures: MeasureLayoutChunk[];
+    measureIndices: number[];
     headerWidth: number;
     headerItems: LayoutItem[];
   }
 
   const systemPlans: SystemPlan[] = [];
   let currentPlanMeasures: MeasureLayoutChunk[] = [];
+  let currentPlanIndices: number[] = [];
   let currentUsedWidth = 0;
 
-  function computeHeader(): { headerWidth: number; headerItems: LayoutItem[] } {
+  function computeHeader(firstMIdx: number = 0): { headerWidth: number; headerItems: LayoutItem[] } {
     const items: LayoutItem[] = [];
     let startX = 0;
 
@@ -639,15 +715,15 @@ export function layoutScore(score: Score, options: LayoutOptions = {}): LayoutRe
     items.push(...clefLayout.items);
     startX += clefLayout.width;
 
-    const initialKeySig = score.measures[0]?.keySig ?? 0;
-    const keySigLayout = createKeySigItems(startX, initialKeySig, clef);
+    const keySigToUse = score.measures[firstMIdx]?.keySig ?? 0;
+    const keySigLayout = createKeySigItems(startX, keySigToUse, clef);
     items.push(...keySigLayout.items);
     startX += keySigLayout.width;
 
     return { headerWidth: startX, headerItems: items };
   }
 
-  let currentHeader = computeHeader();
+  let currentHeader = computeHeader(0);
   currentUsedWidth = currentHeader.headerWidth;
 
   for (let mIdx = 0; mIdx < measureChunks.length; mIdx++) {
@@ -659,13 +735,15 @@ export function layoutScore(score: Score, options: LayoutOptions = {}): LayoutRe
         // Measure does not fit in current system; close system and wrap to next
         systemPlans.push({
           measures: currentPlanMeasures,
+          measureIndices: currentPlanIndices,
           headerWidth: currentHeader.headerWidth,
           headerItems: currentHeader.headerItems,
         });
 
         // Start new system plan
         currentPlanMeasures = [chunk];
-        currentHeader = computeHeader();
+        currentPlanIndices = [mIdx];
+        currentHeader = computeHeader(mIdx);
         currentUsedWidth = currentHeader.headerWidth + chunk.naturalWidth;
       } else {
         // Width is too small for even one measure: put one measure and allow overflow
@@ -674,16 +752,19 @@ export function layoutScore(score: Score, options: LayoutOptions = {}): LayoutRe
         );
         systemPlans.push({
           measures: [chunk],
+          measureIndices: [mIdx],
           headerWidth: currentHeader.headerWidth,
           headerItems: currentHeader.headerItems,
         });
 
         currentPlanMeasures = [];
-        currentHeader = computeHeader();
+        currentPlanIndices = [];
+        currentHeader = computeHeader(mIdx + 1);
         currentUsedWidth = currentHeader.headerWidth;
       }
     } else {
       currentPlanMeasures.push(chunk);
+      currentPlanIndices.push(mIdx);
       currentUsedWidth = projectedWidth;
     }
   }
@@ -691,6 +772,7 @@ export function layoutScore(score: Score, options: LayoutOptions = {}): LayoutRe
   if (currentPlanMeasures.length > 0) {
     systemPlans.push({
       measures: currentPlanMeasures,
+      measureIndices: currentPlanIndices,
       headerWidth: currentHeader.headerWidth,
       headerItems: currentHeader.headerItems,
     });
@@ -699,10 +781,92 @@ export function layoutScore(score: Score, options: LayoutOptions = {}): LayoutRe
   // Construct LayoutSystem objects (justify non-last systems, do not stretch last system)
   const systems: LayoutSystem[] = [];
 
+  const title = score.meta?.title?.trim() || '';
+  const subtitle = score.meta?.subtitle?.trim() || '';
+  const composer = score.meta?.composer?.trim() || '';
+  const arranger = score.meta?.arranger?.trim() || '';
+  const hasHeader = Boolean(title || subtitle || composer || arranger);
+  const headerHeight = hasHeader ? (subtitle ? 8.5 : 6.5) : 0;
+  const isPickup = Boolean(score.measures[0]?.actualTicks);
+
   for (let sIdx = 0; sIdx < systemPlans.length; sIdx++) {
     const plan = systemPlans[sIdx];
     const isLastSystem = sIdx === systemPlans.length - 1;
     const systemItems: LayoutItem[] = [];
+
+    // Header block on first page above system 0
+    if (sIdx === 0 && hasHeader) {
+      if (title) {
+        systemItems.push({
+          id: 'header-title',
+          kind: 'text',
+          text: title,
+          x: targetWidth / 2,
+          y: -headerHeight + 2.5,
+          textAnchor: 'middle',
+          fontSize: 2.2,
+          fontWeight: 'bold',
+          fontFamily: '"Times New Roman", Times, "Liberation Serif", serif',
+        });
+      }
+      if (subtitle) {
+        systemItems.push({
+          id: 'header-subtitle',
+          kind: 'text',
+          text: subtitle,
+          x: targetWidth / 2,
+          y: -headerHeight + (title ? 4.6 : 2.5),
+          textAnchor: 'middle',
+          fontSize: 1.3,
+          fontStyle: 'italic',
+          fontFamily: '"Times New Roman", Times, "Liberation Serif", serif',
+        });
+      }
+      if (composer) {
+        systemItems.push({
+          id: 'header-composer',
+          kind: 'text',
+          text: composer,
+          x: targetWidth,
+          y: -headerHeight + (arranger ? 5.2 : 6.2),
+          textAnchor: 'end',
+          fontSize: 1.2,
+          fontFamily: '"Times New Roman", Times, "Liberation Serif", serif',
+        });
+      }
+      if (arranger) {
+        systemItems.push({
+          id: 'header-arranger',
+          kind: 'text',
+          text: arranger,
+          x: targetWidth,
+          y: -headerHeight + 6.6,
+          textAnchor: 'end',
+          fontSize: 1.0,
+          fontStyle: 'italic',
+          fontFamily: '"Times New Roman", Times, "Liberation Serif", serif',
+        });
+      }
+    }
+
+    // Measure number above start of system for systems after the first
+    if (sIdx > 0) {
+      const firstMIdx = plan.measureIndices[0] ?? 0;
+      const measureNumber = isPickup ? firstMIdx : firstMIdx + 1;
+      if (measureNumber > 0) {
+        systemItems.push({
+          id: `sys-${sIdx}-measure-number`,
+          kind: 'text',
+          text: String(measureNumber),
+          x: 0,
+          y: -1.2,
+          fontSize: 1.1,
+          fontWeight: 'bold',
+          fontStyle: 'italic',
+          fontFamily: '"Times New Roman", Times, "Liberation Serif", serif',
+        });
+      }
+    }
 
     // Header items
     for (const hItem of plan.headerItems) {
@@ -726,7 +890,66 @@ export function layoutScore(score: Score, options: LayoutOptions = {}): LayoutRe
 
     for (let mInSys = 0; mInSys < plan.measures.length; mInSys++) {
       const chunk = plan.measures[mInSys];
+      const globalMIdx = plan.measureIndices[mInSys];
+      const mDef = score.measures[globalMIdx];
       const isLastMeasureInSystem = mInSys === plan.measures.length - 1;
+
+      // Tempo display above measure if specified on this measure
+      const tempo = mDef?.tempo ?? (globalMIdx === 0 && score.measures[0]?.tempo ? score.measures[0].tempo : undefined);
+      if (tempo) {
+        let curTempoX = contentOffset;
+        if (tempo.tempoText) {
+          systemItems.push({
+            id: `tempo-text-${mDef.id}`,
+            kind: 'text',
+            text: tempo.tempoText,
+            x: curTempoX,
+            y: -2.4,
+            fontSize: 1.25,
+            fontWeight: 'bold',
+            fontFamily: '"Times New Roman", Times, "Liberation Serif", serif',
+          });
+          curTempoX += tempo.tempoText.length * 0.65 + 0.5;
+        }
+
+        let beatGlyph = 'metNoteQuarterUp';
+        if (tempo.beatUnit === 0.5) beatGlyph = 'metNote8thUp';
+        else if (tempo.beatUnit === 2.0) beatGlyph = 'metNoteHalfUp';
+        else if (tempo.beatUnit === 1.5) beatGlyph = 'metNoteQuarterUp';
+
+        systemItems.push({
+          id: `tempo-glyph-${mDef.id}`,
+          kind: 'glyph',
+          glyph: beatGlyph,
+          x: curTempoX,
+          y: -2.4,
+          scale: 0.8,
+        });
+        curTempoX += 1.4;
+
+        if (tempo.beatUnit === 1.5) {
+          systemItems.push({
+            id: `tempo-dot-${mDef.id}`,
+            kind: 'glyph',
+            glyph: 'metAugmentationDot',
+            x: curTempoX,
+            y: -2.4,
+            scale: 0.8,
+          });
+          curTempoX += 0.8;
+        }
+
+        systemItems.push({
+          id: `tempo-bpm-${mDef.id}`,
+          kind: 'text',
+          text: ` = ${tempo.bpm}`,
+          x: curTempoX,
+          y: -2.4,
+          fontSize: 1.2,
+          fontWeight: 'bold',
+          fontFamily: '"Times New Roman", Times, "Liberation Serif", serif',
+        });
+      }
 
       for (let iIdx = 0; iIdx < chunk.items.length; iIdx++) {
         const entry = chunk.items[iIdx];
@@ -794,7 +1017,7 @@ export function layoutScore(score: Score, options: LayoutOptions = {}): LayoutRe
     systems.push({
       index: sIdx,
       x: 0,
-      y: sIdx * (systemSpacing + 4) + staffMarginTop,
+      y: sIdx * (systemSpacing + 4) + staffMarginTop + headerHeight,
       width: Math.max(staffEndEndX, targetWidth),
       height: 6,
       staves: [staffContainer],
@@ -998,7 +1221,7 @@ export function layoutScore(score: Score, options: LayoutOptions = {}): LayoutRe
   const allItems = systems.flatMap((s) => s.items);
 
   // SVG height fits its content accurately
-  const totalHeight = systems.length * (systemSpacing + 4) + staffMarginTop + staffMarginBottom;
+  const totalHeight = systems.length * (systemSpacing + 4) + staffMarginTop + staffMarginBottom + headerHeight;
 
   const maxSysWidth = Math.max(targetWidth, ...systems.map((s) => s.width));
 

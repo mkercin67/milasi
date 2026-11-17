@@ -14,6 +14,8 @@ export interface NewScoreConfig {
   keySig: number;
   timeSig: { num: number; den: number };
   measures: number;
+  isPickup?: boolean;
+  pickupDurationTicks?: number;
 }
 
 export interface NewScoreModalProps {
@@ -53,6 +55,8 @@ export const NewScoreModal: React.FC<NewScoreModalProps> = ({
   const [keySig, setKeySig] = useState<number>(0);
   const [timeSigStr, setTimeSigStr] = useState<string>('4/4');
   const [measureCount, setMeasureCount] = useState<number>(8);
+  const [isPickup, setIsPickup] = useState<boolean>(false);
+  const [pickupFraction, setPickupFraction] = useState<string>('1/4');
   const [confirmDiscarding, setConfirmDiscarding] = useState<boolean>(false);
 
   if (!isOpen) return null;
@@ -67,11 +71,20 @@ export const NewScoreModal: React.FC<NewScoreModalProps> = ({
     const clef: Clef =
       clefSign === 'F' ? { sign: 'F', line: 4 } : { sign: 'G', line: 2 };
 
+    const pickupTicksMap: Record<string, number> = {
+      '1/4': 960,
+      '1/8': 480,
+      '3/8': 1440,
+      '1/2': 1920,
+    };
+
     onCreate({
       clef,
       keySig,
       timeSig: { num, den },
       measures: Math.max(1, Math.min(64, measureCount || 8)),
+      isPickup,
+      pickupDurationTicks: isPickup ? (pickupTicksMap[pickupFraction] ?? 960) : undefined,
     });
     setConfirmDiscarding(false);
     onClose();
@@ -293,6 +306,45 @@ export const NewScoreModal: React.FC<NewScoreModalProps> = ({
                 color: '#1e293b',
               }}
             />
+          </div>
+
+          {/* Pickup measure (anacrusis) */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', paddingTop: '0.25rem' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', fontWeight: 500, color: '#334155', cursor: 'pointer' }}>
+              <input
+                type="checkbox"
+                id="pickup-checkbox"
+                checked={isPickup}
+                onChange={(e) => setIsPickup(e.target.checked)}
+                style={{ accentColor: '#2563eb' }}
+              />
+              {t('dialog.newScore.pickup')}
+            </label>
+            {isPickup && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', paddingLeft: '1.5rem' }}>
+                <label htmlFor="pickup-fraction-select" style={{ fontSize: '0.8rem', color: '#64748b' }}>
+                  {t('dialog.newScore.pickupLength')}:
+                </label>
+                <select
+                  id="pickup-fraction-select"
+                  value={pickupFraction}
+                  onChange={(e) => setPickupFraction(e.target.value)}
+                  style={{
+                    padding: '0.35rem 0.6rem',
+                    fontSize: '0.85rem',
+                    borderRadius: '6px',
+                    border: '1px solid #cbd5e1',
+                    backgroundColor: '#ffffff',
+                    color: '#1e293b',
+                  }}
+                >
+                  <option value="1/4">1/4 (960 tick)</option>
+                  <option value="1/8">1/8 (480 tick)</option>
+                  <option value="3/8">3/8 (1440 tick)</option>
+                  <option value="1/2">1/2 (1920 tick)</option>
+                </select>
+              </div>
+            )}
           </div>
         </div>
 
