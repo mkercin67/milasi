@@ -46,7 +46,8 @@ export type UserAction =
   | { type: 'toggle-articulation'; articulation: ArticulationType }
   | { type: 'nudge-override'; dx: number; dy: number }
   | { type: 'enter-pitch'; letter: PitchStep }
-  | { type: 'set-duration'; baseType: BaseDurationType };
+  | { type: 'set-duration'; baseType: BaseDurationType }
+  | { type: 'legacy-key-hint'; hintKey: 'accent' | 'marcato' | 'tenuto' };
 
 export interface KeyEventLike {
   code: string;
@@ -137,7 +138,6 @@ export function mapKeyEvent(
       if (e.code === 'KeyX') return 'cut';
       if (e.code === 'KeyV') return 'paste';
       if (e.code === 'KeyB') return 'insert-measure';
-      if (e.code === 'Delete' || e.code === 'Backspace') return 'delete-measure';
     } else if (mode === 'input') {
       if (e.code === 'KeyB') return 'insert-measure';
       if (e.code === 'KeyV') return 'paste';
@@ -217,7 +217,25 @@ export function mapKeyEvent(
         return { type: 'toggle-articulation', articulation: 'marcato' };
       }
 
+      if (e.key === '>' || e.code === 'Period') {
+        return { type: 'legacy-key-hint', hintKey: 'accent' };
+      }
+      if (e.key === '^' && e.code !== 'Digit6') {
+        return { type: 'legacy-key-hint', hintKey: 'marcato' };
+      }
+
       return null;
+    }
+
+    // Legacy punctuation articulation hints
+    if (e.key === '>' || (isShift && e.code === 'Period')) {
+      return { type: 'legacy-key-hint', hintKey: 'accent' };
+    }
+    if (e.key === '^' && e.code !== 'Digit6') {
+      return { type: 'legacy-key-hint', hintKey: 'marcato' };
+    }
+    if (!isCmdOrCtrl && (e.key === '-' || e.code === 'Minus')) {
+      return { type: 'legacy-key-hint', hintKey: 'tenuto' };
     }
 
     // Unmodified keys in select mode
@@ -282,7 +300,29 @@ export function mapKeyEvent(
     if (e.code === 'ArrowDown') return 'transpose-semitone-down';
     if (e.code === 'Delete' || e.code === 'Backspace') return 'convert-to-rest';
 
+    // Legacy punctuation articulation hints
+    if (e.key === '>' || (isShift && e.code === 'Period')) {
+      return { type: 'legacy-key-hint', hintKey: 'accent' };
+    }
+    if (e.key === '^' && e.code !== 'Digit6') {
+      return { type: 'legacy-key-hint', hintKey: 'marcato' };
+    }
+    if (!isCmdOrCtrl && (e.key === '-' || e.code === 'Minus')) {
+      return { type: 'legacy-key-hint', hintKey: 'tenuto' };
+    }
+
     return null;
+  }
+
+  // Legacy punctuation articulation hints across all modes
+  if (e.key === '>' || (isShift && e.code === 'Period')) {
+    return { type: 'legacy-key-hint', hintKey: 'accent' };
+  }
+  if (e.key === '^') {
+    return { type: 'legacy-key-hint', hintKey: 'marcato' };
+  }
+  if (!isCmdOrCtrl && (e.key === '-' || e.code === 'Minus')) {
+    return { type: 'legacy-key-hint', hintKey: 'tenuto' };
   }
 
   return null;
@@ -322,8 +362,6 @@ export function getCompleteKeyTable(): KeyTableEntry[] {
     { key: 'X', code: 'KeyX', modifiers: 'Ctrl', mode: 'select', action: 'cut' },
     { key: 'V', code: 'KeyV', modifiers: 'Ctrl', mode: 'select', action: 'paste' },
     { key: 'B', code: 'KeyB', modifiers: 'Ctrl', mode: 'select', action: 'insert-measure' },
-    { key: 'Del', code: 'Delete', modifiers: 'Ctrl', mode: 'select', action: 'delete-measure' },
-    { key: 'Backspace', code: 'Backspace', modifiers: 'Ctrl', mode: 'select', action: 'delete-measure' },
     { key: 'S', code: 'KeyS', modifiers: 'none', mode: 'select', action: 'toggle-slur' },
     { key: 'T', code: 'KeyT', modifiers: 'none', mode: 'select', action: 'toggle-tie' },
     { key: 'X', code: 'KeyX', modifiers: 'none', mode: 'select', action: 'reset-accidental' },

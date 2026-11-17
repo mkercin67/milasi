@@ -50,6 +50,8 @@ export interface ToolbarProps {
   onSelectDynamic?: (dynamic: DynamicType | null) => void;
   activeArticulations?: string[];
   onToggleArticulation?: (art: ArticulationType) => void;
+  hasTie?: boolean;
+  onToggleTie?: () => void;
   hasSlur?: boolean;
   onToggleSlur?: () => void;
   onClearNotations?: () => void;
@@ -128,6 +130,8 @@ export const Toolbar: React.FC<ToolbarProps> = ({
   onSelectDynamic,
   activeArticulations = [],
   onToggleArticulation,
+  hasTie = false,
+  onToggleTie,
   hasSlur = false,
   onToggleSlur,
   onClearNotations,
@@ -317,7 +321,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
             data-testid="btn-delete-measure"
             onClick={handleButtonClick(onDeleteMeasure)}
             onMouseDown={(e) => e.preventDefault()}
-            title={`${t('toolbar.deleteMeasure')} (Ctrl+Del)`}
+            title={t('toolbar.deleteMeasure')}
             style={{
               padding: '0.4rem 0.65rem',
               fontSize: '0.85rem',
@@ -340,6 +344,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
           onClick={handleButtonClick(onUndo)}
           onMouseDown={(e) => e.preventDefault()}
           disabled={!canUndo}
+          title={`${t('toolbar.undo')} (Ctrl+Z)`}
           style={{
             display: 'inline-flex',
             alignItems: 'center',
@@ -361,6 +366,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
           onClick={handleButtonClick(onRedo)}
           onMouseDown={(e) => e.preventDefault()}
           disabled={!canRedo}
+          title={`${t('toolbar.redo')} (Ctrl+Shift+Z)`}
           style={{
             display: 'inline-flex',
             alignItems: 'center',
@@ -810,6 +816,30 @@ export const Toolbar: React.FC<ToolbarProps> = ({
           </div>
 
           <div style={{ width: '1px', height: '20px', backgroundColor: '#e2e8f0', margin: '0 2px' }} />
+
+          {/* Tie button */}
+          <button
+            type="button"
+            data-testid="btn-tie"
+            aria-pressed={hasTie}
+            onClick={handleButtonClick(onToggleTie ?? (() => {}))}
+            onMouseDown={(e) => e.preventDefault()}
+            title={t('toolbar.tie')}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              padding: '0.2rem 0.5rem',
+              fontSize: '0.8rem',
+              fontWeight: 600,
+              backgroundColor: hasTie ? '#dbeafe' : 'transparent',
+              color: hasTie ? '#1d4ed8' : '#334155',
+              border: hasTie ? '1px solid #93c5fd' : '1px solid transparent',
+              borderRadius: '4px',
+              cursor: 'pointer',
+            }}
+          >
+            ‿ {t('notation.tie')}
+          </button>
 
           {/* Slur button */}
           <button

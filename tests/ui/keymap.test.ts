@@ -206,18 +206,39 @@ describe('keymap', () => {
     }
   });
 
-  it('maps M6a editing keys: select-all, copy, cut, paste, insert-measure, delete-measure, accidentals', () => {
+  it('maps M6a editing keys: select-all, copy, cut, paste, insert-measure, accidentals (Delete never deletes measures)', () => {
     expect(mapKeyEvent({ code: 'KeyA', ctrlKey: true }, 'select')).toBe('select-all');
     expect(mapKeyEvent({ code: 'KeyC', ctrlKey: true }, 'select')).toBe('copy');
     expect(mapKeyEvent({ code: 'KeyX', ctrlKey: true }, 'select')).toBe('cut');
     expect(mapKeyEvent({ code: 'KeyV', ctrlKey: true }, 'select')).toBe('paste');
     expect(mapKeyEvent({ code: 'KeyB', ctrlKey: true }, 'select')).toBe('insert-measure');
-    expect(mapKeyEvent({ code: 'Delete', ctrlKey: true }, 'select')).toBe('delete-measure');
+    // Ctrl+Delete never deletes measures
+    expect(mapKeyEvent({ code: 'Delete', ctrlKey: true }, 'select')).toBeNull();
+    expect(mapKeyEvent({ code: 'Backspace', ctrlKey: true }, 'select')).toBeNull();
 
     expect(mapKeyEvent({ code: 'ArrowLeft', shiftKey: true }, 'select')).toBe('extend-selection-prev');
     expect(mapKeyEvent({ code: 'ArrowRight', shiftKey: true }, 'select')).toBe('extend-selection-next');
     expect(mapKeyEvent({ code: 'ArrowUp', shiftKey: true }, 'select')).toBe('cycle-accidental-up');
     expect(mapKeyEvent({ code: 'ArrowDown', shiftKey: true }, 'select')).toBe('cycle-accidental-down');
+  });
+
+  it('shows helpful legacy punctuation hints when pressing >, ^, or -', () => {
+    expect(mapKeyEvent({ code: 'Period', shiftKey: true, key: '>' }, 'select')).toEqual({
+      type: 'legacy-key-hint',
+      hintKey: 'accent',
+    });
+    expect(mapKeyEvent({ code: 'IntlBackslash', key: '>' }, 'select')).toEqual({
+      type: 'legacy-key-hint',
+      hintKey: 'accent',
+    });
+    expect(mapKeyEvent({ code: 'BracketRight', key: '^' }, 'select')).toEqual({
+      type: 'legacy-key-hint',
+      hintKey: 'marcato',
+    });
+    expect(mapKeyEvent({ code: 'Minus', key: '-' }, 'select')).toEqual({
+      type: 'legacy-key-hint',
+      hintKey: 'tenuto',
+    });
   });
 
   it('FAILS if there is any duplicate shortcut (code + modifiers + mode)', () => {

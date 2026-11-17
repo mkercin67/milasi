@@ -939,6 +939,14 @@ const EditorShell: React.FC = () => {
         } else if (action.type === 'toggle-articulation') {
           applyArticulation(action.articulation);
           recordSample(`Artic-${action.articulation}`);
+        } else if (action.type === 'legacy-key-hint') {
+          if (action.hintKey === 'accent') {
+            triggerRejectedError(t('hint.accentKey'));
+          } else if (action.hintKey === 'marcato') {
+            triggerRejectedError(t('hint.marcatoKey'));
+          } else if (action.hintKey === 'tenuto') {
+            triggerRejectedError(t('hint.tenutoKey'));
+          }
         } else if (action.type === 'nudge-override') {
           if (selectedEventId && selectedEventInfo) {
             if (action.dy !== 0 && (selectedEventInfo.isNote || selectedEventInfo.isChord)) {
@@ -1080,6 +1088,8 @@ const EditorShell: React.FC = () => {
         onSelectDynamic={applyDynamic}
         activeArticulations={selectedEventInfo?.articulations}
         onToggleArticulation={applyArticulation}
+        hasTie={Boolean(selectedEventInfo?.pitches.some((p) => p.tiedToNext))}
+        onToggleTie={toggleTieSelection}
         hasSlur={selectedEventInfo?.hasSlur}
         onToggleSlur={applySlur}
         onClearNotations={clearNotations}
