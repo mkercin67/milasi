@@ -13,7 +13,7 @@ export function toggleTie(eventId: string, pitchIndex: number = 0): Command {
     name: 'Toggle Tie',
     apply(score: Score): Score {
       let foundStaffId: string | null = null;
-      let foundVoiceId: string | null = null;
+      let foundVoiceIndex = 0;
       let startMIdx = -1;
       let startEvIdx = -1;
       let sourceNote: NoteEvent | null = null;
@@ -24,11 +24,12 @@ export function toggleTie(eventId: string, pitchIndex: number = 0): Command {
             const mDef = score.measures[mIdx];
             const sm = staff.measures[mDef.id];
             if (!sm) continue;
-            for (const v of sm.voices) {
+            for (let vIdx = 0; vIdx < sm.voices.length; vIdx++) {
+              const v = sm.voices[vIdx];
               const idx = v.events.findIndex((e) => e.id === eventId);
               if (idx !== -1) {
                 foundStaffId = staff.id;
-                foundVoiceId = v.id;
+                foundVoiceIndex = vIdx;
                 startMIdx = mIdx;
                 startEvIdx = idx;
                 const ev = v.events[idx];
@@ -56,18 +57,17 @@ export function toggleTie(eventId: string, pitchIndex: number = 0): Command {
             const mDef = score.measures[mIdx];
             const sm = staff.measures[mDef.id];
             if (!sm) continue;
-            for (const v of sm.voices) {
-              if (v.id !== foundVoiceId) continue;
-              const startI = mIdx === startMIdx ? startEvIdx + 1 : 0;
-              for (let i = startI; i < v.events.length; i++) {
-                const ev = v.events[i];
-                if (ev.kind === 'note') {
-                  nextNote = ev;
-                  searchDone = true;
-                  break;
-                }
+            // Rule R3: voice identity is stable voiceIndex, never compare random voice IDs across measures
+            const v = sm.voices[foundVoiceIndex];
+            if (!v) continue;
+            const startI = mIdx === startMIdx ? startEvIdx + 1 : 0;
+            for (let i = startI; i < v.events.length; i++) {
+              const ev = v.events[i];
+              if (ev.kind === 'note') {
+                nextNote = ev;
+                searchDone = true;
+                break;
               }
-              if (searchDone) break;
             }
             if (searchDone) break;
           }

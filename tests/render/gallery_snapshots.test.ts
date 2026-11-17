@@ -8,7 +8,8 @@ function normalizeSvg(svg: string): string {
 }
 
 describe('H1 Regression Gallery: Golden Snapshot Tests', () => {
-  const cases = getGalleryCases();
+  // Exclude pending cases (e.g. multi-voice pending M7a) as specified in H1 Closing Section 2
+  const cases = getGalleryCases().filter((c) => !c.pending);
 
   for (const c of cases) {
     it(`golden snapshot matches for case [${c.id}]: ${c.title}`, () => {

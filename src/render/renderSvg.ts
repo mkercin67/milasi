@@ -10,6 +10,7 @@
  */
 
 import { LayoutItem, LayoutResult, LayoutSystem } from '../layout/types';
+import { computeLayoutBoundingBox } from '../layout/boundingBox';
 import { getGlyphChar } from './smufl';
 import { getGlyphPath, UNITS_PER_EM } from './glyphPaths.generated';
 
@@ -20,6 +21,8 @@ export interface RenderSvgOptions {
   color?: string;
   /** When true, renders glyphs as <text> using Bravura font instead of SVG paths. Defaults to false. */
   useTextFallback?: boolean;
+  /** Margin in staff spaces around all items for the SVG viewBox. Defaults to 1.5. */
+  viewBoxMargin?: number;
 }
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -38,9 +41,13 @@ export function renderSvg(
   const staffSpacePx = options.staffSpacePx ?? 10;
   const color = options.color ?? 'currentColor';
   const useTextFallback = options.useTextFallback ?? false;
+  const margin = options.viewBoxMargin ?? 1.5;
 
-  const totalWidthPx = Math.ceil(layout.width * staffSpacePx);
-  const totalHeightPx = Math.ceil(layout.height * staffSpacePx);
+  const bbox = computeLayoutBoundingBox(layout, margin);
+  const minXPx = Math.floor(bbox.minX * staffSpacePx);
+  const minYPx = Math.floor(bbox.minY * staffSpacePx);
+  const totalWidthPx = Math.ceil(bbox.width * staffSpacePx);
+  const totalHeightPx = Math.ceil(bbox.height * staffSpacePx);
 
   if (typeof document === 'undefined') {
     throw new Error('renderSvg requires a DOM environment (document is undefined).');
@@ -48,7 +55,7 @@ export function renderSvg(
 
   const svg = document.createElementNS(SVG_NS, 'svg');
   svg.setAttribute('xmlns', SVG_NS);
-  svg.setAttribute('viewBox', `0 0 ${totalWidthPx} ${totalHeightPx}`);
+  svg.setAttribute('viewBox', `${minXPx} ${minYPx} ${totalWidthPx} ${totalHeightPx}`);
   svg.setAttribute('width', `${totalWidthPx}px`);
   svg.setAttribute('height', `${totalHeightPx}px`);
   svg.setAttribute('style', `color: ${color}; overflow: visible; user-select: none;`);
@@ -294,9 +301,13 @@ export function renderSvgToString(
   const staffSpacePx = options.staffSpacePx ?? 10;
   const color = options.color ?? 'currentColor';
   const useTextFallback = options.useTextFallback ?? false;
+  const margin = options.viewBoxMargin ?? 1.5;
 
-  const totalWidthPx = Math.ceil(layout.width * staffSpacePx);
-  const totalHeightPx = Math.ceil(layout.height * staffSpacePx);
+  const bbox = computeLayoutBoundingBox(layout, margin);
+  const minXPx = Math.floor(bbox.minX * staffSpacePx);
+  const minYPx = Math.floor(bbox.minY * staffSpacePx);
+  const totalWidthPx = Math.ceil(bbox.width * staffSpacePx);
+  const totalHeightPx = Math.ceil(bbox.height * staffSpacePx);
   const fontSize = staffSpacePx * 4;
   const scale = staffSpacePx / (UNITS_PER_EM / 4);
 
@@ -419,6 +430,6 @@ export function renderSvgToString(
   </style>\n`
     : '';
 
-  return `<svg xmlns="${SVG_NS}" viewBox="0 0 ${totalWidthPx} ${totalHeightPx}" width="${totalWidthPx}px" height="${totalHeightPx}px" style="color: ${color}; overflow: visible; user-select: none;">
+  return `<svg xmlns="${SVG_NS}" viewBox="${minXPx} ${minYPx} ${totalWidthPx} ${totalHeightPx}" width="${totalWidthPx}px" height="${totalHeightPx}px" style="color: ${color}; overflow: visible; user-select: none;">
 ${textStyleBlock}${defsXml}${elementsXml}</svg>`;
 }

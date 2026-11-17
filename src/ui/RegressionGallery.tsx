@@ -105,9 +105,26 @@ export const RegressionGallery: React.FC = () => {
             }}
           >
             <div style={{ marginBottom: '1rem' }}>
-              <h2 style={{ fontSize: '1.15rem', fontWeight: 600, margin: '0 0 0.25rem 0' }}>
-                {c.title}
-              </h2>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
+                <h2 style={{ fontSize: '1.15rem', fontWeight: 600, margin: 0 }}>
+                  {c.title}
+                </h2>
+                {c.pending && (
+                  <span
+                    style={{
+                      fontSize: '0.75rem',
+                      fontWeight: 600,
+                      backgroundColor: '#fef3c7',
+                      color: '#b45309',
+                      padding: '0.15rem 0.5rem',
+                      borderRadius: '4px',
+                      border: '1px solid #fde68a',
+                    }}
+                  >
+                    Pending M7a
+                  </span>
+                )}
+              </div>
               <p style={{ fontSize: '0.875rem', color: '#64748b', margin: 0 }}>
                 {c.description}
               </p>
@@ -120,8 +137,6 @@ export const RegressionGallery: React.FC = () => {
                 borderRadius: '8px',
                 padding: '1rem',
                 overflowX: 'auto',
-                display: 'flex',
-                justifyContent: 'center',
               }}
               dangerouslySetInnerHTML={{ __html: c.svgHtml }}
             />
