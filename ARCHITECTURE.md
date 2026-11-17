@@ -258,33 +258,56 @@ type Selection =
   - `tenuto`: Full duration (no release gap) with +0.05 velocity boost.
   - `accent`: +0.15 velocity boost (capped at 1.0).
   - `marcato`: +0.25 velocity boost (capped at 1.0) and 0.75 duration.
-- **Slur Legato:** Notes under a slur sound for their full duration without release gaps.
+- **Slur Legato:**
+  - Non-terminal notes under a slur overlap by 10 ms (+0.010 s) into the subsequent note.
+  - Staccato and marcato shortening is suppressed for notes inside a slur.
 
-### 4. UI & Keymap
+### 4. UI & Keymap (event.code ONLY)
+- **Terminology:**
+  - Tie: **Bağ** (`KeyT` in Turkish, `Tie` in English).
+  - Slur: **Legato bağı** (`KeyS` in Turkish, `Legato slur` in English).
 - **Toolbar Notations Panel:**
   - 8 Dynamics buttons (`pp`..`fp`). Active dynamic highlighted; clicking active dynamic removes it.
   - 4 Articulation toggle buttons (`staccato`, `tenuto`, `accent`, `marcato`).
-  - Slur toggle button (`Bağ (Slur)`).
-  - Clear notations button (`Temizle`).
-- **Shortcuts:**
-  - `Shift+S`: Toggle slur on range selection.
-  - `Shift+1`..`Shift+8`: Quick-apply dynamics (`pp`..`fp`).
-  - `Period (.)`: Toggle staccato (in Select mode; toggles dot in Input mode).
-  - `Minus (-)`: Toggle tenuto.
-  - `Shift+Period` / `>`: Toggle accent.
-  - `^` / `Shift+6` / `KeyM`: Toggle marcato.
+  - Slur toggle button (`⌒ Legato bağı`).
+  - Clear notations button (`Notasyonları Temizle`).
+- **Physical Key Shortcuts (Strictly event.code, Layout-Independent):**
+  - Slur: `KeyS` (select and position modes).
+  - Tie: `KeyT` (select and position modes).
+  - Natural reset: `KeyX` (select and position modes).
+  - Dynamics: `Shift+Digit1`..`Shift+Digit8` (`pp`..`fp`) in select and position modes only.
+  - Articulations: `KeyJ` (staccato), `KeyK` (tenuto), `KeyL` (accent), `Shift+KeyL` (marcato) in select and position modes.
+  - Augmentation dot: `Period` (all modes, strictly dot, no punctuation keys for articulations).
 
-## File Format & Autosave (src/io)
+## Selection & Clipboard Model (Milestone 6a)
 
+- **Selection Model:**
+  - `{ kind: 'none' } | { kind: 'event', id } | { kind: 'range', staffId, voiceId, anchorId, focusId }`.
+  - Contiguous event run within voice across measures resolved via `eventsInRange(score, range)`.
+  - Selection extension via `extendRange(score, selection, direction)`.
+  - Handlers read state synchronously via refs (R2 anti-stale-closure rule).
+- **Clipboard (`src/core/clipboard.ts`):**
+  - Payloads serialized with `{ app: 'scoreforge-clip', version: 1, events }`.
+  - `pasteEvents` splits pasted events across barlines into standard units with ties and preserves measure durations.
+- **Voice Index Rule (R3):**
+  - Voice continuity across barlines relies on stable `voiceIndex` (1..4) within `StaffMeasure.voices`, not measure-local voice UUIDs.
+
+## File Format, Schema Migrations & Autosave (src/io)
+
+- **Schema Versions & Migrations:**
+  - `schemaVersion: 3`: Staff-level slurs (`Staff.slurs`) and per-event dynamics / articulations.
+  - `schemaVersion: 2`: Per-pitch ties (`Pitch.tiedToNext`).
+  - `schemaVersion: 1`: Legacy event-level ties (`NoteEvent.tiedToNext`).
+  - Automatic chained migration: `v1 -> v2 -> v3` and `v2 -> v3` on file load.
 - **Native Format (`.sfscore`):**
   ```json
   {
     "app": "scoreforge",
-    "savedAt": "2026-11-16T22:00:00.000Z",
-    "score": { "schemaVersion": 1, ... }
+    "savedAt": "2026-11-17T12:00:00.000Z",
+    "score": { "schemaVersion": 3, ... }
   }
   ```
-  - Backward compatible: `deserializeScore` accepts both the enveloped format and bare `Score` JSON.
+  - Backward compatible: `deserializeScore` accepts both enveloped and bare JSON for v1, v2, and v3.
   - Validated with `validateScore` on load.
 - **Autosave & Recovery:**
   - Automatically saves dirty scores to IndexedDB with 1-second debounce.

@@ -1300,6 +1300,7 @@ export const ScoreView: React.FC<ScoreViewProps> = ({
                 className="score-dynamic notranslate"
                 data-event-id={item.eventId}
                 data-dynamic-id={item.id}
+                data-dynamic-type={item.type}
                 pointerEvents="none"
               >
                 {useTextFallback && item.glyph ? (
@@ -1338,6 +1339,7 @@ export const ScoreView: React.FC<ScoreViewProps> = ({
                 className="score-articulation notranslate"
                 data-event-id={item.eventId}
                 data-articulation-id={item.id}
+                data-articulation-type={item.type}
                 pointerEvents="none"
               >
                 {useTextFallback && item.glyph ? (

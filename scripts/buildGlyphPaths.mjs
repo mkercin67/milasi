@@ -1,6 +1,8 @@
 /**
  * Build script: extracts SVG path data from Bravura.otf for SMuFL glyphs
- * and generates src/render/glyphPaths.generated.ts.
+ * referenced by ScoreForge source code and generates src/render/glyphPaths.generated.ts.
+ *
+ * Keeps bundle size optimal by including only referenced glyphs + whitelist.
  *
  * Run with: node scripts/buildGlyphPaths.mjs
  */
@@ -26,23 +28,62 @@ const font = opentype.parse(arrayBuffer);
 
 console.log(`Bravura loaded: unitsPerEm = ${font.unitsPerEm}, total font glyphs = ${font.glyphs.length}`);
 
-// Category regex matching all notation symbols used in ScoreForge and standard SMuFL
-const matchRegex = /^(gClef|fClef|cClef|notehead|rest|flag|accidental|timeSig|augmentationDot|artic|fermata|dynamic|repeat|segno|coda|caesura|breathMark|stem|ledgerLine)/i;
+// Whitelist for dynamically formatted or runtime-referenced glyphs
+const whitelist = new Set([
+  'gClef', 'fClef', 'cClef',
+  'timeSig0', 'timeSig1', 'timeSig2', 'timeSig3', 'timeSig4', 'timeSig5', 'timeSig6', 'timeSig7', 'timeSig8', 'timeSig9',
+  'timeSigCommon', 'timeSigCutCommon',
+  'accidentalSharp', 'accidentalFlat', 'accidentalNatural', 'accidentalDoubleSharp', 'accidentalDoubleFlat',
+  'noteheadBlack', 'noteheadHalf', 'noteheadWhole',
+  'flag8thUp', 'flag8thDown', 'flag16thUp', 'flag16thDown', 'flag32ndUp', 'flag32ndDown',
+  'restWhole', 'restHalf', 'restQuarter', 'rest8th', 'rest16th', 'rest32nd',
+  'augmentationDot',
+  'dynamicPP', 'dynamicPiano', 'dynamicMP', 'dynamicMF', 'dynamicForte', 'dynamicFF', 'dynamicSforzato', 'dynamicFortePiano',
+  'articStaccatoAbove', 'articStaccatoBelow',
+  'articTenutoAbove', 'articTenutoBelow',
+  'articAccentAbove', 'articAccentBelow',
+  'articMarcatoAbove', 'articMarcatoBelow',
+]);
+
+// Scan src directory for glyph mentions
+const allGlyphNames = new Set(Object.keys(glyphnames));
+function scanDir(dir) {
+  if (!fs.existsSync(dir)) return;
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    const full = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      scanDir(full);
+    } else if ((entry.name.endsWith('.ts') || entry.name.endsWith('.tsx')) && !entry.name.includes('glyphPaths.generated')) {
+      const code = fs.readFileSync(full, 'utf8');
+      for (const name of allGlyphNames) {
+        if (code.includes(name)) {
+          whitelist.add(name);
+        }
+      }
+    }
+  }
+}
+
+scanDir(path.join(rootDir, 'src'));
+console.log(`Target glyphs to extract: ${whitelist.size}`);
 
 const glyphPaths = {};
 let count = 0;
 
-for (const [name, entry] of Object.entries(glyphnames)) {
-  if (matchRegex.test(name)) {
-    const code = parseInt(entry.codepoint.replace('U+', ''), 16);
-    const glyph = font.charToGlyph(String.fromCodePoint(code));
-    if (glyph && glyph.unicode !== undefined) {
-      const p = glyph.getPath(0, 0, font.unitsPerEm);
-      const d = p.toPathData(1); // 1 decimal place precision
-      if (d && d.length > 0) {
-        glyphPaths[name] = d;
-        count++;
-      }
+for (const name of whitelist) {
+  const entry = glyphnames[name];
+  if (!entry) {
+    console.warn(`Warning: Whitelisted glyph '${name}' not found in glyphnames.json`);
+    continue;
+  }
+  const code = parseInt(entry.codepoint.replace('U+', ''), 16);
+  const glyph = font.charToGlyph(String.fromCodePoint(code));
+  if (glyph && glyph.unicode !== undefined) {
+    const p = glyph.getPath(0, 0, font.unitsPerEm);
+    const d = p.toPathData(1); // 1 decimal place precision
+    if (d && d.length > 0) {
+      glyphPaths[name] = d;
+      count++;
     }
   }
 }

@@ -80,6 +80,7 @@ export function buildSchedule(
     for (const staff of part.staves) {
       // Collect event IDs under slurs on this staff for legato playback
       const slurredEventIds = new Set<string>();
+      const slurredToNextEventIds = new Set<string>();
       if (staff.slurs && staff.slurs.length > 0) {
         const staffEvents: string[] = [];
         for (const mDef of score.measures) {
@@ -98,6 +99,9 @@ export function buildSchedule(
           if (startIdx >= 0 && endIdx >= startIdx) {
             for (let i = startIdx; i <= endIdx; i++) {
               slurredEventIds.add(staffEvents[i]);
+              if (i < endIdx) {
+                slurredToNextEventIds.add(staffEvents[i]);
+              }
             }
           }
         }
@@ -172,11 +176,17 @@ export function buildSchedule(
               }
 
               let soundingDuration = evDurationSeconds;
-              if (hasStaccato) {
+              if (slurredEventIds.has(ev.id)) {
+                // Legato slur: staccato does NOT shorten notes inside a slur;
+                // non-terminal slurred notes overlap by 10ms into the next note.
+                soundingDuration = slurredToNextEventIds.has(ev.id)
+                  ? evDurationSeconds + 0.010
+                  : evDurationSeconds;
+              } else if (hasStaccato) {
                 soundingDuration = Math.max(0.05, evDurationSeconds * 0.5);
               } else if (hasMarcato) {
                 soundingDuration = Math.max(0.05, evDurationSeconds * 0.75);
-              } else if (slurredEventIds.has(ev.id) || hasTenuto) {
+              } else if (hasTenuto) {
                 soundingDuration = evDurationSeconds;
               }
 

@@ -38,6 +38,8 @@ export interface LayoutItem {
   eventIds?: string[];
   /** Zero-based system index if item is placed relative to a system staff. */
   systemIndex?: number;
+  /** Optional notation subtype (e.g. dynamic type 'pp' or articulation type 'staccato'). */
+  type?: string;
 }
 
 /** Positioned staff container within a system. */

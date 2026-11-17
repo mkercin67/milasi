@@ -180,6 +180,8 @@ export function pasteEvents(
           pitches: newPitches,
           baseType: bType,
           dots: 0,
+          dynamic: sIdx === 0 ? origEv.dynamic : undefined,
+          articulations: origEv.articulations ? [...origEv.articulations] : undefined,
         });
         if (split.tieToNext) {
           (newEv as NoteEvent).tiedToNext = true;

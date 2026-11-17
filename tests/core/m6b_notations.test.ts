@@ -1,10 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import {
   clearSelectionNotations,
+  convertToRest,
   setDynamic,
   toggleArticulation,
   toggleSlur,
 } from '../../src/core/commands';
+import { pasteEvents } from '../../src/core/clipboard';
 import {
   createEmptyScore,
   createNote,
@@ -170,6 +172,53 @@ describe('Milestone 6b: Model, Validation and Commands (src/core)', () => {
       expect(ev0.dynamic).toBeUndefined();
       expect(ev0.articulations).toEqual([]);
       expect(st.slurs).toHaveLength(0);
+    });
+
+    it('delete inside a slur: deleting middle note preserves slur; deleting endpoint cleans up slur without orphaned references', () => {
+      const { score, staff, notes } = makeScore();
+      staff.slurs = [{ id: 'slur-1', startEventId: notes[0].id, endEventId: notes[3].id }];
+      expect(validateScore(score)).toEqual([]);
+
+      // 1. Delete middle note (notes[1]) via convertToRest
+      const s1 = convertToRest(notes[1].id).apply(score);
+      const st1 = s1.parts[0].staves[0];
+      // Slur still connects notes[0] and notes[3]
+      expect(st1.slurs).toHaveLength(1);
+      expect(st1.slurs?.[0].startEventId).toBe(notes[0].id);
+      expect(st1.slurs?.[0].endEventId).toBe(notes[3].id);
+      expect(validateScore(s1)).toEqual([]);
+
+      // 2. Delete endpoint note (notes[0]) via convertToRest
+      const s2 = convertToRest(notes[0].id).apply(s1);
+      const st2 = s2.parts[0].staves[0];
+      // Slur referencing notes[0] is automatically cleaned up
+      expect(st2.slurs).toHaveLength(0);
+      expect(validateScore(s2)).toEqual([]);
+    });
+
+    it('paste preserves dynamics and articulations, keeping valid score structure', () => {
+      const { score, notes } = makeScore();
+      notes[0].dynamic = 'ff';
+      notes[0].articulations = ['staccato', 'accent'];
+
+      const toPaste = [notes[0]];
+      const pasted = pasteEvents(
+        score,
+        {
+          staffId: score.parts[0].staves[0].id,
+          voiceId: score.parts[0].staves[0].measures[score.measures[1].id].voices[0].id,
+          startMeasureId: score.measures[1].id,
+          startOffsetTicks: 0,
+        },
+        toPaste
+      );
+
+      expect(validateScore(pasted)).toEqual([]);
+      const m1Voice0 = pasted.parts[0].staves[0].measures[score.measures[1].id].voices[0];
+      const pastedNote = m1Voice0.events[0] as any;
+      expect(pastedNote.dynamic).toBe('ff');
+      expect(pastedNote.articulations).toContain('staccato');
+      expect(pastedNote.articulations).toContain('accent');
     });
   });
 });

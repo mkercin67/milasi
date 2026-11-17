@@ -119,7 +119,12 @@ export const StatusBar: React.FC<StatusBarProps> = ({
     if (selection.articulations && selection.articulations.length > 0) {
       notationBadges.push(...selection.articulations);
     }
-    if (selection.hasSlur) notationBadges.push('bağ');
+    if (selection.pitches.some((p) => p.tiedToNext)) {
+      notationBadges.push(t('status.tie'));
+    }
+    if (selection.hasSlur) {
+      notationBadges.push(t('status.slur'));
+    }
     const notationText = notationBadges.length > 0 ? ` · ${notationBadges.join(' · ')}` : '';
 
     const overrideBadge = (hasOverride || override) ? (

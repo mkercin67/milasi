@@ -110,6 +110,7 @@ export function layoutDynamics(score: Score, layout: LayoutResult): LayoutItem[]
                 systemIndex: nh.systemIndex,
                 kind: 'glyph',
                 glyph,
+                type: ev.dynamic,
                 x: Number(posX.toFixed(2)),
                 y: Number(posY.toFixed(2)),
               });
@@ -190,6 +191,7 @@ export function layoutArticulations(score: Score, layout: LayoutResult): LayoutI
                   systemIndex: nh.systemIndex,
                   kind: 'glyph',
                   glyph,
+                  type: art,
                   x: Number(posX.toFixed(2)),
                   y: Number(posY.toFixed(2)),
                 });

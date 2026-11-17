@@ -214,6 +214,11 @@ export function deleteEvent(eventId: Id): Command {
                 if (idx !== -1) {
                   voice.events.splice(idx, 1);
                   deleted = true;
+                  if (staff.slurs) {
+                    staff.slurs = staff.slurs.filter(
+                      (s) => s.startEventId !== eventId && s.endEventId !== eventId
+                    );
+                  }
                   break;
                 }
               }
@@ -385,6 +390,11 @@ export function convertToRest(eventId: Id): Command {
                     };
                     voice.events[idx] = rest;
                     delete draft.overrides[eventId];
+                    if (staff.slurs) {
+                      staff.slurs = staff.slurs.filter(
+                        (s) => s.startEventId !== eventId && s.endEventId !== eventId
+                      );
+                    }
                   }
                   return;
                 }
@@ -503,6 +513,11 @@ export function deleteRange(range: RangeSelection): Command {
         for (const part of draft.parts) {
           for (const staff of part.staves) {
             if (staff.id !== range.staffId) continue;
+            if (staff.slurs) {
+              staff.slurs = staff.slurs.filter(
+                (s) => !targetIds.has(s.startEventId) && !targetIds.has(s.endEventId)
+              );
+            }
             for (const mDef of draft.measures) {
               const staffMeasure = staff.measures[mDef.id];
               if (!staffMeasure) continue;
@@ -555,6 +570,11 @@ export function transposeRange(range: RangeSelection, semitones: number): Comman
         for (const part of draft.parts) {
           for (const staff of part.staves) {
             if (staff.id !== range.staffId) continue;
+            if (staff.slurs) {
+              staff.slurs = staff.slurs.filter(
+                (s) => !targetIds.has(s.startEventId) && !targetIds.has(s.endEventId)
+              );
+            }
             for (const mDef of draft.measures) {
               const staffMeasure = staff.measures[mDef.id];
               if (!staffMeasure) continue;

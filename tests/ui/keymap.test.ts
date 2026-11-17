@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { mapKeyEvent } from '../../src/ui/keymap';
+import { EditorMode, getCompleteKeyTable, KeyEventLike, mapKeyEvent } from '../../src/ui/keymap';
 
 describe('keymap', () => {
   it('maps ArrowUp and ArrowDown to semitone transposition', () => {
@@ -25,61 +25,60 @@ describe('keymap', () => {
     expect(mapKeyEvent({ code: 'ArrowRight' })).toBe('select-next');
   });
 
-  it('maps Escape based on isInputMode', () => {
-    expect(mapKeyEvent({ code: 'Escape' }, false)).toBe('clear-selection');
-    expect(mapKeyEvent({ code: 'Escape' }, true)).toBe('exit-note-input');
+  it('maps Escape based on editor mode', () => {
+    expect(mapKeyEvent({ code: 'Escape' }, 'select')).toBe('clear-selection');
+    expect(mapKeyEvent({ code: 'Escape' }, 'input')).toBe('exit-note-input');
+    expect(mapKeyEvent({ code: 'Escape' }, 'position')).toBe('set-mode-select');
   });
 
-  it('maps Ctrl+Z and Ctrl+Shift+Z / Ctrl+Y to undo and redo, untouched by input keys', () => {
-    expect(mapKeyEvent({ code: 'KeyZ', ctrlKey: true })).toBe('undo');
-    expect(mapKeyEvent({ code: 'KeyZ', metaKey: true })).toBe('undo');
-
-    expect(mapKeyEvent({ code: 'KeyZ', ctrlKey: true, shiftKey: true })).toBe('redo');
-    expect(mapKeyEvent({ code: 'KeyY', ctrlKey: true })).toBe('redo');
-    expect(mapKeyEvent({ code: 'KeyY', metaKey: true })).toBe('redo');
+  it('maps Ctrl+Z and Ctrl+Shift+Z / Ctrl+Y to undo and redo across all modes', () => {
+    for (const m of ['select', 'input', 'position'] as EditorMode[]) {
+      expect(mapKeyEvent({ code: 'KeyZ', ctrlKey: true }, m)).toBe('undo');
+      expect(mapKeyEvent({ code: 'KeyZ', metaKey: true }, m)).toBe('undo');
+      expect(mapKeyEvent({ code: 'KeyZ', ctrlKey: true, shiftKey: true }, m)).toBe('redo');
+      expect(mapKeyEvent({ code: 'KeyY', ctrlKey: true }, m)).toBe('redo');
+      expect(mapKeyEvent({ code: 'KeyY', metaKey: true }, m)).toBe('redo');
+    }
   });
 
-  it('maps KeyN, KeyP, KeyV and Escape cleanly across select/input/position modes', () => {
+  it('maps KeyN, KeyP, KeyV cleanly across select/input/position modes', () => {
     expect(mapKeyEvent({ code: 'KeyN' })).toBe('toggle-note-input');
     expect(mapKeyEvent({ code: 'KeyP' })).toBe('toggle-position-mode');
     expect(mapKeyEvent({ code: 'KeyV' }, 'input')).toBe('set-mode-select');
     expect(mapKeyEvent({ code: 'KeyV' }, 'position')).toBe('set-mode-select');
 
-    // Escape per mode
-    expect(mapKeyEvent({ code: 'Escape' }, 'select')).toBe('clear-selection');
-    expect(mapKeyEvent({ code: 'Escape' }, 'input')).toBe('exit-note-input');
-    expect(mapKeyEvent({ code: 'Escape' }, 'position')).toBe('set-mode-select');
-
-    // Ignored when Ctrl/Alt/Shift is held
+    // Ignored when Ctrl/Alt is held
     expect(mapKeyEvent({ code: 'KeyN', ctrlKey: true })).toBeNull();
     expect(mapKeyEvent({ code: 'KeyP', ctrlKey: true })).toBeNull();
     expect(mapKeyEvent({ code: 'KeyV', altKey: true })).toBeNull();
   });
 
-  it('maps KeyA..KeyG to enter-pitch when isInputMode is true; prompts hint when false', () => {
-    // When isInputMode is true: enters pitch
-    expect(mapKeyEvent({ code: 'KeyA' }, true)).toEqual({ type: 'enter-pitch', letter: 'A' });
-    expect(mapKeyEvent({ code: 'KeyB' }, true)).toEqual({ type: 'enter-pitch', letter: 'B' });
-    expect(mapKeyEvent({ code: 'KeyC' }, true)).toEqual({ type: 'enter-pitch', letter: 'C' });
-    expect(mapKeyEvent({ code: 'KeyD' }, true)).toEqual({ type: 'enter-pitch', letter: 'D' });
-    expect(mapKeyEvent({ code: 'KeyE' }, true)).toEqual({ type: 'enter-pitch', letter: 'E' });
-    expect(mapKeyEvent({ code: 'KeyF' }, true)).toEqual({ type: 'enter-pitch', letter: 'F' });
-    expect(mapKeyEvent({ code: 'KeyG' }, true)).toEqual({ type: 'enter-pitch', letter: 'G' });
+  it('maps KeyA..KeyG to enter-pitch when mode is input; prompts hint when select/position', () => {
+    // When mode is input: enters pitch
+    expect(mapKeyEvent({ code: 'KeyA' }, 'input')).toEqual({ type: 'enter-pitch', letter: 'A' });
+    expect(mapKeyEvent({ code: 'KeyB' }, 'input')).toEqual({ type: 'enter-pitch', letter: 'B' });
+    expect(mapKeyEvent({ code: 'KeyC' }, 'input')).toEqual({ type: 'enter-pitch', letter: 'C' });
+    expect(mapKeyEvent({ code: 'KeyD' }, 'input')).toEqual({ type: 'enter-pitch', letter: 'D' });
+    expect(mapKeyEvent({ code: 'KeyE' }, 'input')).toEqual({ type: 'enter-pitch', letter: 'E' });
+    expect(mapKeyEvent({ code: 'KeyF' }, 'input')).toEqual({ type: 'enter-pitch', letter: 'F' });
+    expect(mapKeyEvent({ code: 'KeyG' }, 'input')).toEqual({ type: 'enter-pitch', letter: 'G' });
 
-    // When isInputMode is false: returns 'show-input-off-hint'
-    expect(mapKeyEvent({ code: 'KeyA' }, false)).toBe('show-input-off-hint');
-    expect(mapKeyEvent({ code: 'KeyC' }, false)).toBe('show-input-off-hint');
+    // When mode is select or position: returns 'show-input-off-hint'
+    expect(mapKeyEvent({ code: 'KeyA' }, 'select')).toBe('show-input-off-hint');
+    expect(mapKeyEvent({ code: 'KeyC' }, 'select')).toBe('show-input-off-hint');
+    expect(mapKeyEvent({ code: 'KeyA' }, 'position')).toBe('show-input-off-hint');
 
     // Modifiers ignore note entry
-    expect(mapKeyEvent({ code: 'KeyC', ctrlKey: true }, true)).toBeNull();
-    expect(mapKeyEvent({ code: 'KeyC', altKey: true }, true)).toBeNull();
+    expect(mapKeyEvent({ code: 'KeyC', ctrlKey: true }, 'input')).toBeNull();
+    expect(mapKeyEvent({ code: 'KeyC', altKey: true }, 'input')).toBeNull();
   });
 
-  it('maps Digit0 to enter-rest when isInputMode is true; prompts hint when false; Ctrl+Digit0 to reset-override', () => {
-    expect(mapKeyEvent({ code: 'Digit0' }, true)).toBe('enter-rest');
-    expect(mapKeyEvent({ code: 'Digit0' }, false)).toBe('show-input-off-hint');
-    expect(mapKeyEvent({ code: 'Digit0', ctrlKey: true }, true)).toBe('reset-override');
-    expect(mapKeyEvent({ code: 'Digit0', metaKey: true }, false)).toBe('reset-override');
+  it('maps Digit0 to enter-rest in input mode; prompts hint when select/position; Ctrl+Digit0 to reset-override', () => {
+    expect(mapKeyEvent({ code: 'Digit0' }, 'input')).toBe('enter-rest');
+    expect(mapKeyEvent({ code: 'Digit0' }, 'select')).toBe('show-input-off-hint');
+    expect(mapKeyEvent({ code: 'Digit0' }, 'position')).toBe('show-input-off-hint');
+    expect(mapKeyEvent({ code: 'Digit0', ctrlKey: true }, 'input')).toBe('reset-override');
+    expect(mapKeyEvent({ code: 'Digit0', metaKey: true }, 'select')).toBe('reset-override');
   });
 
   it('disables all Alt shortcuts and maps position-mode Arrows / Tab / Shift+Tab cleanly', () => {
@@ -129,86 +128,85 @@ describe('keymap', () => {
     // Position mode Tab / Shift+Tab navigation
     expect(mapKeyEvent({ code: 'Tab' }, 'position')).toBe('select-next');
     expect(mapKeyEvent({ code: 'Tab', shiftKey: true }, 'position')).toBe('select-prev');
-
-    // Note input mode suppresses letter entry hint check on position mode too
-    expect(mapKeyEvent({ code: 'KeyC' }, 'position')).toBe('show-input-off-hint');
   });
 
-  it('maps Digit2..Digit7 to set-duration', () => {
-    expect(mapKeyEvent({ code: 'Digit2' })).toEqual({ type: 'set-duration', baseType: '32nd' });
-    expect(mapKeyEvent({ code: 'Digit3' })).toEqual({ type: 'set-duration', baseType: '16th' });
-    expect(mapKeyEvent({ code: 'Digit4' })).toEqual({ type: 'set-duration', baseType: 'eighth' });
-    expect(mapKeyEvent({ code: 'Digit5' })).toEqual({ type: 'set-duration', baseType: 'quarter' });
-    expect(mapKeyEvent({ code: 'Digit6' })).toEqual({ type: 'set-duration', baseType: 'half' });
-    expect(mapKeyEvent({ code: 'Digit7' })).toEqual({ type: 'set-duration', baseType: 'whole' });
+  it('maps Digit2..Digit7 to set-duration in select and input modes without shift', () => {
+    for (const m of ['select', 'input'] as EditorMode[]) {
+      expect(mapKeyEvent({ code: 'Digit2' }, m)).toEqual({ type: 'set-duration', baseType: '32nd' });
+      expect(mapKeyEvent({ code: 'Digit3' }, m)).toEqual({ type: 'set-duration', baseType: '16th' });
+      expect(mapKeyEvent({ code: 'Digit4' }, m)).toEqual({ type: 'set-duration', baseType: 'eighth' });
+      expect(mapKeyEvent({ code: 'Digit5' }, m)).toEqual({ type: 'set-duration', baseType: 'quarter' });
+      expect(mapKeyEvent({ code: 'Digit6' }, m)).toEqual({ type: 'set-duration', baseType: 'half' });
+      expect(mapKeyEvent({ code: 'Digit7' }, m)).toEqual({ type: 'set-duration', baseType: 'whole' });
+    }
   });
 
-  it('maps Period to toggle-dot in input mode and staccato in select mode', () => {
+  it('maps Period exclusively to toggle-dot across all modes (no punctuation for articulations)', () => {
     expect(mapKeyEvent({ code: 'Period' }, 'input')).toBe('toggle-dot');
-    expect(mapKeyEvent({ code: 'Period' }, 'select')).toEqual({
-      type: 'toggle-articulation',
-      articulation: 'staccato',
-    });
+    expect(mapKeyEvent({ code: 'Period' }, 'select')).toBe('toggle-dot');
+    expect(mapKeyEvent({ code: 'Period' }, 'position')).toBe('toggle-dot');
   });
 
-  it('maps M6b notation keys: Shift+S (slur), Shift+1..8 (dynamics), and articulations', () => {
-    // Slur toggle
-    expect(mapKeyEvent({ code: 'KeyS', shiftKey: true }, 'select')).toBe('toggle-slur');
+  it('maps M6b notation keys: Slur (KeyS), Tie (KeyT), Natural (KeyX), Dynamics (Shift+Digit1..8), and Articulations (KeyJ, KeyK, KeyL, Shift+KeyL)', () => {
+    // Slur toggle: KeyS in select and position modes
+    expect(mapKeyEvent({ code: 'KeyS' }, 'select')).toBe('toggle-slur');
+    expect(mapKeyEvent({ code: 'KeyS' }, 'position')).toBe('toggle-slur');
+    expect(mapKeyEvent({ code: 'KeyS' }, 'input')).toBeNull(); // No pitch S
 
-    // Dynamics Shift+1..8
-    expect(mapKeyEvent({ code: 'Digit1', shiftKey: true }, 'select')).toEqual({
-      type: 'apply-dynamic',
-      dynamic: 'pp',
-    });
-    expect(mapKeyEvent({ code: 'Digit2', shiftKey: true }, 'select')).toEqual({
-      type: 'apply-dynamic',
-      dynamic: 'p',
-    });
-    expect(mapKeyEvent({ code: 'Digit3', shiftKey: true }, 'select')).toEqual({
-      type: 'apply-dynamic',
-      dynamic: 'mp',
-    });
-    expect(mapKeyEvent({ code: 'Digit4', shiftKey: true }, 'select')).toEqual({
-      type: 'apply-dynamic',
-      dynamic: 'mf',
-    });
-    expect(mapKeyEvent({ code: 'Digit5', shiftKey: true }, 'select')).toEqual({
-      type: 'apply-dynamic',
-      dynamic: 'f',
-    });
-    expect(mapKeyEvent({ code: 'Digit6', shiftKey: true }, 'select')).toEqual({
-      type: 'apply-dynamic',
-      dynamic: 'ff',
-    });
-    expect(mapKeyEvent({ code: 'Digit7', shiftKey: true }, 'select')).toEqual({
-      type: 'apply-dynamic',
-      dynamic: 'sfz',
-    });
-    expect(mapKeyEvent({ code: 'Digit8', shiftKey: true }, 'select')).toEqual({
-      type: 'apply-dynamic',
-      dynamic: 'fp',
-    });
+    // Tie toggle: KeyT in select and position modes
+    expect(mapKeyEvent({ code: 'KeyT' }, 'select')).toBe('toggle-tie');
+    expect(mapKeyEvent({ code: 'KeyT' }, 'position')).toBe('toggle-tie');
 
-    // Articulations
-    expect(mapKeyEvent({ code: 'Minus' }, 'select')).toEqual({
-      type: 'toggle-articulation',
-      articulation: 'tenuto',
-    });
-    expect(mapKeyEvent({ code: 'Period', shiftKey: true }, 'select')).toEqual({
-      type: 'toggle-articulation',
-      articulation: 'accent',
-    });
-    expect(mapKeyEvent({ code: 'Digit6', shiftKey: true, key: '^' }, 'select')).toEqual({
-      type: 'toggle-articulation',
-      articulation: 'marcato',
-    });
-    expect(mapKeyEvent({ code: 'KeyM' }, 'select')).toEqual({
-      type: 'toggle-articulation',
-      articulation: 'marcato',
-    });
+    // Natural reset: KeyX in select and position modes
+    expect(mapKeyEvent({ code: 'KeyX' }, 'select')).toBe('reset-accidental');
+    expect(mapKeyEvent({ code: 'KeyX' }, 'position')).toBe('reset-accidental');
+
+    // Dynamics Shift+Digit1..8 in select and position modes
+    const expectedDynamics = [
+      { code: 'Digit1', dyn: 'pp' },
+      { code: 'Digit2', dyn: 'p' },
+      { code: 'Digit3', dyn: 'mp' },
+      { code: 'Digit4', dyn: 'mf' },
+      { code: 'Digit5', dyn: 'f' },
+      { code: 'Digit6', dyn: 'ff' },
+      { code: 'Digit7', dyn: 'sfz' },
+      { code: 'Digit8', dyn: 'fp' },
+    ];
+    for (const { code, dyn } of expectedDynamics) {
+      expect(mapKeyEvent({ code, shiftKey: true }, 'select')).toEqual({
+        type: 'apply-dynamic',
+        dynamic: dyn,
+      });
+      expect(mapKeyEvent({ code, shiftKey: true }, 'position')).toEqual({
+        type: 'apply-dynamic',
+        dynamic: dyn,
+      });
+      // In input mode, Shift+Digit must NOT apply dynamic
+      expect(mapKeyEvent({ code, shiftKey: true }, 'input')).toBeNull();
+    }
+
+    // Articulations: KeyJ (staccato), KeyK (tenuto), KeyL (accent), Shift+KeyL (marcato)
+    for (const m of ['select', 'position'] as EditorMode[]) {
+      expect(mapKeyEvent({ code: 'KeyJ' }, m)).toEqual({
+        type: 'toggle-articulation',
+        articulation: 'staccato',
+      });
+      expect(mapKeyEvent({ code: 'KeyK' }, m)).toEqual({
+        type: 'toggle-articulation',
+        articulation: 'tenuto',
+      });
+      expect(mapKeyEvent({ code: 'KeyL' }, m)).toEqual({
+        type: 'toggle-articulation',
+        articulation: 'accent',
+      });
+      expect(mapKeyEvent({ code: 'KeyL', shiftKey: true }, m)).toEqual({
+        type: 'toggle-articulation',
+        articulation: 'marcato',
+      });
+    }
   });
 
-  it('maps M6a editing keys: select-all, copy, cut, paste, insert-measure, delete-measure, ties, accidentals', () => {
+  it('maps M6a editing keys: select-all, copy, cut, paste, insert-measure, delete-measure, accidentals', () => {
     expect(mapKeyEvent({ code: 'KeyA', ctrlKey: true }, 'select')).toBe('select-all');
     expect(mapKeyEvent({ code: 'KeyC', ctrlKey: true }, 'select')).toBe('copy');
     expect(mapKeyEvent({ code: 'KeyX', ctrlKey: true }, 'select')).toBe('cut');
@@ -220,15 +218,67 @@ describe('keymap', () => {
     expect(mapKeyEvent({ code: 'ArrowRight', shiftKey: true }, 'select')).toBe('extend-selection-next');
     expect(mapKeyEvent({ code: 'ArrowUp', shiftKey: true }, 'select')).toBe('cycle-accidental-up');
     expect(mapKeyEvent({ code: 'ArrowDown', shiftKey: true }, 'select')).toBe('cycle-accidental-down');
-
-    expect(mapKeyEvent({ code: 'KeyT' }, 'select')).toBe('toggle-tie');
-    expect(mapKeyEvent({ code: 'KeyX' }, 'select')).toBe('reset-accidental');
   });
 
-  it('returns null for unrecognized keys', () => {
-    expect(mapKeyEvent({ code: 'Space' })).toBeNull();
-    expect(mapKeyEvent({ code: 'Tab' })).toBeNull();
-    expect(mapKeyEvent({ code: 'Digit1' })).toBeNull();
-    expect(mapKeyEvent({ code: 'Digit8' })).toBeNull();
+  it('FAILS if there is any duplicate shortcut (code + modifiers + mode)', () => {
+    const table = getCompleteKeyTable();
+    const seen = new Set<string>();
+    const duplicates: string[] = [];
+
+    for (const entry of table) {
+      const modesToCheck: EditorMode[] =
+        entry.mode === 'all' ? ['select', 'input', 'position'] : [entry.mode];
+
+      for (const m of modesToCheck) {
+        const id = `${entry.code}|${entry.modifiers}|${m}`;
+        if (seen.has(id)) {
+          duplicates.push(`Duplicate shortcut detected: ${id} -> ${entry.action}`);
+        } else {
+          seen.add(id);
+        }
+      }
+    }
+
+    expect(duplicates).toEqual([]);
+  });
+
+  it('simulates identical event.code with different event.key values (Turkish Q, US) and expects identical action', () => {
+    // Turkish Q vs US keyboard variations:
+    // On Turkish Q: Shift+Digit3 might produce '^' or '#' depending on layout;
+    // but code is strictly 'Digit3'.
+    const testCases: Array<{ event1: KeyEventLike; event2: KeyEventLike; mode: EditorMode }> = [
+      {
+        event1: { code: 'Digit3', shiftKey: true, key: '#' }, // US layout
+        event2: { code: 'Digit3', shiftKey: true, key: '^' }, // Turkish layout
+        mode: 'select',
+      },
+      {
+        event1: { code: 'Digit6', shiftKey: true, key: '^' }, // US layout
+        event2: { code: 'Digit6', shiftKey: true, key: '&' }, // Turkish layout
+        mode: 'select',
+      },
+      {
+        event1: { code: 'KeyJ', key: 'j' },
+        event2: { code: 'KeyJ', key: 'ı' }, // Alt layout
+        mode: 'select',
+      },
+      {
+        event1: { code: 'KeyL', shiftKey: true, key: 'L' },
+        event2: { code: 'KeyL', shiftKey: true, key: 'l' },
+        mode: 'select',
+      },
+      {
+        event1: { code: 'KeyS', key: 's' },
+        event2: { code: 'KeyS', key: 'ş' },
+        mode: 'select',
+      },
+    ];
+
+    for (const tc of testCases) {
+      const res1 = mapKeyEvent(tc.event1, tc.mode);
+      const res2 = mapKeyEvent(tc.event2, tc.mode);
+      expect(res1).not.toBeNull();
+      expect(res1).toEqual(res2);
+    }
   });
 });

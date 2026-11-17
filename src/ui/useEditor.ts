@@ -1068,10 +1068,10 @@ export function useEditor(initialScore?: Score) {
       try {
         executeCommand(toggleSlur(curSel));
       } catch {
-        triggerRejectedError('Bağ eklenemedi');
+        triggerRejectedError('Legato bağı eklenemedi');
       }
     } else {
-      triggerRejectedError('Bağ için en az iki nota seçmelisiniz (Shift+Yön Tuşları)');
+      triggerRejectedError('Legato bağı için en az iki nota seçmelisiniz (S)');
     }
   }, [executeCommand, triggerRejectedError]);
 

@@ -67,10 +67,10 @@ const DYNAMICS: { type: DynamicType; label: string; shortcut: string }[] = [
 ];
 
 const ARTICULATIONS: { type: ArticulationType; label: string; symbol: string; shortcut: string }[] = [
-  { type: 'staccato', label: 'Staccato', symbol: '•', shortcut: '.' },
-  { type: 'tenuto', label: 'Tenuto', symbol: '—', shortcut: '-' },
-  { type: 'accent', label: 'Accent', symbol: '>', shortcut: '>' },
-  { type: 'marcato', label: 'Marcato', symbol: '^', shortcut: '^' },
+  { type: 'staccato', label: 'Staccato', symbol: '•', shortcut: 'J' },
+  { type: 'tenuto', label: 'Tenuto', symbol: '—', shortcut: 'K' },
+  { type: 'accent', label: 'Aksan', symbol: '>', shortcut: 'L' },
+  { type: 'marcato', label: 'Markato', symbol: '^', shortcut: 'Shift+L' },
 ];
 
 const DURATIONS: { type: BaseDurationType; label: string; shortcut: string; icon: string }[] = [
@@ -818,7 +818,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
             aria-pressed={hasSlur}
             onClick={handleButtonClick(onToggleSlur ?? (() => {}))}
             onMouseDown={(e) => e.preventDefault()}
-            title="Bağ (Slur) (Shift+S)"
+            title={t('toolbar.slur')}
             style={{
               display: 'inline-flex',
               alignItems: 'center',
@@ -832,7 +832,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
               cursor: 'pointer',
             }}
           >
-            ⌒ Bağ
+            ⌒ {t('notation.slur')}
           </button>
 
           {/* Clear Notations button */}
@@ -841,7 +841,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
             data-testid="btn-clear-notations"
             onClick={handleButtonClick(onClearNotations ?? (() => {}))}
             onMouseDown={(e) => e.preventDefault()}
-            title="Notasyonları Temizle"
+            title={t('toolbar.clearNotations')}
             style={{
               display: 'inline-flex',
               alignItems: 'center',

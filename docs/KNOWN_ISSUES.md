@@ -2,11 +2,11 @@
 
 This document lists known constraints and architectural trade-offs in the current implementation.
 
-## 1. Bundle Size & SMuFL Glyph Paths (~1.5 MB bundle)
-- **Status:** Architectural Trade-off.
-- **Details:** The Bravura SMuFL music font glyph paths are compiled directly into `src/render/glyphPaths.ts` as static SVG path strings. This eliminates WebFont loading flash (FOUC), network latency, and canvas rasterization artifacts.
-- **Impact:** Production JavaScript bundle is ~1.5 MB uncompressed (~397 KB gzipped).
-- **Roadmap:** In Phase 2, glyph paths will be split into lazy-loaded chunks or external SVG sprite sheets.
+## 1. Bundle Size & SMuFL Glyph Paths (~1.16 MB bundle)
+- **Status:** Optimized in Milestone 6b.
+- **Details:** The Bravura SMuFL music font glyph paths are compiled into `src/render/glyphPaths.generated.ts` as static SVG path strings. This eliminates WebFont loading flash (FOUC), network latency, and canvas rasterization artifacts. In Milestone 6b closing, static analysis was introduced (`scripts/buildGlyphPaths.mjs`) to filter only the 53 active glyphs referenced across `src/`, reducing the generated glyph source file from 440.4 KB to 33.2 KB.
+- **Impact:** Production JavaScript bundle dropped from 1,569.82 kB down to 1,169.19 kB (289.25 kB gzipped), a net reduction of 400.6 kB.
+- **Roadmap:** In Phase 2, additional font weights or full microtonal glyph sets can be split into lazy-loaded chunks if needed.
 
 ## 2. Basic Synthesizer Playback Timbre
 - **Status:** Scope Limit.
