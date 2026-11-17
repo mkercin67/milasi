@@ -1,6 +1,7 @@
 import { PPQ, measureTicks } from '../core/time';
 import { Pitch, Score } from '../core/model';
 import { pitchToMidi } from './pitch';
+import { expandRepeats } from './repeats';
 import {
   BuildScheduleOptions,
   MeasureStartTime,
@@ -42,7 +43,12 @@ export function buildSchedule(
   score: Score,
   options: BuildScheduleOptions = {}
 ): ScheduleResult {
-  // 1. Calculate measure start times and per-measure tempo
+  // 1. Calculate measure start times and per-measure tempo (expanding repeats if present)
+  const hasRepeats = score.measures.some((m) => m.repeat || m.volta);
+  const sequence = hasRepeats
+    ? expandRepeats(score)
+    : score.measures.map((m, idx) => ({ measureIndex: idx, measureDef: m, pass: 1 }));
+
   const measureStarts: MeasureStartTime[] = [];
   const measureDurations: number[] = [];
   const measureTempos: Array<{ bpm: number; beatUnit: number }> = [];
@@ -50,7 +56,8 @@ export function buildSchedule(
   let currentTempo = DEFAULT_TEMPO;
   let accumulatedSeconds = 0;
 
-  for (const mDef of score.measures) {
+  for (let sIdx = 0; sIdx < sequence.length; sIdx++) {
+    const { measureDef: mDef } = sequence[sIdx];
     if (mDef.tempo) {
       currentTempo = {
         bpm: mDef.tempo.bpm,
@@ -65,7 +72,7 @@ export function buildSchedule(
 
     // Seconds per tick = 60 / (bpm * beatUnit * PPQ)
     const secondsPerTick = 60 / (currentTempo.bpm * currentTempo.beatUnit * PPQ);
-    const mTicks = measureTicks(mDef.timeSig);
+    const mTicks = mDef.actualTicks ?? measureTicks(mDef.timeSig);
     const mDurationSeconds = mTicks * secondsPerTick;
     measureDurations.push(mDurationSeconds);
     accumulatedSeconds += mDurationSeconds;
@@ -124,17 +131,17 @@ export function buildSchedule(
           pitches: Pitch[];
         }> | null = null;
 
-        for (let mIdx = 0; mIdx < score.measures.length; mIdx++) {
-          const mDef = score.measures[mIdx];
+        for (let sIdx = 0; sIdx < sequence.length; sIdx++) {
+          const mDef = sequence[sIdx].measureDef;
           const sm = staff.measures[mDef.id];
           if (!sm) continue;
           const voice = sm.voices[vIdx];
           if (!voice) continue;
 
-          const tempo = measureTempos[mIdx];
+          const tempo = measureTempos[sIdx];
           const secondsPerTick = 60 / (tempo.bpm * tempo.beatUnit * PPQ);
           let currentTick = 0;
-          const mStartSec = measureStarts[mIdx].startSeconds;
+          const mStartSec = measureStarts[sIdx].startSeconds;
 
           for (const ev of voice.events) {
             const evStartSeconds = mStartSec + currentTick * secondsPerTick;

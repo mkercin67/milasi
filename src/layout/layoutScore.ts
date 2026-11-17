@@ -165,7 +165,7 @@ export function layoutSingleMeasure(
     ? `${prevMDef.keySig}_${prevMDef.timeSig.num}/${prevMDef.timeSig.den}`
     : 'none';
   const barlineType = mDef.endBarline ?? (isLastMeasure ? 'final' : 'single');
-  const cacheKey = `${mDef.id}_${mDef.keySig}_${mDef.timeSig.num}/${mDef.timeSig.den}_${clef.sign}${clef.line}_${isFirstMeasure}_${isLastMeasure}_${prevKey}_${mDef.actualTicks ?? 'full'}_${barlineType}`;
+  const cacheKey = `${mDef.id}_${mDef.keySig}_${mDef.timeSig.num}/${mDef.timeSig.den}_${clef.sign}${clef.line}_${isFirstMeasure}_${isLastMeasure}_${prevKey}_${mDef.actualTicks ?? 'full'}_${barlineType}_${mDef.repeat ?? 'none'}_${mDef.volta?.number ?? 'none'}`;
 
   if (staffMeasure) {
     const existing = measureChunkCache.get(staffMeasure);
@@ -270,12 +270,33 @@ export function layoutSingleMeasure(
     relX += tsLayout.width;
   }
 
+  // Repeat start barline
+  if (mDef.repeat === 'start' || mDef.repeat === 'both') {
+    measureItems.push({
+      item: {
+        id: `repeat-start-${mDef.id}`,
+        kind: 'glyph',
+        glyph: 'repeatLeft',
+        x: relX,
+        y: 4.0,
+      },
+    });
+    relX += 1.8;
+  }
+
   // Process events
   for (let eIdx = 0; eIdx < events.length; eIdx++) {
     const ev = events[eIdx];
     const isWholeMeasureRest = ev.kind === 'rest' && Boolean((ev as RestEvent).wholeMeasure);
     const durationFactor = ev.duration / PPQ;
-    const eventWidth = isWholeMeasureRest ? 8.0 : 3.5 + durationFactor * 2.0;
+    let estLyricWidth = 0;
+    if (ev.kind === 'note' && (ev as NoteEvent).lyrics) {
+      const lyricText = (ev as NoteEvent).lyrics!;
+      estLyricWidth = lyricText.length * 1.15 * 0.52;
+    }
+    const eventWidth = isWholeMeasureRest
+      ? 8.0
+      : Math.max(3.5 + durationFactor * 2.0, estLyricWidth > 0 ? estLyricWidth + 1.8 : 0);
 
     let firstEventAccidentalPadding = 0;
     if (eIdx === 0 && ev.kind === 'note') {
@@ -522,6 +543,25 @@ export function layoutSingleMeasure(
           }
         }
       }
+
+      if (ev.kind === 'note' && (ev as NoteEvent).lyrics) {
+        const lyricText = (ev as NoteEvent).lyrics!;
+        const lyricX = eventCenterX + NOTEHEAD_WIDTH / 2;
+        const lyricY = 6.8;
+        measureItems.push({
+          item: {
+            id: `lyric-text-${ev.id}`,
+            eventId: ev.id,
+            kind: 'text',
+            text: lyricText,
+            x: lyricX,
+            y: lyricY,
+            textAnchor: 'middle',
+            fontSize: 1.15,
+            fontFamily: '"Times New Roman", Times, "Liberation Serif", serif',
+          },
+        });
+      }
     }
 
     relX += eventWidth + firstEventAccidentalPadding;
@@ -531,7 +571,29 @@ export function layoutSingleMeasure(
   const barlineX = relX + 0.6;
   let barlineItemIndex = measureItems.length;
 
-  if (barlineType === 'final') {
+  if (mDef.repeat === 'end') {
+    measureItems.push({
+      item: {
+        id: `repeat-end-${mDef.id}`,
+        kind: 'glyph',
+        glyph: 'repeatRight',
+        x: barlineX,
+        y: 4.0,
+      },
+    });
+    relX = barlineX + 1.8;
+  } else if (mDef.repeat === 'both') {
+    measureItems.push({
+      item: {
+        id: `repeat-both-${mDef.id}`,
+        kind: 'glyph',
+        glyph: 'repeatRightLeft',
+        x: barlineX,
+        y: 4.0,
+      },
+    });
+    relX = barlineX + 3.2;
+  } else if (barlineType === 'final') {
     measureItems.push({
       item: {
         id: `barline-${mDef.id}-thin`,
@@ -1114,6 +1176,67 @@ export function layoutScore(score: Score, options: LayoutOptions = {}): LayoutRe
           x: finalX,
           x2: finalX2,
         });
+      }
+
+      const measureStartX = contentOffset;
+      const measureEndX = isLastMeasureInSystem && shouldJustify
+        ? targetWidth
+        : contentOffset + chunk.naturalWidth * stretchRatio;
+
+      // Volta brackets above measure (Milestone 6d)
+      if (mDef.volta) {
+        const vNum = mDef.volta.number;
+        const vStartX = measureStartX;
+        const vEndX = measureEndX;
+        const vY = -3.8;
+        const hookEndY = -2.5;
+
+        // Label "1." or "2."
+        systemItems.push({
+          id: `volta-text-${mDef.id}`,
+          kind: 'text',
+          text: `${vNum}.`,
+          x: vStartX + 0.6,
+          y: vY + 1.0,
+          fontSize: 1.15,
+          fontWeight: 'bold',
+          fontFamily: '"Times New Roman", Times, "Liberation Serif", serif',
+        });
+
+        // Horizontal bracket line
+        systemItems.push({
+          id: `volta-line-${mDef.id}`,
+          kind: 'line',
+          x: vStartX,
+          y: vY,
+          x2: vEndX - 0.2,
+          y2: vY,
+          thickness: 0.16,
+        });
+
+        // Left hook (downward)
+        systemItems.push({
+          id: `volta-hook-left-${mDef.id}`,
+          kind: 'line',
+          x: vStartX,
+          y: vY,
+          x2: vStartX,
+          y2: hookEndY,
+          thickness: 0.16,
+        });
+
+        // Right hook (downward if not openRight)
+        if (!mDef.volta.openRight) {
+          systemItems.push({
+            id: `volta-hook-right-${mDef.id}`,
+            kind: 'line',
+            x: vEndX - 0.2,
+            y: vY,
+            x2: vEndX - 0.2,
+            y2: hookEndY,
+            thickness: 0.16,
+          });
+        }
       }
 
       contentOffset += chunk.naturalWidth * stretchRatio;

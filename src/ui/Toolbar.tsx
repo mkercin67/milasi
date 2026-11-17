@@ -60,6 +60,7 @@ export interface ToolbarProps {
   onOpenTimeSig?: () => void;
   onOpenTempo?: () => void;
   onOpenBarline?: () => void;
+  onAutoSolfege?: () => void;
 }
 
 const DYNAMICS: { type: DynamicType; label: string; shortcut: string }[] = [
@@ -93,6 +94,7 @@ const MODES: { id: EditorMode; labelKey: string; shortcut: string }[] = [
   { id: 'select', labelKey: 'mode.select', shortcut: 'V' },
   { id: 'input', labelKey: 'mode.input', shortcut: 'N' },
   { id: 'position', labelKey: 'mode.position', shortcut: 'P' },
+  { id: 'lyrics', labelKey: 'mode.lyrics', shortcut: 'U' },
 ];
 
 export const Toolbar: React.FC<ToolbarProps> = ({
@@ -144,6 +146,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
   onOpenTimeSig,
   onOpenTempo,
   onOpenBarline,
+  onAutoSolfege,
 }) => {
   const { t, language, setLanguage, noteNameStyle, setNoteNameStyle, zoom, setZoom } = useI18n();
 
@@ -985,6 +988,30 @@ export const Toolbar: React.FC<ToolbarProps> = ({
           >
             ✕ Temizle
           </button>
+
+          {onAutoSolfege && (
+            <button
+              type="button"
+              data-testid="btn-auto-solfege"
+              onClick={handleButtonClick(onAutoSolfege)}
+              onMouseDown={(e) => e.preventDefault()}
+              title="Notanın perdesine göre Türkçe solfej hecesi ekler"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                padding: '0.2rem 0.5rem',
+                fontSize: '0.75rem',
+                fontWeight: 600,
+                backgroundColor: '#f0fdf4',
+                color: '#15803d',
+                border: '1px solid #bbf7d0',
+                borderRadius: '4px',
+                cursor: 'pointer',
+              }}
+            >
+              ♪ {t('toolbar.autoSolfege')}
+            </button>
+          )}
         </div>
       </div>
 

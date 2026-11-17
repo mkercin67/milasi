@@ -117,8 +117,8 @@ describe('Milestone 6c: Score Structure Core Models & Commands', () => {
     expect(validateScore(withFinal)).toHaveLength(0);
   });
 
-  it('upgrades schemaVersion to 4 and migrates v1, v2, v3 scores cleanly', () => {
-    expect(CURRENT_SCHEMA_VERSION).toBe(4);
+  it('upgrades schemaVersion to 4+ and migrates v1, v2, v3 scores cleanly', () => {
+    expect(CURRENT_SCHEMA_VERSION).toBeGreaterThanOrEqual(4);
 
     const v3Score = {
       app: 'scoreforge',
@@ -174,13 +174,13 @@ describe('Milestone 6c: Score Structure Core Models & Commands', () => {
     };
 
     const loaded = deserializeScore(JSON.stringify(v3Score));
-    expect(loaded.schemaVersion).toBe(4);
+    expect(loaded.schemaVersion).toBe(CURRENT_SCHEMA_VERSION);
     expect(loaded.meta.title).toBe('V3 Test Piece');
     expect(loaded.meta.subtitle).toBe('');
     expect(loaded.meta.arranger).toBe('');
     expect(loaded.measures[0].endBarline).toBe('final');
 
     const serialized = serializeScore(loaded);
-    expect(serialized).toContain('"schemaVersion":4');
+    expect(serialized).toContain(`"schemaVersion":${CURRENT_SCHEMA_VERSION}`);
   });
 });

@@ -11,6 +11,8 @@
   "mode.select": "Seçim",
   "mode.input": "Nota girişi",
   "mode.position": "Konum",
+  "mode.lyrics": "Söz girişi",
+  "toolbar.autoSolfege": "Hecele (Solfej)",
   "shortcut.positionArrows": "Konum: Oklar / Shift+Oklar",
   "shortcut.positionTab": "Sonraki/Önceki: Tab / Shift+Tab",
   "shortcut.positionReset": "Sıfırla: Ctrl+0",

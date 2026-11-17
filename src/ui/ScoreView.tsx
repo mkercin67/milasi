@@ -573,6 +573,13 @@ export const ScoreView: React.FC<ScoreViewProps> = ({
     const isNote = loc.event.kind === 'note';
     const isRest = loc.event.kind === 'rest';
 
+    // Lyrics mode: click selects the event for lyrics entry (no drag)
+    if (mode === 'lyrics') {
+      onSelectEvent(hit.eventId);
+      dragStateRef.current = null;
+      return;
+    }
+
     // Select mode: drag on rest = select only (no drag)
     if (mode === 'select' && isRest) {
       onSelectEvent(hit.eventId);

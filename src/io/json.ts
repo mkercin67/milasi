@@ -15,7 +15,7 @@ export interface ScoreForgeEnvelope {
   score: Score;
 }
 
-export const CURRENT_SCHEMA_VERSION = 4;
+export const CURRENT_SCHEMA_VERSION = 5;
 
 /** Migration function signature for schema version upgrades. */
 export type ScoreMigration = (data: unknown) => Score;
@@ -91,11 +91,19 @@ export function migrateV3ToV4(data: unknown): Score {
   return score as Score;
 }
 
+/** Migration from v4 to v5: upgrades schemaVersion to 5 for repeats, voltas, and lyrics. */
+export function migrateV4ToV5(data: unknown): Score {
+  const score = JSON.parse(JSON.stringify(data)) as any;
+  score.schemaVersion = 5;
+  return score as Score;
+}
+
 /** Registry of schema migrations keyed by source schemaVersion. */
 export const migrations: Record<number, ScoreMigration> = {
   1: migrateV1ToV2,
   2: migrateV2ToV3,
   3: migrateV3ToV4,
+  4: migrateV4ToV5,
 };
 
 /**

@@ -11,6 +11,8 @@
   "mode.select": "Select",
   "mode.input": "Note input",
   "mode.position": "Position",
+  "mode.lyrics": "Lyrics",
+  "toolbar.autoSolfege": "Auto Solfege",
   "shortcut.positionArrows": "Position: Arrows / Shift+Arrows",
   "shortcut.positionTab": "Next/Prev: Tab / Shift+Tab",
   "shortcut.positionReset": "Reset: Ctrl+0",

@@ -62,7 +62,7 @@ export interface CreateScoreOptions {
  */
 export function createScore(options?: CreateScoreOptions): Score {
   return {
-    schemaVersion: 4,
+    schemaVersion: 5,
     id: newId(),
     meta: {
       title: options?.title ?? 'Untitled Score',

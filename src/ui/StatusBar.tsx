@@ -32,6 +32,7 @@ const MODE_COLORS: Record<EditorMode, { bg: string; fg: string; border: string }
   select: { bg: '#e2e8f0', fg: '#1e293b', border: '#cbd5e1' },
   input: { bg: '#dbeafe', fg: '#1d4ed8', border: '#93c5fd' },
   position: { bg: '#ccfbf1', fg: '#0f766e', border: '#5eead4' },
+  lyrics: { bg: '#fef3c7', fg: '#b45309', border: '#fcd34d' },
 };
 
 export const StatusBar: React.FC<StatusBarProps> = ({

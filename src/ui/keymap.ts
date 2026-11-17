@@ -7,7 +7,7 @@
 
 import { ArticulationType, BaseDurationType, DynamicType, PitchStep } from '../core/model';
 
-export type EditorMode = 'select' | 'input' | 'position';
+export type EditorMode = 'select' | 'input' | 'position' | 'lyrics';
 
 export type UserAction =
   | 'transpose-semitone-up'
@@ -27,6 +27,9 @@ export type UserAction =
   | 'delete-measure'
   | 'toggle-tie'
   | 'toggle-slur'
+  | 'toggle-lyrics-mode'
+  | 'lyrics-next-note'
+  | 'lyrics-prev-note'
   | 'clear-notations'
   | 'cycle-accidental-up'
   | 'cycle-accidental-down'
@@ -150,10 +153,21 @@ export function mapKeyEvent(
     if (e.code === 'KeyV') return 'set-mode-select';
     if (e.code === 'KeyN') return 'toggle-note-input';
     if (e.code === 'KeyP') return 'toggle-position-mode';
+    if (e.code === 'KeyU') return 'toggle-lyrics-mode';
     if (e.code === 'Escape') {
       if (mode === 'input') return 'exit-note-input';
-      if (mode === 'position') return 'set-mode-select';
+      if (mode === 'position' || mode === 'lyrics') return 'set-mode-select';
       return 'clear-selection';
+    }
+  }
+
+  // Lyrics mode keys
+  if (mode === 'lyrics') {
+    if (e.code === 'Tab') {
+      return isShift ? 'lyrics-prev-note' : 'lyrics-next-note';
+    }
+    if (e.code === 'Escape') {
+      return 'set-mode-select';
     }
   }
 
@@ -351,9 +365,13 @@ export function getCompleteKeyTable(): KeyTableEntry[] {
     { key: 'V', code: 'KeyV', modifiers: 'none', mode: 'all', action: 'set-mode-select' },
     { key: 'N', code: 'KeyN', modifiers: 'none', mode: 'all', action: 'toggle-note-input' },
     { key: 'P', code: 'KeyP', modifiers: 'none', mode: 'all', action: 'toggle-position-mode' },
+    { key: 'U', code: 'KeyU', modifiers: 'none', mode: 'all', action: 'toggle-lyrics-mode' },
     { key: 'Esc', code: 'Escape', modifiers: 'none', mode: 'select', action: 'clear-selection' },
     { key: 'Esc', code: 'Escape', modifiers: 'none', mode: 'input', action: 'exit-note-input' },
     { key: 'Esc', code: 'Escape', modifiers: 'none', mode: 'position', action: 'set-mode-select' },
+    { key: 'Esc', code: 'Escape', modifiers: 'none', mode: 'lyrics', action: 'set-mode-select' },
+    { key: 'Tab', code: 'Tab', modifiers: 'none', mode: 'lyrics', action: 'lyrics-next-note' },
+    { key: 'Tab', code: 'Tab', modifiers: 'Shift', mode: 'lyrics', action: 'lyrics-prev-note' },
     { key: '.', code: 'Period', modifiers: 'none', mode: 'all', action: 'toggle-dot' },
 
     // Select mode editing

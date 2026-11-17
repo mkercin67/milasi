@@ -13,9 +13,11 @@ import {
   NoteEvent,
   Override,
   Pitch,
+  RepeatType,
   RestEvent,
   Score,
   ScoreEvent,
+  VoltaDef,
 } from './model';
 import { createMeasure, createRest, newId } from './factory';
 import { getPitchMidi, transposeOctave, transposeSemitone } from './pitch';
@@ -1113,6 +1115,120 @@ export function clearSelectionNotations(selection: Selection): Command {
                   if (targetIds.has(ev.id) && ev.kind === 'note') {
                     delete ev.dynamic;
                     ev.articulations = [];
+                  }
+                }
+              }
+            }
+          }
+        }
+      });
+    },
+  };
+}
+
+/** Sets or clears the repeat marking on a measure. */
+export function setRepeat(measureId: Id, repeat: RepeatType | undefined): Command {
+  return {
+    name: 'Set Repeat',
+    apply(score: Score): Score {
+      return produce(score, (draft) => {
+        const m = draft.measures.find((meas) => meas.id === measureId);
+        if (m) {
+          if (repeat) {
+            m.repeat = repeat;
+          } else {
+            delete m.repeat;
+          }
+        }
+      });
+    },
+  };
+}
+
+/** Sets or clears the volta (1st / 2nd ending) on a measure. */
+export function setVolta(measureId: Id, volta: VoltaDef | undefined): Command {
+  return {
+    name: 'Set Volta',
+    apply(score: Score): Score {
+      return produce(score, (draft) => {
+        const m = draft.measures.find((meas) => meas.id === measureId);
+        if (m) {
+          if (volta) {
+            m.volta = { ...volta };
+          } else {
+            delete m.volta;
+          }
+        }
+      });
+    },
+  };
+}
+
+/** Sets or clears a lyric syllable on a note event. */
+export function setLyrics(eventId: Id, lyrics: string | undefined): Command {
+  return {
+    name: 'Set Lyrics',
+    apply(score: Score): Score {
+      return produce(score, (draft) => {
+        for (const part of draft.parts) {
+          for (const staff of part.staves) {
+            for (const mDef of draft.measures) {
+              const sm = staff.measures[mDef.id];
+              if (!sm) continue;
+              for (const v of sm.voices) {
+                for (const ev of v.events) {
+                  if (ev.id === eventId && ev.kind === 'note') {
+                    if (lyrics !== undefined && lyrics.trim().length > 0) {
+                      ev.lyrics = lyrics;
+                    } else {
+                      delete ev.lyrics;
+                    }
+                    return;
+                  }
+                }
+              }
+            }
+          }
+        }
+      });
+    },
+  };
+}
+
+const SOLFEGE_MAP: Record<string, string> = {
+  C: 'Do',
+  D: 'Re',
+  E: 'Mi',
+  F: 'Fa',
+  G: 'Sol',
+  A: 'La',
+  B: 'Si',
+};
+
+/** Automatically assigns Turkish solfege syllables (Do, Re, Mi, Fa, Sol, La, Si) to notes based on pitch step. */
+export function autoSolfege(targetMeasureIdOrScoreId?: Id): Command {
+  return {
+    name: 'Auto Solfege',
+    apply(score: Score): Score {
+      return produce(score, (draft) => {
+        for (const part of draft.parts) {
+          for (const staff of part.staves) {
+            for (const mDef of draft.measures) {
+              if (
+                targetMeasureIdOrScoreId &&
+                targetMeasureIdOrScoreId !== score.id &&
+                mDef.id !== targetMeasureIdOrScoreId
+              ) {
+                continue;
+              }
+              const sm = staff.measures[mDef.id];
+              if (!sm) continue;
+              for (const v of sm.voices) {
+                for (const ev of v.events) {
+                  if (ev.kind === 'note' && ev.pitches.length > 0) {
+                    const step = ev.pitches[0].step;
+                    const syllable = SOLFEGE_MAP[step] ?? step;
+                    ev.lyrics = syllable;
                   }
                 }
               }

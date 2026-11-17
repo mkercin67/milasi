@@ -5,7 +5,7 @@
  * keyboard interaction, and automated verification states.
  */
 
-import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
   convertToRest,
   setOverride,
@@ -16,6 +16,8 @@ import {
   setTimeSignature,
   setPickup,
   setEndBarline,
+  autoSolfege,
+  setLyrics,
 } from '../core/commands';
 import { createEmptyScore, createRest } from '../core/factory';
 import { BarlineType, Pitch, Score } from '../core/model';
@@ -30,6 +32,7 @@ import { EditorMode, mapKeyEvent } from './keymap';
 import { NewScoreConfig, NewScoreModal } from './NewScoreModal';
 import { buildBeamDemoScore } from './beamDemoScore';
 import { buildSampleScore, createBenchmark64Score } from './Demo';
+import { buildSutIctimScore } from './sutIctimScore';
 import { ScoreView } from './ScoreView';
 import { StatusBar } from './StatusBar';
 import { Toolbar } from './Toolbar';
@@ -626,6 +629,13 @@ const EditorShell: React.FC = () => {
       return;
     }
 
+    if (stateParam === 'sut_ictim') {
+      const sutScore = buildSutIctimScore();
+      resetScore(sutScore);
+      setMode('select');
+      return;
+    }
+
     if (stateParam === 'm3d_demo' || stateParam === 'm3d_bass') {
       const m3dScore = buildBeamDemoScore(stateParam === 'm3d_bass' ? 'F' : 'G');
       resetScore(m3dScore);
@@ -805,6 +815,112 @@ const EditorShell: React.FC = () => {
     };
   }, []);
 
+  // Selected note for lyrics editing (Milestone 6d)
+  const selectedNote = useMemo(() => {
+    if (!selectedEventId || !score) return null;
+    for (const part of score.parts) {
+      for (const staff of part.staves) {
+        for (const mDef of score.measures) {
+          const sm = staff.measures[mDef.id];
+          if (!sm) continue;
+          for (const v of sm.voices) {
+            for (const ev of v.events) {
+              if (ev.id === selectedEventId && ev.kind === 'note') {
+                return ev;
+              }
+            }
+          }
+        }
+      }
+    }
+    return null;
+  }, [score, selectedEventId]);
+
+  const [lyricsInputValue, setLyricsInputValue] = useState('');
+  const lyricsInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (selectedNote) {
+      setLyricsInputValue(selectedNote.lyrics ?? '');
+    } else {
+      setLyricsInputValue('');
+    }
+  }, [selectedNote?.id, selectedNote?.lyrics]);
+
+  useEffect(() => {
+    if (mode === 'lyrics') {
+      if (!selectedEventId) {
+        // Auto-select first note in score
+        for (const part of score.parts) {
+          for (const staff of part.staves) {
+            for (const mDef of score.measures) {
+              const sm = staff.measures[mDef.id];
+              if (!sm) continue;
+              for (const v of sm.voices) {
+                for (const ev of v.events) {
+                  if (ev.kind === 'note') {
+                    selectEvent(ev.id);
+                    return;
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      setTimeout(() => {
+        lyricsInputRef.current?.focus();
+      }, 50);
+    }
+  }, [mode]);
+
+  const handleLyricsKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === ' ' || e.code === 'Space') {
+      e.preventDefault();
+      if (selectedNote && lyricsInputValue.trim().length > 0) {
+        executeCommand(setLyrics(selectedNote.id, lyricsInputValue.trim()));
+      }
+      moveCursorDirection('next');
+      return;
+    }
+    if (e.key === '-' || e.code === 'Minus') {
+      e.preventDefault();
+      const val = lyricsInputValue.endsWith('-') ? lyricsInputValue : lyricsInputValue + '-';
+      if (selectedNote) {
+        executeCommand(setLyrics(selectedNote.id, val));
+      }
+      moveCursorDirection('next');
+      return;
+    }
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      moveCursorDirection(e.shiftKey ? 'prev' : 'next');
+      return;
+    }
+    if (e.key === 'Backspace' && lyricsInputValue.length === 0) {
+      e.preventDefault();
+      moveCursorDirection('prev');
+      return;
+    }
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      setMode('select');
+      return;
+    }
+  };
+
+  const handleLyricsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setLyricsInputValue(val);
+    if (selectedNote) {
+      executeCommand(setLyrics(selectedNote.id, val.length > 0 ? val : undefined));
+    }
+  };
+
+  const handleAutoSolfege = useCallback(() => {
+    executeCommand(autoSolfege(score.id));
+  }, [executeCommand, score.id]);
+
   // Global physical keyboard event handler
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -927,6 +1043,15 @@ const EditorShell: React.FC = () => {
           case 'toggle-position-mode':
             togglePositionMode();
             setDragStatus(null);
+            break;
+          case 'toggle-lyrics-mode':
+            setMode(mode === 'lyrics' ? 'select' : 'lyrics');
+            break;
+          case 'lyrics-next-note':
+            moveCursorDirection('next');
+            break;
+          case 'lyrics-prev-note':
+            moveCursorDirection('prev');
             break;
           case 'toggle-note-input':
             toggleInputMode();
@@ -1251,6 +1376,7 @@ const EditorShell: React.FC = () => {
         onOpenTimeSig={handleOpenTimeSigModal}
         onOpenTempo={handleOpenTempoModal}
         onOpenBarline={handleOpenBarlineModal}
+        onAutoSolfege={handleAutoSolfege}
       />
       <ScoreView
         score={score}
@@ -1280,6 +1406,64 @@ const EditorShell: React.FC = () => {
         onHoverInfo={setHoverInfo}
         onDragStatus={setDragStatus}
       />
+
+      {mode === 'lyrics' && (
+        <div
+          data-testid="lyrics-editor-overlay"
+          style={{
+            position: 'fixed',
+            bottom: '48px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            backgroundColor: '#ffffff',
+            padding: '8px 16px',
+            borderRadius: '8px',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+            border: '2px solid #0284c7',
+            zIndex: 100,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+          }}
+        >
+          <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#0284c7' }}>
+            {t('mode.lyrics')} (U):
+          </span>
+          <input
+            ref={lyricsInputRef}
+            data-testid="input-lyrics-editor"
+            type="text"
+            autoFocus
+            value={lyricsInputValue}
+            onChange={handleLyricsChange}
+            onKeyDown={handleLyricsKeyDown}
+            placeholder="Hece girin (Boşluk = sonraki, - = hece bağı)..."
+            style={{
+              fontSize: '1rem',
+              padding: '4px 8px',
+              border: '1px solid #cbd5e1',
+              borderRadius: '4px',
+              outline: 'none',
+              minWidth: '240px',
+            }}
+          />
+          <button
+            type="button"
+            onClick={() => setMode('select')}
+            style={{
+              fontSize: '0.8rem',
+              padding: '4px 8px',
+              backgroundColor: '#f1f5f9',
+              border: '1px solid #cbd5e1',
+              borderRadius: '4px',
+              cursor: 'pointer',
+            }}
+          >
+            Tamam (Esc)
+          </button>
+        </div>
+      )}
+
       <StatusBar
         selection={selectedEventInfo}
         rangeInfo={rangeInfo}
