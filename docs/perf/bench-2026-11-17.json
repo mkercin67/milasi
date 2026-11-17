@@ -1,0 +1,55 @@
+{
+  "date": "2026-11-17",
+  "timestamp": "2026-11-17T19:14:34.392Z",
+  "nodeVersion": "v22.16.0",
+  "browser": "Chromium",
+  "scenarios": {
+    "benchmark_64_full": {
+      "measures": 64,
+      "features": [
+        "ties",
+        "slurs",
+        "dynamics",
+        "articulations",
+        "repeats",
+        "lyrics"
+      ],
+      "runs": 30,
+      "meanMs": 9.71,
+      "medianMs": 8.6,
+      "p95Ms": 14.9,
+      "minMs": 0.2,
+      "maxMs": 15,
+      "targetP95Ms": 25,
+      "pass": true
+    },
+    "benchmark_200_full": {
+      "measures": 200,
+      "features": [
+        "ties",
+        "slurs",
+        "dynamics",
+        "articulations",
+        "repeats",
+        "lyrics"
+      ],
+      "runs": 30,
+      "meanMs": 29.02,
+      "medianMs": 28.1,
+      "p95Ms": 37.7,
+      "minMs": 0.2,
+      "maxMs": 39,
+      "targetP95Ms": 40,
+      "pass": true,
+      "virtualization": {
+        "totalSystems": 92,
+        "renderedSystemsTop": 8,
+        "placeholderSystemsTop": 42,
+        "renderedSystemsBottom": 8,
+        "placeholderSystemsBottom": 42,
+        "isSystem0PlaceholderAfterScroll": true,
+        "selectAllWorks": true
+      }
+    }
+  }
+}

@@ -34,7 +34,7 @@ import { I18nProvider, useI18n } from './i18n';
 import { EditorMode, mapKeyEvent } from './keymap';
 import { NewScoreConfig, NewScoreModal } from './NewScoreModal';
 import { buildBeamDemoScore } from './beamDemoScore';
-import { buildSampleScore, createBenchmark64Score } from './Demo';
+import { buildSampleScore, createBenchmark64Score, createBenchmarkFullFeaturedScore } from './Demo';
 import { buildSutIctimScore } from './sutIctimScore';
 import { ScoreView } from './ScoreView';
 import { StatusBar } from './StatusBar';
@@ -191,6 +191,7 @@ const EditorShell: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isResetAllConfirmOpen, setIsResetAllConfirmOpen] = useState<boolean>(false);
   const [isDiagnosticsOpen, setIsDiagnosticsOpen] = useState<boolean>(false);
+  const perfSamplesRef = useRef<PerfSample[]>([]);
   const [perfSamples, setPerfSamples] = useState<PerfSample[]>([]);
   const [hoverPitch, setHoverPitch] = useState<Pitch | null>(null);
   const [hoverInfo, setHoverInfo] = useState<{ pitch: Pitch; measureNumber: number } | null>(null);
@@ -675,12 +676,24 @@ const EditorShell: React.FC = () => {
     // Milestone 3b Verification States
     if (
       stateParam.startsWith('verify_') ||
+      stateParam.startsWith('benchmark_') ||
       stateParam === 'demo_3_4' ||
-      stateParam === 'demo_bass' ||
-      stateParam === 'benchmark_64'
+      stateParam === 'demo_bass'
     ) {
       if (stateParam === 'benchmark_64') {
         const bScore = createBenchmark64Score();
+        resetScore(bScore);
+        setMode('select');
+        return;
+      }
+      if (stateParam === 'benchmark_64_full') {
+        const bScore = createBenchmarkFullFeaturedScore(64);
+        resetScore(bScore);
+        setMode('select');
+        return;
+      }
+      if (stateParam === 'benchmark_200_full') {
+        const bScore = createBenchmarkFullFeaturedScore(200);
         resetScore(bScore);
         setMode('select');
         return;
@@ -989,7 +1002,10 @@ const EditorShell: React.FC = () => {
       // Toggle hidden diagnostics panel (Ctrl+Alt+D or Cmd+Alt+D)
       if (e.ctrlKey && e.altKey && (e.code === 'KeyD' || e.key.toLowerCase() === 'd')) {
         e.preventDefault();
-        setIsDiagnosticsOpen((prev) => !prev);
+        setIsDiagnosticsOpen((prev) => {
+          if (!prev) setPerfSamples([...perfSamplesRef.current]);
+          return !prev;
+        });
         return;
       }
 
@@ -1083,7 +1099,11 @@ const EditorShell: React.FC = () => {
             if (!window.__perf) window.__perf = [];
             window.__perf.push(sample.totalDuration);
 
-            setPerfSamples((prev) => [...prev.slice(-99), sample]);
+            perfSamplesRef.current.push(sample);
+            if (perfSamplesRef.current.length > 100) perfSamplesRef.current.shift();
+            if (isDiagnosticsOpen) {
+              setPerfSamples([...perfSamplesRef.current]);
+            }
           });
         });
       };

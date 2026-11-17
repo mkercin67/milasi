@@ -20,7 +20,8 @@ const SCHEDULER_INTERVAL_MS = 25;
  */
 export class Player {
   private _state: PlayerState = 'idle';
-  private _schedule: ScheduleResult;
+  private _scheduleDirty: boolean = true;
+  private _schedule: ScheduleResult | null = null;
   private _playbackPosition: number = 0;
   private _nextNoteIndex: number = 0;
   private _lastEngineTime: number = 0;
@@ -32,7 +33,7 @@ export class Player {
     private _score: Score,
     private _engine: AudioEngine
   ) {
-    this._schedule = buildSchedule(this._score);
+    this._scheduleDirty = true;
   }
 
   get state(): PlayerState {
@@ -44,13 +45,18 @@ export class Player {
   }
 
   get schedule(): ScheduleResult {
+    if (this._scheduleDirty || !this._schedule) {
+      this._schedule = buildSchedule(this._score);
+      this._scheduleDirty = false;
+    }
     return this._schedule;
   }
 
   setScore(score: Score): void {
     this._score = score;
     this.stop();
-    this._schedule = buildSchedule(this._score);
+    this._scheduleDirty = true;
+    this._schedule = null;
   }
 
   onPosition(cb: PositionCallback): () => void {
@@ -71,6 +77,7 @@ export class Player {
 
     await this._engine.ready();
     this._schedule = buildSchedule(this._score, { fromEventId });
+    this._scheduleDirty = false;
     this._stopAtSeconds = stopAtSeconds !== undefined ? stopAtSeconds : null;
     this._playbackPosition = 0;
     this._nextNoteIndex = 0;
@@ -132,9 +139,10 @@ export class Player {
     this._playbackPosition += dt;
 
     const windowEnd = this._playbackPosition + LOOKAHEAD_WINDOW_SECONDS;
+    const sched = this.schedule;
 
-    while (this._nextNoteIndex < this._schedule.notes.length) {
-      const note = this._schedule.notes[this._nextNoteIndex];
+    while (this._nextNoteIndex < sched.notes.length) {
+      const note = sched.notes[this._nextNoteIndex];
       if (note.startSeconds <= windowEnd + 1e-6) {
         const atSeconds = Math.max(
           now,
@@ -157,8 +165,8 @@ export class Player {
 
     // Check if score playback has finished
     if (
-      this._nextNoteIndex >= this._schedule.notes.length &&
-      this._playbackPosition >= this._schedule.totalSeconds
+      this._nextNoteIndex >= sched.notes.length &&
+      this._playbackPosition >= sched.totalSeconds
     ) {
       this.stop();
     }
@@ -187,7 +195,8 @@ export class Player {
 
   private _calculatePosition(): PlaybackPosition {
     let measureId = this._score.measures[0]?.id ?? '';
-    for (const ms of this._schedule.measureStarts) {
+    const sched = this.schedule;
+    for (const ms of sched.measureStarts) {
       if (ms.startSeconds <= this._playbackPosition + 1e-6) {
         measureId = ms.measureId;
       } else {
@@ -196,8 +205,8 @@ export class Player {
     }
 
     const activeEventIds: string[] = [];
-    if (this._schedule.eventRanges && this._schedule.eventRanges.size > 0) {
-      for (const [eventId, ranges] of this._schedule.eventRanges.entries()) {
+    if (sched.eventRanges && sched.eventRanges.size > 0) {
+      for (const [eventId, ranges] of sched.eventRanges.entries()) {
         for (const time of ranges) {
           if (
             this._playbackPosition >= time.startSeconds - 1e-6 &&
@@ -209,7 +218,7 @@ export class Player {
         }
       }
     } else {
-      for (const [eventId, time] of this._schedule.eventTimes.entries()) {
+      for (const [eventId, time] of sched.eventTimes.entries()) {
         if (
           this._playbackPosition >= time.startSeconds - 1e-6 &&
           this._playbackPosition < time.endSeconds - 1e-6

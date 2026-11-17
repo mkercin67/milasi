@@ -76,6 +76,32 @@ interface GhostNoteData {
   ledgerYs: number[];
 }
 
+const SystemPlaceholder: React.FC<{
+  index: number;
+  y: number;
+  height: number;
+  totalWidthPx: number;
+  staffSpacePx: number;
+}> = React.memo(({ index, y, height, totalWidthPx, staffSpacePx }) => {
+  return (
+    <g
+      data-system-index={index}
+      data-system-placeholder="true"
+      className="score-system-placeholder notranslate"
+      transform={`translate(0, ${y * staffSpacePx})`}
+    >
+      <rect
+        x={0}
+        y={0}
+        width={totalWidthPx}
+        height={height * staffSpacePx}
+        fill="transparent"
+        pointerEvents="none"
+      />
+    </g>
+  );
+});
+
 function findEventLocation(
   score: Score,
   eventId: string
@@ -219,9 +245,84 @@ export const ScoreView: React.FC<ScoreViewProps> = ({
   const scale = staffSpacePx / (UNITS_PER_EM / 4);
   const availableStaffSpaces = Math.max(25, Math.floor(containerWidthPx / staffSpacePx));
 
+  const [viewportScroll, setViewportScroll] = useState<{ scrollTop: number; clientHeight: number }>({
+    scrollTop: 0,
+    clientHeight: 0,
+  });
+
+  const scrollRafRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (containerRef.current) {
+      setViewportScroll({
+        scrollTop: containerRef.current.scrollTop,
+        clientHeight: containerRef.current.clientHeight,
+      });
+    }
+  }, []);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(() => {
+      setViewportScroll({
+        scrollTop: el.scrollTop,
+        clientHeight: el.clientHeight,
+      });
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    (window as any).__setVirtualViewportForTest = (scrollTop: number, clientHeight: number) => {
+      setViewportScroll({ scrollTop, clientHeight });
+    };
+    return () => {
+      delete (window as any).__setVirtualViewportForTest;
+    };
+  }, []);
+
   const layout = useMemo(() => {
     return layoutScore(score, { width: availableStaffSpaces });
   }, [score, availableStaffSpaces]);
+
+  const visibleSystemIndices = useMemo(() => {
+    // If clientHeight is 0 (e.g. Node/jsdom tests) or score is small, render all systems
+    if (viewportScroll.clientHeight <= 0 || layout.systems.length <= 3) {
+      return new Set<number>(layout.systems.map((s) => s.index));
+    }
+
+    const container = containerRef.current;
+    const svg = svgRef.current;
+    let svgTopInContainer = 0;
+    if (container && svg) {
+      const cRect = container.getBoundingClientRect();
+      const sRect = svg.getBoundingClientRect();
+      svgTopInContainer = sRect.top - cRect.top + container.scrollTop;
+    }
+
+    const visibleTopPx = viewportScroll.scrollTop - svgTopInContainer;
+    const bufferPx = Math.max(viewportScroll.clientHeight, 600); // 1 screen above & below
+    const minVisibleY = (visibleTopPx - bufferPx) / staffSpacePx;
+    const maxVisibleY = (visibleTopPx + viewportScroll.clientHeight + bufferPx) / staffSpacePx;
+
+    const visible = new Set<number>();
+    for (const sys of layout.systems) {
+      const sysTop = sys.y;
+      const sysBottom = sys.y + sys.height;
+      if (sysBottom >= minVisibleY && sysTop <= maxVisibleY) {
+        visible.add(sys.index);
+      }
+    }
+
+    if (visible.size === 0 && layout.systems.length > 0) {
+      visible.add(layout.systems[0].index);
+    }
+
+    return visible;
+  }, [viewportScroll, layout.systems, staffSpacePx]);
 
   const ties = useMemo(() => {
     return layoutTies(score, layout);
@@ -238,6 +339,22 @@ export const ScoreView: React.FC<ScoreViewProps> = ({
   const articulations = useMemo(() => {
     return layoutArticulations(score, layout);
   }, [score, layout]);
+
+  const visibleTies = useMemo(() => {
+    return ties.filter((t) => visibleSystemIndices.has(t.systemIndex));
+  }, [ties, visibleSystemIndices]);
+
+  const visibleSlurs = useMemo(() => {
+    return slurs.filter((s) => visibleSystemIndices.has(s.systemIndex));
+  }, [slurs, visibleSystemIndices]);
+
+  const visibleDynamics = useMemo(() => {
+    return dynamics.filter((d) => visibleSystemIndices.has(d.systemIndex ?? 0));
+  }, [dynamics, visibleSystemIndices]);
+
+  const visibleArticulations = useMemo(() => {
+    return articulations.filter((a) => visibleSystemIndices.has(a.systemIndex ?? 0));
+  }, [articulations, visibleSystemIndices]);
 
   useEffect(() => {
     onLayoutChange?.(layout);
@@ -1083,8 +1200,22 @@ export const ScoreView: React.FC<ScoreViewProps> = ({
 
   const handleContainerScroll = () => {
     updateContainerRect();
-    if (isProgrammaticScrollRef.current) return;
-    userScrollPauseUntilRef.current = performance.now() + 3000;
+    if (!isProgrammaticScrollRef.current) {
+      userScrollPauseUntilRef.current = performance.now() + 3000;
+    }
+    if (containerRef.current) {
+      const top = containerRef.current.scrollTop;
+      const height = containerRef.current.clientHeight;
+      if (scrollRafRef.current === null) {
+        scrollRafRef.current = requestAnimationFrame(() => {
+          scrollRafRef.current = null;
+          setViewportScroll((prev) => {
+            if (prev.scrollTop === top && prev.clientHeight === height) return prev;
+            return { scrollTop: top, clientHeight: height };
+          });
+        });
+      }
+    }
   };
 
   const totalWidthPx = layout.width * staffSpacePx;
@@ -1229,6 +1360,7 @@ export const ScoreView: React.FC<ScoreViewProps> = ({
 
           {/* Tinted background band for range selection */}
           {selectedEventIds && selectedEventIds.size > 0 && layout.systems.map((sys) => {
+            if (!visibleSystemIndices.has(sys.index)) return null;
             const sysItems = sys.items.filter((it) => it.eventId && selectedEventIds.has(it.eventId));
             if (sysItems.length === 0) return null;
             const minX = Math.min(...sysItems.map((it) => it.x)) - 0.4;
@@ -1253,18 +1385,33 @@ export const ScoreView: React.FC<ScoreViewProps> = ({
             );
           })}
 
-          {layout.systems.map((sys) => (
-            <SystemView
-              key={sys.index}
-              system={sys}
-              staffSpacePx={staffSpacePx}
-              useTextFallback={useTextFallback}
-              onOpenScoreInfo={onOpenScoreInfo}
-            />
-          ))}
+          {layout.systems.map((sys) => {
+            const isVisible = visibleSystemIndices.has(sys.index);
+            if (!isVisible) {
+              return (
+                <SystemPlaceholder
+                  key={sys.index}
+                  index={sys.index}
+                  y={sys.y}
+                  height={sys.height}
+                  totalWidthPx={totalWidthPx}
+                  staffSpacePx={staffSpacePx}
+                />
+              );
+            }
+            return (
+              <SystemView
+                key={sys.index}
+                system={sys}
+                staffSpacePx={staffSpacePx}
+                useTextFallback={useTextFallback}
+                onOpenScoreInfo={onOpenScoreInfo}
+              />
+            );
+          })}
 
           {/* SVG Ties */}
-          {ties.map((tie) => {
+          {visibleTies.map((tie) => {
             const sys = layout.systems[tie.systemIndex];
             const sysY = sys ? sys.y : 0;
             return (
@@ -1281,7 +1428,7 @@ export const ScoreView: React.FC<ScoreViewProps> = ({
           })}
 
           {/* SVG Slurs */}
-          {slurs.map((slur) => {
+          {visibleSlurs.map((slur) => {
             const sys = layout.systems[slur.systemIndex];
             const sysY = sys ? sys.y : 0;
             return (
@@ -1298,8 +1445,9 @@ export const ScoreView: React.FC<ScoreViewProps> = ({
           })}
 
           {/* SVG Dynamics */}
-          {dynamics.map((item) => {
-            const sys = layout.systems[item.systemIndex ?? 0];
+          {visibleDynamics.map((item) => {
+            const sysIdx = item.systemIndex ?? 0;
+            const sys = layout.systems[sysIdx];
             const sysY = sys ? sys.y : 0;
             const pxX = item.x * staffSpacePx;
             const pxY = (sysY + item.y) * staffSpacePx;
@@ -1337,8 +1485,9 @@ export const ScoreView: React.FC<ScoreViewProps> = ({
           })}
 
           {/* SVG Articulations */}
-          {articulations.map((item) => {
-            const sys = layout.systems[item.systemIndex ?? 0];
+          {visibleArticulations.map((item) => {
+            const sysIdx = item.systemIndex ?? 0;
+            const sys = layout.systems[sysIdx];
             const sysY = sys ? sys.y : 0;
             const pxX = item.x * staffSpacePx;
             const pxY = (sysY + item.y) * staffSpacePx;

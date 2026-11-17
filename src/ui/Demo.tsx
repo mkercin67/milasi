@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import {
+  createEmptyScore,
   createMeasure,
   createNote,
   createPart,
@@ -195,6 +196,79 @@ export function createBenchmark64Score(): Score {
     part.staves[0].measures[mDef.id] = {
       voices: [{ id: `v1_bm_${m}`, events: mEvents }],
     };
+  }
+
+  return score;
+}
+
+export function createBenchmarkFullFeaturedScore(measureCount: number = 64): Score {
+  const score = createEmptyScore({
+    title: `Benchmark ${measureCount} Measures — Full Featured`,
+    composer: 'ScoreForge Perf Benchmark',
+    clef: { sign: 'G', line: 2 },
+    keySig: 1,
+    timeSig: { num: 4, den: 4 },
+    measures: measureCount,
+  });
+
+  const staff = score.parts[0].staves[0];
+  staff.slurs = [];
+
+  const dynamics = ['pp', 'p', 'mp', 'mf', 'f', 'ff', 'sfz', 'fp'];
+  const articulationsList: Array<Array<'staccato' | 'tenuto' | 'accent' | 'marcato'>> = [
+    ['staccato'],
+    ['tenuto'],
+    ['accent'],
+    ['marcato'],
+    ['staccato', 'tenuto'],
+  ];
+
+  for (let m = 0; m < measureCount; m++) {
+    const mDef = score.measures[m];
+    const notes = [
+      createNote({ pitches: [createPitch('G', 4, 0)], baseType: 'quarter' }),
+      createNote({ pitches: [createPitch('B', 4, 0)], baseType: 'quarter' }),
+      createNote({ pitches: [createPitch('D', 5, 0)], baseType: 'quarter' }),
+      createNote({ pitches: [createPitch('G', 5, 0)], baseType: 'quarter' }),
+    ];
+
+    // Ties
+    if (m % 2 === 0) {
+      notes[1].pitches[0].tiedToNext = true;
+      notes[1].tiedToNext = true;
+    }
+
+    // Dynamics
+    notes[0].dynamic = dynamics[m % dynamics.length];
+
+    // Articulations
+    notes[1].articulations = articulationsList[m % articulationsList.length];
+    notes[3].articulations = ['staccato'];
+
+    // Lyrics
+    notes[0].lyrics = [{ verse: 1, text: 'Süt' }];
+    notes[1].lyrics = [{ verse: 1, text: 'iç-' }];
+    notes[2].lyrics = [{ verse: 1, text: 'tim' }];
+    notes[3].lyrics = [{ verse: 1, text: 'yar' }];
+
+    staff.measures[mDef.id].voices[0].events = notes;
+
+    // Slurs
+    if (m % 4 === 0 && m + 1 < measureCount) {
+      staff.slurs.push({
+        id: `slur-${m}`,
+        startEventId: notes[0].id,
+        endEventId: notes[3].id,
+      });
+    }
+
+    // Repeats
+    if (m === 4) {
+      mDef.repeatStart = true;
+    }
+    if (m === 8) {
+      mDef.repeatEnd = true;
+    }
   }
 
   return score;

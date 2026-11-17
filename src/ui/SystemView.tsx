@@ -255,7 +255,9 @@ export const SystemView: React.FC<SystemViewProps> = React.memo(
     if (prev.system.y !== next.system.y || prev.system.width !== next.system.width) return false;
     if (prev.system.items.length !== next.system.items.length) return false;
     for (let i = 0; i < prev.system.items.length; i++) {
-      if (prev.system.items[i] !== next.system.items[i]) return false;
+      const p = prev.system.items[i];
+      const n = next.system.items[i];
+      if (p.id !== n.id || p.x !== n.x || p.y !== n.y || p.glyph !== n.glyph) return false;
     }
     return true;
   }
