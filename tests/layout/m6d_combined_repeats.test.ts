@@ -56,12 +56,23 @@ describe('Milestone 6d: Combined Repeat Barlines and Lyrics Extenders/Hyphens La
     const lyricTexts = sys0.items.filter((it) => it.kind === 'text' && it.id.startsWith('lyric-text-'));
     expect(lyricTexts.length).toBe(2);
 
-    // Check hyphen line or text item between note 1 and 2
+    // Check hyphen line or text item between note 1 and 2 (must be centered between syllables)
     const hyphenItem = sys0.items.find((it) => it.id.includes('lyric-hyphen-'));
     expect(hyphenItem).toBeDefined();
+    if (hyphenItem) {
+      expect(hyphenItem.x).toBeGreaterThan(lyricTexts[0].x);
+      expect(hyphenItem.x).toBeLessThan(lyricTexts[1].x);
+      // Midpoint check (within 0.5 staff spaces tolerance)
+      const expectedMid = (lyricTexts[0].x + lyricTexts[1].x) / 2;
+      expect(Math.abs(hyphenItem.x - expectedMid)).toBeLessThan(0.5);
+    }
 
-    // Check melisma extender line for note 2
+    // Check melisma extender line for note 2 (must extend to end of last melisma note)
     const extenderLine = sys0.items.find((it) => it.kind === 'line' && it.id.includes('lyric-extender-'));
     expect(extenderLine).toBeDefined();
+    if (extenderLine) {
+      expect(extenderLine.x).toBeGreaterThan(lyricTexts[1].x);
+      expect(extenderLine.x2).toBeGreaterThan(extenderLine.x);
+    }
   });
 });

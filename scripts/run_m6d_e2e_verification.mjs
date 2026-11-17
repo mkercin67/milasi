@@ -137,7 +137,7 @@ http.get('http://127.0.0.1:9606/json/list', (res) => {
       await setZoom('2');
       screenshots.push(await captureFullScreenshot('02_sut_ictim_repeats_detail_200.png'));
 
-      console.log('\n--- 3. Two Voltas Score (1st and 2nd endings) ---');
+      console.log('\n--- 3. Two Voltas Score (1st and 2nd endings) at 200% ---');
       await evaluate(`(() => {
         const score = {
           id: 'score-voltas-demo',
@@ -171,11 +171,70 @@ http.get('http://127.0.0.1:9606/json/list', (res) => {
 
       const voltasDOM = await evaluate(`(() => {
         const voltas = document.querySelectorAll('[data-id^="volta-text-"]');
-        return { count: voltas.length };
+        const v1Hook = document.querySelector('[data-id="volta-hook-right-vm-1"]');
+        const v2Hook = document.querySelector('[data-id="volta-hook-right-vm-2"]');
+        return {
+          count: voltas.length,
+          v1HasHook: Boolean(v1Hook),
+          v2HasHook: Boolean(v2Hook)
+        };
       })()`);
       console.log('Voltas DOM inspection:', voltasDOM);
       assert(voltasDOM.count >= 2, 'Must render volta 1 and volta 2 text labels');
+      assert(voltasDOM.v1HasHook, 'Volta 1 must have closing right hook (has repeatEnd)');
+      assert(!voltasDOM.v2HasHook, 'Volta 2 must be open (NO repeatEnd)');
+      await setZoom('2');
       screenshots.push(await captureFullScreenshot('03_two_voltas_example_200.png'));
+
+      console.log('\n--- 3b. Lyrics Hyphen and Extender (Full Size 1280px) ---');
+      await evaluate(`(() => {
+        const score = {
+          id: 'score-lyrics-demo',
+          schemaVersion: 6,
+          meta: { title: 'Hece ve Uzatma Örneği', composer: 'ScoreForge' },
+          measures: [
+            { id: 'lm-0', timeSig: { num: 4, den: 4 }, keySig: 0, endBarline: 'final' }
+          ],
+          parts: [{
+            id: 'lp-1',
+            name: 'Koro',
+            staves: [{
+              id: 'ls-1',
+              clef: { sign: 'G', line: 2 },
+              measures: {
+                'lm-0': {
+                  voices: [{
+                    id: 'lv-0',
+                    events: [
+                      { id: 'le-0', kind: 'note', baseType: 'quarter', dots: 0, duration: 960, pitches: [{ step: 'C', octave: 4, alter: 0 }], lyrics: [{ verse: 1, text: 'Ge-' }] },
+                      { id: 'le-1', kind: 'note', baseType: 'quarter', dots: 0, duration: 960, pitches: [{ step: 'D', octave: 4, alter: 0 }], lyrics: [{ verse: 1, text: 'len' }] },
+                      { id: 'le-2', kind: 'note', baseType: 'quarter', dots: 0, duration: 960, pitches: [{ step: 'E', octave: 4, alter: 0 }], lyrics: [{ verse: 1, text: 'ah_' }] },
+                      { id: 'le-3', kind: 'note', baseType: 'quarter', dots: 0, duration: 960, pitches: [{ step: 'F', octave: 4, alter: 0 }] }
+                    ]
+                  }]
+                }
+              }
+            }]
+          }],
+          overrides: {}
+        };
+        window.__resetScoreForTest(score);
+      })()`);
+      await new Promise((r) => setTimeout(r, 600));
+
+      const lyricsInspect = await evaluate(`(() => {
+        const hyphen = document.querySelector('[data-id="lyric-hyphen-le-0"]');
+        const extender = document.querySelector('[data-id="lyric-extender-le-2"]');
+        return {
+          hasHyphen: Boolean(hyphen),
+          hasExtender: Boolean(extender)
+        };
+      })()`);
+      console.log('Lyrics hyphen and extender inspection:', lyricsInspect);
+      assert(lyricsInspect.hasHyphen, 'Must render centered hyphen between Ge- and len');
+      assert(lyricsInspect.hasExtender, 'Must render melisma extender line across notes');
+      await setZoom('1.5');
+      screenshots.push(await captureFullScreenshot('06_lyrics_hyphen_and_extender.png'));
 
       console.log('\n--- 4. Lyrics Mode ("Söz Girişi") KeyU & Floating Input ---');
       // Press KeyU to switch to Lyrics Mode

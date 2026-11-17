@@ -284,6 +284,19 @@ export function layoutSingleMeasure(
     relX += 1.8;
   }
 
+  // Track note positions and lyrics for centered hyphens and melisma extenders
+  interface LyricLayoutEntry {
+    ev: NoteEvent;
+    eIdx: number;
+    lyricX: number;
+    lyricY: number;
+    displayText: string;
+    hasHyphen: boolean;
+    hasExtender: boolean;
+  }
+  const lyricsToLayout: LyricLayoutEntry[] = [];
+  const notePositions: Array<{ evId: string; noteheadRightX: number; lyricX: number }> = [];
+
   // Process events
   for (let eIdx = 0; eIdx < events.length; eIdx++) {
     const ev = events[eIdx];
@@ -546,6 +559,13 @@ export function layoutSingleMeasure(
         }
       }
 
+      const eventLyricX = eventCenterX + NOTEHEAD_WIDTH / 2;
+      notePositions.push({
+        evId: ev.id,
+        noteheadRightX: eventCenterX + NOTEHEAD_WIDTH,
+        lyricX: eventLyricX,
+      });
+
       if (ev.kind === 'note' && (ev as NoteEvent).lyrics && (ev as NoteEvent).lyrics!.length > 0) {
         const verse1 = (ev as NoteEvent).lyrics!.find((l) => l.verse === 1);
         if (verse1 && verse1.text) {
@@ -553,59 +573,15 @@ export function layoutSingleMeasure(
           const hasHyphen = rawText.endsWith('-');
           const hasExtender = rawText.endsWith('_') || rawText === '_';
           const displayText = rawText.replace(/[-_]+$/, '');
-          const lyricX = eventCenterX + NOTEHEAD_WIDTH / 2;
-          const lyricY = 6.8;
-
-          if (displayText.length > 0) {
-            measureItems.push({
-              item: {
-                id: `lyric-text-${ev.id}`,
-                eventId: ev.id,
-                kind: 'text',
-                text: displayText,
-                x: lyricX,
-                y: lyricY,
-                textAnchor: 'middle',
-                fontSize: 1.15,
-                fontFamily: '"Times New Roman", Times, "Liberation Serif", serif',
-              },
-            });
-          }
-
-          if (hasHyphen) {
-            const hyphenX = lyricX + Math.max(0.8, displayText.length * 0.28) + 0.3;
-            measureItems.push({
-              item: {
-                id: `lyric-hyphen-${ev.id}`,
-                eventId: ev.id,
-                kind: 'text',
-                text: '-',
-                x: hyphenX,
-                y: lyricY,
-                textAnchor: 'middle',
-                fontSize: 1.15,
-                fontFamily: '"Times New Roman", Times, "Liberation Serif", serif',
-              },
-            });
-          }
-
-          if (hasExtender) {
-            const extStartX = displayText.length > 0
-              ? lyricX + Math.max(0.6, displayText.length * 0.28) + 0.2
-              : lyricX;
-            measureItems.push({
-              item: {
-                id: `lyric-extender-${ev.id}`,
-                eventId: ev.id,
-                kind: 'line',
-                x: extStartX,
-                y: lyricY - 0.2,
-                x2: extStartX + 2.0,
-                y2: lyricY - 0.2,
-                thickness: 0.12,
-              },
-            });
-          }
+          lyricsToLayout.push({
+            ev: ev as NoteEvent,
+            eIdx,
+            lyricX: eventLyricX,
+            lyricY: 6.8,
+            displayText,
+            hasHyphen,
+            hasExtender,
+          });
         }
       }
     }
@@ -615,6 +591,88 @@ export function layoutSingleMeasure(
 
   // Barline at end of measure
   const barlineX = relX + 0.6;
+
+  // Render lyric text, centered hyphens, and melisma extender lines
+  for (let lIdx = 0; lIdx < lyricsToLayout.length; lIdx++) {
+    const lInfo = lyricsToLayout[lIdx];
+    const { ev, eIdx, lyricX, lyricY, displayText, hasHyphen, hasExtender } = lInfo;
+
+    if (displayText.length > 0) {
+      measureItems.push({
+        item: {
+          id: `lyric-text-${ev.id}`,
+          eventId: ev.id,
+          kind: 'text',
+          text: displayText,
+          x: lyricX,
+          y: lyricY,
+          textAnchor: 'middle',
+          fontSize: 1.15,
+          fontFamily: '"Times New Roman", Times, "Liberation Serif", serif',
+        },
+      });
+    }
+
+    if (hasHyphen) {
+      // Centered dash between this syllable and the next syllable of the word
+      const nextLyric = lyricsToLayout[lIdx + 1];
+      let nextX: number;
+      if (nextLyric) {
+        nextX = nextLyric.lyricX;
+      } else {
+        // Next syllable is in next measure; center hyphen between this note and barline
+        nextX = barlineX;
+      }
+      const hyphenX = (lyricX + nextX) / 2;
+      measureItems.push({
+        item: {
+          id: `lyric-hyphen-${ev.id}`,
+          eventId: ev.id,
+          kind: 'text',
+          text: '-',
+          x: hyphenX,
+          y: lyricY,
+          textAnchor: 'middle',
+          fontSize: 1.15,
+          fontFamily: '"Times New Roman", Times, "Liberation Serif", serif',
+        },
+      });
+    }
+
+    if (hasExtender) {
+      // Extender line: from the end of the syllable to the end of the last melisma note
+      let lastMelismaNoteId = ev.id;
+      for (let candIdx = eIdx + 1; candIdx < events.length; candIdx++) {
+        const cand = events[candIdx];
+        if (cand.kind === 'note') {
+          const candVerse1 = (cand as NoteEvent).lyrics?.find((l) => l.verse === 1);
+          if (candVerse1 && candVerse1.text && candVerse1.text.replace(/[-_]+$/, '').length > 0) {
+            // Next syllable starts here; stop melisma
+            break;
+          }
+          lastMelismaNoteId = cand.id;
+        }
+      }
+
+      const lastPos = notePositions.find((p) => p.evId === lastMelismaNoteId);
+      const lastNoteEndX = lastPos ? lastPos.noteheadRightX : lyricX + 1.5;
+      const extStartX = lyricX + Math.max(0.6, displayText.length * 0.28) + 0.2;
+      const extEndX = Math.max(extStartX + 1.0, lastNoteEndX);
+
+      measureItems.push({
+        item: {
+          id: `lyric-extender-${ev.id}`,
+          eventId: ev.id,
+          kind: 'line',
+          x: extStartX,
+          y: lyricY - 0.2,
+          x2: extEndX,
+          y2: lyricY - 0.2,
+          thickness: 0.12,
+        },
+      });
+    }
+  }
   let barlineItemIndex = measureItems.length;
 
   if (mDef.repeatEnd) {
@@ -1282,8 +1340,12 @@ export function layoutScore(score: Score, options: LayoutOptions = {}): LayoutRe
           thickness: 0.16,
         });
 
-        // Right hook (downward if not openRight)
-        if (!mDef.volta.openRight) {
+        // Closing hook at the right end of a volta ONLY if the volta's last measure has repeatEnd
+        const isLastMeasureOfVolta =
+          globalMIdx === score.measures.length - 1 ||
+          score.measures[globalMIdx + 1]?.volta?.number !== mDef.volta.number;
+
+        if (isLastMeasureOfVolta && mDef.repeatEnd) {
           systemItems.push({
             id: `volta-hook-right-${mDef.id}`,
             kind: 'line',

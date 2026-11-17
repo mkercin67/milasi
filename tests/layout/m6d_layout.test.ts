@@ -15,10 +15,11 @@ describe('Milestone 6d: Repeats, Voltas & Lyrics Layout (src/layout/layoutScore.
     expect(repeatGlyphs.length).toBeGreaterThanOrEqual(2);
   });
 
-  it('renders volta brackets with "1." and "2." labels above measures', () => {
+  it('renders volta brackets with "1." and "2." labels above measures, closing right hook ONLY if repeatEnd', () => {
     const score = createEmptyScore({ numMeasures: 4 });
     score.measures[1].volta = { number: 1 };
-    score.measures[2].volta = { number: 2, openRight: true };
+    score.measures[1].repeatEnd = true; // 1st ending has repeatEnd
+    score.measures[2].volta = { number: 2 }; // 2nd ending has NO repeatEnd (open by default)
 
     const layout = layoutScore(score, { width: 70 });
     const voltaTexts = layout.items.filter(
@@ -28,6 +29,14 @@ describe('Milestone 6d: Repeats, Voltas & Lyrics Layout (src/layout/layoutScore.
 
     const voltaLines = layout.items.filter((it) => it.id.startsWith('volta-line-'));
     expect(voltaLines.length).toBeGreaterThanOrEqual(2);
+
+    // Volta 1 must have closing right hook because it has repeatEnd
+    const v1HookRight = layout.items.find((it) => it.id === `volta-hook-right-${score.measures[1].id}`);
+    expect(v1HookRight).toBeDefined();
+
+    // Volta 2 must NOT have closing right hook (open by default)
+    const v2HookRight = layout.items.find((it) => it.id === `volta-hook-right-${score.measures[2].id}`);
+    expect(v2HookRight).toBeUndefined();
   });
 
   it('renders lyrics text centered below the staff for notes with lyrics', () => {
