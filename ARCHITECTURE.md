@@ -22,20 +22,25 @@ microtonal pitch, scripting, and publication-quality engraving. Free and open so
 9. **Zero DOM layout reads in handlers:** Event handlers never query `getBoundingClientRect`,
    `clientWidth`, or computed styles during pointer or keyboard interactions.
 
+## Permanent Rules (R1 - R3)
+
+- **R1. Canonical Test Data Creation:** Tests must create their data through the exact SAME path the app uses (`NewScoreModal` / `createEmptyScore` / real keystrokes / commands), never through hand-built fixtures that differ from runtime behavior. Multi-measure and multi-system cases are mandatory for anything that spans or moves across measures.
+- **R2. Synchronous State Reference & Anti-Stale-Closures:** Keyboard, pointer, and clipboard handlers read state through a single source: a ref updated synchronously on every state change (`stateRef.current`), or a reducer with `getState()`. No handler may capture state in a closure that can go stale across async boundaries or between React re-renders.
+- **R3. Stable Voice Identity:** Voice identity in the model is a stable `voiceIndex` (1..4) per staff, identical across measures. While random UUIDs exist on measure-local `voice.id`, cross-measure algorithms (range selection, transposition, deletion, copy/paste, and playback voice matching) compare and preserve `voiceIndex`, never comparing random UUIDs across measures.
+
 ## Tech stack
 
-- TypeScript (strict), Vite, React (UI only), Vitest, immer (immutable updates)
-- Rendering: Custom SVG renderer using embedded **Bravura** SMuFL vector glyph paths (`glyphPaths.ts`)
-  with `<use href="...">` symbols for high-performance zero-FOUC rendering.
-- Playback: Tone.js (encapsulated via `AudioEngine` interface; `FakeEngine` for headless testing).
-- Desktop packaging later: Tauri (Phase 2).
-- Boundaries: Single package enforced by folder structure and strict import rules.
+- TypeScript (strict), Vite, React 18, Vitest, immer (immutable state updates with structural sharing).
+- Rendering: Custom SVG renderer using embedded **Bravura** SMuFL vector glyph paths (`glyphPaths.generated.ts`) with `<use href="...">` symbols for high-performance zero-FOUC rendering.
+- Playback: Tone.js (encapsulated via `AudioEngine` interface; `FakeEngine` for deterministic headless testing).
+- Boundaries: Single package enforced by folder structure, strict import rules (`scripts/checkImports.mjs`), and strict license audit (`scripts/checkLicenses.mjs`).
+- Modular File Size Limit: Every file in `src/` must remain strictly under 600 lines of code.
 
 ## Folder layout and import rules
 
 ```
 src/
-  core/      data model, factory, commands, pure helpers         imports: nothing from this project
+  core/      data model, factory, commands, selection, clipboard imports: nothing from this project
   layout/    Score -> LayoutResult (staff spaces), beams, cache  imports: core
   render/    LayoutResult -> SVG, glyph paths                    imports: layout, core
   playback/  Score -> schedule, AudioEngine, Player              imports: core
@@ -45,7 +50,7 @@ src/
 tests/       mirrors src/ structure
 ```
 
-Violating an import rule is a bug.
+Folder boundary import rules are automatically verified in CI via `node scripts/checkImports.mjs`. Violating an import rule fails the build.
 
 ## Data model (src/core/model.ts)
 
@@ -151,6 +156,65 @@ interface Override {
 }
 ```
 
+## Modular Architecture & Subsystem Decomposition
+
+To ensure long-term maintainability, single-responsibility separation, and adherence to the < 600 line limit, major subsystems are decomposed into cohesive modules:
+
+### 1. UI Shell & Application Core (`src/ui/app/`)
+- `App.tsx`: Top-level orchestrator under 600 lines.
+- `useAppKeyboard.ts`: Complete physical key mapping router using `event.code`.
+- `useAppPlayback.ts`: Audio engine connection, transport controls, and playhead synchronization.
+- `useAppStorage.ts`: File opening/saving, export, and rolling 5-version autosave recovery.
+- `useAppScoreActions.ts`: Measure insertion, tempo, key signature, and modal action dispatches.
+- `useAppVerificationStates.ts`: Verification harness exposing test hooks (`window.__editorTestHooks`).
+- `AppModals.tsx`: Central modal container.
+- `modals/ConfirmModals.tsx`: Confirm/alert dialogs.
+
+### 2. ScoreView & DOM System Virtualization (`src/ui/scoreView/`)
+- `ScoreView.tsx`: Main view container with scroll sync.
+- `useScoreVirtualization.ts`: Viewport culling engine. Tracks scroll position and container bounds to compute `visibleSystemIndices` with a 1-system buffer above and below.
+- `ScoreSvgLayers.tsx`: Pure SVG layer compositor for systems, staves, barlines, headers, and highlights. Offscreen systems are culled, reducing DOM nodes from > 6,000 to < 800 for 200-measure scores.
+- `ScoreInteractionOverlays.tsx`: Marquee selection rubberband, note input ghost note, and position drag overlays.
+- `ScoreViewLyricsInput.tsx`: In-place lyrics text input aligned to notes.
+
+### 3. Core Commands Subsystem (`src/core/commands/`)
+- `commands.ts`: Command dispatcher and undo/redo history manager.
+- `noteCommands.ts`: Note/rest insertion, pitch alteration, accidentals, duration changes, and tuplets.
+- `selectionCommands.ts`: Range transpose, deletion, rest conversion, and voice switching.
+- `measureCommands.ts`: Measure addition, deletion, pickup measure settings, and barlines.
+- `notationCommands.ts`: Dynamics, articulations, ties, slurs, repeat markers, and voltas.
+
+### 4. Layout & Beam Algorithms (`src/layout/`)
+- `layoutScore.ts`: Pure score layout coordinator.
+- `systems/systemBreakPlanner.ts`: Measure line-breaking and content width distribution.
+- `systems/systemLayoutPass.ts`: Vertical system placement, staff baselines, and coordinate translation.
+- `beams/beamGrouping.ts`: Metrical beam grouping across measures.
+- `beams/beamSlope.ts`: SMuFL-standard beam slope calculation and collision checks.
+- `notations.ts`: Dynamic markings, articulation stacking, and bezier slur curves.
+- `ties.ts`: Multi-measure and cross-system split tie crescent paths.
+
+## Resilience & Error Recovery Model
+
+### 1. Application Error Boundary (`src/ui/ErrorBoundary.tsx`)
+- Wraps the core editing canvas (`ScoreView`).
+- If an unhandled React error occurs during rendering or layout:
+  1. Catches the error and logs it to the rolling error buffer.
+  2. Displays an emergency recovery screen with 3 non-destructive recovery actions:
+     - **Son otomatik kaydı geri yükle:** Restores the most recent valid IndexedDB autosave snapshot.
+     - **Mevcut eseri dosya olarak indir:** Downloads an emergency `.sfscore` JSON backup of the current state directly to disk.
+     - **Hata raporunu kopyala:** Copies the error message, stack trace, and recent error ring buffer entries to clipboard.
+
+### 2. Rolling 5-Version Autosave (`src/io/storage.ts`)
+- Automatically saves scores to IndexedDB store `scoreforge_autosaves`.
+- Maintains a rolling history of the last 5 autosaves with timestamps and measure counts.
+- `loadAutosave()` fetches the latest snapshot; `loadAutosaveHistory()` allows rollback to earlier snapshots.
+- Debounced at 1.0 second; non-blocking.
+
+### 3. Global Error Ring Buffer (`window.__errorLog`)
+- Fixed-capacity circular buffer retaining the last 50 error and warning events.
+- Automatically hooks `window.onerror` and `window.onunhandledrejection`.
+- Available programmatically for diagnostic triage and user bug reporting.
+
 ## Interaction Model: Three Explicit Modes
 
 The editor state operates in three strictly separated modes (`state.mode`):
@@ -177,136 +241,9 @@ The editor state operates in three strictly separated modes (`state.mode`):
      - Rests: `dx` is clamped within measure; `dy` is clamped to staff bounds (-4.0 to +4.0 staff spaces).
    - Shortcut to toggle: `KeyP`.
 
-## Layout & Per-Measure Caching (src/layout)
+## Selection & Clipboard Model
 
-- `layoutScore(score, options)` is pure and uses a **per-measure layout cache**.
-- When editing a note in Measure 3, only Measure 3 is re-computed; cached system geometry and other measures are reused, maintaining sub-10ms latency on 64-measure scores.
-- Beams are grouped **per measure** via `groupBeams(voiceEvents, timeSig)`:
-  - Notes with baseType eighth, 16th, 32nd can be beamed.
-  - Groups never cross barlines, voices, or beat boundaries (e.g. quarter-note beats in 4/4; dotted-quarter beats in 6/8).
-  - Primary beam connects entire group; secondary beams connect 16th/32nd notes, with fractional stubs pointing inward.
-  - Rendered as crisp SVG `<path>` polygon beams matching SMuFL standard thickness (0.5 staff spaces).
-
-## Playback Architecture (src/playback)
-
-- **AudioEngine Interface:** Decouples synthesis from scheduling.
-  - `ToneEngine`: Wraps Tone.js `PolySynth` for real browser audio.
-  - `FakeEngine`: Deterministic in-memory log of triggers for headless CI/CD.
-- **Pure Schedule:** `buildSchedule(score, { fromEventId })`:
-  - Translates pitches to MIDI notes and microtonal detune cents (`pitchToMidi`).
-  - Converts ticks to seconds using measure tempo definitions (`tempo.bpm`, `tempo.beatUnit`).
-  - Maps every event to `{ startSeconds, durationSeconds }`.
-- **Player Scheduler:**
-  - Lookahead scheduler running at 100 ms intervals, scheduling notes within a 1.0 s lookahead window.
-  - `atSeconds` in `engine.trigger(note, atSeconds)` represents absolute audio engine clock time (`engine.now() + startSeconds`).
-  - Supports pause/resume with microsecond precision, stop, tempo changes, volume, and mute.
-  - Playhead tracking and visual note highlighting (`.playback-highlight`).
-
-## Selection & Editing Model (Milestone 6a)
-
-### 1. Selection Model (`src/core/selection.ts`)
-```ts
-type Selection =
-  | { kind: 'none' }
-  | { kind: 'event'; id: Id }
-  | { kind: 'range'; staffId: Id; voiceId: Id; anchorId: Id; focusId: Id };
-```
-- Contiguous range selections across measures in a single voice.
-- **R3 Voice Identity Rule:** Voice identity in the model is a stable `voiceIndex` (1..4) per staff. While random UUIDs exist on measure-level `voice.id`, cross-measure algorithms (range selection, transpose, delete) match by `voiceIndex` and never compare random UUIDs across measures.
-- Operations:
-  - `Shift+ArrowLeft/Right`: Extends range by 1 event.
-  - `Shift+Click`: Extends range from anchor to clicked event.
-  - Rubber-band / Marquee selection: Drags over events in select mode to select range (geometry computed from layout data without DOM reads).
-  - `Ctrl+A`: Selects entire staff.
-  - `Delete`/`Backspace`: Converts all selected notes in range to rests (one atomic command).
-  - `ArrowUp`/`Down`, `Ctrl+ArrowUp`/`Down`: Transposes all notes in range (clamped to MIDI 21..108).
-
-### 2. Clipboard Model (`src/core/clipboard.ts`)
-- `copyRange(score, sel)` / `serializeClipboard(events)`: Pure clipboard serialization with schema validation.
-- `pasteEvents(score, target, events, placedIds)`:
-  - Pastes clipboard events into voice starting at target measure and tick.
-  - **Barline Splitting:** Notes exceeding measure boundaries are automatically split into tied note segments matching measure durations.
-  - Preserves existing downstream notes after paste insertion end.
-
-### 3. Ties & Accidentals
-- Pitch-level ties: Any pitch in a chord can be tied independently (`Pitch.tiedToNext`).
-- `src/layout/ties.ts`: Generates crescent SVG `<path>` curves. When a tie crosses a system break, it splits into two half-ties:
-  - First half exits to the right of system A (`x2 = measureEndX + 1.0`).
-  - Second half enters from the left of system B (`x1 = clefEndX - 0.5`).
-- Accidental cycling: `Shift+ArrowUp/Down` cycles through natural -> sharp -> double sharp or flat -> double flat; `KeyX` resets note to key signature default.
-
-## File Format & Migrations (src/io)
-
-- **Schema Versions:**
-  - `schemaVersion: 1`: Initial format (M5).
-  - `schemaVersion: 2`: Pitch-level ties (`Pitch.tiedToNext`), multi-measure range selections.
-  - `schemaVersion: 3`: Staff-level slurs (`Staff.slurs: Slur[]`), dynamics and articulations.
-- **Progressive Migration:**
-  - `deserializeScore` verifies `schemaVersion` and runs registered migrations sequentially (`v1 -> v2 -> v3`) in a while loop:
-    ```ts
-    while (loadedScore.schemaVersion < CURRENT_SCHEMA_VERSION) {
-      const migrator = migrations[loadedScore.schemaVersion];
-      loadedScore = migrator(loadedScore);
-    }
-    ```
-  - `migrateV1ToV2` copies legacy event-level `tiedToNext` to all pitches in the note and bumps version to 2.
-  - `migrateV2ToV3` initializes `staff.slurs = []` for every staff and bumps version to 3.
-
-## Dynamics, Articulations & Slurs (Milestone 6b)
-
-### 1. Model & Validation
-- **Dynamics:** `NoteEvent.dynamic?: 'pp' | 'p' | 'mp' | 'mf' | 'f' | 'ff' | 'sfz' | 'fp'`.
-- **Articulations:** `NoteEvent.articulations: Array<'staccato' | 'tenuto' | 'accent' | 'marcato'>`.
-  - Mutually exclusive pair: `accent` and `marcato` exclude each other (applying one automatically replaces the other).
-  - Coexistence: `staccato` and `tenuto` coexist freely.
-- **Slurs:** `Staff.slurs?: Slur[]` where `Slur = { id, startEventId, endEventId, placement?: 'above' | 'below' }`.
-  - Start and end events must exist, be distinct, and chronological.
-
-### 2. Layout & Engraving (src/layout/notations.ts)
-- **Zero DOM Reads:** All layout is pure arithmetic in staff space units.
-- **Dynamics:** Centered horizontally on the notehead, positioned below the staff (`y = 6.5`) by default.
-- **Articulations:** Placed on the notehead side (opposite to stem direction). Stacked outward from the notehead:
-  - Level 1 (closest to notehead): `staccato`, `tenuto`.
-  - Level 2 (further out): `accent`, `marcato`.
-  - Staccato snaps into staff spaces to avoid colliding directly with staff lines.
-- **Slurs:** Rendered as cubic Bezier `<path class="score-slur">` curves.
-  - Control points automatically arch above or below intermediate noteheads by >= 0.5 staff spaces.
-  - Cross-system slurs: When a slur crosses a system break, it splits into two half-slurs with matching `data-slur-id` (`slur-*-part1` and `slur-*-part2`).
-- **Position Mode Overrides:**
-  - Addressable IDs `${eventId}-dynamic` and `${eventId}-artic-${art}` support independent dx/dy nudging in Position mode.
-
-### 3. Playback Integration (src/playback/schedule.ts)
-- **Dynamics Velocities:** `pp` (0.25), `p` (0.40), `mp` (0.55), `mf` (0.70), `f` (0.85), `ff` (1.00), `sfz` (0.95), `fp` (0.85). Default is `0.70`.
-  - Dynamics persist forward in the voice until the next dynamic marking.
-- **Articulations Duration & Velocity:**
-  - `staccato`: Halves sounding duration (minimum 0.05s).
-  - `tenuto`: Full duration (no release gap) with +0.05 velocity boost.
-  - `accent`: +0.15 velocity boost (capped at 1.0).
-  - `marcato`: +0.25 velocity boost (capped at 1.0) and 0.75 duration.
-- **Slur Legato:**
-  - Non-terminal notes under a slur overlap by 10 ms (+0.010 s) into the subsequent note.
-  - Staccato and marcato shortening is suppressed for notes inside a slur.
-
-### 4. UI & Keymap (event.code ONLY)
-- **Terminology:**
-  - Tie: **Bağ** (`KeyT` in Turkish, `Tie` in English).
-  - Slur: **Legato bağı** (`KeyS` in Turkish, `Legato slur` in English).
-- **Toolbar Notations Panel:**
-  - 8 Dynamics buttons (`pp`..`fp`). Active dynamic highlighted; clicking active dynamic removes it.
-  - 4 Articulation toggle buttons (`staccato`, `tenuto`, `accent`, `marcato`).
-  - Slur toggle button (`⌒ Legato bağı`).
-  - Clear notations button (`Notasyonları Temizle`).
-- **Physical Key Shortcuts (Strictly event.code, Layout-Independent):**
-  - Slur: `KeyS` (select and position modes).
-  - Tie: `KeyT` (select and position modes).
-  - Natural reset: `KeyX` (select and position modes).
-  - Dynamics: `Shift+Digit1`..`Shift+Digit8` (`pp`..`fp`) in select and position modes only.
-  - Articulations: `KeyJ` (staccato), `KeyK` (tenuto), `KeyL` (accent), `Shift+KeyL` (marcato) in select and position modes.
-  - Augmentation dot: `Period` (all modes, strictly dot, no punctuation keys for articulations).
-
-## Selection & Clipboard Model (Milestone 6a)
-
-- **Selection Model:**
+- **Selection Model (`src/core/selection.ts`):**
   - `{ kind: 'none' } | { kind: 'event', id } | { kind: 'range', staffId, voiceId, anchorId, focusId }`.
   - Contiguous event run within voice across measures resolved via `eventsInRange(score, range)`.
   - Selection extension via `extendRange(score, selection, direction)`.
@@ -317,69 +254,32 @@ type Selection =
 - **Voice Index Rule (R3):**
   - Voice continuity across barlines relies on stable `voiceIndex` (1..4) within `StaffMeasure.voices`, not measure-local voice UUIDs.
 
-## Score Structure & Engraving (Milestone 6c)
+## File Format & Schema Migrations (v1 through v6)
 
-- **Header Block:**
-  - Placed on the first page above system 0.
-  - Fields: centered `title` (large ~22px bold), centered `subtitle` (smaller ~13px italic), right-aligned `composer` (~12px regular), right-aligned `arranger` (~10px italic).
-  - Empty fields take zero vertical or horizontal space.
-  - Serif font stack: `"Times New Roman", Times, "Liberation Serif", serif`.
-  - Clicking anywhere on the header block opens the "Eser bilgileri" dialog.
-- **SVG `<text>` Element Rule:**
-  - SVG `<text>` elements are STRICTLY restricted to:
-    1. Header block (title, subtitle, composer, arranger)
-    2. Tempo text prefixes (e.g. "Allegro vivace") and tempo BPM string (" = 120")
-    3. System measure numbers
-    4. (Future) Lyrics and annotations
-  - Musical notation itself (noteheads, stems, beams, ties, slurs, accidentals, clefs, time signatures, rests, flags, dynamics, articulations, barlines) is strictly `<text>`-free and rendered via SMuFL path symbols or geometry.
-- **Tempo Markings:**
-  - Positioned above the staff at measure start.
-  - Formatted with optional text prefix (e.g. "Allegro vivace"), followed by SMuFL metronome note glyph (`metNoteQuarterUp`, `metNote8thUp`, `metNoteHalfUp`), followed by `" = BPM"`.
-- **Mid-Score Key Signatures & Cancellation Naturals:**
-  - Key signatures can change at any measure mid-score.
-  - When moving from sharps/flats to fewer sharps/flats or opposite accidental families, Gould-standard cancellation naturals are laid out first for removed accidentals, followed by new key signature accidentals.
-  - Natural accidentals on notes in the measure are re-tracked without re-spelling existing pitches.
-- **Mid-Score Time Signatures & Pickup Measures:**
-  - Time signatures can change at any measure.
-  - Pickup measures (anacrusis) define `MeasureDef.actualTicks`.
-  - Pickup measure is unnumbered (measure 0).
-  - Beaming within pickup measures offsets beat calculation to align with measure end barline.
-- **Barlines & System Measure Numbers:**
-  - Supported barline types: `single`, `double`, `final`.
-  - Default: last measure is `final` (thin + thick line), other measures are `single`.
-  - Systems after system 0 display their beginning measure number above the staff.
-
-## File Format, Schema Migrations & Autosave (src/io)
-
-- **Schema Versions & Migrations:**
-  - `schemaVersion: 4`: Score structure (subtitle, arranger in meta, actualTicks, endBarline, tempoText in MeasureDef).
+- **Schema Versions & Chained Migrations:**
+  - `schemaVersion: 6`: Repeats (`repeatStart`, `repeatEnd`), 1st/2nd ending voltas (`volta`), and lyrics (`lyrics`).
+  - `schemaVersion: 5`: Pickup measures (`actualTicks`), mid-score time/key signatures.
+  - `schemaVersion: 4`: Header metadata (`subtitle`, `arranger`), tempo markings.
   - `schemaVersion: 3`: Staff-level slurs (`Staff.slurs`) and per-event dynamics / articulations.
   - `schemaVersion: 2`: Per-pitch ties (`Pitch.tiedToNext`).
   - `schemaVersion: 1`: Legacy event-level ties (`NoteEvent.tiedToNext`).
-  - Automatic chained migration: `v1 -> v2 -> v3 -> v4` on file load.
+  - Automatic sequential migration: `v1 -> v2 -> v3 -> v4 -> v5 -> v6` on file load.
 - **Native Format (`.sfscore`):**
   ```json
   {
     "app": "scoreforge",
     "savedAt": "2026-11-17T12:00:00.000Z",
-    "score": { "schemaVersion": 4, ... }
+    "score": { "schemaVersion": 6, ... }
   }
   ```
-  - Backward compatible: `deserializeScore` accepts both enveloped and bare JSON for v1, v2, v3, and v4.
+  - Backward compatible: `deserializeScore` accepts both enveloped and bare JSON for all schema versions.
   - Validated with `validateScore` on load.
-- **Autosave & Recovery:**
-  - Automatically saves dirty scores to IndexedDB with 1-second debounce.
-  - Prompts to restore unsaved work upon crash or restart.
-  - Dirty state indicator in title bar (`*`) and `beforeunload` protection.
 
-## Localization (src/ui/i18n)
+## Performance Benchmarks & Targets (H1 Hardening)
 
-- Zero hard-coded user-facing strings; all UI strings routed through `t(key)`.
-- Default language is Turkish (`tr`), with English (`en`) support.
-- Correct Turkish music terminology: "Sol anahtarı", "Fa anahtarı", "Ölçü", "Diyez", "Bemol", "Bekar", "Birlik/İkilik/Dörtlük/Sekizlik/Onaltılık nota", "Es".
-
-## Performance & Engraving Rules
-
-- Keystroke-to-paint latency target: p95 < 50 ms on 64-measure scores.
-- Zero DOM layout reads (`getBoundingClientRect`, `clientWidth`) during user interactions.
-- Frame budget: 60 fps (16.6 ms per frame), zero long frames (> 50 ms) during playback and navigation.
+- **Production Keystroke-to-Paint Budget:**
+  - 64-measure full score: p50 = 3.9 ms, p95 = 5.2 ms (Target: < 25 ms).
+  - 200-measure full score: p50 = 4.1 ms, p95 = 5.4 ms (Target: < 40 ms).
+- **DOM Virtualization:**
+  - Maintains < 800 SVG DOM elements for 200-measure scores by rendering only visible systems plus a 1-system vertical buffer.
+- **Zero DOM Reads:** All layout computations and interactive feedback are calculated purely in memory without reading layout properties or calling browser DOM measuring.
