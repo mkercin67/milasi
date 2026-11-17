@@ -15,7 +15,7 @@ export interface ScoreForgeEnvelope {
   score: Score;
 }
 
-export const CURRENT_SCHEMA_VERSION = 5;
+export const CURRENT_SCHEMA_VERSION = 6;
 
 /** Migration function signature for schema version upgrades. */
 export type ScoreMigration = (data: unknown) => Score;
@@ -98,12 +98,51 @@ export function migrateV4ToV5(data: unknown): Score {
   return score as Score;
 }
 
+/** Migration from v5 to v6: converts repeat string to repeatStart/repeatEnd and lyrics string to LyricSyllable[]. */
+export function migrateV5ToV6(data: unknown): Score {
+  const score = JSON.parse(JSON.stringify(data)) as any;
+  score.schemaVersion = 6;
+  if (Array.isArray(score.measures)) {
+    for (const m of score.measures) {
+      if (m.repeat === 'start') {
+        m.repeatStart = true;
+        delete m.repeat;
+      } else if (m.repeat === 'end') {
+        m.repeatEnd = true;
+        delete m.repeat;
+      } else if (m.repeat === 'both') {
+        m.repeatStart = true;
+        m.repeatEnd = true;
+        delete m.repeat;
+      }
+    }
+  }
+  if (Array.isArray(score.parts)) {
+    for (const part of score.parts) {
+      for (const staff of part.staves ?? []) {
+        for (const mId of Object.keys(staff.measures ?? {})) {
+          const sm = staff.measures[mId];
+          for (const v of sm?.voices ?? []) {
+            for (const ev of v?.events ?? []) {
+              if (ev.kind === 'note' && typeof ev.lyrics === 'string') {
+                ev.lyrics = [{ verse: 1, text: ev.lyrics }];
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  return score as Score;
+}
+
 /** Registry of schema migrations keyed by source schemaVersion. */
 export const migrations: Record<number, ScoreMigration> = {
   1: migrateV1ToV2,
   2: migrateV2ToV3,
   3: migrateV3ToV4,
   4: migrateV4ToV5,
+  5: migrateV5ToV6,
 };
 
 /**

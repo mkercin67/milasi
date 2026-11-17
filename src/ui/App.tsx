@@ -16,8 +16,11 @@ import {
   setTimeSignature,
   setPickup,
   setEndBarline,
+  setRepeatStart,
+  setRepeatEnd,
   autoSolfege,
   setLyrics,
+  pasteLyrics,
 } from '../core/commands';
 import { createEmptyScore, createRest } from '../core/factory';
 import { BarlineType, Pitch, Score } from '../core/model';
@@ -176,6 +179,8 @@ const EditorShell: React.FC = () => {
 
   const [isBarlineModalOpen, setIsBarlineModalOpen] = useState<boolean>(false);
   const [barlineInput, setBarlineInput] = useState<BarlineType>('single');
+  const [isRepeatStartInput, setIsRepeatStartInput] = useState<boolean>(false);
+  const [isRepeatEndInput, setIsRepeatEndInput] = useState<boolean>(false);
   const [isPickupBarline, setIsPickupBarline] = useState<boolean>(false);
   const [pickupTicksInput, setPickupTicksInput] = useState<number>(960);
   const [isUnsavedPromptOpen, setIsUnsavedPromptOpen] = useState<boolean>(false);
@@ -558,6 +563,8 @@ const EditorShell: React.FC = () => {
     const targetMeasure =
       score.measures.find((m) => m.id === selectedEventInfo?.measureId) ?? score.measures[0];
     setBarlineInput(targetMeasure?.endBarline ?? 'single');
+    setIsRepeatStartInput(Boolean(targetMeasure?.repeatStart));
+    setIsRepeatEndInput(Boolean(targetMeasure?.repeatEnd));
     setIsPickupBarline(Boolean(targetMeasure?.actualTicks));
     setPickupTicksInput(targetMeasure?.actualTicks ?? 960);
     setIsBarlineModalOpen(true);
@@ -568,6 +575,8 @@ const EditorShell: React.FC = () => {
       score.measures.find((m) => m.id === selectedEventInfo?.measureId) ?? score.measures[0];
     if (targetMeasure) {
       executeCommand(setEndBarline(targetMeasure.id, barlineInput));
+      executeCommand(setRepeatStart(targetMeasure.id, isRepeatStartInput));
+      executeCommand(setRepeatEnd(targetMeasure.id, isRepeatEndInput));
       if (targetMeasure.id === score.measures[0].id) {
         executeCommand(setPickup(targetMeasure.id, isPickupBarline ? pickupTicksInput : null));
       }
@@ -577,10 +586,28 @@ const EditorShell: React.FC = () => {
     barlineInput,
     executeCommand,
     isPickupBarline,
+    isRepeatEndInput,
+    isRepeatStartInput,
     pickupTicksInput,
     score.measures,
     selectedEventInfo?.measureId,
   ]);
+
+  const handleToggleRepeatStart = useCallback(() => {
+    const targetMeasure =
+      score.measures.find((m) => m.id === selectedEventInfo?.measureId) ?? score.measures[0];
+    if (targetMeasure) {
+      executeCommand(setRepeatStart(targetMeasure.id, !targetMeasure.repeatStart));
+    }
+  }, [executeCommand, score.measures, selectedEventInfo?.measureId]);
+
+  const handleToggleRepeatEnd = useCallback(() => {
+    const targetMeasure =
+      score.measures.find((m) => m.id === selectedEventInfo?.measureId) ?? score.measures[0];
+    if (targetMeasure) {
+      executeCommand(setRepeatEnd(targetMeasure.id, !targetMeasure.repeatEnd));
+    }
+  }, [executeCommand, score.measures, selectedEventInfo?.measureId]);
 
   const handleCreateNewScore = (config: NewScoreConfig) => {
     const t0 = performance.now();
@@ -841,65 +868,88 @@ const EditorShell: React.FC = () => {
 
   useEffect(() => {
     if (selectedNote) {
-      setLyricsInputValue(selectedNote.lyrics ?? '');
+      const v1 = selectedNote.lyrics?.find((l) => l.verse === 1);
+      setLyricsInputValue(v1?.text ?? '');
     } else {
       setLyricsInputValue('');
     }
   }, [selectedNote?.id, selectedNote?.lyrics]);
 
-  useEffect(() => {
-    if (mode === 'lyrics') {
-      if (!selectedEventId) {
-        // Auto-select first note in score
-        for (const part of score.parts) {
-          for (const staff of part.staves) {
-            for (const mDef of score.measures) {
-              const sm = staff.measures[mDef.id];
-              if (!sm) continue;
-              for (const v of sm.voices) {
-                for (const ev of v.events) {
-                  if (ev.kind === 'note') {
-                    selectEvent(ev.id);
-                    return;
-                  }
+  // Collect all eligible note IDs (skipping rests and second tied notes)
+  const eligibleLyricsNoteIds = useMemo(() => {
+    const ids: string[] = [];
+    for (const part of score.parts) {
+      for (const staff of part.staves) {
+        let prevTied = false;
+        for (const mDef of score.measures) {
+          const sm = staff.measures[mDef.id];
+          if (!sm) continue;
+          for (const v of sm.voices) {
+            for (const ev of v.events) {
+              const isSecondTied = prevTied;
+              if (ev.kind === 'note') {
+                prevTied = Boolean(ev.tiedToNext || ev.pitches.some((p) => p.tiedToNext));
+                if (!isSecondTied) {
+                  ids.push(ev.id);
                 }
+              } else {
+                prevTied = false;
               }
             }
           }
         }
       }
+    }
+    return ids;
+  }, [score]);
+
+  const moveLyricsNote = useCallback(
+    (dir: 'next' | 'prev') => {
+      if (!selectedNote || eligibleLyricsNoteIds.length === 0) return;
+      const curIdx = eligibleLyricsNoteIds.indexOf(selectedNote.id);
+      if (curIdx === -1) {
+        selectEvent(eligibleLyricsNoteIds[0]);
+        return;
+      }
+      const nextIdx = dir === 'next' ? curIdx + 1 : curIdx - 1;
+      if (nextIdx >= 0 && nextIdx < eligibleLyricsNoteIds.length) {
+        selectEvent(eligibleLyricsNoteIds[nextIdx]);
+      }
+    },
+    [eligibleLyricsNoteIds, selectEvent, selectedNote]
+  );
+
+  useEffect(() => {
+    if (mode === 'lyrics') {
+      if (!selectedEventId && eligibleLyricsNoteIds.length > 0) {
+        selectEvent(eligibleLyricsNoteIds[0]);
+      }
       setTimeout(() => {
         lyricsInputRef.current?.focus();
       }, 50);
     }
-  }, [mode]);
+  }, [eligibleLyricsNoteIds, mode, selectEvent, selectedEventId]);
 
   const handleLyricsKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === ' ' || e.code === 'Space') {
+    if (e.key === ' ' || e.code === 'Space' || e.key === 'Enter' || e.code === 'Enter') {
       e.preventDefault();
       if (selectedNote && lyricsInputValue.trim().length > 0) {
-        executeCommand(setLyrics(selectedNote.id, lyricsInputValue.trim()));
+        executeCommand(setLyrics(selectedNote.id, lyricsInputValue.trim(), 1));
       }
-      moveCursorDirection('next');
-      return;
-    }
-    if (e.key === '-' || e.code === 'Minus') {
-      e.preventDefault();
-      const val = lyricsInputValue.endsWith('-') ? lyricsInputValue : lyricsInputValue + '-';
-      if (selectedNote) {
-        executeCommand(setLyrics(selectedNote.id, val));
-      }
-      moveCursorDirection('next');
+      moveLyricsNote('next');
       return;
     }
     if (e.key === 'Tab') {
       e.preventDefault();
-      moveCursorDirection(e.shiftKey ? 'prev' : 'next');
+      if (selectedNote && lyricsInputValue.trim().length > 0) {
+        executeCommand(setLyrics(selectedNote.id, lyricsInputValue.trim(), 1));
+      }
+      moveLyricsNote(e.shiftKey ? 'prev' : 'next');
       return;
     }
     if (e.key === 'Backspace' && lyricsInputValue.length === 0) {
       e.preventDefault();
-      moveCursorDirection('prev');
+      moveLyricsNote('prev');
       return;
     }
     if (e.key === 'Escape') {
@@ -913,7 +963,19 @@ const EditorShell: React.FC = () => {
     const val = e.target.value;
     setLyricsInputValue(val);
     if (selectedNote) {
-      executeCommand(setLyrics(selectedNote.id, val.length > 0 ? val : undefined));
+      executeCommand(setLyrics(selectedNote.id, val.length > 0 ? val : undefined, 1));
+    }
+  };
+
+  const handleLyricsPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    const pastedText = e.clipboardData.getData('text');
+    if (/\s+/.test(pastedText.trim()) && selectedNote) {
+      e.preventDefault();
+      executeCommand(pasteLyrics(selectedNote.id, pastedText, score));
+      const syllables = pastedText.trim().split(/\s+/).filter(Boolean);
+      if (syllables.length > 0) {
+        setLyricsInputValue(syllables[0]);
+      }
     }
   };
 
@@ -1376,6 +1438,14 @@ const EditorShell: React.FC = () => {
         onOpenTimeSig={handleOpenTimeSigModal}
         onOpenTempo={handleOpenTempoModal}
         onOpenBarline={handleOpenBarlineModal}
+        isRepeatStart={Boolean(
+          (score.measures.find((m) => m.id === selectedEventInfo?.measureId) ?? score.measures[0])?.repeatStart
+        )}
+        onToggleRepeatStart={handleToggleRepeatStart}
+        isRepeatEnd={Boolean(
+          (score.measures.find((m) => m.id === selectedEventInfo?.measureId) ?? score.measures[0])?.repeatEnd
+        )}
+        onToggleRepeatEnd={handleToggleRepeatEnd}
         onAutoSolfege={handleAutoSolfege}
       />
       <ScoreView
@@ -1437,6 +1507,7 @@ const EditorShell: React.FC = () => {
             value={lyricsInputValue}
             onChange={handleLyricsChange}
             onKeyDown={handleLyricsKeyDown}
+            onPaste={handleLyricsPaste}
             placeholder="Hece girin (Boşluk = sonraki, - = hece bağı)..."
             style={{
               fontSize: '1rem',
@@ -2250,6 +2321,33 @@ const EditorShell: React.FC = () => {
                   {t('dialog.barline.final')}
                 </label>
               </div>
+            </div>
+
+            {/* Repeat options */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', borderTop: '1px solid #f1f5f9', paddingTop: '0.75rem' }}>
+              <label style={{ fontSize: '0.85rem', color: '#475569', fontWeight: 500 }}>
+                {t('toolbar.repeatStart')} / {t('toolbar.repeatEnd')}
+              </label>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  data-testid="input-barline-repeat-start"
+                  checked={isRepeatStartInput}
+                  onChange={(e) => setIsRepeatStartInput(e.target.checked)}
+                  style={{ accentColor: '#2563eb' }}
+                />
+                {t('dialog.barline.repeatStart')}
+              </label>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  data-testid="input-barline-repeat-end"
+                  checked={isRepeatEndInput}
+                  onChange={(e) => setIsRepeatEndInput(e.target.checked)}
+                  style={{ accentColor: '#2563eb' }}
+                />
+                {t('dialog.barline.repeatEnd')}
+              </label>
             </div>
 
             {/* Pickup measure option for measure 1 */}

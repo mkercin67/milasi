@@ -32,17 +32,18 @@ export interface ValidationProblem {
 export function validateScore(score: Score): ValidationProblem[] {
   const problems: ValidationProblem[] = [];
 
-  // Schema version check (1, 2, 3, 4, or 5)
+  // Schema version check (1, 2, 3, 4, 5, or 6)
   if (
     score.schemaVersion !== 1 &&
     score.schemaVersion !== 2 &&
     score.schemaVersion !== 3 &&
     score.schemaVersion !== 4 &&
-    score.schemaVersion !== 5
+    score.schemaVersion !== 5 &&
+    score.schemaVersion !== 6
   ) {
     problems.push({
       code: 'invalid-schema-version',
-      message: `Unsupported schema version: ${score.schemaVersion} (expected 1, 2, 3, 4, or 5)`,
+      message: `Unsupported schema version: ${score.schemaVersion} (expected 1, 2, 3, 4, 5, or 6)`,
       severity: 'error',
     });
   }
@@ -68,14 +69,6 @@ export function validateScore(score: Score): ValidationProblem[] {
         measureId: mDef.id,
       });
     }
-    if (mDef.repeat && !['start', 'end', 'both'].includes(mDef.repeat)) {
-      problems.push({
-        code: 'invalid-repeat',
-        message: `Measure ${mDef.id} has invalid repeat: ${mDef.repeat}`,
-        severity: 'error',
-        measureId: mDef.id,
-      });
-    }
     if (mDef.volta && mDef.volta.number !== 1 && mDef.volta.number !== 2) {
       problems.push({
         code: 'invalid-volta',
@@ -87,9 +80,24 @@ export function validateScore(score: Score): ValidationProblem[] {
     measureMap.set(mDef.id, mDef);
   }
 
-  // Cross-measure volta validation
+  // Cross-measure repeat and volta validation
+  let inRepeatBlock = false;
   let seenVolta1 = false;
   for (const m of score.measures) {
+    if (m.repeatStart) {
+      if (inRepeatBlock) {
+        problems.push({
+          code: 'nested-repeat',
+          message: `Measure ${m.id} has nested repeat start without closing preceding repeat`,
+          severity: 'error',
+          measureId: m.id,
+        });
+      }
+      inRepeatBlock = true;
+    }
+    if (m.repeatEnd) {
+      inRepeatBlock = false;
+    }
     if (m.volta?.number === 1) {
       seenVolta1 = true;
     } else if (m.volta?.number === 2 && !seenVolta1) {

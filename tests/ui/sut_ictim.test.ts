@@ -3,64 +3,64 @@ import { buildSutIctimScore } from '../../src/ui/sutIctimScore';
 import { validateScore } from '../../src/core/validate';
 import { layoutScore } from '../../src/layout/layoutScore';
 import { expandRepeats } from '../../src/playback/repeats';
+import { buildSchedule } from '../../src/playback/schedule';
 
-describe('Milestone 6d Reference Score: "Süt İçtim Dilim Yandı" (2/4, 9 measures)', () => {
+describe('Milestone 6d True Reference Score: "Süt İçtim Dilim Yandı" (2/4, 8 measures, C major)', () => {
   it('builds a valid score with zero errors and clean validateScore output', () => {
     const score = buildSutIctimScore();
     const problems = validateScore(score);
     expect(problems.filter((p) => p.severity === 'error')).toEqual([]);
-    expect(score.measures.length).toBe(9);
+    expect(score.measures.length).toBe(8);
+    expect(score.meta.title).toBe('Süt İçtim Dilim Yandı');
+    expect(score.meta.composer).toBe('Müzik Notlarım');
   });
 
-  it('has correct musical structures: pickup, repeats, voltas, and final barline', () => {
+  it('has correct musical structures: no pickup, no voltas, repeatEnd on m4, repeatStart on m5, repeatEnd on m8', () => {
     const score = buildSutIctimScore();
-    expect(score.measures[0].actualTicks).toBe(960);
-    expect(score.measures[1].repeat).toBe('start');
-    expect(score.measures[4].volta?.number).toBe(1);
-    expect(score.measures[4].repeat).toBe('end');
-    expect(score.measures[5].volta?.number).toBe(2);
-    expect(score.measures[8].endBarline).toBe('final');
+    expect(score.measures[0].actualTicks).toBeUndefined(); // No pickup
+    expect(score.measures[3].repeatEnd).toBe(true);        // Measure 4 end-repeat
+    expect(score.measures[4].repeatStart).toBe(true);      // Measure 5 start-repeat
+    expect(score.measures[7].repeatEnd).toBe(true);        // Measure 8 end-repeat
+    // No voltas
+    for (const m of score.measures) {
+      expect(m.volta).toBeUndefined();
+    }
   });
 
-  it('linearizes playback correctly skipping volta 1 on the second pass', () => {
+  it('linearizes playback correctly: 1-4 twice and 5-8 twice (16 measures, 56 notes, 16.0s)', () => {
     const score = buildSutIctimScore();
     const linear = expandRepeats(score);
     const indices = linear.map((e) => e.measureIndex);
-    // Expected playback path:
-    // Pass 1: 0 (pickup), 1, 2, 3, 4 (volta 1, repeatEnd)
-    // Pass 2: jumps back to 1, 2, 3, skips 4, plays 5 (volta 2), 6, 7, 8
-    expect(indices).toEqual([0, 1, 2, 3, 4, 1, 2, 3, 5, 6, 7, 8]);
+
+    // Expected playback path: 1, 2, 3, 4, 1, 2, 3, 4, 5, 6, 7, 8, 5, 6, 7, 8
+    expect(indices).toEqual([0, 1, 2, 3, 0, 1, 2, 3, 4, 5, 6, 7, 4, 5, 6, 7]);
+    expect(linear.length).toBe(16);
+
+    const schedule = buildSchedule(score);
+    expect(schedule.notes.length).toBe(56);
+    expect(schedule.totalSeconds).toBeCloseTo(16.0, 1);
   });
 
-  it('layouts header, repeats, voltas, and lyrics cleanly without errors', () => {
+  it('layouts header, combined repeat barline, and Turkish solfege syllables cleanly', () => {
     const score = buildSutIctimScore();
-    const layout = layoutScore(score, { width: 70 });
+    const layout = layoutScore(score, { width: 100 });
 
     // Header items
     const title = layout.items.find((it) => it.id === 'header-title');
     const composer = layout.items.find((it) => it.id === 'header-composer');
     expect(title?.text).toContain('Süt İçtim Dilim Yandı');
-    expect(composer?.text).toContain('Anonim');
+    expect(composer?.text).toContain('Müzik Notlarım');
 
-    // Repeat barlines
-    const repeatStart = layout.items.find((it) => it.glyph === 'repeatLeft');
-    const repeatEnd = layout.items.find((it) => it.glyph === 'repeatRight');
-    expect(repeatStart).toBeDefined();
-    expect(repeatEnd).toBeDefined();
+    // Repeat barlines: on system 0 at width 100, measure 4 and 5 share combined repeatRightLeft
+    const combinedRepeat = layout.items.find((it) => (it as any).glyph === 'repeatRightLeft');
+    const endRepeat = layout.items.find((it) => (it as any).glyph === 'repeatRight');
+    expect(combinedRepeat || endRepeat).toBeDefined();
 
-    // Volta brackets
-    const volta1 = layout.items.find((it) => it.text === '1.');
-    const volta2 = layout.items.find((it) => it.text === '2.');
-    expect(volta1).toBeDefined();
-    expect(volta2).toBeDefined();
-
-    // Lyric syllables
+    // Lyric syllables: 28 notes all have solfege syllables
     const lyrics = layout.items.filter((it) => it.id.startsWith('lyric-text-'));
-    expect(lyrics.length).toBeGreaterThanOrEqual(14);
-    const syllables = lyrics.map((l) => l.text);
-    expect(syllables).toContain('Süt');
-    expect(syllables).toContain('iç-');
-    expect(syllables).toContain('tim');
-    expect(syllables).toContain('ver');
+    expect(lyrics.length).toBe(28);
+
+    const firstFour = lyrics.slice(0, 4).map((l) => l.text);
+    expect(firstFour).toEqual(['Re', 'Mi', 'Fa', 'Sol']);
   });
 });

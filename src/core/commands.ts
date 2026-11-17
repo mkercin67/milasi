@@ -13,7 +13,6 @@ import {
   NoteEvent,
   Override,
   Pitch,
-  RepeatType,
   RestEvent,
   Score,
   ScoreEvent,
@@ -1126,18 +1125,37 @@ export function clearSelectionNotations(selection: Selection): Command {
   };
 }
 
-/** Sets or clears the repeat marking on a measure. */
-export function setRepeat(measureId: Id, repeat: RepeatType | undefined): Command {
+/** Sets or clears the start repeat marking on a measure. */
+export function setRepeatStart(measureId: Id, repeatStart: boolean): Command {
   return {
-    name: 'Set Repeat',
+    name: 'Set Repeat Start',
     apply(score: Score): Score {
       return produce(score, (draft) => {
         const m = draft.measures.find((meas) => meas.id === measureId);
         if (m) {
-          if (repeat) {
-            m.repeat = repeat;
+          if (repeatStart) {
+            m.repeatStart = true;
           } else {
-            delete m.repeat;
+            delete m.repeatStart;
+          }
+        }
+      });
+    },
+  };
+}
+
+/** Sets or clears the end repeat marking on a measure. */
+export function setRepeatEnd(measureId: Id, repeatEnd: boolean): Command {
+  return {
+    name: 'Set Repeat End',
+    apply(score: Score): Score {
+      return produce(score, (draft) => {
+        const m = draft.measures.find((meas) => meas.id === measureId);
+        if (m) {
+          if (repeatEnd) {
+            m.repeatEnd = true;
+          } else {
+            delete m.repeatEnd;
           }
         }
       });
@@ -1164,8 +1182,8 @@ export function setVolta(measureId: Id, volta: VoltaDef | undefined): Command {
   };
 }
 
-/** Sets or clears a lyric syllable on a note event. */
-export function setLyrics(eventId: Id, lyrics: string | undefined): Command {
+/** Sets or clears a lyric syllable on a note event for a given verse. */
+export function setLyrics(eventId: Id, text: string | undefined, verse: number = 1): Command {
   return {
     name: 'Set Lyrics',
     apply(score: Score): Score {
@@ -1178,15 +1196,88 @@ export function setLyrics(eventId: Id, lyrics: string | undefined): Command {
               for (const v of sm.voices) {
                 for (const ev of v.events) {
                   if (ev.id === eventId && ev.kind === 'note') {
-                    if (lyrics !== undefined && lyrics.trim().length > 0) {
-                      ev.lyrics = lyrics;
-                    } else {
-                      delete ev.lyrics;
+                    if (text !== undefined && text.trim().length > 0) {
+                      const trimmed = text.trim();
+                      if (!ev.lyrics) {
+                        ev.lyrics = [{ verse, text: trimmed }];
+                      } else {
+                        const existingIdx = ev.lyrics.findIndex((l) => l.verse === verse);
+                        if (existingIdx >= 0) {
+                          ev.lyrics[existingIdx].text = trimmed;
+                        } else {
+                          ev.lyrics.push({ verse, text: trimmed });
+                        }
+                      }
+                    } else if (ev.lyrics) {
+                      ev.lyrics = ev.lyrics.filter((l) => l.verse !== verse);
+                      if (ev.lyrics.length === 0) {
+                        delete ev.lyrics;
+                      }
                     }
                     return;
                   }
                 }
               }
+            }
+          }
+        }
+      });
+    },
+  };
+}
+
+/** Pastes whitespace-delimited syllables across consecutive non-tied notes starting at startEventId. */
+export function pasteLyrics(startEventId: Id, text: string, _score?: Score, verse: number = 1): Command {
+  const syllables = text.trim().split(/\s+/).filter(Boolean);
+  return {
+    name: 'Paste Lyrics',
+    apply(currentScore: Score): Score {
+      return produce(currentScore, (draft) => {
+        if (syllables.length === 0) return;
+
+        // Collect all eligible notes in sequential order
+        const eligibleNotes: NoteEvent[] = [];
+        let startCollecting = false;
+
+        for (const part of draft.parts) {
+          for (const staff of part.staves) {
+            let prevTied = false;
+            for (const mDef of draft.measures) {
+              const sm = staff.measures[mDef.id];
+              if (!sm) continue;
+              for (const v of sm.voices) {
+                for (const ev of v.events) {
+                  const isSecondTied = prevTied;
+                  if (ev.kind === 'note') {
+                    prevTied = Boolean(ev.tiedToNext || ev.pitches.some((p) => p.tiedToNext));
+                    if (!startCollecting) {
+                      if (ev.id === startEventId) {
+                        startCollecting = true;
+                      }
+                    }
+                    if (startCollecting && !isSecondTied) {
+                      eligibleNotes.push(ev);
+                    }
+                  } else {
+                    prevTied = false;
+                  }
+                }
+              }
+            }
+          }
+        }
+
+        for (let i = 0; i < syllables.length && i < eligibleNotes.length; i++) {
+          const note = eligibleNotes[i];
+          const syllText = syllables[i];
+          if (!note.lyrics) {
+            note.lyrics = [{ verse, text: syllText }];
+          } else {
+            const existingIdx = note.lyrics.findIndex((l) => l.verse === verse);
+            if (existingIdx >= 0) {
+              note.lyrics[existingIdx].text = syllText;
+            } else {
+              note.lyrics.push({ verse, text: syllText });
             }
           }
         }
@@ -1228,7 +1319,7 @@ export function autoSolfege(targetMeasureIdOrScoreId?: Id): Command {
                   if (ev.kind === 'note' && ev.pitches.length > 0) {
                     const step = ev.pitches[0].step;
                     const syllable = SOLFEGE_MAP[step] ?? step;
-                    ev.lyrics = syllable;
+                    ev.lyrics = [{ verse: 1, text: syllable }];
                   }
                 }
               }

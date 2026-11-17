@@ -11,7 +11,7 @@ export type Id = string;
 
 /** Root score container. */
 export interface Score {
-  schemaVersion: 1 | 2 | 3 | 4 | 5;
+  schemaVersion: 1 | 2 | 3 | 4 | 5 | 6;
   id: Id;
   meta: {
     title: string;
@@ -26,9 +26,6 @@ export interface Score {
 
 /** Supported barline types for measure endings. */
 export type BarlineType = 'single' | 'double' | 'final';
-
-/** Supported repeat barline types (Milestone 6d). */
-export type RepeatType = 'start' | 'end' | 'both';
 
 /** Volta (1st and 2nd ending) specification (Milestone 6d). */
 export interface VoltaDef {
@@ -51,7 +48,8 @@ export interface MeasureDef {
   };
   actualTicks?: number; // Optional custom duration in ticks (e.g. pickup/anacrusis measures)
   endBarline?: BarlineType;
-  repeat?: RepeatType;
+  repeatStart?: boolean;
+  repeatEnd?: boolean;
   volta?: VoltaDef;
 }
 
@@ -129,6 +127,12 @@ export interface BaseEvent {
   };
 }
 
+/** Syllable specification for lyrics (Milestone 6d). */
+export interface LyricSyllable {
+  verse: number;
+  text: string;
+}
+
 /** Note event (single pitch or multi-pitch chord). */
 export interface NoteEvent extends BaseEvent {
   kind: 'note';
@@ -136,7 +140,7 @@ export interface NoteEvent extends BaseEvent {
   tiedToNext?: boolean;
   articulations: string[]; // e.g. 'staccato', 'accent', 'tenuto'
   dynamic?: string; // e.g. 'p', 'mf', 'f'
-  lyrics?: string; // Optional syllable (Milestone 6d)
+  lyrics?: LyricSyllable[]; // Syllables by verse (Milestone 6d)
 }
 
 /** Rest event. */

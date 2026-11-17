@@ -13,7 +13,7 @@ describe('Milestone 6d: Lyrics & Solfege Commands (setLyrics, autoSolfege)', () 
     const cmd = setLyrics(note.id, 'Süt-');
     const updated = history.do(cmd);
     const updatedNote = updated.parts[0].staves[0].measures[m0Id].voices[0].events[0];
-    expect(updatedNote.kind === 'note' ? updatedNote.lyrics : undefined).toBe('Süt-');
+    expect(updatedNote.kind === 'note' ? updatedNote.lyrics : undefined).toEqual([{ verse: 1, text: 'Süt-' }]);
 
     // Undo reverts back to undefined
     const undone = history.undo()!;
@@ -37,10 +37,10 @@ describe('Milestone 6d: Lyrics & Solfege Commands (setLyrics, autoSolfege)', () 
     const updated = cmd.apply(score);
     const evs = updated.parts[0].staves[0].measures[m0Id].voices[0].events;
 
-    expect(evs[0].kind === 'note' ? evs[0].lyrics : undefined).toBe('Do');
-    expect(evs[1].kind === 'note' ? evs[1].lyrics : undefined).toBe('Re');
-    expect(evs[2].kind === 'note' ? evs[2].lyrics : undefined).toBe('Mi');
-    expect(evs[3].kind === 'note' ? evs[3].lyrics : undefined).toBe('Fa');
+    expect(evs[0].kind === 'note' ? evs[0].lyrics : undefined).toEqual([{ verse: 1, text: 'Do' }]);
+    expect(evs[1].kind === 'note' ? evs[1].lyrics : undefined).toEqual([{ verse: 1, text: 'Re' }]);
+    expect(evs[2].kind === 'note' ? evs[2].lyrics : undefined).toEqual([{ verse: 1, text: 'Mi' }]);
+    expect(evs[3].kind === 'note' ? evs[3].lyrics : undefined).toEqual([{ verse: 1, text: 'Fa' }]);
   });
 
   it('autoSolfege assigns Sol, La, Si for G, A, B', () => {
@@ -58,9 +58,9 @@ describe('Milestone 6d: Lyrics & Solfege Commands (setLyrics, autoSolfege)', () 
     const updated = autoSolfege(score.id).apply(score);
     const evs = updated.parts[0].staves[0].measures[m0Id].voices[0].events;
 
-    expect(evs[0].kind === 'note' ? evs[0].lyrics : undefined).toBe('Sol');
-    expect(evs[1].kind === 'note' ? evs[1].lyrics : undefined).toBe('La');
-    expect(evs[2].kind === 'note' ? evs[2].lyrics : undefined).toBe('Si');
-    expect(evs[3].kind === 'note' ? evs[3].lyrics : undefined).toBe('Do');
+    expect(evs[0].kind === 'note' ? evs[0].lyrics : undefined).toEqual([{ verse: 1, text: 'Sol' }]);
+    expect(evs[1].kind === 'note' ? evs[1].lyrics : undefined).toEqual([{ verse: 1, text: 'La' }]);
+    expect(evs[2].kind === 'note' ? evs[2].lyrics : undefined).toEqual([{ verse: 1, text: 'Si' }]);
+    expect(evs[3].kind === 'note' ? evs[3].lyrics : undefined).toEqual([{ verse: 1, text: 'Do' }]);
   });
 });

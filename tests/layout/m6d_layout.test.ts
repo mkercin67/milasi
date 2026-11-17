@@ -5,8 +5,8 @@ import { layoutScore } from '../../src/layout/layoutScore';
 describe('Milestone 6d: Repeats, Voltas & Lyrics Layout (src/layout/layoutScore.ts)', () => {
   it('FAILING-FIRST: renders repeat barlines (repeatLeft, repeatRight) in layout items', () => {
     const score = createEmptyScore({ numMeasures: 3 });
-    score.measures[1].repeat = 'start';
-    score.measures[2].repeat = 'end';
+    score.measures[1].repeatStart = true;
+    score.measures[2].repeatEnd = true;
 
     const layout = layoutScore(score, { width: 70 });
     const repeatGlyphs = layout.items.filter(
@@ -38,14 +38,14 @@ describe('Milestone 6d: Repeats, Voltas & Lyrics Layout (src/layout/layoutScore.
       createNote({ pitches: [createPitch('C', 4, 0)], baseType: 'quarter' }),
       createNote({ pitches: [createPitch('D', 4, 0)], baseType: 'quarter' }),
     ];
-    (v.events[0] as any).lyrics = 'Süt';
-    (v.events[1] as any).lyrics = 'iç-';
+    (v.events[0] as any).lyrics = [{ verse: 1, text: 'Süt' }];
+    (v.events[1] as any).lyrics = [{ verse: 1, text: 'iç' }];
 
     const layout = layoutScore(score, { width: 70 });
     const lyricItems = layout.items.filter((it) => it.id.startsWith('lyric-text-'));
     expect(lyricItems.length).toBe(2);
     expect(lyricItems[0].text).toBe('Süt');
-    expect(lyricItems[1].text).toBe('iç-');
+    expect(lyricItems[1].text).toBe('iç');
 
     // Placed below staff (line 4 is at y = 4; lyrics at y >= 6.0)
     expect(lyricItems[0].y).toBeGreaterThanOrEqual(6.0);
@@ -60,11 +60,11 @@ describe('Milestone 6d: Repeats, Voltas & Lyrics Layout (src/layout/layoutScore.
       createNote({ pitches: [createPitch('C', 4, 0)], baseType: '16th' }),
       createNote({ pitches: [createPitch('D', 4, 0)], baseType: '16th' }),
     ];
-    (v.events[0] as any).lyrics = 'Kahramanmaraş-';
-    (v.events[1] as any).lyrics = 'lılaştıramadıklarımızdan';
+    (v.events[0] as any).lyrics = [{ verse: 1, text: 'Kahramanmaraş' }];
+    (v.events[1] as any).lyrics = [{ verse: 1, text: 'lılaştıramadıklarımızdan' }];
 
     const layout = layoutScore(score, { width: 70 });
-    const lyric1 = layout.items.find((it) => it.text === 'Kahramanmaraş-');
+    const lyric1 = layout.items.find((it) => it.text === 'Kahramanmaraş');
     const lyric2 = layout.items.find((it) => it.text === 'lılaştıramadıklarımızdan');
 
     expect(lyric1).toBeDefined();

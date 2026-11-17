@@ -55,7 +55,7 @@ Time is measured in integer **ticks**. `PPQ = 960` (ticks per quarter note). Nev
 type Id = string; // uuid
 
 interface Score {
-  schemaVersion: 1 | 2 | 3 | 4;
+  schemaVersion: 1 | 2 | 3 | 4 | 5 | 6;
   id: Id;
   meta: {
     title: string;
@@ -66,6 +66,11 @@ interface Score {
   parts: Part[];
   measures: MeasureDef[];            // global measure definitions
   overrides: Record<Id, Override>;   // manual layout overrides keyed by element id
+}
+
+interface VoltaDef {
+  number: number;                    // 1 for 1st ending, 2 for 2nd ending
+  text?: string;                     // e.g. "1.", "2."
 }
 
 interface MeasureDef {
@@ -79,6 +84,9 @@ interface MeasureDef {
   };
   actualTicks?: number;              // pickup/anacrusis measure duration in ticks
   endBarline?: 'single' | 'double' | 'final';
+  repeatStart?: boolean;             // Milestone 6d repeat start (|:)
+  repeatEnd?: boolean;               // Milestone 6d repeat end (:|)
+  volta?: VoltaDef;                  // Milestone 6d 1st / 2nd ending bracket
 }
 
 interface Part { id: Id; name: string; staves: Staff[]; instrument: string }
@@ -109,12 +117,18 @@ interface BaseEvent {
   tuplet?: { actual: number; normal: number };
 }
 
+interface LyricSyllable {
+  verse: number;                     // 1-based verse number (default: 1)
+  text: string;                      // Syllable text; trailing '-' connects hyphen, '_' connects extender
+}
+
 interface NoteEvent extends BaseEvent {
   kind: 'note';
   pitches: Pitch[];                  // chord = multiple pitches
   tiedToNext?: boolean;              // legacy v1 event-level tie, migrated to Pitch.tiedToNext
   articulations: string[];
   dynamic?: string;
+  lyrics?: LyricSyllable[];          // Milestone 6d lyrics
 }
 
 interface RestEvent extends BaseEvent {

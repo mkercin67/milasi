@@ -8,6 +8,7 @@
 import { MeasureDef, Score } from '../core/model';
 
 export interface ExpandedMeasureEntry {
+  id: string;
   measureIndex: number;
   measureDef: MeasureDef;
   pass: number;
@@ -36,7 +37,7 @@ export function expandRepeats(score: Score): ExpandedMeasureEntry[] {
     const m = measures[i];
 
     // Check if this measure marks the start of a repeated section
-    if (m.repeat === 'start' || m.repeat === 'both') {
+    if (m.repeatStart) {
       currentRepeatStart = i;
     }
 
@@ -56,13 +57,14 @@ export function expandRepeats(score: Score): ExpandedMeasureEntry[] {
 
     // Emit this measure for playback
     result.push({
+      id: m.id,
       measureIndex: i,
       measureDef: m,
       pass,
     });
 
     // Check if this measure marks the end of a repeated section
-    if (m.repeat === 'end' || m.repeat === 'both') {
+    if (m.repeatEnd) {
       if (pass === 1) {
         // Jump back to repeat start for second pass
         i = currentRepeatStart;
@@ -71,11 +73,14 @@ export function expandRepeats(score: Score): ExpandedMeasureEntry[] {
       } else {
         // Already repeated pass 2, reset pass to 1 for subsequent sections
         pass = 1;
-        if (m.repeat === 'both') {
-          currentRepeatStart = i + 1;
-        } else {
-          currentRepeatStart = i + 1;
-        }
+        currentRepeatStart = i + 1;
+      }
+    } else if (pass === 2 && m.volta?.number === 2) {
+      // Finished pass 2 after playing volta 2 (only if next measure is not also part of volta 2)
+      const nextM = measures[i + 1];
+      if (!nextM || nextM.volta?.number !== 2) {
+        pass = 1;
+        currentRepeatStart = i + 1;
       }
     }
 

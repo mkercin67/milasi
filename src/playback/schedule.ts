@@ -44,26 +44,33 @@ export function buildSchedule(
   options: BuildScheduleOptions = {}
 ): ScheduleResult {
   // 1. Calculate measure start times and per-measure tempo (expanding repeats if present)
-  const hasRepeats = score.measures.some((m) => m.repeat || m.volta);
+  const hasRepeats = score.measures.some((m) => m.repeatStart || m.repeatEnd || m.volta);
   const sequence = hasRepeats
     ? expandRepeats(score)
-    : score.measures.map((m, idx) => ({ measureIndex: idx, measureDef: m, pass: 1 }));
+    : score.measures.map((m, idx) => ({ id: m.id, measureIndex: idx, measureDef: m, pass: 1 }));
 
   const measureStarts: MeasureStartTime[] = [];
   const measureDurations: number[] = [];
   const measureTempos: Array<{ bpm: number; beatUnit: number }> = [];
 
-  let currentTempo = DEFAULT_TEMPO;
+  // Precompute base tempo for each measure in the score
+  const baseTempos: Array<{ bpm: number; beatUnit: number }> = [];
+  let scanTempo = DEFAULT_TEMPO;
+  for (const m of score.measures) {
+    if (m.tempo) {
+      scanTempo = {
+        bpm: m.tempo.bpm,
+        beatUnit: m.tempo.beatUnit ?? 1.0,
+      };
+    }
+    baseTempos.push(scanTempo);
+  }
+
   let accumulatedSeconds = 0;
 
   for (let sIdx = 0; sIdx < sequence.length; sIdx++) {
-    const { measureDef: mDef } = sequence[sIdx];
-    if (mDef.tempo) {
-      currentTempo = {
-        bpm: mDef.tempo.bpm,
-        beatUnit: mDef.tempo.beatUnit ?? 1.0,
-      };
-    }
+    const { measureIndex, measureDef: mDef } = sequence[sIdx];
+    const currentTempo = baseTempos[measureIndex] ?? DEFAULT_TEMPO;
     measureTempos.push(currentTempo);
     measureStarts.push({
       measureId: mDef.id,

@@ -31,6 +31,10 @@ This document lists known constraints and architectural trade-offs in the curren
 ## 6. Score Structure Elements (Milestone 6c)
 - **Status:** Implemented in Milestone 6c.
 - **Details:** Supports header text (title, subtitle, composer, arranger), tempo text markings (e.g. "Allegro vivace ♩ = 120"), mid-score key signature changes with cancellation naturals, mid-score time signatures, pickup measures (anacrusis), and barlines (single, double, final).
-- **Scope Limits:** Repeats, volta brackets (1st/2nd endings), rehearsal marks, D.S./coda navigation, multi-staff systems, and lyrics are deferred to subsequent milestones.
+
+## 7. Repeats, Voltas & Lyrics (Milestone 6d)
+- **Status:** Implemented in Milestone 6d (Schema Version 6).
+- **Details:** Supports repeat start (`repeatStart`), repeat end (`repeatEnd`), combined barlines (`repeatRightLeft`), volta brackets (`volta: { number }`), syllable-level lyrics (`lyrics: LyricSyllable[]`), Turkish solfège automation (`autoSolfege`), and lyrics input mode (`KeyU`).
+- **Scope Limits:** Nested repeats without matching delimiters trigger validation errors (`nested-repeat`). Multiple lyric verses (verse > 1) and complex melisma curves are deferred to Phase 2.
 
 

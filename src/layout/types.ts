@@ -79,6 +79,7 @@ export interface LayoutResult {
 export interface LayoutOptions {
   /** Target system width in staff spaces before wrapping to next system. */
   width?: number;
+  contentWidth?: number;
   /** Vertical distance in staff spaces between consecutive systems. */
   systemSpacing?: number;
 }

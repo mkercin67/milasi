@@ -30,6 +30,6 @@ describe('Milestone 6d: Lyrics Mode & Input Keymap (src/ui/keymap.ts)', () => {
     const turkishLyric = 'çğışöü-ÇĞİŞÖÜ';
     const updated = setLyrics(note.id, turkishLyric).apply(score);
     const ev = updated.parts[0].staves[0].measures[m0Id].voices[0].events[0];
-    expect(ev.kind === 'note' ? ev.lyrics : '').toBe(turkishLyric);
+    expect(ev.kind === 'note' ? ev.lyrics : []).toEqual([{ verse: 1, text: turkishLyric }]);
   });
 });

@@ -165,7 +165,7 @@ export function layoutSingleMeasure(
     ? `${prevMDef.keySig}_${prevMDef.timeSig.num}/${prevMDef.timeSig.den}`
     : 'none';
   const barlineType = mDef.endBarline ?? (isLastMeasure ? 'final' : 'single');
-  const cacheKey = `${mDef.id}_${mDef.keySig}_${mDef.timeSig.num}/${mDef.timeSig.den}_${clef.sign}${clef.line}_${isFirstMeasure}_${isLastMeasure}_${prevKey}_${mDef.actualTicks ?? 'full'}_${barlineType}_${mDef.repeat ?? 'none'}_${mDef.volta?.number ?? 'none'}`;
+  const cacheKey = `${mDef.id}_${mDef.keySig}_${mDef.timeSig.num}/${mDef.timeSig.den}_${clef.sign}${clef.line}_${isFirstMeasure}_${isLastMeasure}_${prevKey}_${mDef.actualTicks ?? 'full'}_${barlineType}_${mDef.repeatStart ? 'rs' : ''}_${mDef.repeatEnd ? 're' : ''}_${mDef.volta?.number ?? 'none'}`;
 
   if (staffMeasure) {
     const existing = measureChunkCache.get(staffMeasure);
@@ -271,7 +271,7 @@ export function layoutSingleMeasure(
   }
 
   // Repeat start barline
-  if (mDef.repeat === 'start' || mDef.repeat === 'both') {
+  if (mDef.repeatStart) {
     measureItems.push({
       item: {
         id: `repeat-start-${mDef.id}`,
@@ -290,9 +290,11 @@ export function layoutSingleMeasure(
     const isWholeMeasureRest = ev.kind === 'rest' && Boolean((ev as RestEvent).wholeMeasure);
     const durationFactor = ev.duration / PPQ;
     let estLyricWidth = 0;
-    if (ev.kind === 'note' && (ev as NoteEvent).lyrics) {
-      const lyricText = (ev as NoteEvent).lyrics!;
-      estLyricWidth = lyricText.length * 1.15 * 0.52;
+    if (ev.kind === 'note' && (ev as NoteEvent).lyrics && (ev as NoteEvent).lyrics!.length > 0) {
+      const v1 = (ev as NoteEvent).lyrics!.find((l) => l.verse === 1);
+      if (v1 && v1.text) {
+        estLyricWidth = v1.text.length * 0.72;
+      }
     }
     const eventWidth = isWholeMeasureRest
       ? 8.0
@@ -544,23 +546,67 @@ export function layoutSingleMeasure(
         }
       }
 
-      if (ev.kind === 'note' && (ev as NoteEvent).lyrics) {
-        const lyricText = (ev as NoteEvent).lyrics!;
-        const lyricX = eventCenterX + NOTEHEAD_WIDTH / 2;
-        const lyricY = 6.8;
-        measureItems.push({
-          item: {
-            id: `lyric-text-${ev.id}`,
-            eventId: ev.id,
-            kind: 'text',
-            text: lyricText,
-            x: lyricX,
-            y: lyricY,
-            textAnchor: 'middle',
-            fontSize: 1.15,
-            fontFamily: '"Times New Roman", Times, "Liberation Serif", serif',
-          },
-        });
+      if (ev.kind === 'note' && (ev as NoteEvent).lyrics && (ev as NoteEvent).lyrics!.length > 0) {
+        const verse1 = (ev as NoteEvent).lyrics!.find((l) => l.verse === 1);
+        if (verse1 && verse1.text) {
+          const rawText = verse1.text;
+          const hasHyphen = rawText.endsWith('-');
+          const hasExtender = rawText.endsWith('_') || rawText === '_';
+          const displayText = rawText.replace(/[-_]+$/, '');
+          const lyricX = eventCenterX + NOTEHEAD_WIDTH / 2;
+          const lyricY = 6.8;
+
+          if (displayText.length > 0) {
+            measureItems.push({
+              item: {
+                id: `lyric-text-${ev.id}`,
+                eventId: ev.id,
+                kind: 'text',
+                text: displayText,
+                x: lyricX,
+                y: lyricY,
+                textAnchor: 'middle',
+                fontSize: 1.15,
+                fontFamily: '"Times New Roman", Times, "Liberation Serif", serif',
+              },
+            });
+          }
+
+          if (hasHyphen) {
+            const hyphenX = lyricX + Math.max(0.8, displayText.length * 0.28) + 0.3;
+            measureItems.push({
+              item: {
+                id: `lyric-hyphen-${ev.id}`,
+                eventId: ev.id,
+                kind: 'text',
+                text: '-',
+                x: hyphenX,
+                y: lyricY,
+                textAnchor: 'middle',
+                fontSize: 1.15,
+                fontFamily: '"Times New Roman", Times, "Liberation Serif", serif',
+              },
+            });
+          }
+
+          if (hasExtender) {
+            const extStartX = displayText.length > 0
+              ? lyricX + Math.max(0.6, displayText.length * 0.28) + 0.2
+              : lyricX;
+            measureItems.push({
+              item: {
+                id: `lyric-extender-${ev.id}`,
+                eventId: ev.id,
+                kind: 'line',
+                x: extStartX,
+                y: lyricY - 0.2,
+                x2: extStartX + 2.0,
+                y2: lyricY - 0.2,
+                thickness: 0.12,
+              },
+            });
+          }
+        }
       }
     }
 
@@ -571,7 +617,7 @@ export function layoutSingleMeasure(
   const barlineX = relX + 0.6;
   let barlineItemIndex = measureItems.length;
 
-  if (mDef.repeat === 'end') {
+  if (mDef.repeatEnd) {
     measureItems.push({
       item: {
         id: `repeat-end-${mDef.id}`,
@@ -582,17 +628,6 @@ export function layoutSingleMeasure(
       },
     });
     relX = barlineX + 1.8;
-  } else if (mDef.repeat === 'both') {
-    measureItems.push({
-      item: {
-        id: `repeat-both-${mDef.id}`,
-        kind: 'glyph',
-        glyph: 'repeatRightLeft',
-        x: barlineX,
-        y: 4.0,
-      },
-    });
-    relX = barlineX + 3.2;
   } else if (barlineType === 'final') {
     measureItems.push({
       item: {
@@ -866,7 +901,7 @@ function computeHeaderLayout(
 }
 
 export function layoutScore(score: Score, options: LayoutOptions = {}): LayoutResult {
-  const targetWidth = options.width ?? 70;
+  const targetWidth = options.width ?? options.contentWidth ?? 70;
   const systemSpacing = options.systemSpacing ?? 10;
   const staffMarginTop = 7.0;
   const staffMarginBottom = 4.0;
@@ -1088,6 +1123,12 @@ export function layoutScore(score: Score, options: LayoutOptions = {}): LayoutRe
       const globalMIdx = plan.measureIndices[mInSys];
       const mDef = score.measures[globalMIdx];
       const isLastMeasureInSystem = mInSys === plan.measures.length - 1;
+      const isNextOnSameSystem = !isLastMeasureInSystem;
+      const nextMDef = isNextOnSameSystem ? score.measures[plan.measureIndices[mInSys + 1]] : undefined;
+      const prevMDefOnSameSystem = mInSys > 0 ? score.measures[plan.measureIndices[mInSys - 1]] : undefined;
+
+      const hasCombinedRepeatEnd = Boolean(mDef.repeatEnd && nextMDef?.repeatStart);
+      const isCombinedRepeatStartSuppressed = Boolean(mDef.repeatStart && prevMDefOnSameSystem?.repeatEnd);
 
       // Tempo display above measure if specified on this measure
       const tempo = mDef?.tempo ?? (globalMIdx === 0 && score.measures[0]?.tempo ? score.measures[0].tempo : undefined);
@@ -1149,6 +1190,22 @@ export function layoutScore(score: Score, options: LayoutOptions = {}): LayoutRe
       for (let iIdx = 0; iIdx < chunk.items.length; iIdx++) {
         const entry = chunk.items[iIdx];
         const raw = entry.item;
+
+        // If this measure's repeat-start is covered by previous measure's combined repeatRightLeft, skip it
+        if (raw.id.startsWith('repeat-start-') && isCombinedRepeatStartSuppressed) {
+          continue;
+        }
+
+        // If this measure has repeatEnd and next measure has repeatStart on the same system, draw combined repeatRightLeft
+        let itemToPlace = raw;
+        if (raw.id.startsWith('repeat-end-') && hasCombinedRepeatEnd) {
+          itemToPlace = {
+            ...raw,
+            id: `repeat-combined-${mDef.id}`,
+            glyph: 'repeatRightLeft',
+          };
+        }
+
         const isBarline = iIdx >= chunk.barlineItemIndex;
 
         let finalX: number;
@@ -1156,7 +1213,7 @@ export function layoutScore(score: Score, options: LayoutOptions = {}): LayoutRe
 
         if (isLastMeasureInSystem && shouldJustify && isBarline) {
           // Align last barline exactly so right edge lands at targetWidth
-          const barlineThickness = raw.thickness ?? BARLINE_THICKNESS;
+          const barlineThickness = itemToPlace.thickness ?? BARLINE_THICKNESS;
           finalX = targetWidth - barlineThickness;
           finalX2 = finalX;
         } else if (entry.ledgerNoteRelativeX !== undefined) {
@@ -1165,14 +1222,14 @@ export function layoutScore(score: Score, options: LayoutOptions = {}): LayoutRe
           finalX = stretchedNoteX - LEDGER_EXTENSION;
           finalX2 = stretchedNoteX + NOTEHEAD_WIDTH + LEDGER_EXTENSION;
         } else {
-          finalX = contentOffset + raw.x * stretchRatio;
-          if (raw.x2 !== undefined) {
-            finalX2 = contentOffset + raw.x2 * stretchRatio;
+          finalX = contentOffset + itemToPlace.x * stretchRatio;
+          if (itemToPlace.x2 !== undefined) {
+            finalX2 = contentOffset + itemToPlace.x2 * stretchRatio;
           }
         }
 
         systemItems.push({
-          ...raw,
+          ...itemToPlace,
           x: finalX,
           x2: finalX2,
         });

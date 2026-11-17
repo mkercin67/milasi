@@ -274,7 +274,7 @@ describe('Milestone 6c Closing: Header Layout, Edge Cases & Robustness', () => {
       });
 
       const loaded = deserializeScore(realM6bV3Json);
-      expect(loaded.schemaVersion).toBe(5);
+      expect(loaded.schemaVersion).toBe(6);
       expect(loaded.meta.title).toBe('Süt İçtim Dilim Yandı');
       expect(loaded.meta.composer).toBe('Müzik Notlarım');
       expect(loaded.meta.subtitle).toBe('');

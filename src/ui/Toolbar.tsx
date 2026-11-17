@@ -60,6 +60,10 @@ export interface ToolbarProps {
   onOpenTimeSig?: () => void;
   onOpenTempo?: () => void;
   onOpenBarline?: () => void;
+  isRepeatStart?: boolean;
+  onToggleRepeatStart?: () => void;
+  isRepeatEnd?: boolean;
+  onToggleRepeatEnd?: () => void;
   onAutoSolfege?: () => void;
 }
 
@@ -146,6 +150,10 @@ export const Toolbar: React.FC<ToolbarProps> = ({
   onOpenTimeSig,
   onOpenTempo,
   onOpenBarline,
+  isRepeatStart = false,
+  onToggleRepeatStart,
+  isRepeatEnd = false,
+  onToggleRepeatEnd,
   onAutoSolfege,
 }) => {
   const { t, language, setLanguage, noteNameStyle, setNoteNameStyle, zoom, setZoom } = useI18n();
@@ -391,6 +399,50 @@ export const Toolbar: React.FC<ToolbarProps> = ({
             }}
           >
             𝄀𝄂 {t('toolbar.barline')}
+          </button>
+        )}
+
+        {onToggleRepeatStart && (
+          <button
+            type="button"
+            data-testid="btn-repeat-start"
+            onClick={handleButtonClick(onToggleRepeatStart)}
+            onMouseDown={(e) => e.preventDefault()}
+            title={t('toolbar.repeatStart')}
+            style={{
+              padding: '0.4rem 0.65rem',
+              fontSize: '0.85rem',
+              fontWeight: 600,
+              color: isRepeatStart ? '#1e40af' : '#1e293b',
+              backgroundColor: isRepeatStart ? '#dbeafe' : '#f1f5f9',
+              border: `1px solid ${isRepeatStart ? '#93c5fd' : '#cbd5e1'}`,
+              borderRadius: '6px',
+              cursor: 'pointer',
+            }}
+          >
+            |: {t('toolbar.repeatStart')}
+          </button>
+        )}
+
+        {onToggleRepeatEnd && (
+          <button
+            type="button"
+            data-testid="btn-repeat-end"
+            onClick={handleButtonClick(onToggleRepeatEnd)}
+            onMouseDown={(e) => e.preventDefault()}
+            title={t('toolbar.repeatEnd')}
+            style={{
+              padding: '0.4rem 0.65rem',
+              fontSize: '0.85rem',
+              fontWeight: 600,
+              color: isRepeatEnd ? '#1e40af' : '#1e293b',
+              backgroundColor: isRepeatEnd ? '#dbeafe' : '#f1f5f9',
+              border: `1px solid ${isRepeatEnd ? '#93c5fd' : '#cbd5e1'}`,
+              borderRadius: '6px',
+              cursor: 'pointer',
+            }}
+          >
+            :| {t('toolbar.repeatEnd')}
           </button>
         )}
 
