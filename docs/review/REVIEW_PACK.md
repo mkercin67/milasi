@@ -1,6 +1,6 @@
 # ScoreForge Review Pack
 
-**Generated:** 2026-11-18T21:54:24.621Z  
+**Generated:** 2026-11-18T22:32:09.753Z  
 **Target Milestone:** Foundation Hardening (Milestone H1) Closed  
 **Architecture Version:** Schema v6 (Preparing Schema v7)  
 
@@ -19,6 +19,8 @@
 
 ## 2. Recent Git Log (Last 30 Commits)
 
+* `523b424` H1 closing 4: design document v3.1 revisions (next column interval, unverified corpus claims, solfege backlog) (2026-11-19)
+* `12c9624` H1 closing 4: add Rule R4, fix toolbar i18n regression, add static and DOM tests (2026-11-19)
 * `0e3d4db` H1 closing 3: design document v3 (2026-11-18)
 * `256a785` H1 closing 3: align architecture facts, fix design document keymap and corpus, pin CI node 22, add reviewpack generator (2026-11-18)
 * `51d85ba` H1 closing 3: repo hygiene, delete stale root screenshots, add README and gitignore rules (2026-11-18)
@@ -47,8 +49,6 @@
 * `1ba2a66` M6c: score structure - header, tempo text, key and time changes, pickup measures, and barlines (2026-11-17)
 * `43da74d` M6b closing 2: remove Ctrl+Delete measure shortcut, add legacy punctuation hints, and wire toolbar tooltips with shortcuts (2026-11-17)
 * `91d4b84` M6b closing: terminology, event.code keymap, legato overlap, bundle size reduction, and 200% close-up verification (2026-11-17)
-* `13e63db` M6b: dynamics, articulations, slurs, notations toolbar panel, and playback legato (2026-11-17)
-* `df884eb` M6a closing: multi-measure selection, R2 anti-stale-closure refs, v1 migration test, and paste profile (2026-11-17)
 
 ---
 
@@ -66,7 +66,7 @@
 
 ## 4. Tracked Files and Line Counts
 
-Total Tracked Files: 346 | Total Lines: 194112
+Total Tracked Files: 351 | Total Lines: 194967
 
 | Tracked File | Lines |
 |:---|---:|
@@ -79,39 +79,39 @@ Total Tracked Files: 346 | Total Lines: 194112
 | `tests/render/__snapshots__/gallery_snapshots.test.ts.snap` | 1282 |
 | `public/fonts/Bravura.woff2` | 1218 |
 | `scripts/assets/Bravura.otf` | 867 |
-| `scripts/run_m6a_e2e_verification.mjs` | 777 |
+| `scripts/run_m6a_e2e_verification.mjs` | 778 |
 | `tests/render/__snapshots__/renderSvg.test.ts.snap` | 739 |
-| `tests/layout/mouseInput.test.ts` | 667 |
-| `src/ui/keymap.ts` | 588 |
-| `src/layout/measureLayout.ts` | 586 |
-| `src/ui/scoreView/useScoreInteractions.ts` | 575 |
-| `src/render/renderSvg.ts` | 568 |
-| `src/layout/layoutScore.ts` | 565 |
-| `src/ui/App.tsx` | 565 |
-| `scripts/run_m3c3_e2e_verification.mjs` | 549 |
-| `src/core/input.ts` | 546 |
-| `scripts/run_m3c4_e2e_verification.mjs` | 538 |
-| `docs/design/multi-staff-and-pages.md` | 531 |
-| `src/ui/app/useAppKeyboard.ts` | 531 |
-| `src/ui/editor/useEditorSelection.ts` | 529 |
-| `src/ui/ScoreView.tsx` | 524 |
-| `scripts/run_m3c_e2e_verification.mjs` | 517 |
-| `src/core/notationCommands.ts` | 497 |
-| `src/ui/galleryCases.ts` | 495 |
-| `tests/core/commands.test.ts` | 487 |
-| `scripts/run_m6b_e2e_verification.mjs` | 480 |
-| `src/ui/toolbar/ToolbarFileHistory.tsx` | 460 |
-| `src/layout/mouse.ts` | 454 |
-| `src/core/commands.ts` | 449 |
-| `src/ui/app/modals/ConfirmModals.tsx` | 430 |
-| `tests/core/input.test.ts` | 430 |
-| `tests/layout/layoutScore.test.ts` | 429 |
-| `scripts/run_m4_e2e_verification.mjs` | 426 |
-| `scripts/run_m3c2_e2e_verification.mjs` | 412 |
-| `scripts/bench.mjs` | 411 |
-| `tests/layout/beamLayout.test.ts` | 397 |
+| `tests/layout/mouseInput.test.ts` | 668 |
+| `src/ui/keymap.ts` | 589 |
+| `src/layout/measureLayout.ts` | 587 |
+| `docs/design/multi-staff-and-pages.md` | 585 |
+| `src/ui/scoreView/useScoreInteractions.ts` | 576 |
+| `src/render/renderSvg.ts` | 569 |
+| `src/layout/layoutScore.ts` | 566 |
+| `src/ui/App.tsx` | 566 |
+| `scripts/run_m3c3_e2e_verification.mjs` | 550 |
+| `src/core/input.ts` | 547 |
+| `scripts/run_m3c4_e2e_verification.mjs` | 539 |
+| `src/ui/app/useAppKeyboard.ts` | 532 |
+| `src/ui/editor/useEditorSelection.ts` | 530 |
+| `src/ui/ScoreView.tsx` | 525 |
+| `scripts/run_m3c_e2e_verification.mjs` | 518 |
+| `src/core/notationCommands.ts` | 498 |
+| `src/ui/galleryCases.ts` | 496 |
+| `tests/core/commands.test.ts` | 488 |
+| `scripts/run_m6b_e2e_verification.mjs` | 481 |
+| `src/ui/toolbar/ToolbarFileHistory.tsx` | 461 |
+| `src/layout/mouse.ts` | 455 |
+| `src/core/commands.ts` | 450 |
+| `src/ui/app/modals/ConfirmModals.tsx` | 431 |
+| `tests/core/input.test.ts` | 431 |
+| `tests/layout/layoutScore.test.ts` | 430 |
+| `scripts/run_m4_e2e_verification.mjs` | 427 |
+| `scripts/run_m3c2_e2e_verification.mjs` | 413 |
+| `scripts/bench.mjs` | 412 |
+| `tests/layout/beamLayout.test.ts` | 398 |
 
-*... and 306 additional tracked files.*
+*... and 311 additional tracked files.*
 
 
 ---
@@ -219,6 +219,7 @@ This document lists known constraints and architectural trade-offs in the curren
 ### 8.1 Data Model (`src/core/model.ts`)
 
 ```typescript
+// SPDX-License-Identifier: GPL-3.0-or-later
 /**
  * Core data model for ScoreForge.
  *
@@ -394,6 +395,7 @@ export interface Override {
 ### 8.2 Selection Model (`src/core/selection.ts`)
 
 ```typescript
+// SPDX-License-Identifier: GPL-3.0-or-later
 /**
  * Core selection helpers and range computations.
  */
@@ -680,6 +682,7 @@ export function nextEventId(
 ### 8.3 Layout Types (`src/layout/types.ts`)
 
 ```typescript
+// SPDX-License-Identifier: GPL-3.0-or-later
 /**
  * Type definitions for ScoreForge layout structures.
  *
@@ -771,6 +774,7 @@ export interface LayoutOptions {
 ### 8.4 Keyboard Mapping (`src/ui/keymap.ts`)
 
 ```typescript
+// SPDX-License-Identifier: GPL-3.0-or-later
 /**
  * Physical keyboard shortcut mapping for ScoreForge editor.
  *

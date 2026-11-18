@@ -1,6 +1,6 @@
-# Architectural Design Document: Multi-Staff, Polyphony, and Pagination (v3.1)
+# Architectural Design Document: Multi-Staff, Polyphony, and Pagination (v3.2)
 
-**Document Status:** DRAFT v3.1 - under lead review  
+**Document Status:** DRAFT v3.2 - under lead review  
 **Target Schema:** Schema v7 (Milestone 7: Multi-Staff & Polyphony, Milestone 8: Pagination & Print)  
 **Author:** ScoreForge Core Engineering  
 **Scope:** Complete architectural blueprint for multi-voice polyphony, horizontal cross-staff column alignment, skyline vertical spacing, staff groups and barlines, discrete page layouts, keymap conflict resolutions, MusicXML mapping, test corpus, and migration strategy. Zero runtime code implemented in Milestone H1.
@@ -14,7 +14,8 @@
 | **v1.0** | 17.11.2026 | Core Engineering | Initial architectural draft for multi-staff and pagination. Rejected by lead due to loose column alignment and ad-hoc vertical spacing. |
 | **v2.0** | 18.11.2026 | Core Engineering | Addressed initial review items (keymap collision notes, Turkish Q labels, Double rAF perf numbers). Rejected by lead (not accepted in full). |
 | **v3.0** | 18.11.2026 | Core Engineering | Complete rewrite under lead review (global tick columns, dynamic skylines, groups, voice invariants, Gould engraving rules, keymap, and MusicXML). |
-| **v3.1** | 19.11.2026 | Core Engineering | **Targeted lead review revisions:**<br>1. **Column Gap Interval:** Replaced shortest event duration with interval to next global column $t_{k+1} - t_k$; added Staff D / Staff E counterexample.<br>2. **Gould References:** Removed page numbers; marked Voices 3/4 offsets (+1.25/-1.25 sp) and second intervals as PROPOSED with human gallery verification procedure.<br>3. **Corpus Audit:** Replaced all "Verified (edition)" with "UNVERIFIED claim, to be checked by the human against the IMSLP score"; removed publisher names; confirmed BWV 140 as SATB closing chorale (Bach-Gesellschaft).<br>4. **Local Exercise:** Added non-committed local exercise for 'Uzun İnce Bir Yoldayım' (Aşık Veysel); added `tests/private/` to `.gitignore`.<br>5. **Backlog:** Added solfege 'es' rest marking and stacked chord syllables to backlog. |
+| **v3.1** | 19.11.2026 | Core Engineering | Targeted lead review revisions (next column interval $t_{k+1}-t_k$, unverified corpus claims, solfege backlog, local tests/private/ exercise). |
+| **v3.2** | 19.11.2026 | Core Engineering | **7-Staff Chorale & Historical Engraving Audit:**<br>1. **Expanded C Clefs:** Pitch-to-staff mapping tables for Soprano (C1), Mezzo-soprano (C2), Alto (C3), Tenor (C4), Baritone (C5), and Treble-8vb transposing octave rules.<br>2. **Fermatas:** Scoped into M7c with data model, skyline placement, and playback suppression.<br>3. **Time Signature Symbols:** Added display option 'numeric' \| 'common' \| 'cut' to `MeasureDef`.<br>4. **Dynamic Part Label Indents:** Multi-line part labels with dynamic first-system indent calculated from text width; right-aligned and centered.<br>5. **Multi-Verse Lyrics:** Multi-verse stacking, independent hyphens and extenders entering bottom skyline with 2.5 sp clearance.<br>6. **Choir Barlines:** Proposed individual choir barlines with lyric corridor and left group bracket.<br>7. **Scope Clarification:** Figured bass, continuo realization, and piano reductions explicitly deferred (out of scope for M7).<br>8. **Corpus Audit:** Noted human's BWV 140.7 PDF is CC BY-NC-SA 4.0 and barred from repo; data entered by hand from Bach-Gesellschaft scan. |
 
 ---
 
@@ -208,6 +209,16 @@ System-level annotations are anchored to the **top visible staff** of each syste
 
 These objects contribute exclusively to the top skyline of staff 0, preventing collision with the system above or the page top margin.
 
+### 2.5 Multi-Verse Lyric Stacking & Skyline Integration
+In choral music (such as Lutheran chorales, hymns, and folk songs), multiple lyric verses frequently appear beneath the vocal staff.
+1. **Verse Baseline Offsets:** Each verse $v \in \{1, 2, \dots, V\}$ is laid out with its own horizontal baseline:
+   $$\text{baselineY}(v) = \text{baseLyricY} + (v - 1) \times 2.0\text{ sp}$$
+   where $\text{baseLyricY} \ge 6.0\text{ sp}$ (displaced downward dynamically if low notes or downward stems project below the staff).
+2. **Independent Hyphens & Extenders:** Syllable hyphens and melisma extender lines are evaluated and rendered independently per verse line.
+3. **Cumulative Skyline Contribution:** Every syllable bounding box across all active verses contributes to the staff's bottom skyline:
+   $$\text{Sky}_{\text{bottom}}(x) = \max \left( 4.0, \max_{e} \text{box}_{\text{bottom}}(e), \max_{v=1}^V \left[ \text{baselineY}(v) + \text{fontDescender} \right] \right)$$
+4. **Staff Distance Guarantee:** When stacking $V \ge 2$ verses, the dynamic staff separation formula guarantees a strict $\ge 2.5\text{ sp}$ clearance between the lowest verse ($V$) and the top skyline of the adjacent staff below.
+
 #### Computational Cost
 - Skyline profiles are computed over discrete interval segments defined by note bounding boxes.
 - For a system of 4 staves and 4 measures ($~64$ notes), skyline computation requires $< 0.4\text{ ms}$ in Node / V8 ($O(N)$ linear segment scan).
@@ -227,8 +238,19 @@ export interface StaffGroup {
   barlineSpan: 'through' | 'individual' | 'mensurstrich';
 }
 
+export interface MeasureDefV7 extends MeasureDef {
+  /** Display style for time signature glyphs (underlying model remains {num, den}) */
+  timeSigDisplay?: 'numeric' | 'common' | 'cut'; // 'common' = C (SMuFL timeSigCommon), 'cut' = alla breve (timeSigCutCommon), 'numeric' = digits (default)
+}
+
+export interface EventNotationsV7 extends EventNotations {
+  /** Phrase fermata (M7c): rendered on top/bottom skyline; ignored by audio playback */
+  fermata?: 'above' | 'below';
+}
+
 export interface ScoreV7 extends Omit<Score, 'schemaVersion'> {
   schemaVersion: 7;
+  measures: MeasureDefV7[];
   groups: StaffGroup[];              // Milestone 7 group hierarchy
   pages?: PageDef[];                 // Milestone 8 discrete pages
 }
@@ -239,17 +261,24 @@ export interface ScoreV7 extends Omit<Score, 'schemaVersion'> {
 | Template ID | Parts & Staves | Group Bracket | Barline Span | Musical / Engraving Standard |
 |:---|:---|:---|:---|:---|
 | `piano` | 1 Part, 2 Staves (Treble + Bass) | `brace` | `through` | Barlines connect continuously from top line of Staff 1 to bottom line of Staff 2. |
-| `satb` | 4 Parts (S, A, T, B), 1 Staff each | `bracket` | `individual` | Barlines stop at line 4 of each staff, leaving lyrics corridor unbroken. |
+| `satb` | 4 Parts (S, A, T, B), 1 Staff each | `bracket` | `individual` | **PROPOSED (pending Bach-Gesellschaft scan review):** Barlines stop at line 5 (bottom) of each staff, leaving an open lyrics corridor between staves. Far left features a thick system start line and system bracket. |
 | `string_quartet` | 4 Parts (Vln I, Vln II, Vla, Vc) | `bracket` | `through` | Continuous barlines connect all 4 staves through the ensemble. |
 | `voice_piano` | 2 Parts: Voice (1 staff) + Piano (2 staves) | Piano group has `brace` | Voice: `individual`; Piano: `through` | Voice barline is independent; piano staves share through-barlines. |
 | `solo_instrument` | 1 Part, 1 Staff | `none` | `individual` | Standard single-staff barline. |
 
-### 3.3 Robust Schema Migration (v6 -> v7)
+### 3.3 Dynamic Part Labels & First-System Indent
+In multi-part scores, choral staves, and orchestral scores, part labels on the first system can be multi-line and wide (e.g. `"Soprano / Violino piccolo in 8va,\nCorno, Oboe I, Violino I. / col Soprano"`).
+1. **Dynamic Indent Formula:** The first-system indent is not a hardcoded constant (12–18 sp). Instead, it is computed dynamically from the maximum measured text width across all active part labels:
+   $$\text{firstSystemIndent} = \max_{p \in \text{Score.parts}} \text{labelWidth}(p.\text{name}) + \text{labelMargin} (2.0\text{ sp})$$
+2. **Label Alignment & Centering:** Labels are right-aligned to $\text{firstSystemIndent} - \text{labelMargin}$ and vertically centered on their respective staff baseline, or centered across the vertical span of their staff group when a shared group label is rendered. Subsequent systems use abbreviated short names (or zero indent for single-part scores).
+
+### 3.4 Robust Schema Migration (v6 -> v7)
 The automated migration function `migrateV6ToV7(score: ScoreV6): ScoreV7` guarantees:
 1. `groups = []` initialized if absent.
-2. **Deterministic Part Short Names:** Rather than crude string slicing (`name.slice(0, 3)`), short names are looked up from the instrument definition catalog (e.g., `"Flute"` $\to$ `"Fl."`, `"Violin I"` $\to$ `"Vln. I"`, `"Pianoforte"` $\to$ `"Pno."`).
-3. **Unique MIDI Channel Allocation:** Sequentially assigns `midiChannel: 0..15` per Part (omitting Channel 9 reserved for percussion).
-4. **Cross-Staff Target Validation:** `crossStaffTarget?: Id` on `NoteEvent` is validated to ensure it references an existing, adjacent staff within the same Part; otherwise stripped with a migration warning. Rendering is ignored until Milestone 10.
+2. `measures[m].timeSigDisplay = 'numeric'` default set for all existing measures.
+3. **Deterministic Part Short Names:** Rather than crude string slicing (`name.slice(0, 3)`), short names are looked up from the instrument definition catalog (e.g., `"Flute"` $\to$ `"Fl."`, `"Violin I"` $\to$ `"Vln. I"`, `"Pianoforte"` $\to$ `"Pno."`).
+4. **Unique MIDI Channel Allocation:** Sequentially assigns `midiChannel: 0..15` per Part (omitting Channel 9 reserved for percussion).
+5. **Cross-Staff Target Validation:** `crossStaffTarget?: Id` on `NoteEvent` is validated to ensure it references an existing, adjacent staff within the same Part; otherwise stripped with a migration warning. Rendering is ignored until Milestone 10.
 
 ---
 
@@ -401,10 +430,35 @@ Every sub-milestone is autonomous and carries its own strict four-part verificat
   - *Performance:* Keystroke-to-paint p95 $\le 30\text{ ms}$ on 100-measure 2-staff score (200 measure-staves).
 
 ### Milestone 7c: Multi-Part Ensembles, Groups, and C Clefs
-- **Deliverables:** `Score.groups: StaffGroup[]`, SATB and String Quartet templates, instrument bracket rendering, through vs. individual barline spans, multi-track audio routing, and **C Clefs (Alto, Tenor, and Treble-8vb)** moved into M7c.
+- **Deliverables:** `Score.groups: StaffGroup[]`, SATB and String Quartet templates, instrument bracket rendering, through vs. individual barline spans, multi-track audio routing, **C Clefs (Soprano, Mezzo-Soprano, Alto, Tenor, Baritone, and Treble-8vb)**, and **Phrase Fermatas (`fermataAbove`, `fermataBelow`)**.
+- **Historical Clef Engine Scope & Pitch-to-Staff Position Table:**
+  Historical choral and orchestral editions (e.g. Bach-Gesellschaft) write vocal parts using C clefs centered on distinct lines:
+
+  | Clef Type | Clef Sign | Staff Line | C4 (Middle C) Position | SMuFL Glyph | Musical Usage |
+  |:---|:---:|:---:|:---:|:---|:---|
+  | **Treble** | `G` | 2 | Step -2 (ledger line below) | `gClef` | Soprano modern, Violins, Flutes |
+  | **Soprano** | `C` | 1 | Step 0 (Line 1, bottom) | `cClef` | Classical/Baroque Soprano choral parts |
+  | **Mezzo-Soprano** | `C` | 2 | Step 2 (Line 2) | `cClef` | Historical Mezzo-soprano / Boy Soprano |
+  | **Alto** | `C` | 3 | Step 4 (Line 3, middle) | `cClef` | Viola, Classical Alto choral parts |
+  | **Tenor** | `C` | 4 | Step 6 (Line 4) | `cClef` | Cello/Bassoon high register, Tenor choral parts |
+  | **Baritone** | `C` | 5 | Step 8 (Line 5, top) | `cClef` | Historical Baritone / Low Tenor |
+  | **Bass** | `F` | 4 | Step 10 (ledger line above) | `fClef` | Bass choral parts, Cello, Bassoon |
+  | **Treble-8vb** | `G` | 2 (`octaveShift: -1`) | Step -2 (notated as Treble) | `gClef8vb` | Modern Tenor vocal notation |
+
+- **Octave Transposition Rule for Clefs:**
+  When `clef.octaveShift` is defined (e.g. `octaveShift = -1` for `gClef8vb` tenor clef):
+  1. *Visual Notation:* The notehead is placed at the standard visual staff position of the notated pitch (C4 appears on the ledger line below the staff).
+  2. *Acoustic Playback:* In the audio synthesis scheduler, the sounding pitch is shifted by $\text{octaveShift} \times 12$ semitones (C4 sounds as C3 / MIDI 48).
+- **Phrase Fermatas (`event.notations.fermata?: 'above' | 'below'`):**
+  - Rendered using SMuFL glyphs `fermataAbove` and `fermataBelow`.
+  - Positioned dynamically against the top or bottom skyline of the staff, clearing all noteheads, stems, beams, and articulations.
+  - In Milestone 7, playback strictly ignores fermata durations (normal metrical playback is maintained; interactive pause extension is scoped to playback enhancements in Milestone 11).
+- **Explicit Scope Boundaries for M7c:**
+  - **In Scope:** 4-part SATB vocal staves, String Quartet staves, C clefs, dynamic indents, lyrics corridors, and phrase fermatas.
+  - **Out of Scope (Deferred to M12+):** Figured bass numerals (basso continuo realization), orchestral organ/harpsichord reductions, and pedal markings.
 - **Exit Gates:**
-  - *Property Tests:* Individual vocal barlines do not intersect lyric bounding boxes; C clef transpositions and pitches map accurately.
-  - *Gallery Cards:* String Quartet card (alto clef, bracket, through-barlines) and SATB card (lyrics, individual barlines).
+  - *Property Tests:* Individual vocal barlines do not intersect lyric bounding boxes; C clef transpositions and pitches map accurately across all 6 clef lines; fermatas strictly clear skylines.
+  - *Gallery Cards:* String Quartet card (alto clef, bracket, through-barlines), SATB card (choral C clefs, multi-verse lyrics, individual barlines), and Fermata card.
   - *IMSLP Audit:* Beethoven Op. 18 No. 1 mm. 1–8 (Viola alto clef) and Schubert D. 547 mm. 1–12 checked against IMSLP public domain score.
   - *Performance:* Keystroke-to-paint p95 $\le 30\text{ ms}$ on 50-measure 4-staff score (200 measure-staves).
 
@@ -423,7 +477,7 @@ All reference tests utilize **short excerpts** (measures 1–8 or 1–12) to ver
 
 | # | Work & Excerpt | Target Milestone | Target Engraving Test Role | IMSLP Edition Audit Status |
 |:---:|:---|:---:|:---|:---|
-| 1 | **J.S. Bach — Chorale "Wachet auf", BWV 140 (mm. 1–8)** | M7a | 4-part SATB homophony, fermatas, German lyrics, individual barlines | **UNVERIFIED claim, to be checked by the human against the IMSLP score:** SATB closing chorale from the Bach-Gesellschaft edition (note: guitar arrangement PDF is not used). Individual barlines broken between staves for lyrics corridor. |
+| 1 | **J.S. Bach — Chorale "Wachet auf", BWV 140 (mm. 1–8)** | M7a | 4-part SATB homophony, fermatas, German lyrics, individual barlines | **UNVERIFIED claim, to be checked by the human against the IMSLP score:** SATB closing chorale. **Corpus License Note:** The modern PDF provided during research is licensed under CC BY-NC-SA 4.0 and is **strictly prohibited from being committed to the repository**; musical data must be entered by hand from the public-domain Bach-Gesellschaft edition (1851–1899). The PDF serves solely as a local visual reference in `tests/private/`. Individual barlines broken between staves for lyrics corridor (PROPOSED). |
 | 2 | **J. Brahms — Intermezzo Op. 118 No. 2 (mm. 1–8)** | M7a | Polyphonic voice leading, opposing stems, shared noteheads | **UNVERIFIED claim, to be checked by the human against the IMSLP score:** Polyphonic voice leading and shared noteheads. Pedal markings excluded from M7 acceptance; scoped to M12. |
 | 3 | **J.S. Bach — Invention No. 1 in C major, BWV 772 (mm. 1–8)** | M7b | Two-staff grand staff contrapuntal imitation, 16th-note beam alignment | **UNVERIFIED claim, to be checked by the human against the IMSLP score:** Two-part counterpoint without pedals or text. |
 | 4 | **W.A. Mozart — Piano Sonata in C major, K. 545, I (mm. 1–8)** | M7b | Melody over Alberti bass, legato slurs, dynamics | **UNVERIFIED claim, to be checked by the human against the IMSLP score:** Alberti bass synchronization. Note: 1st/2nd voltas occur in exposition repeat (m. 28), not mm. 1–8. |
