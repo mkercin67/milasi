@@ -1,6 +1,6 @@
-# Architectural Design Document: Multi-Staff, Polyphony, and Pagination (v3)
+# Architectural Design Document: Multi-Staff, Polyphony, and Pagination (v3.1)
 
-**Document Status:** DRAFT v3 - under lead review  
+**Document Status:** DRAFT v3.1 - under lead review  
 **Target Schema:** Schema v7 (Milestone 7: Multi-Staff & Polyphony, Milestone 8: Pagination & Print)  
 **Author:** ScoreForge Core Engineering  
 **Scope:** Complete architectural blueprint for multi-voice polyphony, horizontal cross-staff column alignment, skyline vertical spacing, staff groups and barlines, discrete page layouts, keymap conflict resolutions, MusicXML mapping, test corpus, and migration strategy. Zero runtime code implemented in Milestone H1.
@@ -13,7 +13,8 @@
 |:---|:---|:---|:---|
 | **v1.0** | 17.11.2026 | Core Engineering | Initial architectural draft for multi-staff and pagination. Rejected by lead due to loose column alignment and ad-hoc vertical spacing. |
 | **v2.0** | 18.11.2026 | Core Engineering | Addressed initial review items (keymap collision notes, Turkish Q labels, Double rAF perf numbers). Rejected by lead (not accepted in full). |
-| **v3.0** | 18.11.2026 | Core Engineering | **Complete rewrite under lead review:**<br>1. **Horizontal Alignment:** Replaced flawed max-width with global tick column union, shortest-duration gap, per-staff glyph extents, column-relative Stage 1 output, and measure-level compound cache keys.<br>2. **Vertical Layout:** Replaced fixed staff gaps with dynamic per-system top/bottom skylines, 2.5 sp lyric clearance, and pipeline reordering (horizontal -> breaking -> skyline -> pagination).<br>3. **Groups & Barlines:** Added `Score.groups: StaffGroup[]`, through/individual/mensurstrich barline spans, template associations, and fixed v6->v7 migration (unique MIDI channels, template shortNames, validated `crossStaffTarget`).<br>4. **Voice Model:** Strict `voiceIndex` (1..4) identity invariant, v7 4-tuple cursor/selection, cross-staff Range and List selection models, and `validateScore` rules.<br>5. **Voice Rules:** Deterministic Gould "Behind Bars" engraving rules for polyphony, opposing stems, horizontal voice offsets for voices 3 & 4, unison/second noteheads, formulaic rest collision shifts in 0.5 sp steps, rest consolidation, and voice-2 rest suppression.<br>6. **Keymap:** Mechanically verified conflict table against `keymap.ts`, browser shortcuts, and Turkish Windows AltGr (Ctrl+Alt); non-conflicting voice/staff switching.<br>7. **Sub-Milestones:** Structured M7a (Single-staff voices), M7b (Grand staff), M7c (Ensembles, groups & C clefs: alto, tenor, treble-8vb), M7d (Pages & print); entry task `perf-0`; milestone gates.<br>8. **Corpus:** 9 historical excerpts with unverified claims audited and identified.<br>9. **Performance:** Unified production Double rAF & Event Timing budget table (p95 <= 20 ms / 64 mm-staves; <= 30 ms / 200 mm-staves; Node edit <= 5 ms).<br>10. **MusicXML & Pages:** Formal MusicXML element mapping (backup/forward/staves) and discrete page model. |
+| **v3.0** | 18.11.2026 | Core Engineering | Complete rewrite under lead review (global tick columns, dynamic skylines, groups, voice invariants, Gould engraving rules, keymap, and MusicXML). |
+| **v3.1** | 19.11.2026 | Core Engineering | **Targeted lead review revisions:**<br>1. **Column Gap Interval:** Replaced shortest event duration with interval to next global column $t_{k+1} - t_k$; added Staff D / Staff E counterexample.<br>2. **Gould References:** Removed page numbers; marked Voices 3/4 offsets (+1.25/-1.25 sp) and second intervals as PROPOSED with human gallery verification procedure.<br>3. **Corpus Audit:** Replaced all "Verified (edition)" with "UNVERIFIED claim, to be checked by the human against the IMSLP score"; removed publisher names; confirmed BWV 140 as SATB closing chorale (Bach-Gesellschaft).<br>4. **Local Exercise:** Added non-committed local exercise for 'Uzun İnce Bir Yoldayım' (Aşık Veysel); added `tests/private/` to `.gitignore`.<br>5. **Backlog:** Added solfege 'es' rest marking and stacked chord syllables to backlog. |
 
 ---
 
@@ -50,11 +51,20 @@ For any measure $m \in \text{Score.measures}$, the global column set $\mathcal{T
 $$\mathcal{T}_m = \bigcup_{s \in \text{Staves}} \bigcup_{v \in s.\text{voices}} \{ \text{ev.startTick} \mid \text{ev} \in v.\text{events} \} = \{ t_0, t_1, t_2, \dots, t_{K-1} \}$$
 where $0 = t_0 < t_1 < \dots < t_{K-1} < \text{measureTicks}(m)$.
 
-#### Definition 2: Shortest Column Duration
-The duration $\Delta t_k$ following column $k$ is governed by the shortest sounding event starting at $t_k$ across all staves:
-$$\Delta t_k = \min_{s \in \text{Staves}} \{ \text{ev.duration} \mid \text{ev.startTick} = t_k \} \quad (\text{or } t_{k+1} - t_k)$$
+#### Definition 2: Next Global Column Interval & Optical Gap
+The duration $\Delta t_k$ following column $k$ is governed strictly by the interval to the **NEXT GLOBAL COLUMN**:
+$$\Delta t_k = t_{k+1} - t_k \quad (\text{or } (m.\text{actualTicks} \mathbin{??} \text{measureTicks}(m)) - t_k \text{ for the terminal column})$$
+Deriving the baseline gap from the interval $t_{k+1} - t_k$ rather than the duration of notes starting at $t_k$ is mathematically required because notes on other staves can introduce intermediate columns within that duration.
+
+**Counterexample Demonstrating the Interval Requirement:**
+- Staff D holds a note starting at tick $-240$ (from a pickup or tied over) that sounds through tick $360$, with its next event starting at tick $360$.
+- Staff E has an event starting at tick $0$ with a duration of $480\text{ ticks}$.
+- The global column set for this measure consists of columns at tick $0$ and tick $360$ ($t_0 = 0$, $t_1 = 360$).
+- If column 0's gap were naively derived from Staff E's duration ($480\text{ ticks}$), the optical spacing would allocate room for $480\text{ ticks}$, pushing tick $360$ too far to the right and distorting the rhythm.
+- Deriving the gap strictly from the interval to the next global column ($t_1 - t_0 = 360 - 0 = 360\text{ ticks}$) computes the exact optical distance required for $360\text{ ticks}$.
+
 The optical spacing baseline gap $G_{\text{optical}}(t_k)$ is computed using the non-linear engraving power curve:
-$$G_{\text{optical}}(t_k) = \text{baseSpacing} \cdot \left(\frac{\Delta t_k}{\text{PPQ}}\right)^{0.6}$$
+$$G_{\text{optical}}(t_k) = \text{baseSpacing} \cdot \left(\frac{t_{k+1} - t_k}{\text{PPQ}}\right)^{0.6}$$
 
 #### Definition 3: Per-Staff Minimum Distance Between Columns
 For each staff $s$ and each adjacent column pair $(t_k, t_{k+1})$, let $\mathcal{E}(s, t_k)$ be the set of layout items belonging to events active at $t_k$. The minimum required horizontal distance $D_{\min}(s, t_k, t_{k+1})$ is determined by the rightmost extent of items at $t_k$ (including noteheads, accidentals, dots, displaced polyphonic noteheads, and lyric syllables) plus the leftmost extent (pre-roll / accidental clearance) of items starting at $t_{k+1}$:
@@ -65,16 +75,21 @@ The final distance $W(t_k)$ between column $t_k$ and $t_{k+1}$ is:
 $$W(t_k) = \max \left( G_{\text{optical}}(t_k), \max_{s \in \text{Staves}} D_{\min}(s, t_k, t_{k+1}) \right)$$
 
 ### 1.3 Worked Example
-- **Staff 1 (Soprano/Alto):** Tick 0 has an F4 quarter note; Tick 480 has an A4 eighth note; Tick 960 has a C5 quarter note.
-- **Staff 2 (Bass):** Tick 0 has a low F2 half note with a sharp accidental and a displaced voice-2 notehead (unison clash, shifted right by $+1.25\text{ sp}$). Tick 960 has a C3 half note.
+- **Staff 1 (Soprano/Alto):** Tick 0 has an F4 quarter note ($960\text{ ticks}$); Tick 480 has an A4 eighth note ($480\text{ ticks}$); Tick 960 has a C5 quarter note.
+- **Staff 2 (Bass):** Tick 0 has a low F2 half note ($1920\text{ ticks}$) with a sharp accidental and a displaced voice-2 notehead (unison clash, shifted right by $+1.25\text{ sp}$). Tick 960 has a C3 half note.
 - **Tick Union $\mathcal{T}_m$:** $\{ 0, 480, 960 \}$.
 - **Column 0 ($t = 0$):**
-  - Shortest duration across staves: Tick 480 exists on Staff 1 $\implies \Delta t_0 = 480\text{ ticks}$ (eighth note).
+  - Next global column is $t_1 = 480 \implies \Delta t_0 = t_1 - t_0 = 480\text{ ticks}$.
   - $G_{\text{optical}}(0) = 4.0 \cdot (480 / 960)^{0.6} = 2.64\text{ sp}$.
   - Staff 1 extent at 0: Notehead black ($1.18\text{ sp}$) $\implies D_{\min}(\text{Staff 1}, 0, 480) = 1.18 + 0.5 = 1.68\text{ sp}$.
   - Staff 2 extent at 0: Accidental sharp ($1.0\text{ sp}$) + Notehead ($1.18\text{ sp}$) + Displaced unison notehead ($+1.25\text{ sp}$) $= 3.43\text{ sp}$.
   - Distance $W(0) = \max(2.64, 1.68, 3.43) = 3.43\text{ sp}$.
-- **Result:** Tick 480 on Staff 1 is placed exactly at $x = 3.43\text{ sp}$, maintaining perfect clearance with Staff 2's displaced cluster without artificially stretching beat 2 (tick 960).
+- **Column 1 ($t = 480$):**
+  - Next global column is $t_2 = 960 \implies \Delta t_1 = t_2 - t_1 = 480\text{ ticks}$.
+  - Optical gap: $G_{\text{optical}}(480) = 2.64\text{ sp}$.
+  - Physical clearance: Eighth notehead and flag clearance $\implies 2.10\text{ sp}$.
+  - Distance $W(480) = \max(2.64, 2.10) = 2.64\text{ sp}$.
+- **Result:** Tick 480 on Staff 1 is placed exactly at $x = 3.43\text{ sp}$, maintaining perfect clearance with Staff 2's displaced cluster without artificially stretching beat 2 (tick 960, placed at $x = 3.43 + 2.64 = 6.07\text{ sp}$).
 
 ### 1.4 Algorithmic Complexity & Pseudo-Code
 
@@ -95,14 +110,15 @@ function computeMeasureColumnLayout(
     }
   }
   const columns = Array.from(tickSet).sort((a, b) => a - b);
+  const totalMeasureTicks = mDef.actualTicks ?? measureTicks(mDef.timeSig);
   
-  // Step 2: For each column, determine shortest active duration
+  // Step 2: For each column, determine interval to next global column
   const columnGaps: number[] = [];
   for (let i = 0; i < columns.length; i++) {
     const t = columns[i];
-    const nextT = i + 1 < columns.length ? columns[i + 1] : mDef.actualTicks ?? measureTicks(mDef.timeSig);
-    const shortestDuration = Math.min(nextT - t, findShortestEventDurationAtTick(staves, t));
-    const opticalGap = calculateOpticalSpacing(shortestDuration);
+    const nextT = i + 1 < columns.length ? columns[i + 1] : totalMeasureTicks;
+    const columnInterval = nextT - t;
+    const opticalGap = calculateOpticalSpacing(columnInterval);
     
     // Step 3: Find maximum physical glyph clearance required across all staves
     let maxPhysicalGap = 0;
@@ -281,33 +297,37 @@ export type SelectionV7 =
 
 ---
 
-## 5. Gould-Compliant Engraving Rules for Polyphony
+## 5. Engraving Rules for Polyphony (Gould Standards & Proposals)
 
-*(All rules referenced against Elaine Gould, "Behind Bars: The Definitive Guide to Music Notation", Faber Music 2011, pp. 48–55, 65–72).*
+*(Standard classical polyphony rules referenced against Elaine Gould, "Behind Bars: The Definitive Guide to Music Notation", Faber Music).*
 
 ### 5.1 Definition of a Polyphonic Staff-Measure
 A staff-measure is defined as **polyphonic** if and only if $\ge 2$ voices contain at least one sounding `NoteEvent` within that measure. A measure with voice 1 notes and only voice 2 rests is treated as monophonic unless voice 2 rests are explicitly shown.
 
 ### 5.2 Stem Direction Rules
-- **Monophonic Measure:** Middle line rule (Gould p. 13): noteheads on or above line 2 (middle B in treble) stem down; noteheads below line 2 stem up.
+- **Monophonic Measure:** Middle line rule: noteheads on or above line 2 (middle B in treble) stem down; noteheads below line 2 stem up.
 - **Polyphonic Measure:**
   - **Voice 1:** Stems point strictly **UP**.
   - **Voice 2:** Stems point strictly **DOWN**.
-  - **Voice 3:** Stems point **UP**. Horizontally displaced to the right by $+1.25\text{ sp}$ to avoid collision with Voice 1.
-  - **Voice 4:** Stems point **DOWN**. Horizontally displaced to the left by $-1.25\text{ sp}$ to avoid collision with Voice 2.
+  - **Voice 3 (PROPOSED):** Stems point **UP**. Horizontally displaced to the right by $+1.25\text{ sp}$ to avoid collision with Voice 1.
+  - **Voice 4 (PROPOSED):** Stems point **DOWN**. Horizontally displaced to the left by $-1.25\text{ sp}$ to avoid collision with Voice 2.
+  - *Validation Procedure for Voices 3 & 4:* Golden visual regression cards (e.g. 4-voice single-staff polyphony) will be rendered and submitted to the human for direct visual comparison against published classical scores.
 
 ### 5.3 Unison and Second Interval Notehead Placement
 
 #### Rule 1: Perfect Unison (Same Pitch, Same Value)
-- Two voices sharing the exact same pitch and duration share a **single notehead** with a two-way stem (one stem up for Voice 1, one stem down for Voice 2) (Gould p. 49).
+- Two voices sharing the exact same pitch and duration share a **single notehead** with a two-way stem (one stem up for Voice 1, one stem down for Voice 2).
 
-#### Rule 2: Unison Clash (Different Durations or Seconds)
+#### Rule 2: Unison Clash (Different Durations)
 - If Voice 1 is a half note (open head) and Voice 2 is a quarter note (black head), they cannot share a notehead.
 - **Voice 1** sits in the standard optical column.
-- **Voice 2** is displaced to the right side of Voice 1's stem (Gould p. 50).
-- If pitches form a second interval (e.g. F4 and G4):
-  - Higher notehead is on the right; lower notehead is on the left.
+- **Voice 2** is displaced to the right side of Voice 1's stem.
+
+#### Rule 3: Second Intervals (PROPOSED)
+- When pitches in opposing voices form a second interval (e.g. F4 and G4):
+  - Higher notehead is placed on the right; lower notehead is placed on the left.
   - Voice 1 stem goes up from the right notehead; Voice 2 stem goes down from the left notehead.
+  - *Validation Procedure for Second Intervals:* A dedicated gallery card will be rendered with second intervals across various stem configurations and reviewed by the human against reference engraving examples before final acceptance.
 
 ### 5.4 Rest Placement and Dynamic Collision Avoidance
 - **Formula for Polyphonic Rest Elevation:**
@@ -315,7 +335,7 @@ A staff-measure is defined as **polyphonic** if and only if $\ge 2$ voices conta
   $$Y_{\text{rest}}(\text{Voice 2}) = Y_{\text{default}} + 2.0\text{ sp} + k \cdot 0.5\text{ sp}$$
   where $k \in \{0, 1, 2, 3\}$ is the minimal step count preventing bounding-box collision with notes in the opposing voice.
 - **Rest Boundaries:** Rests must remain within $y \in [-2.0, 6.0]\text{ sp}$.
-- **Rest Consolidation:** When Voice 1 and Voice 2 have identical rests at identical ticks (e.g., both rest on beat 3), a single consolidated rest is rendered at the staff center ($y = 2.0\text{ sp}$) (Gould p. 52).
+- **Rest Consolidation:** When Voice 1 and Voice 2 have identical rests at identical ticks (e.g., both rest on beat 3), a single consolidated rest is rendered at the staff center ($y = 2.0\text{ sp}$).
 - **Hidden Voice-2 Rests:** In choral/keyboard textures where Voice 2 enters after a pickup or mid-measure pause, leading voice-2 rests may be hidden (`rest.hidden = true`).
 
 ---
@@ -377,7 +397,7 @@ Every sub-milestone is autonomous and carries its own strict four-part verificat
 - **Exit Gates:**
   - *Property Tests:* Events at identical ticks on different staves share identical $x$ coordinate; measure widths are strictly equal across staves in a system.
   - *Gallery Cards:* Grand Staff Piano Card with through-barlines and curly brace.
-  - *IMSLP Audit:* Bach Invention No. 1 mm. 1–8 and Mozart K. 545 mm. 1–8 match Bärenreiter edition.
+  - *IMSLP Audit:* Bach Invention No. 1 mm. 1–8 and Mozart K. 545 mm. 1–8 checked against IMSLP public domain score.
   - *Performance:* Keystroke-to-paint p95 $\le 30\text{ ms}$ on 100-measure 2-staff score (200 measure-staves).
 
 ### Milestone 7c: Multi-Part Ensembles, Groups, and C Clefs
@@ -385,7 +405,7 @@ Every sub-milestone is autonomous and carries its own strict four-part verificat
 - **Exit Gates:**
   - *Property Tests:* Individual vocal barlines do not intersect lyric bounding boxes; C clef transpositions and pitches map accurately.
   - *Gallery Cards:* String Quartet card (alto clef, bracket, through-barlines) and SATB card (lyrics, individual barlines).
-  - *IMSLP Audit:* Beethoven Op. 18 No. 1 mm. 1–8 (Viola alto clef) and Schubert D. 547 mm. 1–12 match Breitkopf/Peters edition.
+  - *IMSLP Audit:* Beethoven Op. 18 No. 1 mm. 1–8 (Viola alto clef) and Schubert D. 547 mm. 1–12 checked against IMSLP public domain score.
   - *Performance:* Keystroke-to-paint p95 $\le 30\text{ ms}$ on 50-measure 4-staff score (200 measure-staves).
 
 ### Milestone 7d: Discrete Page Model & Print Layout
@@ -399,19 +419,29 @@ Every sub-milestone is autonomous and carries its own strict four-part verificat
 
 ## 8. Milestone Reference Corpus & IMSLP Audit Matrix
 
-All reference tests utilize **short excerpts** (measures 1–8 or 1–12) to verify core engraving invariants without out-of-scope feature bloat.
+All reference tests utilize **short excerpts** (measures 1–8 or 1–12) to verify core engraving invariants without out-of-scope feature bloat. Because this repository is open source and will not assert what it has not checked, specific commercial publisher claims have been dropped. All edition assertions are marked as claims to be verified against IMSLP public domain scores.
 
 | # | Work & Excerpt | Target Milestone | Target Engraving Test Role | IMSLP Edition Audit Status |
 |:---:|:---|:---:|:---|:---|
-| 1 | **J.S. Bach — Chorale "Wachet auf", BWV 140 (mm. 1–8)** | M7a | 4-part SATB homophony, fermatas, German lyrics, individual barlines | **VERIFIED:** Individual barlines broken between staves for lyrics corridor (Bärenreiter). |
-| 2 | **J. Brahms — Intermezzo Op. 118 No. 2 (mm. 1–8)** | M7a | Polyphonic voice leading, opposing stems, shared noteheads | **AUDIT NOTE:** Pedal markings excluded from M7 acceptance; scoped to M12. Voice leading strictly verified against Henle. |
-| 3 | **J.S. Bach — Invention No. 1 in C major, BWV 772 (mm. 1–8)** | M7b | Two-staff grand staff contrapuntal imitation, 16th-note beam alignment | **VERIFIED:** Clean two-part counterpoint without pedals or text (Bärenreiter). |
-| 4 | **W.A. Mozart — Piano Sonata in C major, K. 545, I (mm. 1–8)** | M7b | Melody over Alberti bass, legato slurs, dynamics | **AUDIT NOTE:** 1st/2nd voltas occur in exposition repeat (m. 28), not mm. 1–8. Excerpt tests Alberti bass synchronization. |
-| 5 | **F. Chopin — Prelude in E minor, Op. 28 No. 4 (mm. 1–12)** | M7b | Descending chromatic polyphonic chords in left hand | **AUDIT NOTE:** "Tempo rubato" text excluded from M7 acceptance; scoped to M10. Chromatic accidentals verified against Polish National Edition. |
-| 6 | **F. Schubert — "An die Musik", D. 547 (mm. 1–12)** | M7c | Mixed ensemble: Solo Voice (individual barline) + Piano (brace, through-barlines) | **VERIFIED:** Distinct barline spans between vocal and piano staves (Peters). |
-| 7 | **L. van Beethoven — String Quartet Op. 18 No. 1, I (mm. 1–8)** | M7c | Chamber bracket, through-barlines connecting 4 staves, **Viola Alto Clef** | **VERIFIED:** Alto C-clef placement on line 3 (Henle). |
-| 8 | **Claude Debussy — "Golliwogg's Cakewalk" (mm. 1–8)** | M7d | Syncopation, sudden dynamics (ff, sfz), page-turn layout | **AUDIT NOTE:** Mid-score key change to G-flat occurs at m. 25, not mm. 1–8. Excerpt tests page distribution and syncopations. |
-| 9 | **Turkish Folk Song (e.g. "Süt İçtim Dilim Yandı", mm. 1–9)** | M7a/M7b | Solfege syllables, regional aksak meter, lyric hyphens/extenders | **VERIFIED:** Single and grand staff Turkish vocal notation. |
+| 1 | **J.S. Bach — Chorale "Wachet auf", BWV 140 (mm. 1–8)** | M7a | 4-part SATB homophony, fermatas, German lyrics, individual barlines | **UNVERIFIED claim, to be checked by the human against the IMSLP score:** SATB closing chorale from the Bach-Gesellschaft edition (note: guitar arrangement PDF is not used). Individual barlines broken between staves for lyrics corridor. |
+| 2 | **J. Brahms — Intermezzo Op. 118 No. 2 (mm. 1–8)** | M7a | Polyphonic voice leading, opposing stems, shared noteheads | **UNVERIFIED claim, to be checked by the human against the IMSLP score:** Polyphonic voice leading and shared noteheads. Pedal markings excluded from M7 acceptance; scoped to M12. |
+| 3 | **J.S. Bach — Invention No. 1 in C major, BWV 772 (mm. 1–8)** | M7b | Two-staff grand staff contrapuntal imitation, 16th-note beam alignment | **UNVERIFIED claim, to be checked by the human against the IMSLP score:** Two-part counterpoint without pedals or text. |
+| 4 | **W.A. Mozart — Piano Sonata in C major, K. 545, I (mm. 1–8)** | M7b | Melody over Alberti bass, legato slurs, dynamics | **UNVERIFIED claim, to be checked by the human against the IMSLP score:** Alberti bass synchronization. Note: 1st/2nd voltas occur in exposition repeat (m. 28), not mm. 1–8. |
+| 5 | **F. Chopin — Prelude in E minor, Op. 28 No. 4 (mm. 1–12)** | M7b | Descending chromatic polyphonic chords in left hand | **UNVERIFIED claim, to be checked by the human against the IMSLP score:** Chromatic accidentals in left-hand chords. "Tempo rubato" text excluded from M7; scoped to M10. |
+| 6 | **F. Schubert — "An die Musik", D. 547 (mm. 1–12)** | M7c | Mixed ensemble: Solo Voice (individual barline) + Piano (brace, through-barlines) | **UNVERIFIED claim, to be checked by the human against the IMSLP score:** Distinct barline spans between vocal and piano staves. |
+| 7 | **L. van Beethoven — String Quartet Op. 18 No. 1, I (mm. 1–8)** | M7c | Chamber bracket, through-barlines connecting 4 staves, **Viola Alto Clef** | **UNVERIFIED claim, to be checked by the human against the IMSLP score:** Alto C-clef placement on line 3. |
+| 8 | **Claude Debussy — "Golliwogg's Cakewalk" (mm. 1–8)** | M7d | Syncopation, sudden dynamics (ff, sfz), page-turn layout | **UNVERIFIED claim, to be checked by the human against the IMSLP score:** Page distribution and syncopations. Note: mid-score key change to G-flat occurs at m. 25, not mm. 1–8. |
+| 9 | **Turkish Folk Song (e.g. "Süt İçtim Dilim Yandı", mm. 1–9)** | M7a/M7b | Solfege syllables, regional aksak meter, lyric hyphens/extenders | **UNVERIFIED claim, to be checked by the human against the IMSLP score:** Single and grand staff Turkish vocal notation. |
+
+### 8.1 Local Private Test Fixtures (Never Committed)
+The repository is public, and all committed fixtures must be strictly public-domain or traditional. A dedicated local directory `tests/private/` is added to `.gitignore` for private transcriptions and tests that are never committed to version control.
+- **Local Exercise — "Uzun İnce Bir Yoldayım" (Aşık Veysel):**
+  - Time signature: 2/4
+  - Rhythmic features: 16th-note beams, dotted rhythms
+  - Structure: End repeat barline
+  - Lyric features: Solfege syllables, `'es'` syllable under rests, stacked syllables under a two-note chord (e.g. two pitches = two lyric lines)
+  - Microtonal note: Turkish koma accidentals in key signatures remain out of scope until Milestone 13.
+  - Storage: Resides strictly inside `tests/private/` and is never committed.
 
 ---
 
@@ -490,9 +520,11 @@ export interface PageDef {
 
 ---
 
-## 12. Lead Decisions Recorded & Questions Closed
+## 12. Lead Decisions Recorded & Backlog
 
 1. **Abbreviated Instrument Names:** Abbreviated names on systems after the first are enabled **only for multi-part ensembles ($\ge 2$ parts)**. For solo piano or single-instrument scores, subsequent systems have no indent, maximizing printable width.
 2. **Lyric Vertical Clearance:** Minimum vertical clearance between lyric syllable baselines and the top skyline of the next staff down is **strictly $2.5\text{ sp}$**.
 3. **Staff Switching Keymap:** Navigating between staves is permanently assigned to physical `BracketLeft` (staff above) and `BracketRight` (staff below).
 4. **Deferred to Milestone 13+:** Visual page-turn hints on rests are non-binding suggestions and deferred to M13+.
+5. **Backlog — Solfege Option "es" on Rests:** In the `Hecele (Solfej)` command, add an option to insert the syllable `'es'` under rest events.
+6. **Backlog — Stacked Syllables for Chords:** In the `Hecele (Solfej)` command, support multiple vertically stacked syllables for chord pitches (e.g. two pitches create two lyric lines aligned with the chord notes).

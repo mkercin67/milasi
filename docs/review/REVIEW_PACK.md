@@ -1,6 +1,6 @@
 # ScoreForge Review Pack
 
-**Generated:** 2026-11-18T11:51:31.646Z  
+**Generated:** 2026-11-18T21:54:24.621Z  
 **Target Milestone:** Foundation Hardening (Milestone H1) Closed  
 **Architecture Version:** Schema v6 (Preparing Schema v7)  
 
@@ -19,6 +19,7 @@
 
 ## 2. Recent Git Log (Last 30 Commits)
 
+* `0e3d4db` H1 closing 3: design document v3 (2026-11-18)
 * `256a785` H1 closing 3: align architecture facts, fix design document keymap and corpus, pin CI node 22, add reviewpack generator (2026-11-18)
 * `51d85ba` H1 closing 3: repo hygiene, delete stale root screenshots, add README and gitignore rules (2026-11-18)
 * `eb3f63a` H1 closing 2: comprehensive v2 design document for multi-staff and pagination (2026-11-18)
@@ -48,7 +49,6 @@
 * `91d4b84` M6b closing: terminology, event.code keymap, legato overlap, bundle size reduction, and 200% close-up verification (2026-11-17)
 * `13e63db` M6b: dynamics, articulations, slurs, notations toolbar panel, and playback legato (2026-11-17)
 * `df884eb` M6a closing: multi-measure selection, R2 anti-stale-closure refs, v1 migration test, and paste profile (2026-11-17)
-* `c85461c` Fix cross-measure range selection and clipboard copy/paste count (2026-11-16)
 
 ---
 
@@ -66,7 +66,7 @@
 
 ## 4. Tracked Files and Line Counts
 
-Total Tracked Files: 346 | Total Lines: 194061
+Total Tracked Files: 346 | Total Lines: 194112
 
 | Tracked File | Lines |
 |:---|---:|
@@ -91,16 +91,16 @@ Total Tracked Files: 346 | Total Lines: 194061
 | `scripts/run_m3c3_e2e_verification.mjs` | 549 |
 | `src/core/input.ts` | 546 |
 | `scripts/run_m3c4_e2e_verification.mjs` | 538 |
+| `docs/design/multi-staff-and-pages.md` | 531 |
 | `src/ui/app/useAppKeyboard.ts` | 531 |
 | `src/ui/editor/useEditorSelection.ts` | 529 |
 | `src/ui/ScoreView.tsx` | 524 |
 | `scripts/run_m3c_e2e_verification.mjs` | 517 |
-| `docs/design/multi-staff-and-pages.md` | 499 |
 | `src/core/notationCommands.ts` | 497 |
 | `src/ui/galleryCases.ts` | 495 |
 | `tests/core/commands.test.ts` | 487 |
 | `scripts/run_m6b_e2e_verification.mjs` | 480 |
-| `src/ui/toolbar/ToolbarFileHistory.tsx` | 459 |
+| `src/ui/toolbar/ToolbarFileHistory.tsx` | 460 |
 | `src/layout/mouse.ts` | 454 |
 | `src/core/commands.ts` | 449 |
 | `src/ui/app/modals/ConfirmModals.tsx` | 430 |

@@ -6,3 +6,6 @@ dist
 /artifacts/
 /*.png
 
+# Local private test fixtures (never committed)
+tests/private/
+
