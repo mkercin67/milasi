@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// SPDX-License-Identifier: GPL-3.0-or-later
 /**
  * Playwright DOM i18n Verification Script
  *
@@ -8,10 +9,11 @@
  * Captures toolbar screenshots for both locales.
  */
 
-import http from 'http';
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import { spawn } from 'node:child_process';
+import http from 'node:http';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -40,6 +42,31 @@ function checkServer(url) {
     http.get(url, (res) => {
       resolve(res.statusCode === 200);
     }).on('error', () => resolve(false));
+  });
+}
+
+function waitForServer(url, timeoutMs = 15000) {
+  const t0 = Date.now();
+  return new Promise((resolve, reject) => {
+    const check = () => {
+      http.get(url, (res) => {
+        if (res.statusCode === 200) {
+          resolve();
+        } else {
+          retry();
+        }
+      }).on('error', retry);
+    };
+
+    const retry = () => {
+      if (Date.now() - t0 > timeoutMs) {
+        reject(new Error(`Timed out waiting for server at ${url}`));
+      } else {
+        setTimeout(check, 250);
+      }
+    };
+
+    check();
   });
 }
 
@@ -97,11 +124,23 @@ async function checkVisibleTextNodes(page, contextName) {
 }
 
 async function runI18nPlaywrightCheck() {
-  const serverUrl = 'http://localhost:5173';
-  const isUp = await checkServer(serverUrl);
-  if (!isUp) {
-    console.error(`Dev server is not reachable at ${serverUrl}. Please run npm run dev first.`);
-    process.exit(1);
+  let serverUrl = 'http://localhost:5173';
+  let previewProcess = null;
+
+  const is5173Up = await checkServer(serverUrl);
+  if (!is5173Up) {
+    const is4198Up = await checkServer('http://localhost:4198');
+    if (is4198Up) {
+      serverUrl = 'http://localhost:4198';
+    } else {
+      console.log('No existing dev/preview server found; starting Vite preview on port 4198...');
+      previewProcess = spawn('npx', ['vite', 'preview', '--port', '4198', '--strictPort'], {
+        shell: true,
+        stdio: 'pipe',
+      });
+      serverUrl = 'http://localhost:4198';
+      await waitForServer(serverUrl);
+    }
   }
 
   console.log(`Testing ScoreForge UI against ${serverUrl}...`);
@@ -112,14 +151,15 @@ async function runI18nPlaywrightCheck() {
     args: ['--no-sandbox', '--disable-gpu'],
   });
 
-  const page = await browser.newPage({ viewport: { width: 1366, height: 850 } });
-  await page.goto(serverUrl, { waitUntil: 'networkidle' });
-  await sleep(500);
-
-  const screenshotDir = path.join(rootDir, 'docs', 'screenshots', 'h1');
-  fs.mkdirSync(screenshotDir, { recursive: true });
-
   let allPassed = true;
+
+  try {
+    const page = await browser.newPage({ viewport: { width: 1366, height: 850 } });
+    await page.goto(serverUrl, { waitUntil: 'networkidle' });
+    await sleep(500);
+
+    const screenshotDir = path.join(rootDir, 'docs', 'screenshots', 'h1');
+    fs.mkdirSync(screenshotDir, { recursive: true });
 
   // 1. TURKISH (tr)
   console.log('\n--- Verifying Turkish (tr) Locale ---');
@@ -217,7 +257,14 @@ async function runI18nPlaywrightCheck() {
     }
   }
 
-  await browser.close();
+  } finally {
+    if (browser) {
+      await browser.close();
+    }
+    if (previewProcess) {
+      previewProcess.kill();
+    }
+  }
 
   if (!allPassed) {
     console.error('\nFAILED: One or more raw i18n translation keys were displayed in the UI!');
