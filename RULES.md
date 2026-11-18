@@ -50,6 +50,15 @@ Read this file and ARCHITECTURE.md at the start of every session.
 - **R1:** Tests must create their data through the SAME path the app uses (New dialog / `createEmptyScore` / real keystrokes), never through hand-built fixtures that differ from it. Multi-measure and multi-system cases are mandatory for anything that moves across measures.
 - **R2:** Keyboard and pointer handlers read state through a single source (a ref updated synchronously on every state change, or a reducer with `getState()`). No handler may capture state in a closure that can go stale.
 - **R3:** Voice identity in the model is a stable `voiceIndex` (1..4) per staff, identical across measures; random IDs may exist but are never compared across measures.
+- **R4:** At the END of EVERY task:
+  1. `npm run check` passes cleanly.
+  2. Commit with a clear, descriptive message (`H1 closing 4: ...`).
+  3. `git push origin main`.
+  4. Print `git log -1 --oneline`, `git status -sb` and `git ls-remote origin main` and confirm the hashes are equal (local HEAD == remote main).
+  5. If the push fails (auth, network, non-fast-forward), STOP and report the exact error; never force-push, never rewrite pushed history, never commit secrets or tokens, never ask the human to paste a token (use the Git credential manager).
+  6. At a milestone end, also tag and push: `git tag <name>` and `git push origin <name>`.
+  7. If GitHub CLI (`gh`) exists, print `gh run list --limit 3`, otherwise remind the human to check the Actions tab.
+  If `npm run check` fails, do not push; fix or report.
 
 ## Things you must not do
 

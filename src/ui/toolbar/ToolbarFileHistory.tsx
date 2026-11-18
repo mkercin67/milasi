@@ -76,6 +76,7 @@ export const ToolbarFileHistory: React.FC<ToolbarFileHistoryProps> = ({
 
       <button
         type="button"
+        data-testid="btn-new-score"
         onClick={handleButtonClick(onOpenNewScore)}
         onMouseDown={(e) => e.preventDefault()}
         title={t('dialog.newScore.title')}
@@ -186,7 +187,7 @@ export const ToolbarFileHistory: React.FC<ToolbarFileHistoryProps> = ({
             data-testid="btn-open-keysig"
             onClick={handleButtonClick(onOpenKeySig)}
             onMouseDown={(e) => e.preventDefault()}
-            title={t('toolbar.keySignature')}
+            title={t('toolbar.keySig')}
             style={{
               padding: '0.4rem 0.65rem',
               fontSize: '0.85rem',
@@ -198,7 +199,7 @@ export const ToolbarFileHistory: React.FC<ToolbarFileHistoryProps> = ({
               cursor: 'pointer',
             }}
           >
-            ♯♭ {t('toolbar.keySignature')}
+            ♯♭ {t('toolbar.keySig')}
           </button>
         )}
 
@@ -208,7 +209,7 @@ export const ToolbarFileHistory: React.FC<ToolbarFileHistoryProps> = ({
             data-testid="btn-open-timesig"
             onClick={handleButtonClick(onOpenTimeSig)}
             onMouseDown={(e) => e.preventDefault()}
-            title={t('toolbar.timeSignature')}
+            title={t('toolbar.timeSig')}
             style={{
               padding: '0.4rem 0.65rem',
               fontSize: '0.85rem',
@@ -220,7 +221,7 @@ export const ToolbarFileHistory: React.FC<ToolbarFileHistoryProps> = ({
               cursor: 'pointer',
             }}
           >
-            𝄴 {t('toolbar.timeSignature')}
+            𝄴 {t('toolbar.timeSig')}
           </button>
         )}
 
@@ -230,7 +231,7 @@ export const ToolbarFileHistory: React.FC<ToolbarFileHistoryProps> = ({
             data-testid="btn-open-tempo"
             onClick={handleButtonClick(onOpenTempo)}
             onMouseDown={(e) => e.preventDefault()}
-            title={t('toolbar.tempoText')}
+            title={t('toolbar.tempo')}
             style={{
               padding: '0.4rem 0.65rem',
               fontSize: '0.85rem',
@@ -242,7 +243,7 @@ export const ToolbarFileHistory: React.FC<ToolbarFileHistoryProps> = ({
               cursor: 'pointer',
             }}
           >
-            ♩ {t('toolbar.tempoText')}
+            ♩ {t('toolbar.tempo')}
           </button>
         )}
 
