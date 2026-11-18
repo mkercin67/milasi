@@ -144,16 +144,6 @@ export function useAppKeyboard(params: UseAppKeyboardParams) {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Toggle hidden diagnostics panel (Ctrl+Alt+D or Cmd+Alt+D)
-      if (e.ctrlKey && e.altKey && (e.code === 'KeyD' || e.key.toLowerCase() === 'd')) {
-        e.preventDefault();
-        setIsDiagnosticsOpen((prev) => {
-          if (!prev) setPerfSamples([...perfSamplesRef.current]);
-          return !prev;
-        });
-        return;
-      }
-
       // Ignore typing inside text / number inputs or textareas (e.g. modal form inputs)
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
         return;
@@ -161,63 +151,63 @@ export function useAppKeyboard(params: UseAppKeyboardParams) {
 
       // If a button or select is focused, release focus so it never swallows shortcuts
       if (e.target instanceof HTMLButtonElement || e.target instanceof HTMLSelectElement) {
-        if (e.code === 'Space' || e.code === 'Enter') {
-          e.preventDefault();
-          (e.target as HTMLElement).blur();
-          return;
-        }
         (e.target as HTMLElement).blur();
       }
 
-      // Save and Open shortcuts (Ctrl+S / Cmd+S, Ctrl+O / Cmd+O)
-      if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey) {
-        if (e.code === 'KeyS' || e.key.toLowerCase() === 's') {
-          e.preventDefault();
-          handleSave(false);
-          return;
-        }
-        if (e.code === 'KeyO' || e.key.toLowerCase() === 'o') {
-          e.preventDefault();
-          handleOpenClick();
-          return;
-        }
+      const isPlaying = player.state === 'playing' || player.state === 'paused';
+      const action = mapKeyEvent(e, mode, { isPlaying });
+      if (!action) return;
+
+      e.preventDefault();
+
+      if (action === 'toggle-diagnostics') {
+        setIsDiagnosticsOpen((prev) => {
+          if (!prev) setPerfSamples([...perfSamplesRef.current]);
+          return !prev;
+        });
+        return;
       }
 
-      // Playback shortcuts: Space = play/pause (Shift+Space = play from start)
-      if (e.code === 'Space') {
-        e.preventDefault();
-        if (e.shiftKey) {
-          player.stop();
-          player.play();
+      if (action === 'save-score') {
+        handleSave(false);
+        return;
+      }
+
+      if (action === 'save-as-score') {
+        handleSave(true);
+        return;
+      }
+
+      if (action === 'open-score') {
+        handleOpenClick();
+        return;
+      }
+
+      if (action === 'toggle-playback') {
+        if (player.state === 'playing') {
+          player.pause();
+        } else if (player.state === 'paused') {
+          player.resume();
         } else {
-          if (player.state === 'playing') {
-            player.pause();
-          } else if (player.state === 'paused') {
-            player.resume();
+          if (selectedRange) {
+            player.playRange(selectedRange.anchorId, selectedRange.focusId);
           } else {
-            if (selectedRange) {
-              player.playRange(selectedRange.anchorId, selectedRange.focusId);
-            } else {
-              player.play(selectedEventId ?? undefined);
-            }
+            player.play(selectedEventId ?? undefined);
           }
         }
         return;
       }
 
-      // Esc stops playback first (if playing or paused)
-      if (e.code === 'Escape') {
-        if (player.state === 'playing' || player.state === 'paused') {
-          e.preventDefault();
-          player.stop();
-          return;
-        }
+      if (action === 'play-from-start') {
+        player.stop();
+        player.play();
+        return;
       }
 
-      const action = mapKeyEvent(e, mode);
-      if (!action) return;
-
-      e.preventDefault();
+      if (action === 'stop-playback') {
+        player.stop();
+        return;
+      }
 
       const tInput = e.timeStamp;
       const tHandlerStart = performance.now();

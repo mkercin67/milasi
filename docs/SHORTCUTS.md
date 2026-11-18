@@ -9,6 +9,11 @@
 
 | Key | Physical Code | Modifiers | Action |
 |-----|---------------|-----------|--------|
+| `Space` | `Space` | - | toggle-playback |
+| `Space` | `Space` | `Shift` | play-from-start |
+| `S` | `KeyS` | `Ctrl` | save-score |
+| `S` | `KeyS` | `Ctrl+Shift` | save-as-score |
+| `O` | `KeyO` | `Ctrl` | open-score |
 | `Z` | `KeyZ` | `Ctrl` | undo |
 | `Z` | `KeyZ` | `Ctrl+Shift` | redo |
 | `Y` | `KeyY` | `Ctrl` | redo |
@@ -76,10 +81,25 @@ Activated via `KeyN`. Enter pitches, rests, and note durations.
 | Key | Physical Code | Modifiers | Action |
 |-----|---------------|-----------|--------|
 | `Esc` | `Escape` | - | exit-note-input |
+| `1` | `Digit1` | `Shift` | apply-dynamic: pp |
+| `2` | `Digit2` | `Shift` | apply-dynamic: p |
+| `3` | `Digit3` | `Shift` | apply-dynamic: mp |
+| `4` | `Digit4` | `Shift` | apply-dynamic: mf |
+| `5` | `Digit5` | `Shift` | apply-dynamic: f |
+| `6` | `Digit6` | `Shift` | apply-dynamic: ff |
+| `7` | `Digit7` | `Shift` | apply-dynamic: sfz |
+| `8` | `Digit8` | `Shift` | apply-dynamic: fp |
 | `C..B` | `KeyC..KeyB` | - | enter-pitch |
 | `0` | `Digit0` | - | enter-rest |
 | `B` | `KeyB` | `Ctrl` | insert-measure |
 | `V` | `KeyV` | `Ctrl` | paste |
+| `S` | `KeyS` | - | toggle-slur |
+| `T` | `KeyT` | - | toggle-tie |
+| `X` | `KeyX` | - | reset-accidental |
+| `J` | `KeyJ` | - | toggle-articulation: staccato |
+| `K` | `KeyK` | - | toggle-articulation: tenuto |
+| `L` | `KeyL` | - | toggle-articulation: accent |
+| `L` | `KeyL` | `Shift` | toggle-articulation: marcato |
 | `2` | `Digit2` | - | set-duration: 32nd |
 | `3` | `Digit3` | - | set-duration: 16th |
 | `4` | `Digit4` | - | set-duration: eighth |
@@ -106,14 +126,6 @@ Activated via `KeyP`. Fine engraving layout nudging (`dx` / `dy`).
 | Key | Physical Code | Modifiers | Action |
 |-----|---------------|-----------|--------|
 | `Esc` | `Escape` | - | set-mode-select |
-| `1` | `Digit1` | `Shift` | apply-dynamic: pp |
-| `2` | `Digit2` | `Shift` | apply-dynamic: p |
-| `3` | `Digit3` | `Shift` | apply-dynamic: mp |
-| `4` | `Digit4` | `Shift` | apply-dynamic: mf |
-| `5` | `Digit5` | `Shift` | apply-dynamic: f |
-| `6` | `Digit6` | `Shift` | apply-dynamic: ff |
-| `7` | `Digit7` | `Shift` | apply-dynamic: sfz |
-| `8` | `Digit8` | `Shift` | apply-dynamic: fp |
 | `Left` | `ArrowLeft` | - | nudge dx: -0.25 |
 | `Right` | `ArrowRight` | - | nudge dx: +0.25 |
 | `Up` | `ArrowUp` | - | nudge dy: -0.25 |
@@ -131,6 +143,14 @@ Activated via `KeyP`. Fine engraving layout nudging (`dx` / `dy`).
 | `K` | `KeyK` | - | toggle-articulation: tenuto |
 | `L` | `KeyL` | - | toggle-articulation: accent |
 | `L` | `KeyL` | `Shift` | toggle-articulation: marcato |
+| `1` | `Digit1` | `Shift` | apply-dynamic: pp |
+| `2` | `Digit2` | `Shift` | apply-dynamic: p |
+| `3` | `Digit3` | `Shift` | apply-dynamic: mp |
+| `4` | `Digit4` | `Shift` | apply-dynamic: mf |
+| `5` | `Digit5` | `Shift` | apply-dynamic: f |
+| `6` | `Digit6` | `Shift` | apply-dynamic: ff |
+| `7` | `Digit7` | `Shift` | apply-dynamic: sfz |
+| `8` | `Digit8` | `Shift` | apply-dynamic: fp |
 
 ---
 
@@ -141,8 +161,11 @@ Activated via `KeyU`. Syllable entry and melisma extender input aligned to noteh
 | Key | Physical Code | Modifiers | Action |
 |-----|---------------|-----------|--------|
 | `Esc` | `Escape` | - | set-mode-select |
+| `Space` | `Space` | - | lyrics-commit-and-next |
+| `Enter` | `Enter` | - | lyrics-commit-and-next |
 | `Tab` | `Tab` | - | lyrics-next-note |
 | `Tab` | `Tab` | `Shift` | lyrics-prev-note |
+| `Backspace` | `Backspace` | - | lyrics-backspace-prev |
 
 ---
 

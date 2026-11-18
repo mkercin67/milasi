@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Score } from '../../core/model';
 import { autoSolfege, pasteLyrics, setLyrics, Command } from '../../core/commands';
-import { EditorMode } from '../keymap';
+import { EditorMode, mapKeyEvent } from '../keymap';
 
 export interface UseAppLyricsParams {
   score: Score;
@@ -104,7 +104,10 @@ export function useAppLyrics({
   }, [eligibleLyricsNoteIds, mode, selectEvent, selectedEventId]);
 
   const handleLyricsKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === ' ' || e.code === 'Space' || e.key === 'Enter' || e.code === 'Enter') {
+    const action = mapKeyEvent(e, 'lyrics', { lyricsInputEmpty: lyricsInputValue.length === 0 });
+    if (!action) return;
+
+    if (action === 'lyrics-commit-and-next' || action === 'lyrics-next-note') {
       e.preventDefault();
       if (selectedNote && lyricsInputValue.trim().length > 0) {
         executeCommand(setLyrics(selectedNote.id, lyricsInputValue.trim(), 1));
@@ -112,20 +115,20 @@ export function useAppLyrics({
       moveLyricsNote('next');
       return;
     }
-    if (e.key === 'Tab') {
+    if (action === 'lyrics-prev-note') {
       e.preventDefault();
       if (selectedNote && lyricsInputValue.trim().length > 0) {
         executeCommand(setLyrics(selectedNote.id, lyricsInputValue.trim(), 1));
       }
-      moveLyricsNote(e.shiftKey ? 'prev' : 'next');
+      moveLyricsNote('prev');
       return;
     }
-    if (e.key === 'Backspace' && lyricsInputValue.length === 0) {
+    if (action === 'lyrics-backspace-prev') {
       e.preventDefault();
       moveLyricsNote('prev');
       return;
     }
-    if (e.key === 'Escape') {
+    if (action === 'set-mode-select') {
       e.preventDefault();
       setMode('select');
       return;

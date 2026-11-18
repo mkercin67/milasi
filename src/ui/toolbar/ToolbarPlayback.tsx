@@ -1,5 +1,6 @@
 import React from 'react';
 import { useI18n } from '../i18n';
+import { isInputCommitEvent } from '../keymap';
 
 export interface ToolbarPlaybackProps {
   isPlaying?: boolean;
@@ -125,7 +126,7 @@ export const ToolbarPlayback: React.FC<ToolbarPlaybackProps> = ({
           onBlur={handleCommitTempo}
           onKeyDown={(e) => {
             e.stopPropagation();
-            if (e.key === 'Enter') {
+            if (isInputCommitEvent(e)) {
               e.currentTarget.blur();
             }
           }}

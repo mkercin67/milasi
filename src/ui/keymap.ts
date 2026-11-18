@@ -30,6 +30,8 @@ export type UserAction =
   | 'toggle-lyrics-mode'
   | 'lyrics-next-note'
   | 'lyrics-prev-note'
+  | 'lyrics-commit-and-next'
+  | 'lyrics-backspace-prev'
   | 'clear-notations'
   | 'cycle-accidental-up'
   | 'cycle-accidental-down'
@@ -45,6 +47,13 @@ export type UserAction =
   | 'toggle-dot'
   | 'show-input-off-hint'
   | 'reset-override'
+  | 'toggle-playback'
+  | 'play-from-start'
+  | 'stop-playback'
+  | 'save-score'
+  | 'save-as-score'
+  | 'open-score'
+  | 'toggle-diagnostics'
   | { type: 'apply-dynamic'; dynamic: DynamicType }
   | { type: 'toggle-articulation'; articulation: ArticulationType }
   | { type: 'nudge-override'; dx: number; dy: number }
@@ -59,6 +68,61 @@ export interface KeyEventLike {
   metaKey?: boolean;
   shiftKey?: boolean;
   altKey?: boolean;
+}
+
+export interface KeyMapContext {
+  isPlaying?: boolean;
+  lyricsInputEmpty?: boolean;
+}
+
+let layoutMapCache: Map<string, string> | null = null;
+
+/**
+ * Initializes layout mapping from the browser's Keyboard API if available.
+ */
+export async function initKeyboardLayoutMap(): Promise<void> {
+  if (
+    typeof navigator !== 'undefined' &&
+    'keyboard' in navigator &&
+    typeof (navigator as unknown as { keyboard?: { getLayoutMap?: () => Promise<Map<string, string>> } }).keyboard?.getLayoutMap === 'function'
+  ) {
+    try {
+      const map = await (navigator as unknown as { keyboard: { getLayoutMap: () => Promise<Map<string, string>> } }).keyboard.getLayoutMap();
+      layoutMapCache = new Map();
+      for (const [code, key] of map.entries()) {
+        layoutMapCache.set(code, String(key).toUpperCase());
+      }
+    } catch {
+      // getLayoutMap may reject if permissions policy blocks it
+    }
+  }
+}
+
+/**
+ * Resolves localized keycap label for a physical key code.
+ */
+export function getKeycapLabel(code: string, fallbackKey?: string): string {
+  if (layoutMapCache && layoutMapCache.has(code)) {
+    return layoutMapCache.get(code)!;
+  }
+  if (fallbackKey) return fallbackKey;
+  if (code.startsWith('Key')) return code.slice(3);
+  if (code.startsWith('Digit')) return code.slice(5);
+  return code;
+}
+
+/**
+ * Helper to check if an event represents the Escape key.
+ */
+export function isCancelDragEvent(e: KeyEventLike): boolean {
+  return e.code === 'Escape';
+}
+
+/**
+ * Helper to check if an event commits a text input (Enter).
+ */
+export function isInputCommitEvent(e: KeyEventLike): boolean {
+  return e.code === 'Enter';
 }
 
 const DIGIT_DURATIONS: Record<string, BaseDurationType> = {
@@ -103,7 +167,8 @@ const PITCH_LETTERS: Record<string, PitchStep> = {
  */
 export function mapKeyEvent(
   e: KeyEventLike,
-  modeOrIsInput: EditorMode | boolean = 'select'
+  modeOrIsInput: EditorMode | boolean = 'select',
+  context?: KeyMapContext
 ): UserAction | null {
   const mode: EditorMode =
     typeof modeOrIsInput === 'boolean' ? (modeOrIsInput ? 'input' : 'select') : modeOrIsInput;
@@ -112,13 +177,24 @@ export function mapKeyEvent(
   const isShift = Boolean(e.shiftKey);
   const isAlt = Boolean(e.altKey);
 
-  // All Alt shortcuts are disabled
+  // Diagnostics shortcut (Ctrl+Alt+D)
+  if (isCmdOrCtrl && isAlt && e.code === 'KeyD') {
+    return 'toggle-diagnostics';
+  }
+
+  // All other Alt shortcuts are disabled
   if (isAlt) {
     return null;
   }
 
   // Ctrl / Cmd combinations across all modes
   if (isCmdOrCtrl) {
+    if (e.code === 'KeyS') {
+      return isShift ? 'save-as-score' : 'save-score';
+    }
+    if (e.code === 'KeyO') {
+      return 'open-score';
+    }
     if (e.code === 'KeyZ') {
       return isShift ? 'redo' : 'undo';
     }
@@ -148,27 +224,44 @@ export function mapKeyEvent(
     return null;
   }
 
+  // Playback shortcuts: Space = play/pause (Shift+Space = play from start)
+  if (e.code === 'Space') {
+    if (mode === 'lyrics') {
+      return 'lyrics-commit-and-next';
+    }
+    return isShift ? 'play-from-start' : 'toggle-playback';
+  }
+
+  // Escape handling: stops playback first if active
+  if (e.code === 'Escape') {
+    if (context?.isPlaying) {
+      return 'stop-playback';
+    }
+    if (mode === 'input') return 'exit-note-input';
+    if (mode === 'position' || mode === 'lyrics') return 'set-mode-select';
+    return 'clear-selection';
+  }
+
   // Mode switching keys (unmodified)
   if (!isShift) {
     if (e.code === 'KeyV') return 'set-mode-select';
     if (e.code === 'KeyN') return 'toggle-note-input';
     if (e.code === 'KeyP') return 'toggle-position-mode';
     if (e.code === 'KeyU') return 'toggle-lyrics-mode';
-    if (e.code === 'Escape') {
-      if (mode === 'input') return 'exit-note-input';
-      if (mode === 'position' || mode === 'lyrics') return 'set-mode-select';
-      return 'clear-selection';
-    }
   }
 
   // Lyrics mode keys
   if (mode === 'lyrics') {
+    if (e.code === 'Enter') {
+      return 'lyrics-commit-and-next';
+    }
     if (e.code === 'Tab') {
       return isShift ? 'lyrics-prev-note' : 'lyrics-next-note';
     }
-    if (e.code === 'Escape') {
-      return 'set-mode-select';
+    if (e.code === 'Backspace' && context?.lyricsInputEmpty) {
+      return 'lyrics-backspace-prev';
     }
+    return null;
   }
 
   // Augmentation dot is Period across all modes (unmodified)
@@ -285,12 +378,26 @@ export function mapKeyEvent(
   // INPUT MODE
   if (mode === 'input') {
     if (isShift) {
+      if (e.code === 'KeyL') {
+        return { type: 'toggle-articulation', articulation: 'marcato' };
+      }
+      if (DYNAMICS_BY_CODE[e.code]) {
+        return { type: 'apply-dynamic', dynamic: DYNAMICS_BY_CODE[e.code] };
+      }
       if (e.code === 'ArrowLeft') return 'extend-selection-prev';
       if (e.code === 'ArrowRight') return 'extend-selection-next';
       if (e.code === 'ArrowUp') return 'cycle-accidental-up';
       if (e.code === 'ArrowDown') return 'cycle-accidental-down';
       return null;
     }
+
+    // Input mode notation keys: Tie (T), Slur (S), Natural (X), Articulations (J, K, L)
+    if (e.code === 'KeyT') return 'toggle-tie';
+    if (e.code === 'KeyS') return 'toggle-slur';
+    if (e.code === 'KeyX') return 'reset-accidental';
+    if (e.code === 'KeyJ') return { type: 'toggle-articulation', articulation: 'staccato' };
+    if (e.code === 'KeyK') return { type: 'toggle-articulation', articulation: 'tenuto' };
+    if (e.code === 'KeyL') return { type: 'toggle-articulation', articulation: 'accent' };
 
     // Note entry (C..B)
     if (PITCH_LETTERS[e.code]) {
@@ -355,7 +462,12 @@ export interface KeyTableEntry {
  */
 export function getCompleteKeyTable(): KeyTableEntry[] {
   return [
-    // Global mode switches & Undo/Redo
+    // Global mode switches, Storage & Playback
+    { key: 'Space', code: 'Space', modifiers: 'none', mode: 'all', action: 'toggle-playback' },
+    { key: 'Space', code: 'Space', modifiers: 'Shift', mode: 'all', action: 'play-from-start' },
+    { key: 'S', code: 'KeyS', modifiers: 'Ctrl', mode: 'all', action: 'save-score' },
+    { key: 'S', code: 'KeyS', modifiers: 'Ctrl+Shift', mode: 'all', action: 'save-as-score' },
+    { key: 'O', code: 'KeyO', modifiers: 'Ctrl', mode: 'all', action: 'open-score' },
     { key: 'Z', code: 'KeyZ', modifiers: 'Ctrl', mode: 'all', action: 'undo' },
     { key: 'Z', code: 'KeyZ', modifiers: 'Ctrl+Shift', mode: 'all', action: 'redo' },
     { key: 'Y', code: 'KeyY', modifiers: 'Ctrl', mode: 'all', action: 'redo' },
@@ -370,8 +482,11 @@ export function getCompleteKeyTable(): KeyTableEntry[] {
     { key: 'Esc', code: 'Escape', modifiers: 'none', mode: 'input', action: 'exit-note-input' },
     { key: 'Esc', code: 'Escape', modifiers: 'none', mode: 'position', action: 'set-mode-select' },
     { key: 'Esc', code: 'Escape', modifiers: 'none', mode: 'lyrics', action: 'set-mode-select' },
+    { key: 'Space', code: 'Space', modifiers: 'none', mode: 'lyrics', action: 'lyrics-commit-and-next' },
+    { key: 'Enter', code: 'Enter', modifiers: 'none', mode: 'lyrics', action: 'lyrics-commit-and-next' },
     { key: 'Tab', code: 'Tab', modifiers: 'none', mode: 'lyrics', action: 'lyrics-next-note' },
     { key: 'Tab', code: 'Tab', modifiers: 'Shift', mode: 'lyrics', action: 'lyrics-prev-note' },
+    { key: 'Backspace', code: 'Backspace', modifiers: 'none', mode: 'lyrics', action: 'lyrics-backspace-prev' },
     { key: '.', code: 'Period', modifiers: 'none', mode: 'all', action: 'toggle-dot' },
 
     // Select mode editing
@@ -387,25 +502,6 @@ export function getCompleteKeyTable(): KeyTableEntry[] {
     { key: 'K', code: 'KeyK', modifiers: 'none', mode: 'select', action: 'toggle-articulation: tenuto' },
     { key: 'L', code: 'KeyL', modifiers: 'none', mode: 'select', action: 'toggle-articulation: accent' },
     { key: 'L', code: 'KeyL', modifiers: 'Shift', mode: 'select', action: 'toggle-articulation: marcato' },
-
-    // Dynamics (Select & Position)
-    { key: '1', code: 'Digit1', modifiers: 'Shift', mode: 'select', action: 'apply-dynamic: pp' },
-    { key: '2', code: 'Digit2', modifiers: 'Shift', mode: 'select', action: 'apply-dynamic: p' },
-    { key: '3', code: 'Digit3', modifiers: 'Shift', mode: 'select', action: 'apply-dynamic: mp' },
-    { key: '4', code: 'Digit4', modifiers: 'Shift', mode: 'select', action: 'apply-dynamic: mf' },
-    { key: '5', code: 'Digit5', modifiers: 'Shift', mode: 'select', action: 'apply-dynamic: f' },
-    { key: '6', code: 'Digit6', modifiers: 'Shift', mode: 'select', action: 'apply-dynamic: ff' },
-    { key: '7', code: 'Digit7', modifiers: 'Shift', mode: 'select', action: 'apply-dynamic: sfz' },
-    { key: '8', code: 'Digit8', modifiers: 'Shift', mode: 'select', action: 'apply-dynamic: fp' },
-
-    { key: '1', code: 'Digit1', modifiers: 'Shift', mode: 'position', action: 'apply-dynamic: pp' },
-    { key: '2', code: 'Digit2', modifiers: 'Shift', mode: 'position', action: 'apply-dynamic: p' },
-    { key: '3', code: 'Digit3', modifiers: 'Shift', mode: 'position', action: 'apply-dynamic: mp' },
-    { key: '4', code: 'Digit4', modifiers: 'Shift', mode: 'position', action: 'apply-dynamic: mf' },
-    { key: '5', code: 'Digit5', modifiers: 'Shift', mode: 'position', action: 'apply-dynamic: f' },
-    { key: '6', code: 'Digit6', modifiers: 'Shift', mode: 'position', action: 'apply-dynamic: ff' },
-    { key: '7', code: 'Digit7', modifiers: 'Shift', mode: 'position', action: 'apply-dynamic: sfz' },
-    { key: '8', code: 'Digit8', modifiers: 'Shift', mode: 'position', action: 'apply-dynamic: fp' },
 
     // Position mode shortcuts
     { key: 'Left', code: 'ArrowLeft', modifiers: 'none', mode: 'position', action: 'nudge dx: -0.25' },
@@ -426,11 +522,29 @@ export function getCompleteKeyTable(): KeyTableEntry[] {
     { key: 'L', code: 'KeyL', modifiers: 'none', mode: 'position', action: 'toggle-articulation: accent' },
     { key: 'L', code: 'KeyL', modifiers: 'Shift', mode: 'position', action: 'toggle-articulation: marcato' },
 
+    // Dynamics across Select, Position, and Input modes
+    ...(['select', 'position', 'input'] as const).flatMap((m) =>
+      Object.entries(DYNAMICS_BY_CODE).map(([c, dyn]) => ({
+        key: c.slice(5),
+        code: c,
+        modifiers: 'Shift',
+        mode: m,
+        action: `apply-dynamic: ${dyn}`,
+      }))
+    ),
+
     // Input mode shortcuts
     { key: 'C..B', code: 'KeyC..KeyB', modifiers: 'none', mode: 'input', action: 'enter-pitch' },
     { key: '0', code: 'Digit0', modifiers: 'none', mode: 'input', action: 'enter-rest' },
     { key: 'B', code: 'KeyB', modifiers: 'Ctrl', mode: 'input', action: 'insert-measure' },
     { key: 'V', code: 'KeyV', modifiers: 'Ctrl', mode: 'input', action: 'paste' },
+    { key: 'S', code: 'KeyS', modifiers: 'none', mode: 'input', action: 'toggle-slur' },
+    { key: 'T', code: 'KeyT', modifiers: 'none', mode: 'input', action: 'toggle-tie' },
+    { key: 'X', code: 'KeyX', modifiers: 'none', mode: 'input', action: 'reset-accidental' },
+    { key: 'J', code: 'KeyJ', modifiers: 'none', mode: 'input', action: 'toggle-articulation: staccato' },
+    { key: 'K', code: 'KeyK', modifiers: 'none', mode: 'input', action: 'toggle-articulation: tenuto' },
+    { key: 'L', code: 'KeyL', modifiers: 'none', mode: 'input', action: 'toggle-articulation: accent' },
+    { key: 'L', code: 'KeyL', modifiers: 'Shift', mode: 'input', action: 'toggle-articulation: marcato' },
 
     // Duration Digits (Select & Input)
     { key: '2', code: 'Digit2', modifiers: 'none', mode: 'select', action: 'set-duration: 32nd' },

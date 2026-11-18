@@ -25,10 +25,38 @@ describe('keymap', () => {
     expect(mapKeyEvent({ code: 'ArrowRight' })).toBe('select-next');
   });
 
-  it('maps Escape based on editor mode', () => {
+  it('maps Escape based on editor mode and playback state', () => {
     expect(mapKeyEvent({ code: 'Escape' }, 'select')).toBe('clear-selection');
     expect(mapKeyEvent({ code: 'Escape' }, 'input')).toBe('exit-note-input');
     expect(mapKeyEvent({ code: 'Escape' }, 'position')).toBe('set-mode-select');
+    expect(mapKeyEvent({ code: 'Escape' }, 'lyrics')).toBe('set-mode-select');
+    expect(mapKeyEvent({ code: 'Escape' }, 'select', { isPlaying: true })).toBe('stop-playback');
+    expect(mapKeyEvent({ code: 'Escape' }, 'input', { isPlaying: true })).toBe('stop-playback');
+  });
+
+  it('maps Space and Shift+Space for playback control, and Space for lyrics commit', () => {
+    expect(mapKeyEvent({ code: 'Space' }, 'select')).toBe('toggle-playback');
+    expect(mapKeyEvent({ code: 'Space' }, 'input')).toBe('toggle-playback');
+    expect(mapKeyEvent({ code: 'Space', shiftKey: true }, 'select')).toBe('play-from-start');
+    expect(mapKeyEvent({ code: 'Space' }, 'lyrics')).toBe('lyrics-commit-and-next');
+  });
+
+  it('maps Ctrl+S, Ctrl+Shift+S, and Ctrl+O to storage actions across modes', () => {
+    for (const m of ['select', 'input', 'position', 'lyrics'] as EditorMode[]) {
+      expect(mapKeyEvent({ code: 'KeyS', ctrlKey: true }, m)).toBe('save-score');
+      expect(mapKeyEvent({ code: 'KeyS', metaKey: true }, m)).toBe('save-score');
+      expect(mapKeyEvent({ code: 'KeyS', ctrlKey: true, shiftKey: true }, m)).toBe('save-as-score');
+      expect(mapKeyEvent({ code: 'KeyO', ctrlKey: true }, m)).toBe('open-score');
+      expect(mapKeyEvent({ code: 'KeyO', metaKey: true }, m)).toBe('open-score');
+    }
+  });
+
+  it('maps lyrics mode navigation and commit keys', () => {
+    expect(mapKeyEvent({ code: 'Enter' }, 'lyrics')).toBe('lyrics-commit-and-next');
+    expect(mapKeyEvent({ code: 'Tab' }, 'lyrics')).toBe('lyrics-next-note');
+    expect(mapKeyEvent({ code: 'Tab', shiftKey: true }, 'lyrics')).toBe('lyrics-prev-note');
+    expect(mapKeyEvent({ code: 'Backspace' }, 'lyrics', { lyricsInputEmpty: true })).toBe('lyrics-backspace-prev');
+    expect(mapKeyEvent({ code: 'Backspace' }, 'lyrics', { lyricsInputEmpty: false })).toBeNull();
   });
 
   it('maps Ctrl+Z and Ctrl+Shift+Z / Ctrl+Y to undo and redo across all modes', () => {
@@ -148,20 +176,22 @@ describe('keymap', () => {
   });
 
   it('maps M6b notation keys: Slur (KeyS), Tie (KeyT), Natural (KeyX), Dynamics (Shift+Digit1..8), and Articulations (KeyJ, KeyK, KeyL, Shift+KeyL)', () => {
-    // Slur toggle: KeyS in select and position modes
+    // Slur toggle: KeyS in select, position, and input modes
     expect(mapKeyEvent({ code: 'KeyS' }, 'select')).toBe('toggle-slur');
     expect(mapKeyEvent({ code: 'KeyS' }, 'position')).toBe('toggle-slur');
-    expect(mapKeyEvent({ code: 'KeyS' }, 'input')).toBeNull(); // No pitch S
+    expect(mapKeyEvent({ code: 'KeyS' }, 'input')).toBe('toggle-slur');
 
-    // Tie toggle: KeyT in select and position modes
+    // Tie toggle: KeyT in select, position, and input modes
     expect(mapKeyEvent({ code: 'KeyT' }, 'select')).toBe('toggle-tie');
     expect(mapKeyEvent({ code: 'KeyT' }, 'position')).toBe('toggle-tie');
+    expect(mapKeyEvent({ code: 'KeyT' }, 'input')).toBe('toggle-tie');
 
-    // Natural reset: KeyX in select and position modes
+    // Natural reset: KeyX in select, position, and input modes
     expect(mapKeyEvent({ code: 'KeyX' }, 'select')).toBe('reset-accidental');
     expect(mapKeyEvent({ code: 'KeyX' }, 'position')).toBe('reset-accidental');
+    expect(mapKeyEvent({ code: 'KeyX' }, 'input')).toBe('reset-accidental');
 
-    // Dynamics Shift+Digit1..8 in select and position modes
+    // Dynamics Shift+Digit1..8 across select, position, and input modes
     const expectedDynamics = [
       { code: 'Digit1', dyn: 'pp' },
       { code: 'Digit2', dyn: 'p' },
@@ -173,20 +203,16 @@ describe('keymap', () => {
       { code: 'Digit8', dyn: 'fp' },
     ];
     for (const { code, dyn } of expectedDynamics) {
-      expect(mapKeyEvent({ code, shiftKey: true }, 'select')).toEqual({
-        type: 'apply-dynamic',
-        dynamic: dyn,
-      });
-      expect(mapKeyEvent({ code, shiftKey: true }, 'position')).toEqual({
-        type: 'apply-dynamic',
-        dynamic: dyn,
-      });
-      // In input mode, Shift+Digit must NOT apply dynamic
-      expect(mapKeyEvent({ code, shiftKey: true }, 'input')).toBeNull();
+      for (const m of ['select', 'position', 'input'] as EditorMode[]) {
+        expect(mapKeyEvent({ code, shiftKey: true }, m)).toEqual({
+          type: 'apply-dynamic',
+          dynamic: dyn,
+        });
+      }
     }
 
     // Articulations: KeyJ (staccato), KeyK (tenuto), KeyL (accent), Shift+KeyL (marcato)
-    for (const m of ['select', 'position'] as EditorMode[]) {
+    for (const m of ['select', 'position', 'input'] as EditorMode[]) {
       expect(mapKeyEvent({ code: 'KeyJ' }, m)).toEqual({
         type: 'toggle-articulation',
         articulation: 'staccato',
@@ -300,6 +326,44 @@ describe('keymap', () => {
       const res2 = mapKeyEvent(tc.event2, tc.mode);
       expect(res1).not.toBeNull();
       expect(res1).toEqual(res2);
+    }
+  });
+
+  it('uses getKeycapLabel with fallback and navigator.keyboard layout map', async () => {
+    const { getKeycapLabel, initKeyboardLayoutMap } = await import('../../src/ui/keymap');
+
+    // Default fallback when layout map is not loaded
+    expect(getKeycapLabel('KeyC')).toBe('C');
+    expect(getKeycapLabel('Digit5')).toBe('5');
+    expect(getKeycapLabel('Period', '.')).toBe('.');
+
+    // Mock navigator.keyboard.getLayoutMap
+    const mockMap = new Map<string, string>([
+      ['KeyQ', 'a'], // French AZERTY layout: KeyQ produces 'A'
+      ['KeyW', 'z'],
+    ]);
+
+    const originalNavigator = globalThis.navigator;
+    try {
+      Object.defineProperty(globalThis, 'navigator', {
+        value: {
+          keyboard: {
+            getLayoutMap: async () => mockMap,
+          },
+        },
+        configurable: true,
+        writable: true,
+      });
+
+      await initKeyboardLayoutMap();
+      expect(getKeycapLabel('KeyQ')).toBe('A');
+      expect(getKeycapLabel('KeyW')).toBe('Z');
+    } finally {
+      Object.defineProperty(globalThis, 'navigator', {
+        value: originalNavigator,
+        configurable: true,
+        writable: true,
+      });
     }
   });
 });

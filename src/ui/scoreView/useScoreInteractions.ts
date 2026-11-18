@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { BaseDurationType, NoteEvent, Pitch, Score } from '../../core/model';
 import { LayoutResult } from '../../layout/types';
 import { RangeSelection } from '../../core/selection';
-import { EditorMode } from '../keymap';
+import { EditorMode, isCancelDragEvent } from '../keymap';
 import { ScoreCursor } from '../../core/input';
 import {
   pitchToStaffPosition,
@@ -185,7 +185,7 @@ export function useScoreInteractions({
   // Cancel active drag on Escape or window blur (no command emitted)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.code === 'Escape' && dragStateRef.current?.isDragging) {
+      if (isCancelDragEvent(e) && dragStateRef.current?.isDragging) {
         e.preventDefault();
         e.stopImmediatePropagation();
         cancelActiveInteractions();
