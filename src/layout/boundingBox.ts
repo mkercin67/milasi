@@ -8,6 +8,7 @@
 
 import { LayoutItem, LayoutResult } from './types';
 import { getGlyphBBox, getGlyphAdvanceWidth } from './smufl';
+import { layoutArticulations, layoutDynamics } from './notations';
 
 export interface BoundingBox {
   minX: number;
@@ -151,6 +152,31 @@ export function computeLayoutBoundingBox(layout: LayoutResult, margin: number = 
     for (const item of sys.items) {
       if (item.hidden) continue;
       const b = computeItemBoundingBox(item, sys.y);
+      if (b.minX < minX) minX = b.minX;
+      if (b.maxX > maxX) maxX = b.maxX;
+      if (b.minY < minY) minY = b.minY;
+      if (b.maxY > maxY) maxY = b.maxY;
+      hasItems = true;
+    }
+  }
+
+  if (layout.score) {
+    const dyns = layoutDynamics(layout.score, layout);
+    for (const d of dyns) {
+      const sysIdx = d.systemIndex ?? 0;
+      const sysY = layout.systems[sysIdx]?.y ?? 0;
+      const b = computeItemBoundingBox(d, sysY);
+      if (b.minX < minX) minX = b.minX;
+      if (b.maxX > maxX) maxX = b.maxX;
+      if (b.minY < minY) minY = b.minY;
+      if (b.maxY > maxY) maxY = b.maxY;
+      hasItems = true;
+    }
+    const arts = layoutArticulations(layout.score, layout);
+    for (const a of arts) {
+      const sysIdx = a.systemIndex ?? 0;
+      const sysY = layout.systems[sysIdx]?.y ?? 0;
+      const b = computeItemBoundingBox(a, sysY);
       if (b.minX < minX) minX = b.minX;
       if (b.maxX > maxX) maxX = b.maxX;
       if (b.minY < minY) minY = b.minY;

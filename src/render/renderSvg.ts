@@ -11,6 +11,9 @@
 
 import { LayoutItem, LayoutResult, LayoutSystem } from '../layout/types';
 import { computeLayoutBoundingBox } from '../layout/boundingBox';
+import { layoutArticulations, layoutDynamics, layoutSlurs } from '../layout/notations';
+import { layoutTies } from '../layout/ties';
+import { Score } from '../core/model';
 import { getGlyphChar } from './smufl';
 import { getGlyphPath, UNITS_PER_EM } from './glyphPaths.generated';
 
@@ -23,6 +26,8 @@ export interface RenderSvgOptions {
   useTextFallback?: boolean;
   /** Margin in staff spaces around all items for the SVG viewBox. Defaults to 1.5. */
   viewBoxMargin?: number;
+  /** Optional score to compute and render overlays (ties, slurs, dynamics, articulations). */
+  score?: Score;
 }
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -88,6 +93,15 @@ export function renderSvg(
         if (!it.hidden && it.kind === 'glyph' && it.glyph) {
           usedGlyphs.add(it.glyph);
         }
+      }
+    }
+    const scoreForDefs = options.score ?? layout.score;
+    if (scoreForDefs) {
+      for (const d of layoutDynamics(scoreForDefs, layout)) {
+        if (d.glyph) usedGlyphs.add(d.glyph);
+      }
+      for (const a of layoutArticulations(scoreForDefs, layout)) {
+        if (a.glyph) usedGlyphs.add(a.glyph);
       }
     }
 
@@ -169,6 +183,74 @@ export function renderSvg(
 
     svg.appendChild(sysGroup);
   }
+
+  const score = options.score ?? layout.score;
+  const ties = score ? layoutTies(score, layout) : [];
+  const slurs = score ? layoutSlurs(score, layout) : [];
+  const dynamics = score ? layoutDynamics(score, layout) : [];
+  const articulations = score ? layoutArticulations(score, layout) : [];
+
+  for (const t of ties) {
+    const path = document.createElementNS(SVG_NS, 'path');
+    path.setAttribute('data-tie-id', t.id);
+    path.setAttribute('class', 'score-tie notranslate');
+    path.setAttribute('d', t.d);
+    path.setAttribute('fill', 'currentColor');
+    path.setAttribute('stroke', 'none');
+    path.setAttribute('pointer-events', 'none');
+    svg.appendChild(path);
+  }
+  for (const s of slurs) {
+    const path = document.createElementNS(SVG_NS, 'path');
+    path.setAttribute('data-slur-id', s.id);
+    path.setAttribute('class', 'score-slur notranslate');
+    path.setAttribute('d', s.d);
+    path.setAttribute('fill', 'currentColor');
+    path.setAttribute('stroke', 'none');
+    path.setAttribute('pointer-events', 'none');
+    svg.appendChild(path);
+  }
+  const renderOverlayGlyphGroup = (
+    items: LayoutItem[],
+    className: string,
+    idAttr: string,
+    typeAttr: string
+  ) => {
+    for (const item of items) {
+      const sysIdx = item.systemIndex ?? 0;
+      const sys = layout.systems[sysIdx];
+      const pxX = item.x * staffSpacePx;
+      const pxY = ((sys ? sys.y : 0) + item.y) * staffSpacePx;
+      const g = document.createElementNS(SVG_NS, 'g');
+      g.setAttribute('class', `${className} notranslate`);
+      g.setAttribute(idAttr, item.id);
+      if (item.eventId) g.setAttribute('data-event-id', item.eventId);
+      if (item.type) g.setAttribute(typeAttr, item.type);
+      g.setAttribute('pointer-events', 'none');
+      if (useTextFallback && item.glyph) {
+        const text = document.createElementNS(SVG_NS, 'text');
+        text.setAttribute('x', pxX.toString());
+        text.setAttribute('y', pxY.toString());
+        text.setAttribute('font-size', `${fontSize}px`);
+        text.setAttribute('font-family', 'Bravura, BravuraText, sans-serif');
+        text.setAttribute('text-anchor', 'start');
+        text.setAttribute('dominant-baseline', 'alphabetic');
+        text.setAttribute('fill', 'currentColor');
+        text.textContent = getGlyphChar(item.glyph);
+        g.appendChild(text);
+      } else if (item.glyph) {
+        const use = document.createElementNS(SVG_NS, 'use');
+        use.setAttribute('href', `#glyph-${item.glyph}`);
+        use.setAttribute('transform', `translate(${pxX}, ${pxY}) scale(${scale})`);
+        use.setAttribute('fill', 'currentColor');
+        g.appendChild(use);
+      }
+      svg.appendChild(g);
+    }
+  };
+
+  renderOverlayGlyphGroup(dynamics, 'score-dynamic', 'data-dynamic-id', 'data-dynamic-type');
+  renderOverlayGlyphGroup(articulations, 'score-articulation', 'data-articulation-id', 'data-articulation-type');
 
   return svg;
 }
@@ -321,6 +403,15 @@ export function renderSvgToString(
         }
       }
     }
+    const scoreForDefs = options.score ?? layout.score;
+    if (scoreForDefs) {
+      for (const d of layoutDynamics(scoreForDefs, layout)) {
+        if (d.glyph) usedGlyphs.add(d.glyph);
+      }
+      for (const a of layoutArticulations(scoreForDefs, layout)) {
+        if (a.glyph) usedGlyphs.add(a.glyph);
+      }
+    }
     defsXml = '  <defs>\n';
     for (const glyphName of Array.from(usedGlyphs).sort()) {
       const pathD = getGlyphPath(glyphName);
@@ -412,6 +503,47 @@ export function renderSvgToString(
     }
 
     elementsXml += `  </g>\n`;
+  }
+
+  const score = options.score ?? layout.score;
+  const ties = score ? layoutTies(score, layout) : [];
+  const slurs = score ? layoutSlurs(score, layout) : [];
+  const dynamics = score ? layoutDynamics(score, layout) : [];
+  const articulations = score ? layoutArticulations(score, layout) : [];
+
+  for (const t of ties) {
+    elementsXml += `  <path data-tie-id="${t.id}" class="score-tie notranslate" d="${t.d}" fill="currentColor" stroke="none" pointer-events="none" />\n`;
+  }
+  for (const s of slurs) {
+    elementsXml += `  <path data-slur-id="${s.id}" class="score-slur notranslate" d="${s.d}" fill="currentColor" stroke="none" pointer-events="none" />\n`;
+  }
+  for (const item of dynamics) {
+    const sysIdx = item.systemIndex ?? 0;
+    const sys = layout.systems[sysIdx];
+    const sysY = sys ? sys.y : 0;
+    const pxX = item.x * staffSpacePx;
+    const pxY = (sysY + item.y) * staffSpacePx;
+    const eventAttr = item.eventId ? ` data-event-id="${item.eventId}"` : '';
+    const typeAttr = item.type ? ` data-dynamic-type="${item.type}"` : '';
+    if (useTextFallback && item.glyph) {
+      elementsXml += `  <g class="score-dynamic notranslate"${eventAttr} data-dynamic-id="${item.id}"${typeAttr} pointer-events="none">\n    <text x="${pxX}" y="${pxY}" font-size="${fontSize}px" font-family="Bravura, BravuraText, sans-serif" text-anchor="start" dominant-baseline="alphabetic" fill="currentColor">${getGlyphChar(item.glyph)}</text>\n  </g>\n`;
+    } else if (item.glyph) {
+      elementsXml += `  <g class="score-dynamic notranslate"${eventAttr} data-dynamic-id="${item.id}"${typeAttr} pointer-events="none">\n    <use href="#glyph-${item.glyph}" transform="translate(${pxX}, ${pxY}) scale(${scale})" fill="currentColor" />\n  </g>\n`;
+    }
+  }
+  for (const item of articulations) {
+    const sysIdx = item.systemIndex ?? 0;
+    const sys = layout.systems[sysIdx];
+    const sysY = sys ? sys.y : 0;
+    const pxX = item.x * staffSpacePx;
+    const pxY = (sysY + item.y) * staffSpacePx;
+    const eventAttr = item.eventId ? ` data-event-id="${item.eventId}"` : '';
+    const typeAttr = item.type ? ` data-articulation-type="${item.type}"` : '';
+    if (useTextFallback && item.glyph) {
+      elementsXml += `  <g class="score-articulation notranslate"${eventAttr} data-articulation-id="${item.id}"${typeAttr} pointer-events="none">\n    <text x="${pxX}" y="${pxY}" font-size="${fontSize}px" font-family="Bravura, BravuraText, sans-serif" text-anchor="start" dominant-baseline="alphabetic" fill="currentColor">${getGlyphChar(item.glyph)}</text>\n  </g>\n`;
+    } else if (item.glyph) {
+      elementsXml += `  <g class="score-articulation notranslate"${eventAttr} data-articulation-id="${item.id}"${typeAttr} pointer-events="none">\n    <use href="#glyph-${item.glyph}" transform="translate(${pxX}, ${pxY}) scale(${scale})" fill="currentColor" />\n  </g>\n`;
+    }
   }
 
   const textStyleBlock = useTextFallback

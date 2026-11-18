@@ -57,6 +57,7 @@ export function getGalleryCases(): GalleryCase[] {
           note('B', 4, '32nd'),
           note('C', 5, '32nd'),
           note('D', 5, '16th'),
+          qNote('E', 5),
         ]);
         return score;
       },
@@ -64,11 +65,20 @@ export function getGalleryCases(): GalleryCase[] {
     {
       id: 'rests-all-values',
       title: '2. Rests of All Values',
-      description: 'Whole, half, quarter, 8th, 16th, 32nd rests and dotted rests.',
+      description: 'Whole, half, dotted half, quarter, dotted quarter, 8th, 16th, 32nd rests.',
       build: () => {
-        let score = createEmptyScore({ title: '2. Rests of All Values', measures: 2 });
+        let score = createEmptyScore({ title: '2. Rests of All Values', measures: 3 });
         score = setMeasureEventsViaCommands(score, 0, [rest('whole')]);
         score = setMeasureEventsViaCommands(score, 1, [rest('half', 1), rest('quarter')]);
+        score = setMeasureEventsViaCommands(score, 2, [
+          rest('quarter', 1),
+          rest('eighth'),
+          rest('quarter'),
+          rest('16th'),
+          rest('32nd'),
+          rest('32nd'),
+          rest('eighth'),
+        ]);
         return score;
       },
     },
@@ -85,7 +95,7 @@ export function getGalleryCases(): GalleryCase[] {
           qNote('F', 4, 1),
         ]);
         score = setMeasureEventsViaCommands(score, 1, [
-          createNote({ pitches: [createPitch('C', 4, 0), createPitch('E', 4, 0), createPitch('G', 4, 0)], baseType: 'half' }),
+          createNote({ pitches: [createPitch('C', 4, 0), createPitch('D', 4, 0), createPitch('G', 4, 0)], baseType: 'half' }),
           createNote({ pitches: [createPitch('F', 4, 0), createPitch('F', 4, 1)], baseType: 'half' }),
         ]);
         return score;
@@ -99,11 +109,11 @@ export function getGalleryCases(): GalleryCase[] {
         let score = createEmptyScore({ title: '4. Beams All Cases', measures: 3 });
         score = setMeasureEventsViaCommands(score, 0, [
           note('C', 4, '16th'), note('D', 4, '16th'), note('E', 4, '16th'), note('F', 4, '16th'),
-          note('G', 4, 'eighth'), note('A', 4, 'eighth'), qNote('B', 4),
+          note('G', 4, 'eighth'), note('A', 4, 'eighth'), qNote('B', 4), qNote('C', 5),
         ]);
         score = setMeasureEventsViaCommands(score, 1, [
           note('C', 5, 'eighth'), note('B', 4, '16th'), note('A', 4, '16th'),
-          rest('eighth'), note('G', 4, 'eighth'), qNote('E', 4),
+          rest('eighth'), note('G', 4, 'eighth'), qNote('E', 4), rest('quarter'),
         ]);
         score = setTimeSignature(score.measures[2].id, { num: 6, den: 8 }).apply(score);
         score = setMeasureEventsViaCommands(score, 2, [
@@ -185,9 +195,9 @@ export function getGalleryCases(): GalleryCase[] {
       build: () => {
         let score = createEmptyScore({ title: '9. Slurs Stem Down', measures: 1 });
         const n1 = qNote('C', 5);
-        const n2 = qNote('B', 4);
-        const n3 = qNote('A', 4);
-        const n4 = qNote('G', 4);
+        const n2 = qNote('D', 5);
+        const n3 = qNote('E', 5);
+        const n4 = qNote('C', 5);
         score = setMeasureEventsViaCommands(score, 0, [n1, n2, n3, n4]);
         const staff = score.parts[0].staves[0];
         score = toggleSlur({

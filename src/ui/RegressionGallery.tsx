@@ -1,17 +1,47 @@
 import React, { useMemo, useState } from 'react';
-import { getGalleryCases } from './galleryCases';
+import { GalleryCase, getGalleryCases } from './galleryCases';
+import { Score } from '../core/model';
+import { LayoutResult } from '../layout/types';
 import { layoutScore } from '../layout/layoutScore';
 import { renderSvgToString } from '../render/renderSvg';
+
+interface RenderedGalleryCase extends GalleryCase {
+  score: Score;
+  layout: LayoutResult;
+  svgHtml: string;
+  multiWidthSvgs?: Array<{ label: string; svg: string }>;
+}
 
 export const RegressionGallery: React.FC = () => {
   const cases = useMemo(() => getGalleryCases(), []);
   const [selectedCaseId, setSelectedCaseId] = useState<string>('all');
 
-  const renderedCases = useMemo(() => {
+  const renderedCases = useMemo((): RenderedGalleryCase[] => {
     return cases.map((c) => {
       const score = c.build();
       const layout = layoutScore(score, { width: 70 });
-      const svgHtml = renderSvgToString(layout, { staffSpacePx: 10 });
+      const svgHtml = renderSvgToString(layout, { staffSpacePx: 10, score });
+
+      if (c.id === 'wrapping-three-widths') {
+        const layout385 = layoutScore(score, { width: 38.5 });
+        const layout600 = layoutScore(score, { width: 60 });
+        const layout1200 = layoutScore(score, { width: 120 });
+        const svg385 = renderSvgToString(layout385, { staffSpacePx: 10, score });
+        const svg600 = renderSvgToString(layout600, { staffSpacePx: 10, score });
+        const svg1200 = renderSvgToString(layout1200, { staffSpacePx: 10, score });
+        return {
+          ...c,
+          score,
+          layout,
+          svgHtml,
+          multiWidthSvgs: [
+            { label: '385 px (Narrow / Mobile)', svg: svg385 },
+            { label: '600 px (Medium / Tablet)', svg: svg600 },
+            { label: '1200 px (Wide / Desktop)', svg: svg1200 },
+          ],
+        };
+      }
+
       return {
         ...c,
         score,
@@ -130,16 +160,48 @@ export const RegressionGallery: React.FC = () => {
               </p>
             </div>
 
-            <div
-              style={{
-                backgroundColor: '#ffffff',
-                border: '1px solid #f1f5f9',
-                borderRadius: '8px',
-                padding: '1rem',
-                overflowX: 'auto',
-              }}
-              dangerouslySetInnerHTML={{ __html: c.svgHtml }}
-            />
+            {c.multiWidthSvgs ? (
+              <div
+                style={{
+                  display: 'flex',
+                  gap: '1.5rem',
+                  overflowX: 'auto',
+                  padding: '0.5rem 0',
+                }}
+              >
+                {c.multiWidthSvgs.map((mw) => (
+                  <div
+                    key={mw.label}
+                    style={{
+                      flex: '1 1 0',
+                      minWidth: '320px',
+                      backgroundColor: '#ffffff',
+                      border: '1px solid #f1f5f9',
+                      borderRadius: '8px',
+                      padding: '1rem',
+                      display: 'flex',
+                      flexDirection: 'column',
+                    }}
+                  >
+                    <div style={{ fontSize: '0.8rem', fontWeight: 600, color: '#475569', marginBottom: '0.5rem' }}>
+                      {mw.label}
+                    </div>
+                    <div style={{ overflowX: 'auto' }} dangerouslySetInnerHTML={{ __html: mw.svg }} />
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div
+                style={{
+                  backgroundColor: '#ffffff',
+                  border: '1px solid #f1f5f9',
+                  borderRadius: '8px',
+                  padding: '1rem',
+                  overflowX: 'auto',
+                }}
+                dangerouslySetInnerHTML={{ __html: c.svgHtml }}
+              />
+            )}
           </div>
         ))}
       </div>
