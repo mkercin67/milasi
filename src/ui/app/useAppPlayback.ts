@@ -9,6 +9,11 @@ export interface UseAppPlaybackParams {
   executeCommand: (cmd: Command) => Score;
 }
 
+interface AudioTestWindow extends Window {
+  __audioLog?: unknown[];
+  __audioEngine?: AudioEngine;
+}
+
 export function useAppPlayback({
   score,
   selectedEventId,
@@ -19,8 +24,9 @@ export function useAppPlayback({
       const params = new URLSearchParams(window.location.search);
       if (params.get('audio') === 'fake') {
         const fake = new FakeEngine();
-        (window as any).__audioLog = fake.logs;
-        (window as any).__audioEngine = fake;
+        const testWin = window as unknown as AudioTestWindow;
+        testWin.__audioLog = fake.logs;
+        testWin.__audioEngine = fake;
         return fake;
       }
     }

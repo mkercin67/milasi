@@ -132,7 +132,7 @@ export function useAppVerificationStates({
 
       if (stateParam === 'verify_1') return;
 
-      const enterNoteSeq = (letter: any, dur: any, dots = 0) => {
+      const enterNoteSeq = (letter: PitchStep, dur: ScoreEvent['baseType'], dots = 0) => {
         setActiveDuration(dur);
         setActiveDots(dots);
         enterPitchAtCursor(letter, t('error.doesNotFit'), t('error.noCursor'));

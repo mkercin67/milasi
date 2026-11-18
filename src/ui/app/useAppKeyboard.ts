@@ -241,9 +241,10 @@ export function useAppKeyboard(params: UseAppKeyboardParams) {
               totalDuration: Number(totalDuration.toFixed(2)),
             };
 
-            const w = window as any;
-            if (!w.__perf) w.__perf = [];
-            w.__perf.push(sample.totalDuration);
+            if (typeof window !== 'undefined') {
+              if (!window.__perf) window.__perf = [];
+              window.__perf.push(sample.totalDuration);
+            }
 
             perfSamplesRef.current.push(sample);
             if (perfSamplesRef.current.length > 100) perfSamplesRef.current.shift();

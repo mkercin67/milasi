@@ -90,10 +90,11 @@ export function computeCursorPosition(
   }
 
   // Check if measure only has a wholeMeasure rest (empty measure)
+  const firstEv = voice.events[0];
   const isOnlyWholeRest =
     voice.events.length === 1 &&
-    voice.events[0].kind === 'rest' &&
-    Boolean((voice.events[0] as any).wholeMeasure);
+    firstEv.kind === 'rest' &&
+    Boolean(firstEv.wholeMeasure);
 
   if (cursor.tick === 0) {
     if (isFirstMeasureInScore) {

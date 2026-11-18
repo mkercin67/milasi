@@ -29,17 +29,20 @@ export function useScoreVirtualization({
     width: 0,
     height: 0,
   });
+  const svgTopInContainerRef = useRef<number>(0);
 
   const updateContainerRect = useCallback(() => {
-    if (!svgRef.current) return;
-    const rect = svgRef.current.getBoundingClientRect();
+    if (!svgRef.current || !containerRef.current) return;
+    const sRect = svgRef.current.getBoundingClientRect();
+    const cRect = containerRef.current.getBoundingClientRect();
+    svgTopInContainerRef.current = sRect.top - cRect.top + containerRef.current.scrollTop;
     containerRectRef.current = {
-      left: rect.left,
-      top: rect.top,
-      width: rect.width,
-      height: rect.height,
+      left: sRect.left,
+      top: sRect.top,
+      width: sRect.width,
+      height: sRect.height,
     };
-  }, [svgRef]);
+  }, [containerRef, svgRef]);
 
   useEffect(() => {
     const el = cardRef.current;
@@ -88,13 +91,18 @@ export function useScoreVirtualization({
     return () => ro.disconnect();
   }, [containerRef]);
 
+interface VirtualTestWindow extends Window {
+  __setVirtualViewportForTest?: (scrollTop: number, clientHeight: number) => void;
+}
+
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    (window as any).__setVirtualViewportForTest = (scrollTop: number, clientHeight: number) => {
+    const testWin = window as unknown as VirtualTestWindow;
+    testWin.__setVirtualViewportForTest = (scrollTop: number, clientHeight: number) => {
       setViewportScroll({ scrollTop, clientHeight });
     };
     return () => {
-      delete (window as any).__setVirtualViewportForTest;
+      delete testWin.__setVirtualViewportForTest;
     };
   }, []);
 
@@ -108,15 +116,7 @@ export function useScoreVirtualization({
       return new Set<number>(layout.systems.map((s) => s.index));
     }
 
-    const container = containerRef.current;
-    const svg = svgRef.current;
-    let svgTopInContainer = 0;
-    if (container && svg) {
-      const cRect = container.getBoundingClientRect();
-      const sRect = svg.getBoundingClientRect();
-      svgTopInContainer = sRect.top - cRect.top + container.scrollTop;
-    }
-
+    const svgTopInContainer = svgTopInContainerRef.current;
     const visibleTopPx = viewportScroll.scrollTop - svgTopInContainer;
     const bufferPx = Math.max(viewportScroll.clientHeight, 600); // 1 screen above & below
     const minVisibleY = (visibleTopPx - bufferPx) / staffSpacePx;
@@ -136,7 +136,7 @@ export function useScoreVirtualization({
     }
 
     return visible;
-  }, [viewportScroll, layout.systems, staffSpacePx, containerRef, svgRef]);
+  }, [viewportScroll, layout.systems, staffSpacePx]);
 
   // Auto-scroll to keep active system visible, paused for 3s if user scrolls
   const lastAutoScrollSysRef = useRef<number>(-1);

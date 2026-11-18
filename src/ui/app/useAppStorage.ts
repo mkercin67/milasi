@@ -11,6 +11,18 @@ export interface UseAppStorageParams {
   resetScore: (newScore: Score) => void;
 }
 
+interface StorageTestWindow extends Window {
+  __scoreforge_last_autosave_ms?: number;
+  __checkAutosaveForTest?: () => Promise<void>;
+  __disableNativePickerForTest?: boolean;
+  showSaveFilePicker?: (options?: unknown) => Promise<{
+    createWritable: () => Promise<{
+      write: (data: string) => Promise<void>;
+      close: () => Promise<void>;
+    }>;
+  }>;
+}
+
 export function useAppStorage({
   score,
   isDirty,
@@ -46,7 +58,8 @@ export function useAppStorage({
         const t0 = performance.now();
         await saveAutosave(score);
         const dt = performance.now() - t0;
-        (window as any).__scoreforge_last_autosave_ms = dt;
+        const testWin = window as unknown as StorageTestWindow;
+        testWin.__scoreforge_last_autosave_ms = dt;
         loadAutosaveHistory().then(setHistoryVersions);
       } catch (err) {
         console.warn('Autosave error:', err);
@@ -58,7 +71,8 @@ export function useAppStorage({
   // Startup autosave check
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    (window as any).__checkAutosaveForTest = async () => {
+    const testWin = window as unknown as StorageTestWindow;
+    testWin.__checkAutosaveForTest = async () => {
       const record = await loadAutosave();
       if (record && record.score) {
         setRestoreData({ score: record.score, savedAt: typeof record.savedAt === 'string' ? new Date(record.savedAt).getTime() : record.savedAt });
@@ -95,16 +109,17 @@ export function useAppStorage({
         const cleanTitle = (score.meta.title || 'adsiz').trim().toLowerCase().replace(/[^a-z0-9]/gi, '_');
         const filename = `${cleanTitle}.sfscore`;
 
+        const testWin = typeof window !== 'undefined' ? (window as unknown as StorageTestWindow) : undefined;
         const hasNativePicker =
           !saveAs &&
-          typeof window !== 'undefined' &&
-          'showSaveFilePicker' in window &&
+          testWin &&
+          'showSaveFilePicker' in testWin &&
           !window.navigator.webdriver &&
-          !(window as any).__disableNativePickerForTest;
+          !testWin.__disableNativePickerForTest;
 
-        if (hasNativePicker) {
+        if (hasNativePicker && testWin.showSaveFilePicker) {
           try {
-            const handle = await (window as any).showSaveFilePicker({
+            const handle = await testWin.showSaveFilePicker({
               suggestedName: filename,
               types: [
                 {
@@ -119,8 +134,8 @@ export function useAppStorage({
             markClean();
             setStatusToast({ message: t('status.saveSuccess'), type: 'success' });
             return;
-          } catch (pickerErr: any) {
-            if (pickerErr.name === 'AbortError') return;
+          } catch (pickerErr: unknown) {
+            if (pickerErr instanceof Error && pickerErr.name === 'AbortError') return;
           }
         }
 
@@ -136,7 +151,7 @@ export function useAppStorage({
 
         markClean();
         setStatusToast({ message: t('status.saveSuccess'), type: 'success' });
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error('Save failed:', err);
         setStatusToast({ message: t('status.saveError'), type: 'error' });
       }
@@ -163,9 +178,10 @@ export function useAppStorage({
         resetScore(loaded);
         markClean();
         setStatusToast({ message: t('status.saveSuccess'), type: 'success' });
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error('File load failed:', err);
-        setStatusToast({ message: `${t('status.saveError')}: ${err.message || 'Geçersiz dosya'}`, type: 'error' });
+        const message = err instanceof Error ? err.message : 'Geçersiz dosya';
+        setStatusToast({ message: `${t('status.saveError')}: ${message}`, type: 'error' });
       } finally {
         e.target.value = '';
       }

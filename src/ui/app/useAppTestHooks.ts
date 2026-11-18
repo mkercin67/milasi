@@ -23,6 +23,16 @@ export interface UseAppTestHooksParams {
   }>;
 }
 
+declare global {
+  interface Window {
+    __executeCommandForTest?: (cmd: (score: Score) => Score) => Score;
+    __selectEventForTest?: (id: string | null) => void;
+    __resetScoreForTest?: (newScore: Score) => void;
+    __buildSampleScore?: () => Score;
+    __createBenchmark64Score?: () => Score;
+  }
+}
+
 export function useAppTestHooks({
   executeCommand,
   selectEvent,
@@ -53,11 +63,11 @@ export function useAppTestHooks({
       executeCommand(setOverride(eventId, { dx, dy }));
     };
     window.__getScoreForTest = () => scoreRef.current;
-    (window as any).__executeCommandForTest = (cmd: (score: Score) => Score) => executeCommand(cmd);
-    (window as any).__selectEventForTest = (id: string | null) => selectEvent(id);
-    (window as any).__resetScoreForTest = (newScore: Score) => resetScore(newScore);
-    (window as any).__buildSampleScore = () => buildSampleScore('G');
-    (window as any).__createBenchmark64Score = () => createBenchmark64Score();
+    window.__executeCommandForTest = (cmd: (score: Score) => Score) => executeCommand(cmd);
+    window.__selectEventForTest = (id: string | null) => selectEvent(id);
+    window.__resetScoreForTest = (newScore: Score) => resetScore(newScore);
+    window.__buildSampleScore = () => buildSampleScore('G');
+    window.__createBenchmark64Score = () => createBenchmark64Score();
     window.__getEditorStateForTest = () => editorStateRef.current;
     window.__printPerfTable = () => {
       const arr = window.__perf ?? [];

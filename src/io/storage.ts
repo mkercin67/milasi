@@ -34,13 +34,18 @@ declare global {
 }
 
 /** Pushes an entry to the global 50-item error ring buffer. */
+interface GlobalWithErrorLog {
+  __errorLog?: ErrorLogEntry[];
+  __errorLogInitialized?: boolean;
+}
+
 export function logToErrorRingBuffer(
   level: 'error' | 'warn',
   message: string,
   stack?: string,
   source?: string
 ): void {
-  const g = typeof window !== 'undefined' ? window : (globalThis as any);
+  const g = typeof window !== 'undefined' ? (window as unknown as GlobalWithErrorLog) : (globalThis as unknown as GlobalWithErrorLog);
   if (!g.__errorLog) {
     g.__errorLog = [];
   }
@@ -57,9 +62,10 @@ export function logToErrorRingBuffer(
 }
 
 // Attach unhandled error listeners once
-if (typeof window !== 'undefined' && !(window as any).__errorLogInitialized) {
-  (window as any).__errorLogInitialized = true;
-  if (!window.__errorLog) window.__errorLog = [];
+const winTarget = typeof window !== 'undefined' ? (window as unknown as GlobalWithErrorLog) : undefined;
+if (winTarget && !winTarget.__errorLogInitialized) {
+  winTarget.__errorLogInitialized = true;
+  if (!winTarget.__errorLog) winTarget.__errorLog = [];
 
   window.addEventListener('error', (e) => {
     logToErrorRingBuffer(

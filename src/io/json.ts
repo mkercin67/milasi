@@ -20,16 +20,51 @@ export const CURRENT_SCHEMA_VERSION = 6;
 /** Migration function signature for schema version upgrades. */
 export type ScoreMigration = (data: unknown) => Score;
 
+interface RawPitch {
+  tiedToNext?: boolean;
+}
+interface RawEvent {
+  kind?: string;
+  pitches?: RawPitch[];
+  tiedToNext?: boolean;
+  lyrics?: unknown;
+}
+interface RawVoice {
+  events?: RawEvent[];
+}
+interface RawMeasureData {
+  voices?: RawVoice[];
+}
+interface RawStaff {
+  measures?: Record<string, RawMeasureData>;
+  slurs?: unknown[];
+}
+interface RawPart {
+  staves?: RawStaff[];
+}
+interface RawMeasureDef {
+  repeat?: string;
+  repeatStart?: boolean;
+  repeatEnd?: boolean;
+  endBarline?: string;
+}
+interface RawScore {
+  schemaVersion?: number;
+  meta?: { subtitle?: string; arranger?: string };
+  parts?: RawPart[];
+  measures?: RawMeasureDef[];
+}
+
 /** Migration from v1 to v2: upgrades schemaVersion to 2 and migrates tiedToNext to pitch level. */
 export function migrateV1ToV2(data: unknown): Score {
-  const score = JSON.parse(JSON.stringify(data)) as any;
+  const score = JSON.parse(JSON.stringify(data)) as RawScore;
   score.schemaVersion = 2;
   if (Array.isArray(score.parts)) {
     for (const part of score.parts) {
       if (Array.isArray(part.staves)) {
         for (const staff of part.staves) {
           if (staff.measures) {
-            for (const m of Object.values(staff.measures) as any[]) {
+            for (const m of Object.values(staff.measures)) {
               if (Array.isArray(m?.voices)) {
                 for (const v of m.voices) {
                   if (Array.isArray(v?.events)) {
@@ -51,12 +86,12 @@ export function migrateV1ToV2(data: unknown): Score {
       }
     }
   }
-  return score as Score;
+  return score as unknown as Score;
 }
 
 /** Migration from v2 to v3: upgrades schemaVersion to 3 and initializes slurs array on staves. */
 export function migrateV2ToV3(data: unknown): Score {
-  const score = JSON.parse(JSON.stringify(data)) as any;
+  const score = JSON.parse(JSON.stringify(data)) as RawScore;
   score.schemaVersion = 3;
   if (Array.isArray(score.parts)) {
     for (const part of score.parts) {
@@ -69,12 +104,12 @@ export function migrateV2ToV3(data: unknown): Score {
       }
     }
   }
-  return score as Score;
+  return score as unknown as Score;
 }
 
 /** Migration from v3 to v4: upgrades schemaVersion to 4 and initializes metadata & barlines. */
 export function migrateV3ToV4(data: unknown): Score {
-  const score = JSON.parse(JSON.stringify(data)) as any;
+  const score = JSON.parse(JSON.stringify(data)) as RawScore;
   score.schemaVersion = 4;
   if (score.meta) {
     score.meta.subtitle = score.meta.subtitle ?? '';
@@ -88,19 +123,19 @@ export function migrateV3ToV4(data: unknown): Score {
       }
     }
   }
-  return score as Score;
+  return score as unknown as Score;
 }
 
 /** Migration from v4 to v5: upgrades schemaVersion to 5 for repeats, voltas, and lyrics. */
 export function migrateV4ToV5(data: unknown): Score {
-  const score = JSON.parse(JSON.stringify(data)) as any;
+  const score = JSON.parse(JSON.stringify(data)) as RawScore;
   score.schemaVersion = 5;
-  return score as Score;
+  return score as unknown as Score;
 }
 
 /** Migration from v5 to v6: converts repeat string to repeatStart/repeatEnd and lyrics string to LyricSyllable[]. */
 export function migrateV5ToV6(data: unknown): Score {
-  const score = JSON.parse(JSON.stringify(data)) as any;
+  const score = JSON.parse(JSON.stringify(data)) as RawScore;
   score.schemaVersion = 6;
   if (Array.isArray(score.measures)) {
     for (const m of score.measures) {
@@ -121,7 +156,7 @@ export function migrateV5ToV6(data: unknown): Score {
     for (const part of score.parts) {
       for (const staff of part.staves ?? []) {
         for (const mId of Object.keys(staff.measures ?? {})) {
-          const sm = staff.measures[mId];
+          const sm = staff.measures?.[mId];
           for (const v of sm?.voices ?? []) {
             for (const ev of v?.events ?? []) {
               if (ev.kind === 'note' && typeof ev.lyrics === 'string') {
@@ -133,7 +168,7 @@ export function migrateV5ToV6(data: unknown): Score {
       }
     }
   }
-  return score as Score;
+  return score as unknown as Score;
 }
 
 /** Registry of schema migrations keyed by source schemaVersion. */

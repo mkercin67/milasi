@@ -23,10 +23,10 @@ export interface ScoreSvgLayersProps {
   playhead?: { x: number; y1: number; y2: number; sysIndex: number } | null;
   isInputMode: boolean;
   cursorPos?: { x: number; y1: number; y2: number; systemIndex: number } | null;
-  cursorLineRef: React.RefObject<SVGLineElement | null>;
+  cursorLineRef: React.RefObject<SVGLineElement>;
   ghostNote: GhostNoteData | null;
   isDraggingState: boolean;
-  dragOverlayRef: React.RefObject<SVGGElement | null>;
+  dragOverlayRef: React.RefObject<SVGGElement>;
 }
 
 export const ScoreSvgLayers: React.FC<ScoreSvgLayersProps> = ({
@@ -231,7 +231,7 @@ export const ScoreSvgLayers: React.FC<ScoreSvgLayersProps> = ({
       {/* Persistent cursor overlay inside the SVG */}
       {isInputMode && cursorPos && (
         <line
-          ref={cursorLineRef as any}
+          ref={cursorLineRef}
           className="score-input-cursor notranslate"
           x1={cursorPos.x * staffSpacePx}
           y1={cursorPos.y1 * staffSpacePx}
@@ -268,7 +268,7 @@ export const ScoreSvgLayers: React.FC<ScoreSvgLayersProps> = ({
       )}
 
       {/* Live drag feedback overlay */}
-      <g ref={dragOverlayRef as any} className="score-drag-overlay notranslate" pointerEvents="none" />
+      <g ref={dragOverlayRef} className="score-drag-overlay notranslate" pointerEvents="none" />
     </>
   );
 };
