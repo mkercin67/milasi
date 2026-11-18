@@ -1,9 +1,19 @@
 # Architectural Design Document: Multi-Staff and Pagination (v2)
 
-**Document Status:** ACCEPTED ARCHITECTURAL BLUEPRINT  
+**Document Status:** PROPOSED ARCHITECTURAL BLUEPRINT (NOT REVIEWED BY LEAD IN FULL)  
 **Target Schema:** Schema v7 (Milestone 7: Multi-Staff & Polyphony, Milestone 8: Pagination & Print)  
 **Author:** ScoreForge Core Engineering  
 **Scope:** Complete technical blueprint for multi-staff systems, voice polyphony, horizontal cross-staff alignment, vertical spacing, discrete page layouts, keymap conflict resolutions, audio routing, test corpus, and migration strategy. Zero runtime implementation in H1.
+
+> [!WARNING]
+> This architectural design document was authored as a technical design proposal for future milestones and has **NOT been reviewed by the lead in full**. All architectural proposals, key mappings, and schema specifications herein are subject to formal lead review and approval before Milestone 7 implementation begins.
+
+## Revision History
+
+| Version | Date | Author | Summary of Changes |
+|:---|:---|:---|:---|
+| **v1.0** | 17.11.2026 | Core Engineering | Initial architectural design draft for Schema v7 multi-staff systems and pagination. |
+| **v2.0** | 18.11.2026 | Core Engineering | Resolved keymap collision (removed `KeyV` voice toggle colliding with global `set-mode-select`); added physical Turkish Q keycap mapping for `BracketLeft` (`Ğ`) and `BracketRight` (`Ü`); updated performance targets to Double rAF and Event Timing; updated corpus list with lead's exact pieces and milestone gates (Bach BWV 140 M7a, Brahms Op. 118 No. 2 M7a, Bach BWV 772 M7b, Mozart K. 545 M7b, Chopin Op. 28 No. 4 M7b, Debussy M7c, Schubert D. 547 M7c, Beethoven Op. 18 No. 1 M10 with viola alto clef; Turkish folk song); deferred page-turn hints to M13+; scoped C clefs to M10; added M7a performance exit gates. |
 
 ---
 
@@ -441,35 +451,54 @@ Multi-staff navigation introduces multi-dimensional cursor motion:
 
 #### Conflict Resolution Rules
 1. **NO Alt modifier:** In ScoreForge, Alt is reserved exclusively for browser/OS window commands and screen readers.
-2. **Tab Key:**
+2. **Master Mode Key Reservations:**
+   - `KeyV` is **permanently reserved** as the master shortcut for **Select Mode** (`set-mode-select`) across all modes, and `Ctrl+KeyV` for clipboard `paste`. It must **never** be bound to voice switching.
+   - `KeyN` is the master shortcut for **Note Input Mode** (`toggle-note-input`).
+   - `KeyP` is the master shortcut for **Position Mode** (`toggle-position-mode`).
+   - `KeyU` is the master shortcut for **Lyrics Mode** (`toggle-lyrics-mode`).
+3. **Tab Key (Contextual Routing):**
    - In **Position Mode** (`mode === 'position'`): Tab cycles through elements in the measure; Shift+Tab reverses.
-   - In **Lyrics Mode** (`mode === 'lyrics'`): Tab commits syllable and jumps to next note.
-   - In **Input Mode** (`mode === 'input'`): Tab switches active voice (`voiceIndex` 1 -> 2 -> 1).
-3. **Staff Switching:**
-   - `BracketLeft` (`[`): Move cursor to staff above.
-   - `BracketRight` (`]`): Move cursor to staff below.
-   - `Shift+Tab`: In input mode, cycles voice backward (2 -> 1).
+   - In **Lyrics Mode** (`mode === 'lyrics'`): Tab commits syllable and jumps to next note; Shift+Tab jumps to previous note.
+   - In **Note Input Mode** (`mode === 'input'`): Tab switches active voice (`voiceIndex` 1 -> 2 -> 1); Shift+Tab cycles backward (2 -> 1).
+4. **Staff Switching & Turkish Q Layout Mappings:**
+   - In ScoreForge, keyboard events are dispatched strictly via physical `event.code`, guaranteeing identical behavior across keyboard layouts.
+   - `BracketLeft` (`event.code === 'BracketLeft'`):
+     - Physical keycap on US layout: `[`
+     - Physical keycap on Turkish Q layout: `Ğ` (G-breve)
+     - Action: Move cursor / selection to staff above.
+     - Dynamic layout label: `getKeycapLabel('BracketLeft')` returns `"["` on US and `"Ğ"` on Turkish Q.
+   - `BracketRight` (`event.code === 'BracketRight'`):
+     - Physical keycap on US layout: `]`
+     - Physical keycap on Turkish Q layout: `Ü` (U-umlaut)
+     - Action: Move cursor / selection to staff below.
+     - Dynamic layout label: `getKeycapLabel('BracketRight')` returns `"]"` on US and `"Ü"` on Turkish Q.
 
-#### Complete Conflict Table
+#### Complete Conflict Table (Mechanically Verified Against `src/ui/keymap.ts`)
 
-| Key Event (`event.code`) | Mode | Action | Conflict Check & Precedence |
-|:---|:---|:---|:---|
-| `BracketLeft` (`[`) | `input` / `select` | Move cursor / selection to staff above | No conflict. Distinct key code. |
-| `BracketRight` (`]`) | `input` / `select` | Move cursor / selection to staff below | No conflict. Distinct key code. |
-| `Tab` | `input` | Cycle Voice (1 -> 2 -> 1) | Gated by `mode === 'input'`. Does not collide with position/lyrics. |
-| `Shift+Tab` | `input` | Cycle Voice backward | Gated by `mode === 'input'`. |
-| `Tab` | `position` | Select next layout element | Gated by `mode === 'position'`. |
-| `Tab` | `lyrics` | Advance to next lyric syllable | Gated by `mode === 'lyrics'`. |
-| `KeyV` | All modes | Toggle Voice Index (1 <-> 2) | Instant shortcut to flip between voice 1 and 2. |
-| `KeyN` | All modes | Toggle Note Input Mode | Master mode toggle. |
-| `KeyP` | All modes | Toggle Position Mode | Master mode toggle. |
-| `KeyL` | `select` / `input` | Accent articulation | No conflict (fixed in M6b). |
-| `Shift+KeyL` | `select` / `input` | Marcato articulation | No conflict. |
-| `KeyJ` | `select` / `input` | Staccato articulation | No conflict. |
-| `KeyK` | `select` / `input` | Tenuto articulation | No conflict. |
-| `KeyT` | `select` / `input` | Tie to next note ("Bağ") | No conflict. |
-| `KeyS` | `select` / `input` | Slur ("Legato bağı") | No conflict. |
-| `Delete` / `Backspace` | `select` | Convert selected note to rest | Delete NEVER deletes measures. |
+| Key Event (`event.code`) | Modifiers | Mode | Action | Conflict Check & Precedence |
+|:---|:---|:---|:---|:---|
+| `BracketLeft` (US: `[`, TR: `Ğ`) | `none` | `input` / `select` | Move cursor / selection to staff above | Physical `event.code`. No collision with any existing action. |
+| `BracketRight` (US: `]`, TR: `Ü`) | `none` | `input` / `select` | Move cursor / selection to staff below | Physical `event.code`. No collision with any existing action. |
+| `Tab` | `none` | `input` | Cycle Voice (1 -> 2 -> 1) | Gated strictly by `mode === 'input'`. |
+| `Tab` | `Shift` | `input` | Cycle Voice backward (2 -> 1) | Gated strictly by `mode === 'input'`. |
+| `Tab` | `none` | `position` | Select next layout element | Gated strictly by `mode === 'position'`. |
+| `Tab` | `Shift` | `position` | Select previous layout element | Gated strictly by `mode === 'position'`. |
+| `Tab` | `none` | `lyrics` | Advance to next lyric note | Gated strictly by `mode === 'lyrics'`. |
+| `Tab` | `Shift` | `lyrics` | Move to previous lyric note | Gated strictly by `mode === 'lyrics'`. |
+| `KeyV` | `none` | All modes | Set Select Mode (`set-mode-select`) | Master mode switch. Never overloaded with voice toggling. |
+| `KeyV` | `Ctrl` | `select` / `input` | Paste clipboard | Standard OS shortcut. |
+| `KeyN` | `none` | All modes | Toggle Note Input Mode | Master mode toggle. |
+| `KeyP` | `none` | All modes | Toggle Position Mode | Master mode toggle. |
+| `KeyU` | `none` | All modes | Toggle Lyrics Mode | Master mode toggle. |
+| `KeyL` | `none` | `select` / `input` / `position` | Accent articulation | No conflict (verified in M6b). |
+| `KeyL` | `Shift` | `select` / `input` / `position` | Marcato articulation | No conflict. |
+| `KeyJ` | `none` | `select` / `input` / `position` | Staccato articulation | No conflict. |
+| `KeyK` | `none` | `select` / `input` / `position` | Tenuto articulation | No conflict. |
+| `KeyT` | `none` | `select` / `input` / `position` | Tie to next note ("Bağ") | No conflict. |
+| `KeyS` | `none` | `select` / `input` / `position` | Slur ("Legato bağı") | No conflict. |
+| `KeyS` | `Ctrl` | All modes | Save score | Standard shortcut. |
+| `KeyS` | `Ctrl+Shift` | All modes | Save as score | Standard shortcut. |
+| `Delete` / `Backspace` | `none` | `select` | Convert selected note to rest | Delete NEVER deletes measures. |
 
 ---
 
@@ -544,26 +573,28 @@ export interface ClipboardPayloadV7 {
 
 ---
 
-### (i) Test & Corpus Plan: 8 Classical Public Domain Reference Scores
+### (i) Test & Corpus Plan: Milestone Verification Corpus
 
-To guarantee real-world musicological fidelity, Milestone 7 and 8 verification will be anchored against 8 public domain masterpieces representing every structural archetype:
+To guarantee real-world musicological fidelity, Milestone 7, 8, and 10 verification is anchored against the lead's designated corpus representing every structural archetype:
 
-1. **J.S. Bach — Invention No. 1 in C major, BWV 772 (2 staves, Piano/Harpsichord):**
-   - *Test Role:* Contrapuntal two-part polyphony, cross-staff thematic imitation, 16th-note beam groups, treble and bass clef interaction.
-2. **J.S. Bach — Chorale "Wachet auf, ruft uns die Stimme", BWV 140 (4 staves, SATB Choir):**
-   - *Test Role:* 4 independent vocal staves with German lyrics, bracket grouping, individual barlines (unbroken between staves for lyrics clearance), fermatas.
-3. **W.A. Mozart — Piano Sonata in C major, K. 545, 1st Mvt (2 staves, Piano):**
-   - *Test Role:* Alberti bass in left hand, classical phrasing, long legato slurs, dynamics (p, f), 1st and 2nd volta endings.
-4. **L. van Beethoven — String Quartet No. 1 in F major, Op. 18 No. 1, 1st Mvt (4 staves, Violin I, Violin II, Viola, Cello):**
-   - *Test Role:* Chamber bracket, alto clef for viola, through-barlines connecting all 4 staves, extreme dynamic contrasts (pp, ff, sfz), staccato / sforzato articulations.
-5. **F. Chopin — Prelude in E minor, Op. 28 No. 4 (2 staves, Piano):**
-   - *Test Role:* Expressive polyphonic voice leading in left hand (chords with independent descending tenor/bass lines), dense chromatic accidentals, tempo rubato text.
-6. **F. Schubert — "An die Musik", D. 547 (3 staves, Voice + Piano):**
+1. **J.S. Bach — Chorale "Wachet auf, ruft uns die Stimme", BWV 140 closing chorale (SATB) (Milestone 7a):**
+   - *Test Role:* 4-part homophonic choral texture, independent vocal staves with German lyrics, bracket grouping, individual barlines (unbroken between staves for lyrics clearance), fermatas.
+2. **J. Brahms — Intermezzo in A major, Op. 118 No. 2, mm. 1-8 (Milestone 7a):**
+   - *Test Role:* Polyphonic voice leading on single and two staves (melody + inner voices with opposing stems), complex cross-rhythms, hairpins, pedal markings.
+3. **J.S. Bach — Invention No. 1 in C major, BWV 772, mm. 1-8 (Milestone 7b):**
+   - *Test Role:* Two-staff grand staff contrapuntal two-part polyphony, cross-staff thematic imitation, 16th-note beam groups, treble and bass clef cross-staff alignment.
+4. **W.A. Mozart — Piano Sonata in C major, K. 545, 1st Mvt, mm. 1-8 (Milestone 7b):**
+   - *Test Role:* Two-staff grand staff with melody and Alberti bass accompaniment, classical phrasing, long legato slurs, dynamics (p, f).
+5. **F. Chopin — Prelude in E minor, Op. 28 No. 4, mm. 1-12 (Milestone 7b):**
+   - *Test Role:* Two-staff grand staff with expressive polyphonic voice leading in left hand (chords with independent descending tenor/bass lines), dense chromatic accidentals, tempo rubato text.
+6. **Claude Debussy — "Golliwogg's Cakewalk" from Children's Corner, mm. 1-8 (Milestone 7c):**
+   - *Test Role:* Multi-staff syncopations, sudden dynamic shifts (fp, sfz), staccato accents, mid-score key signature changes (E-flat major to G-flat major with natural cancellations).
+7. **F. Schubert — "An die Musik", D. 547, mm. 1-12 (Milestone 7c):**
    - *Test Role:* Mixed ensemble: 1 single vocal staff (bracket none, individual barline, German lyrics) above a 2-staff piano accompaniment (curly brace, through-barlines).
-7. **J. Brahms — Intermezzo in A major, Op. 118 No. 2 (2 staves, Piano):**
-   - *Test Role:* 3-to-4-voice polyphony within two staves (melody + inner voices with opposing stems), complex cross-rhythms, hairpins, pedal markings.
-8. **Claude Debussy — "Golliwogg's Cakewalk" from Children's Corner (2 staves, Piano):**
-   - *Test Role:* Syncopations, sudden dynamic shifts (fp, sfz), staccato accents, mid-score key signature changes (E-flat major to G-flat major with natural cancellations).
+8. **L. van Beethoven — String Quartet No. 1 in F major, Op. 18 No. 1, 1st Mvt, mm. 1-8 (Milestone 10):**
+   - *Test Role:* Chamber bracket, alto C-clef for viola, through-barlines connecting all 4 staves, extreme dynamic contrasts. Note: C clefs (alto, tenor) are scoped strictly to Milestone 10.
+9. **Turkish Folk Song (to be chosen by the human):**
+   - *Test Role:* Traditional Turkish makam/folk song scoring with Turkish lyrics, solfege syllables, regional meters and vocal ornaments.
 
 ---
 
@@ -589,11 +620,13 @@ To guarantee real-world musicological fidelity, Milestone 7 and 8 verification w
 ### (k) Sub-Milestone Breakdown and Exit Criteria
 
 #### Milestone 7a: Multi-Voice Polyphony on a Single Staff
-- **Deliverables:** Rule R3 compliance (`voiceIndex` 1..4), opposing stems, unison notehead sharing, independent voice beaming, voice switching keymap (`Tab`, `KeyV`).
+- **Deliverables:** Rule R3 compliance (`voiceIndex` 1..4), opposing stems, unison notehead sharing, independent voice beaming, voice switching keymap (`Tab`, `Shift+Tab`).
 - **Exit Criteria:**
   - Invention BWV 772 right-hand 2-voice passage renders with zero stem collisions.
   - Test suite verifies clean copy/paste of individual voices.
   - Single-note edit latency <= 15 ms on 64 measures.
+  - **Performance Exit Gate:** 200-measure single-staff keystroke-to-paint p95 < 30 ms (Double rAF and Event Timing API).
+  - **Multi-Staff Target:** 4-staff x 64-measure keystroke-to-paint p95 < 35 ms (Double rAF and Event Timing API).
 
 #### Milestone 7b: Two-Staff Grand Staff (Piano)
 - **Deliverables:** `Score.parts[0]` holding 2 staves (Treble + Bass), curly brace at system start, synchronized cross-staff tick columns, through-barlines.
@@ -624,12 +657,14 @@ To guarantee real-world musicological fidelity, Milestone 7 and 8 verification w
 3. **Part Names and System 1 Indent:**
    - System 1 reserves an indent (default 12 to 18 sp) on the left to render full instrument names (e.g. "Violino I", "Pianoforte").
    - Subsequent systems render abbreviated names (`shortName`, e.g. "Vl. I", "Pno.") in a compact margin indent (6 to 8 sp).
-4. **Page-Turn Hints Only:**
-   - Automatic page layout inserts visual page-turn glyph hints on rests at the bottom of odd-numbered pages; it does not distort musical spacing to force artificial page turns.
+4. **Deferred to Milestone 13+: Page-Turn Hints:**
+   - Visual page-turn hints on rests at the bottom of odd-numbered pages are deferred to Milestone 13+ (no page-turn hints in M7/M8).
 5. **Cross-Staff Display Property Reserved for M10:**
    - Schema v7 reserves `crossStaffTarget?: Id` in NoteEvent without enabling rendering until M10.
 6. **Part Extraction Deferred to M11:**
    - Conductor score editing is the primary focus of M7/M8. Extracting isolated instrumental parts into independent `.sfscore` files is scheduled for M11.
+7. **C Clefs (Alto & Tenor) Scoped to M10:**
+   - C clefs for viola and cello tenor passages are scoped strictly to Milestone 10. M7 supports G clef (treble) and F clef (bass).
 
 ---
 

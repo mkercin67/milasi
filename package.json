@@ -14,6 +14,7 @@
     "licenses": "node scripts/checkLicenses.mjs",
     "shortcuts": "node scripts/generateShortcuts.mjs",
     "shortcuts:check": "node scripts/generateShortcuts.mjs --check",
+    "reviewpack": "node scripts/generateReviewPack.mjs",
     "check": "tsc --noEmit && node scripts/checkImports.mjs && node scripts/checkLicenses.mjs && node scripts/generateShortcuts.mjs --check && eslint src/ && npx knip && npm test && npm run build"
   },
   "dependencies": {

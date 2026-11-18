@@ -51,7 +51,7 @@ export function useAppStorage({
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [isDirty]);
 
-  // 2s debounced autosave to IndexedDB
+  // 1000 ms debounced autosave to IndexedDB
   useEffect(() => {
     const timer = window.setTimeout(async () => {
       try {
@@ -64,7 +64,7 @@ export function useAppStorage({
       } catch (err) {
         console.warn('Autosave error:', err);
       }
-    }, 2000);
+    }, 1000);
     return () => window.clearTimeout(timer);
   }, [score]);
 

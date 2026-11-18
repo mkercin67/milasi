@@ -179,7 +179,7 @@ To ensure long-term maintainability, single-responsibility separation, and adher
 
 ### 3. Core Commands Subsystem (`src/core/commands/`)
 - `commands.ts`: Command dispatcher and undo/redo history manager.
-- `noteCommands.ts`: Note/rest insertion, pitch alteration, accidentals, duration changes, and tuplets.
+- `noteCommands.ts`: Note/rest insertion, pitch alteration, accidentals, and duration changes.
 - `selectionCommands.ts`: Range transpose, deletion, rest conversion, and voice switching.
 - `measureCommands.ts`: Measure addition, deletion, pickup measure settings, and barlines.
 - `notationCommands.ts`: Dynamics, articulations, ties, slurs, repeat markers, and voltas.
@@ -208,16 +208,16 @@ To ensure long-term maintainability, single-responsibility separation, and adher
 - Automatically saves scores to IndexedDB store `scoreforge_autosaves`.
 - Maintains a rolling history of the last 5 autosaves with timestamps and measure counts.
 - `loadAutosave()` fetches the latest snapshot; `loadAutosaveHistory()` allows rollback to earlier snapshots.
-- Debounced at 1.0 second; non-blocking.
+- Debounced at 1000 ms; non-blocking.
 
 ### 3. Global Error Ring Buffer (`window.__errorLog`)
 - Fixed-capacity circular buffer retaining the last 50 error and warning events.
 - Automatically hooks `window.onerror` and `window.onunhandledrejection`.
 - Available programmatically for diagnostic triage and user bug reporting.
 
-## Interaction Model: Three Explicit Modes
+## Interaction Model: Four Explicit Modes
 
-The editor state operates in three strictly separated modes (`state.mode`):
+The editor state operates in four strictly separated modes (`state.mode`):
 
 1. **Select Mode (`mode: 'select'`):**
    - Click note/rest: selects the event.
@@ -230,7 +230,7 @@ The editor state operates in three strictly separated modes (`state.mode`):
 2. **Note Input Mode (`mode: 'input'`):**
    - Pointer hover: shows ghost note snapped to diatonic pitch (hidden outside staff area).
    - Click on staff or note: enters note with active duration and pitch.
-   - Keys: letters `A`–`G` enter pitch at cursor; `Digit1`–`5` set duration; `Digit0` enters rest; `Period` toggles dot; `ArrowLeft`/`Right` moves caret.
+   - Keys: letters `A`–`G` enter pitch at cursor; `Digit2`–`Digit7` set duration (32nd to whole); `Digit0` enters rest; `Period` toggles dot; `ArrowLeft`/`Right` moves caret.
    - Shortcut to toggle: `KeyN`.
 
 3. **Position Mode (`mode: 'position'`):**
@@ -238,8 +238,16 @@ The editor state operates in three strictly separated modes (`state.mode`):
    - Drag or arrow keys nudge visual position (`dx` / `dy`).
    - Offset limits:
      - Notes/chords: `dy` is locked to 0 (pitch defines vertical position; vertical offset is rejected with warning); `dx` is clamped within its measure boundary.
-     - Rests: `dx` is clamped within measure; `dy` is clamped to staff bounds (-4.0 to +4.0 staff spaces).
+     - Rests: `dx` is clamped within measure; `dy` is clamped to staff bounds (-1.0 to +5.0 staff spaces, matching the 5-line staff glyph band).
    - Shortcut to toggle: `KeyP`.
+
+4. **Lyrics Mode (`mode: 'lyrics'`):**
+   - In-place text input aligned under notes for vocal syllable editing.
+   - Syllable entry: typing text into the active lyric input field.
+   - Navigation: `Space` or `Enter` advances to the next note in the active voice; `Tab` advances to next note; `Shift+Tab` moves to previous note.
+   - Hyphenation and melisma: typing `-` marks a syllable hyphen and advances caret; typing `_` marks a melisma extender line and advances.
+   - Deletion: `Backspace` on an empty syllable moves focus to the previous note's syllable. Non-note events (rests) and tied notes are skipped automatically.
+   - Shortcut to toggle: `KeyU` (or double-clicking on an existing lyric syllable).
 
 ## Selection & Clipboard Model
 
@@ -251,8 +259,14 @@ The editor state operates in three strictly separated modes (`state.mode`):
 - **Clipboard (`src/core/clipboard.ts`):**
   - Payloads serialized with `{ app: 'scoreforge-clip', version: 1, events }`.
   - `pasteEvents` splits pasted events across barlines into standard units with ties and preserves measure durations.
-- **Voice Index Rule (R3):**
-  - Voice continuity across barlines relies on stable `voiceIndex` (1..4) within `StaffMeasure.voices`, not measure-local voice UUIDs.
+- **Voice Index Rule (R3) & Voice Identity Implementation:**
+  - In current Schema v6, voice identity is stored implicitly via array index position in `StaffMeasure.voices[vIdx]`.
+  - Code references:
+    - `src/core/selection.ts:findEventContext` (lines 30, 48): assigns `voiceIndex = vIdx`.
+    - `src/core/commands.ts:352` (`deleteRange`) and `src/core/commands.ts:61-62`: iterates and resolves target voices by array index `params.voiceIndex`.
+    - `src/playback/schedule.ts:134`: schedules polyphonic voices across measures using `for (let vIdx = 0; vIdx < maxVoices; vIdx++)`, matching voices across measures strictly by array index.
+  - Risk for multi-voice editing: If voice 0 were deleted or spliced out of `voices: Voice[]`, voice 1 would shift down to array index 0. This index shift would alter the voice identity across measures, causing voice 1 in that measure to be matched with voice 0 in adjacent measures during range selection, playback scheduling, and slur/tie attachment.
+  - Resolution (proposed for Schema v7 in design doc): Explicit `Voice.voiceIndex: 1 | 2 | 3 | 4` property, migrating v6 -> v7, and keying selections by `(staffId, voiceIndex)`.
 
 ## File Format & Schema Migrations (v1 through v6)
 
@@ -277,9 +291,10 @@ The editor state operates in three strictly separated modes (`state.mode`):
 
 ## Performance Benchmarks & Targets (H1 Hardening)
 
-- **Production Keystroke-to-Paint Budget:**
-  - 64-measure full score: p50 = 3.9 ms, p95 = 5.2 ms (Target: < 25 ms).
-  - 200-measure full score: p50 = 4.1 ms, p95 = 5.4 ms (Target: < 40 ms).
+- **Production Keystroke-to-Paint Performance (Double rAF & Event Timing):**
+  - Latency is measured from synthetic keydown dispatch to the frame following render commit using both Double requestAnimationFrame (nested rAF timestamp delta) and Chromium's PerformanceEventTiming API in headless Playwright.
+  - 64-measure full-featured score: Double rAF (median = 12.10 ms, p95 = 17.60 ms); Event Timing (median = 12.00 ms, p95 = 16.00 ms) (Target: < 25 ms).
+  - 200-measure full-featured score: Double rAF (median = 26.30 ms, p95 = 32.20 ms); Event Timing (median = 24.00 ms, p95 = 40.00 ms) (Target: < 40 ms).
 - **DOM Virtualization:**
   - Maintains < 800 SVG DOM elements for 200-measure scores by rendering only visible systems plus a 1-system vertical buffer.
 - **Zero DOM Reads:** All layout computations and interactive feedback are calculated purely in memory without reading layout properties or calling browser DOM measuring.
