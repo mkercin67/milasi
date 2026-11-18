@@ -1,3 +1,8 @@
 node_modules
 dist
 .DS_Store
+
+# Root artifacts and root screenshots (keep docs/screenshots/<milestone>/)
+/artifacts/
+/*.png
+
