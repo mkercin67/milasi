@@ -1,9 +1,14 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 /**
- * True Reference Score for Milestone 6d: "Süt İçtim Dilim Yandı".
+ * Reference Score Fixture: "Süt İçtim Dilim Yandı"
+ *
+ * Source: Traditional Turkish Folk Song (Kilis / Gaziantep regional folklore)
+ * Composer: Traditional / Anonymous
+ * Composer Death Year: Traditional / Pre-1900 (Public Domain)
+ * License: Public Domain
  *
  * Characteristics:
  * - Title: "Süt İçtim Dilim Yandı"
- * - Composer: "Müzik Notlarım"
  * - Meter: 2/4
  * - Clef: Treble (G2)
  * - Key Signature: C major (0 sharps/flats)

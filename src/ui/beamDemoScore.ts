@@ -1,5 +1,11 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 /**
  * Comprehensive 8-measure Beam Demo Score covering all Milestone 3d Section D cases.
+ *
+ * Source: Original synthetic test score created for ScoreForge beaming engine verification
+ * Composer: ScoreForge Engineering
+ * Composer Death Year: Original Work (2026)
+ * License: GPL-3.0-or-later
  */
 
 import {
