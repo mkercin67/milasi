@@ -13,7 +13,7 @@ Furthermore, automated testing in Node.js (Vitest) cannot access native Web Audi
 1. **Decoupled AudioEngine Interface:** We define an abstract `AudioEngine` interface (`src/playback/audio.ts`) with methods `trigger(note, atSeconds)`, `now()`, `setMasterVolume()`, and `close()`.
    - `ToneEngine` (`src/playback/toneEngine.ts`) implements this using Tone.js `PolySynth` for real browser audio.
    - `FakeEngine` (`src/playback/fakeEngine.ts`) implements this with an in-memory chronological event log for deterministic, headless unit tests.
-2. **Lookahead Audio Scheduler:** The playback player (`src/playback/player.ts`) converts score ticks to absolute wall-clock seconds (`buildSchedule`). A cooperative 100 ms interval timer schedules upcoming note events up to 1.0 s into the future directly onto the Web Audio hardware clock (`engine.now() + startSeconds`).
+2. **Lookahead Audio Scheduler:** The playback player (`src/playback/player.ts`) converts score ticks to absolute wall-clock seconds (`buildSchedule`). A cooperative 25 ms interval timer (`SCHEDULER_INTERVAL_MS = 25`) schedules upcoming note events within a 1.0 s lookahead window (`LOOKAHEAD_WINDOW_SECONDS = 1.0`) directly onto the Web Audio hardware clock (`engine.now() + startSeconds`).
 
 ## Consequences
 ### Positive
