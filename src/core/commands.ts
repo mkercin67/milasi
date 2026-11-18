@@ -288,32 +288,57 @@ export function transposeEvent(eventId: Id, semitones: number): Command {
     apply(score: Score): Score {
       if (semitones === 0) return score;
 
-      return produce(score, (draft) => {
-        for (const part of draft.parts) {
-          for (const staff of part.staves) {
-            for (const measureId of Object.keys(staff.measures)) {
-              const staffMeasure = staff.measures[measureId];
-              for (const voice of staffMeasure.voices) {
-                const event = voice.events.find((ev: ScoreEvent) => ev.id === eventId);
-                if (event && event.kind === 'note') {
-                  if (Math.abs(semitones) === 12) {
-                    const octaves = semitones > 0 ? 1 : -1;
-                    event.pitches = event.pitches.map((p) => transposeOctave(p, octaves));
-                  } else {
-                    const direction = semitones > 0 ? 'up' : 'down';
-                    const steps = Math.abs(semitones);
-                    event.pitches = event.pitches.map((p) => {
-                      let current = p;
-                      for (let i = 0; i < steps; i++) {
-                        current = transposeSemitone(current, direction);
-                      }
-                      return current;
-                    });
-                  }
-                  return;
-                }
+      // Locate event on unproxied score first to avoid proxying all measures
+      let targetPartId = '';
+      let targetStaffId = '';
+      let targetMeasureId = '';
+      let targetVoiceIndex = -1;
+      let targetEventIndex = -1;
+
+      for (const part of score.parts) {
+        for (const staff of part.staves) {
+          for (const measureId of Object.keys(staff.measures)) {
+            const staffMeasure = staff.measures[measureId];
+            for (let vi = 0; vi < staffMeasure.voices.length; vi++) {
+              const ei = staffMeasure.voices[vi].events.findIndex((ev: ScoreEvent) => ev.id === eventId);
+              if (ei !== -1) {
+                targetPartId = part.id;
+                targetStaffId = staff.id;
+                targetMeasureId = measureId;
+                targetVoiceIndex = vi;
+                targetEventIndex = ei;
+                break;
               }
             }
+            if (targetEventIndex !== -1) break;
+          }
+          if (targetEventIndex !== -1) break;
+        }
+        if (targetEventIndex !== -1) break;
+      }
+
+      if (targetEventIndex === -1) return score;
+
+      return produce(score, (draft) => {
+        const part = draft.parts.find((p) => p.id === targetPartId);
+        const staff = part?.staves.find((s) => s.id === targetStaffId);
+        const staffMeasure = staff?.measures[targetMeasureId];
+        const voice = staffMeasure?.voices[targetVoiceIndex];
+        const event = voice?.events[targetEventIndex];
+        if (event && event.kind === 'note') {
+          if (Math.abs(semitones) === 12) {
+            const octaves = semitones > 0 ? 1 : -1;
+            event.pitches = event.pitches.map((p) => transposeOctave(p, octaves));
+          } else {
+            const direction = semitones > 0 ? 'up' : 'down';
+            const steps = Math.abs(semitones);
+            event.pitches = event.pitches.map((p) => {
+              let current = p;
+              for (let i = 0; i < steps; i++) {
+                current = transposeSemitone(current, direction);
+              }
+              return current;
+            });
           }
         }
       });

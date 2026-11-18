@@ -103,38 +103,65 @@ async function runBenchmark() {
     });
     await sleep(200);
 
-    // Instrument keydown latency measurement
+    // Instrument keydown latency measurement with multiple probes
     await page.evaluate(() => {
-      window.__perfLatencies = [];
+      window.__perfDoubleRaf = [];
+      window.__perfSingleRaf = [];
+      window.__perfEventTiming = [];
+
+      try {
+        const observer = new PerformanceObserver((list) => {
+          for (const entry of list.getEntries()) {
+            if (entry.name === 'keydown') {
+              window.__perfEventTiming.push(entry.duration);
+            }
+          }
+        });
+        observer.observe({ type: 'event', durationThreshold: 0, buffered: true });
+      } catch {
+        // Event Timing API fallback
+      }
+
       window.addEventListener('keydown', (e) => {
         if (e.code === 'ArrowUp' || e.code === 'ArrowDown') {
           const t0 = performance.now();
           requestAnimationFrame(() => {
-            const dt = performance.now() - t0;
-            window.__perfLatencies.push(dt);
+            const dtSingle = performance.now() - t0;
+            window.__perfSingleRaf.push(dtSingle);
+            requestAnimationFrame(() => {
+              const dtDouble = performance.now() - t0;
+              window.__perfDoubleRaf.push(dtDouble);
+            });
           });
         }
       });
     });
 
-    // 30 Keystrokes
-    for (let i = 0; i < 30; i++) {
+    // 50 Keystrokes
+    for (let i = 0; i < 50; i++) {
       const key = i % 2 === 0 ? 'ArrowUp' : 'ArrowDown';
       await page.keyboard.press(key);
       await sleep(90);
     }
-    await sleep(200);
+    await sleep(250);
 
-    const latencies64 = await page.evaluate(() => window.__perfLatencies);
-    const stats64 = calculateStats(latencies64);
+    const latencies64Double = await page.evaluate(() => window.__perfDoubleRaf);
+    const latencies64Single = await page.evaluate(() => window.__perfSingleRaf);
+    const latencies64EventTiming = await page.evaluate(() => window.__perfEventTiming);
+    const latencies64App = await page.evaluate(() => window.__perf?.slice(-50) ?? []);
 
-    console.log('--- 64-Measure Full-Featured Benchmark Results ---');
-    console.log(`Keystrokes: ${latencies64.length}`);
-    console.log(`Mean:       ${stats64.mean.toFixed(2)} ms`);
-    console.log(`Median:     ${stats64.median.toFixed(2)} ms`);
-    console.log(`p95:        ${stats64.p95.toFixed(2)} ms (Target: < 25.0 ms)`);
-    console.log(`Min / Max:  ${stats64.min.toFixed(2)} ms / ${stats64.max.toFixed(2)} ms`);
+    const stats64Double = calculateStats(latencies64Double);
+    const stats64Single = calculateStats(latencies64Single);
+    const stats64EventTiming = latencies64EventTiming.length > 0 ? calculateStats(latencies64EventTiming) : null;
+    const stats64App = latencies64App.length > 0 ? calculateStats(latencies64App) : null;
 
+    console.log('--- 64-Measure Full-Featured Benchmark Results (n = 50) ---');
+    console.log(`Probe 1 (Double rAF / Next Paint): Median: ${stats64Double.median.toFixed(2)} ms, p95: ${stats64Double.p95.toFixed(2)} ms, Mean: ${stats64Double.mean.toFixed(2)} ms, Min/Max: ${stats64Double.min.toFixed(2)}/${stats64Double.max.toFixed(2)} ms (Target: < 25.0 ms)`);
+    console.log(`Probe 2 (Event Timing API):        ${stats64EventTiming ? `Median: ${stats64EventTiming.median.toFixed(2)} ms, p95: ${stats64EventTiming.p95.toFixed(2)} ms, Mean: ${stats64EventTiming.mean.toFixed(2)} ms` : 'N/A'}`);
+    console.log(`Probe 3 (App Internal __perf):     ${stats64App ? `Median: ${stats64App.median.toFixed(2)} ms, p95: ${stats64App.p95.toFixed(2)} ms, Mean: ${stats64App.mean.toFixed(2)} ms` : 'N/A'}`);
+    console.log(`Comparative (Single rAF):          Median: ${stats64Single.median.toFixed(2)} ms, p95: ${stats64Single.p95.toFixed(2)} ms, Mean: ${stats64Single.mean.toFixed(2)} ms, Min/Max: ${stats64Single.min.toFixed(2)}/${stats64Single.max.toFixed(2)} ms`);
+
+    const stats64 = stats64Double;
     if (stats64.p95 >= 25.0) {
       throw new Error(`FAIL: 64-measure p95 (${stats64.p95.toFixed(2)} ms) exceeds 25 ms target!`);
     }
@@ -147,18 +174,13 @@ async function runBenchmark() {
     await page.waitForSelector('.score-event-group', { timeout: 15000 });
 
     // Verify virtualization at top
-    const totalSystems = await page.evaluate(() => {
-      const placeholders = document.querySelectorAll('[data-system-placeholder="true"]').length;
-      const systems = document.querySelectorAll('svg > g[data-system-index]').length;
-      return placeholders + systems;
-    });
-
     const renderedSystemsTop = await page.evaluate(() => {
       return document.querySelectorAll('svg > g[data-system-index]:not([data-system-placeholder="true"])').length;
     });
     const placeholderSystemsTop = await page.evaluate(() => {
       return document.querySelectorAll('[data-system-placeholder="true"]').length;
     });
+    const totalSystems = renderedSystemsTop + placeholderSystemsTop;
 
     console.log(`Virtualization at Top: ${renderedSystemsTop} rendered systems, ${placeholderSystemsTop} placeholder systems (total: ${totalSystems})`);
     if (placeholderSystemsTop === 0) {
@@ -233,37 +255,62 @@ async function runBenchmark() {
 
     // Instrument keydown latency measurement for 200 measures
     await page.evaluate(() => {
-      window.__perfLatencies200 = [];
+      window.__perfDoubleRaf200 = [];
+      window.__perfSingleRaf200 = [];
+      window.__perfEventTiming200 = [];
+
+      try {
+        const observer = new PerformanceObserver((list) => {
+          for (const entry of list.getEntries()) {
+            if (entry.name === 'keydown') {
+              window.__perfEventTiming200.push(entry.duration);
+            }
+          }
+        });
+        observer.observe({ type: 'event', durationThreshold: 0, buffered: true });
+      } catch {
+        // Event Timing API fallback
+      }
+
       window.addEventListener('keydown', (e) => {
         if (e.code === 'ArrowUp' || e.code === 'ArrowDown') {
           const t0 = performance.now();
           requestAnimationFrame(() => {
-            const dt = performance.now() - t0;
-            window.__perfLatencies200.push(dt);
+            const dtSingle = performance.now() - t0;
+            window.__perfSingleRaf200.push(dtSingle);
+            requestAnimationFrame(() => {
+              const dtDouble = performance.now() - t0;
+              window.__perfDoubleRaf200.push(dtDouble);
+            });
           });
         }
       });
     });
 
-    for (let i = 0; i < 30; i++) {
+    for (let i = 0; i < 50; i++) {
       const key = i % 2 === 0 ? 'ArrowUp' : 'ArrowDown';
       await page.keyboard.press(key);
       await sleep(90);
     }
-    await sleep(200);
+    await sleep(250);
 
-    const latencies200 = await page.evaluate(() => window.__perfLatencies200);
-    const perfAppSamples = await page.evaluate(() => window.__perf?.slice(-30) ?? []);
-    console.log('Sample App perf timings (last 5):', perfAppSamples.slice(-5));
-    const stats200 = calculateStats(latencies200);
+    const latencies200Double = await page.evaluate(() => window.__perfDoubleRaf200);
+    const latencies200Single = await page.evaluate(() => window.__perfSingleRaf200);
+    const latencies200EventTiming = await page.evaluate(() => window.__perfEventTiming200);
+    const latencies200App = await page.evaluate(() => window.__perf?.slice(-50) ?? []);
 
-    console.log('\n--- 200-Measure Full-Featured Benchmark Results ---');
-    console.log(`Keystrokes: ${latencies200.length}`);
-    console.log(`Mean:       ${stats200.mean.toFixed(2)} ms`);
-    console.log(`Median:     ${stats200.median.toFixed(2)} ms`);
-    console.log(`p95:        ${stats200.p95.toFixed(2)} ms (Target: < 40.0 ms)`);
-    console.log(`Min / Max:  ${stats200.min.toFixed(2)} ms / ${stats200.max.toFixed(2)} ms`);
+    const stats200Double = calculateStats(latencies200Double);
+    const stats200Single = calculateStats(latencies200Single);
+    const stats200EventTiming = latencies200EventTiming.length > 0 ? calculateStats(latencies200EventTiming) : null;
+    const stats200App = latencies200App.length > 0 ? calculateStats(latencies200App) : null;
 
+    console.log('\n--- 200-Measure Full-Featured Benchmark Results (n = 50) ---');
+    console.log(`Probe 1 (Double rAF / Next Paint): Median: ${stats200Double.median.toFixed(2)} ms, p95: ${stats200Double.p95.toFixed(2)} ms, Mean: ${stats200Double.mean.toFixed(2)} ms, Min/Max: ${stats200Double.min.toFixed(2)}/${stats200Double.max.toFixed(2)} ms (Target: < 40.0 ms)`);
+    console.log(`Probe 2 (Event Timing API):        ${stats200EventTiming ? `Median: ${stats200EventTiming.median.toFixed(2)} ms, p95: ${stats200EventTiming.p95.toFixed(2)} ms, Mean: ${stats200EventTiming.mean.toFixed(2)} ms` : 'N/A'}`);
+    console.log(`Probe 3 (App Internal __perf):     ${stats200App ? `Median: ${stats200App.median.toFixed(2)} ms, p95: ${stats200App.p95.toFixed(2)} ms, Mean: ${stats200App.mean.toFixed(2)} ms` : 'N/A'}`);
+    console.log(`Comparative (Single rAF):          Median: ${stats200Single.median.toFixed(2)} ms, p95: ${stats200Single.p95.toFixed(2)} ms, Mean: ${stats200Single.mean.toFixed(2)} ms, Min/Max: ${stats200Single.min.toFixed(2)}/${stats200Single.max.toFixed(2)} ms`);
+
+    const stats200 = stats200Double;
     if (stats200.p95 >= 40.0) {
       throw new Error(`FAIL: 200-measure p95 (${stats200.p95.toFixed(2)} ms) exceeds 40 ms target!`);
     }
@@ -285,24 +332,36 @@ async function runBenchmark() {
         benchmark_64_full: {
           measures: 64,
           features: ['ties', 'slurs', 'dynamics', 'articulations', 'repeats', 'lyrics'],
-          runs: latencies64.length,
+          runs: latencies64Double.length,
           meanMs: Number(stats64.mean.toFixed(2)),
           medianMs: Number(stats64.median.toFixed(2)),
           p95Ms: Number(stats64.p95.toFixed(2)),
           minMs: Number(stats64.min.toFixed(2)),
           maxMs: Number(stats64.max.toFixed(2)),
+          probes: {
+            doubleRaf: stats64Double,
+            singleRaf: stats64Single,
+            eventTiming: stats64EventTiming,
+            appInternal: stats64App,
+          },
           targetP95Ms: 25.0,
           pass: stats64.p95 < 25.0,
         },
         benchmark_200_full: {
           measures: 200,
           features: ['ties', 'slurs', 'dynamics', 'articulations', 'repeats', 'lyrics'],
-          runs: latencies200.length,
+          runs: latencies200Double.length,
           meanMs: Number(stats200.mean.toFixed(2)),
           medianMs: Number(stats200.median.toFixed(2)),
           p95Ms: Number(stats200.p95.toFixed(2)),
           minMs: Number(stats200.min.toFixed(2)),
           maxMs: Number(stats200.max.toFixed(2)),
+          probes: {
+            doubleRaf: stats200Double,
+            singleRaf: stats200Single,
+            eventTiming: stats200EventTiming,
+            appInternal: stats200App,
+          },
           targetP95Ms: 40.0,
           pass: stats200.p95 < 40.0,
           virtualization: {
