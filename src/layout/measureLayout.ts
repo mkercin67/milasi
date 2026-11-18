@@ -63,11 +63,33 @@ export function layoutSingleMeasure(
 ): MeasureLayoutChunk {
   measureLayoutCacheStats.calls++;
 
+  let eventsHash = 0;
+  const voiceEvents = staffMeasure?.voices[0]?.events;
+  if (voiceEvents) {
+    for (let i = 0; i < voiceEvents.length; i++) {
+      const ev = voiceEvents[i];
+      eventsHash = (eventsHash * 31 + ev.duration + (ev.kind === 'note' && ev.tiedToNext ? 1 : 0)) | 0;
+      if (ev.kind === 'note') {
+        for (let j = 0; j < ev.pitches.length; j++) {
+          const p = ev.pitches[j];
+          eventsHash =
+            (eventsHash * 31 +
+              p.step.charCodeAt(0) * 10 +
+              p.octave +
+              ((p.alter ?? 0) + 2) * 100) |
+            0;
+        }
+      } else {
+        eventsHash = (eventsHash * 31 + 7) | 0;
+      }
+    }
+  }
+
   const prevKey = prevMDef
     ? `${prevMDef.keySig}_${prevMDef.timeSig.num}/${prevMDef.timeSig.den}`
     : 'none';
   const barlineType = mDef.endBarline ?? (isLastMeasure ? 'final' : 'single');
-  const cacheKey = `${mDef.id}_${mDef.keySig}_${mDef.timeSig.num}/${mDef.timeSig.den}_${clef.sign}${clef.line}_${isFirstMeasure}_${isLastMeasure}_${prevKey}_${mDef.actualTicks ?? 'full'}_${barlineType}_${mDef.repeatStart ? 'rs' : ''}_${mDef.repeatEnd ? 're' : ''}_${mDef.volta?.number ?? 'none'}`;
+  const cacheKey = `${mDef.id}_${mDef.keySig}_${mDef.timeSig.num}/${mDef.timeSig.den}_${clef.sign}${clef.line}_${isFirstMeasure}_${isLastMeasure}_${prevKey}_${mDef.actualTicks ?? 'full'}_${barlineType}_${mDef.repeatStart ? 'rs' : ''}_${mDef.repeatEnd ? 're' : ''}_${mDef.volta?.number ?? 'none'}_${eventsHash}`;
 
   if (staffMeasure) {
     const existing = measureChunkCache.get(staffMeasure);
@@ -547,6 +569,7 @@ export function layoutSingleMeasure(
     naturalWidth: relX,
     barlineItemIndex,
     beamGroups: beamGroupsMeta,
+    cacheKey,
   };
 
   if (staffMeasure) {

@@ -212,13 +212,8 @@ export const ScoreView: React.FC<ScoreViewProps> = ({
         }
       }
     }
-    for (const item of layout.items) {
-      if (item.kind === 'glyph' && item.glyph) {
-        set.add(item.glyph);
-      }
-    }
     return Array.from(set);
-  }, [layout.items, layout.systems]);
+  }, [layout.systems]);
 
   const cursorPos = useMemo(() => {
     if (!isInputMode || !cursor) return null;
@@ -412,8 +407,10 @@ export const ScoreView: React.FC<ScoreViewProps> = ({
           fill: transparent !important;
           stroke: none !important;
         }
+        svg g.score-event-group.playback-highlight,
         svg g.score-event-group.playback-highlight use,
-        svg g.score-event-group.playback-highlight path {
+        svg g.score-event-group.playback-highlight path,
+        svg g.score-event-group.playback-highlight text {
           fill: #16a34a !important;
           color: #16a34a !important;
         }

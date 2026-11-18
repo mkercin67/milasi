@@ -10,6 +10,10 @@ export function applyVisualOverrides(
   score: Score,
   systems: LayoutSystem[]
 ): Record<string, { dx: number; dy: number }> {
+  if (!score.overrides || Object.keys(score.overrides).length === 0) {
+    return {};
+  }
+
   // Build lookup of event IDs to their kind and measure for layout override rules
   const eventKindMap = new Map<string, string>();
   const eventMeasureMap = new Map<string, string>();

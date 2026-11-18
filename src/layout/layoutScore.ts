@@ -24,13 +24,26 @@ import {
 import { computeHeaderLayout } from './headerLayout';
 import { layoutSingleMeasure } from './measureLayout';
 import { applyVisualOverrides } from './overrideLayout';
-import { generateSystemBeams, SystemPlan } from './systemBeams';
+import { generateSingleSystemBeams, generateSystemBeams, SystemPlan } from './systemBeams';
 
 export * from './layoutPrimitives';
 export * from './headerLayout';
 export * from './measureLayout';
 export * from './overrideLayout';
 export * from './systemBeams';
+
+interface CachedSystemLayout {
+  items: LayoutItem[];
+  staffEndEndX: number;
+}
+
+const MAX_SYSTEM_CACHE = 1000;
+const systemLayoutCache = new Map<string, CachedSystemLayout>();
+
+/** Clears the system layout memoization cache (for tests or hard resets). */
+export function clearSystemLayoutCache(): void {
+  systemLayoutCache.clear();
+}
 
 export function layoutScore(score: Score, options: LayoutOptions = {}): LayoutResult {
   const targetWidth = options.width ?? options.contentWidth ?? 70;
@@ -189,257 +202,300 @@ export function layoutScore(score: Score, options: LayoutOptions = {}): LayoutRe
   const preliminarySys0Y = headerLayout.height > 0 ? headerLayout.height + staffMarginTop : staffMarginTop;
   const isPickup = Boolean(score.measures[0]?.actualTicks);
 
+  const hasOverrides = Boolean(score.overrides && Object.keys(score.overrides).length > 0);
+
   for (let sIdx = 0; sIdx < systemPlans.length; sIdx++) {
     const plan = systemPlans[sIdx];
     const isLastSystem = sIdx === systemPlans.length - 1;
-    const systemItems: LayoutItem[] = [];
-
-    // Header block on first page above system 0
-    if (sIdx === 0 && headerLayout.items.length > 0) {
-      for (const hItem of headerLayout.items) {
-        systemItems.push({
-          ...hItem,
-          y: hItem.y - preliminarySys0Y,
-        });
-      }
+    let mKeys = '';
+    for (let i = 0; i < plan.measures.length; i++) {
+      mKeys += (i === 0 ? '' : ';') + (plan.measures[i].cacheKey ?? plan.measures[i].measureDefId);
     }
+    const sysKey = !hasOverrides
+      ? `${sIdx === 0 ? 's0' : 'sx'}_${isLastSystem ? 'last' : 'norm'}_${targetWidth}_${preliminarySys0Y}_${plan.measureIndices[0]}_${mKeys}`
+      : null;
 
-    // Measure number above start of system for systems after the first
-    if (sIdx > 0) {
-      const firstMIdx = plan.measureIndices[0] ?? 0;
-      const measureNumber = isPickup ? firstMIdx : firstMIdx + 1;
-      if (measureNumber > 0) {
-        systemItems.push({
-          id: `sys-${sIdx}-measure-number`,
-          kind: 'text',
-          text: String(measureNumber),
-          x: 0,
-          y: -1.2,
-          fontSize: 1.1,
-          fontWeight: 'bold',
-          fontStyle: 'italic',
-          fontFamily: '"Times New Roman", Times, "Liberation Serif", serif',
-        });
-      }
-    }
+    let systemItems: LayoutItem[];
+    let staffEndEndX: number;
 
-    // Header items
-    for (const hItem of plan.headerItems) {
-      systemItems.push({
-        ...hItem,
-        id: `sys-${sIdx}-${hItem.id}`,
-      });
-    }
+    if (sysKey && systemLayoutCache.has(sysKey)) {
+      const cached = systemLayoutCache.get(sysKey)!;
+      systemItems = cached.items;
+      staffEndEndX = cached.staffEndEndX;
+    } else {
+      systemItems = [];
 
-    const naturalContentWidth = plan.measures.reduce((sum, m) => sum + m.naturalWidth, 0);
-    const availableContentSpace = targetWidth - plan.headerWidth;
-
-    const shouldJustify =
-      !isLastSystem && naturalContentWidth > 0 && availableContentSpace > naturalContentWidth;
-    const stretchRatio = shouldJustify ? availableContentSpace / naturalContentWidth : 1.0;
-
-    let contentOffset = plan.headerWidth;
-
-    for (let mInSys = 0; mInSys < plan.measures.length; mInSys++) {
-      const chunk = plan.measures[mInSys];
-      const globalMIdx = plan.measureIndices[mInSys];
-      const mDef = score.measures[globalMIdx];
-      const isLastMeasureInSystem = mInSys === plan.measures.length - 1;
-      const isNextOnSameSystem = !isLastMeasureInSystem;
-      const nextMDef = isNextOnSameSystem ? score.measures[plan.measureIndices[mInSys + 1]] : undefined;
-      const prevMDefOnSameSystem = mInSys > 0 ? score.measures[plan.measureIndices[mInSys - 1]] : undefined;
-
-      const hasCombinedRepeatEnd = Boolean(mDef.repeatEnd && nextMDef?.repeatStart);
-      const isCombinedRepeatStartSuppressed = Boolean(mDef.repeatStart && prevMDefOnSameSystem?.repeatEnd);
-
-      // Tempo display above measure if specified on this measure
-      const tempo = mDef?.tempo ?? (globalMIdx === 0 && score.measures[0]?.tempo ? score.measures[0].tempo : undefined);
-      if (tempo) {
-        let curTempoX = contentOffset;
-        if (tempo.tempoText) {
+      // Header block on first page above system 0
+      if (sIdx === 0 && headerLayout.items.length > 0) {
+        for (const hItem of headerLayout.items) {
           systemItems.push({
-            id: `tempo-text-${mDef.id}`,
+            ...hItem,
+            y: hItem.y - preliminarySys0Y,
+          });
+        }
+      }
+
+      // Measure number above start of system for systems after the first
+      if (sIdx > 0) {
+        const firstMIdx = plan.measureIndices[0] ?? 0;
+        const measureNumber = isPickup ? firstMIdx : firstMIdx + 1;
+        if (measureNumber > 0) {
+          systemItems.push({
+            id: `sys-${sIdx}-measure-number`,
             kind: 'text',
-            text: tempo.tempoText,
-            x: curTempoX,
-            y: -2.4,
-            fontSize: 1.25,
+            text: String(measureNumber),
+            x: 0,
+            y: -1.2,
+            fontSize: 1.1,
             fontWeight: 'bold',
+            fontStyle: 'italic',
             fontFamily: '"Times New Roman", Times, "Liberation Serif", serif',
           });
-          curTempoX += tempo.tempoText.length * 0.65 + 0.5;
         }
+      }
 
-        let beatGlyph = 'metNoteQuarterUp';
-        if (tempo.beatUnit === 0.5) beatGlyph = 'metNote8thUp';
-        else if (tempo.beatUnit === 2.0) beatGlyph = 'metNoteHalfUp';
-        else if (tempo.beatUnit === 1.5) beatGlyph = 'metNoteQuarterUp';
-
+      // Header items
+      for (const hItem of plan.headerItems) {
         systemItems.push({
-          id: `tempo-glyph-${mDef.id}`,
-          kind: 'glyph',
-          glyph: beatGlyph,
-          x: curTempoX,
-          y: -2.4,
-          scale: 0.8,
+          ...hItem,
+          id: `sys-${sIdx}-${hItem.id}`,
         });
-        curTempoX += 1.4;
+      }
 
-        if (tempo.beatUnit === 1.5) {
+      const naturalContentWidth = plan.measures.reduce((sum, m) => sum + m.naturalWidth, 0);
+      const availableContentSpace = targetWidth - plan.headerWidth;
+
+      const shouldJustify =
+        !isLastSystem && naturalContentWidth > 0 && availableContentSpace > naturalContentWidth;
+      const stretchRatio = shouldJustify ? availableContentSpace / naturalContentWidth : 1.0;
+
+      let contentOffset = plan.headerWidth;
+
+      for (let mInSys = 0; mInSys < plan.measures.length; mInSys++) {
+        const chunk = plan.measures[mInSys];
+        const globalMIdx = plan.measureIndices[mInSys];
+        const mDef = score.measures[globalMIdx];
+        const isLastMeasureInSystem = mInSys === plan.measures.length - 1;
+        const isNextOnSameSystem = !isLastMeasureInSystem;
+        const nextMDef = isNextOnSameSystem ? score.measures[plan.measureIndices[mInSys + 1]] : undefined;
+        const prevMDefOnSameSystem = mInSys > 0 ? score.measures[plan.measureIndices[mInSys - 1]] : undefined;
+
+        const hasCombinedRepeatEnd = Boolean(mDef.repeatEnd && nextMDef?.repeatStart);
+        const isCombinedRepeatStartSuppressed = Boolean(mDef.repeatStart && prevMDefOnSameSystem?.repeatEnd);
+
+        // Tempo display above measure if specified on this measure
+        const tempo = mDef?.tempo ?? (globalMIdx === 0 && score.measures[0]?.tempo ? score.measures[0].tempo : undefined);
+        if (tempo) {
+          let curTempoX = contentOffset;
+          if (tempo.tempoText) {
+            systemItems.push({
+              id: `tempo-text-${mDef.id}`,
+              kind: 'text',
+              text: tempo.tempoText,
+              x: curTempoX,
+              y: -2.4,
+              fontSize: 1.25,
+              fontWeight: 'bold',
+              fontFamily: '"Times New Roman", Times, "Liberation Serif", serif',
+            });
+            curTempoX += tempo.tempoText.length * 0.65 + 0.5;
+          }
+
+          let beatGlyph = 'metNoteQuarterUp';
+          if (tempo.beatUnit === 0.5) beatGlyph = 'metNote8thUp';
+          else if (tempo.beatUnit === 2.0) beatGlyph = 'metNoteHalfUp';
+          else if (tempo.beatUnit === 1.5) beatGlyph = 'metNoteQuarterUp';
+
           systemItems.push({
-            id: `tempo-dot-${mDef.id}`,
+            id: `tempo-glyph-${mDef.id}`,
             kind: 'glyph',
-            glyph: 'metAugmentationDot',
+            glyph: beatGlyph,
             x: curTempoX,
             y: -2.4,
             scale: 0.8,
           });
-          curTempoX += 0.8;
-        }
+          curTempoX += 1.4;
 
-        systemItems.push({
-          id: `tempo-bpm-${mDef.id}`,
-          kind: 'text',
-          text: ` = ${tempo.bpm}`,
-          x: curTempoX,
-          y: -2.4,
-          fontSize: 1.2,
-          fontWeight: 'bold',
-          fontFamily: '"Times New Roman", Times, "Liberation Serif", serif',
-        });
-      }
-
-      for (let iIdx = 0; iIdx < chunk.items.length; iIdx++) {
-        const entry = chunk.items[iIdx];
-        const raw = entry.item;
-
-        // If this measure's repeat-start is covered by previous measure's combined repeatRightLeft, skip it
-        if (raw.id.startsWith('repeat-start-') && isCombinedRepeatStartSuppressed) {
-          continue;
-        }
-
-        // If this measure has repeatEnd and next measure has repeatStart on the same system, draw combined repeatRightLeft
-        let itemToPlace = raw;
-        if (raw.id.startsWith('repeat-end-') && hasCombinedRepeatEnd) {
-          itemToPlace = {
-            ...raw,
-            id: `repeat-combined-${mDef.id}`,
-            glyph: 'repeatRightLeft',
-          };
-        }
-
-        const isBarline = iIdx >= chunk.barlineItemIndex;
-
-        let finalX: number;
-        let finalX2: number | undefined = undefined;
-
-        if (isLastMeasureInSystem && shouldJustify && isBarline) {
-          const barlineThickness = itemToPlace.thickness ?? BARLINE_THICKNESS;
-          finalX = targetWidth - barlineThickness;
-          finalX2 = finalX;
-        } else if (entry.ledgerNoteRelativeX !== undefined) {
-          const stretchedNoteX = contentOffset + entry.ledgerNoteRelativeX * stretchRatio;
-          finalX = stretchedNoteX - LEDGER_EXTENSION;
-          finalX2 = stretchedNoteX + NOTEHEAD_WIDTH + LEDGER_EXTENSION;
-        } else {
-          finalX = contentOffset + itemToPlace.x * stretchRatio;
-          if (itemToPlace.x2 !== undefined) {
-            finalX2 = contentOffset + itemToPlace.x2 * stretchRatio;
+          if (tempo.beatUnit === 1.5) {
+            systemItems.push({
+              id: `tempo-dot-${mDef.id}`,
+              kind: 'glyph',
+              glyph: 'metAugmentationDot',
+              x: curTempoX,
+              y: -2.4,
+              scale: 0.8,
+            });
+            curTempoX += 0.8;
           }
+
+          systemItems.push({
+            id: `tempo-bpm-${mDef.id}`,
+            kind: 'text',
+            text: ` = ${tempo.bpm}`,
+            x: curTempoX,
+            y: -2.4,
+            fontSize: 1.2,
+            fontWeight: 'bold',
+            fontFamily: '"Times New Roman", Times, "Liberation Serif", serif',
+          });
         }
 
-        systemItems.push({
-          ...itemToPlace,
-          x: finalX,
-          x2: finalX2,
-        });
-      }
+        for (let iIdx = 0; iIdx < chunk.items.length; iIdx++) {
+          const entry = chunk.items[iIdx];
+          const raw = entry.item;
 
-      const measureStartX = contentOffset;
-      const measureEndX = isLastMeasureInSystem && shouldJustify
-        ? targetWidth
-        : contentOffset + chunk.naturalWidth * stretchRatio;
+          // If this measure's repeat-start is covered by previous measure's combined repeatRightLeft, skip it
+          if (raw.id.startsWith('repeat-start-') && isCombinedRepeatStartSuppressed) {
+            continue;
+          }
 
-      // Volta brackets above measure (Milestone 6d)
-      if (mDef.volta) {
-        const vNum = mDef.volta.number;
-        const vStartX = measureStartX;
-        const vEndX = measureEndX;
-        const vY = -3.8;
-        const hookEndY = -2.5;
+          // If this measure has repeatEnd and next measure has repeatStart on the same system, draw combined repeatRightLeft
+          let itemToPlace = raw;
+          if (raw.id.startsWith('repeat-end-') && hasCombinedRepeatEnd) {
+            itemToPlace = {
+              ...raw,
+              id: `repeat-combined-${mDef.id}`,
+              glyph: 'repeatRightLeft',
+            };
+          }
 
-        // Label "1." or "2."
-        systemItems.push({
-          id: `volta-text-${mDef.id}`,
-          kind: 'text',
-          text: `${vNum}.`,
-          x: vStartX + 0.6,
-          y: vY + 1.0,
-          fontSize: 1.15,
-          fontWeight: 'bold',
-          fontFamily: '"Times New Roman", Times, "Liberation Serif", serif',
-        });
+          const isBarline = iIdx >= chunk.barlineItemIndex;
 
-        // Horizontal bracket line
-        systemItems.push({
-          id: `volta-line-${mDef.id}`,
-          kind: 'line',
-          x: vStartX,
-          y: vY,
-          x2: vEndX - 0.2,
-          y2: vY,
-          thickness: 0.16,
-        });
+          let finalX: number;
+          let finalX2: number | undefined = undefined;
 
-        // Left hook (downward)
-        systemItems.push({
-          id: `volta-hook-left-${mDef.id}`,
-          kind: 'line',
-          x: vStartX,
-          y: vY,
-          x2: vStartX,
-          y2: hookEndY,
-          thickness: 0.16,
-        });
+          if (isLastMeasureInSystem && shouldJustify && isBarline) {
+            const barlineThickness = itemToPlace.thickness ?? BARLINE_THICKNESS;
+            finalX = targetWidth - barlineThickness;
+            finalX2 = finalX;
+          } else if (entry.ledgerNoteRelativeX !== undefined) {
+            const stretchedNoteX = contentOffset + entry.ledgerNoteRelativeX * stretchRatio;
+            finalX = stretchedNoteX - LEDGER_EXTENSION;
+            finalX2 = stretchedNoteX + NOTEHEAD_WIDTH + LEDGER_EXTENSION;
+          } else {
+            finalX = contentOffset + itemToPlace.x * stretchRatio;
+            if (itemToPlace.x2 !== undefined) {
+              finalX2 = contentOffset + itemToPlace.x2 * stretchRatio;
+            }
+          }
 
-        // Closing hook at the right end of a volta ONLY if the volta's last measure has repeatEnd
-        const isLastMeasureOfVolta =
-          globalMIdx === score.measures.length - 1 ||
-          score.measures[globalMIdx + 1]?.volta?.number !== mDef.volta.number;
-
-        if (isLastMeasureOfVolta && mDef.repeatEnd) {
           systemItems.push({
-            id: `volta-hook-right-${mDef.id}`,
+            ...itemToPlace,
+            x: finalX,
+            x2: finalX2,
+          });
+        }
+
+        const measureStartX = contentOffset;
+        const measureEndX = isLastMeasureInSystem && shouldJustify
+          ? targetWidth
+          : contentOffset + chunk.naturalWidth * stretchRatio;
+
+        // Volta brackets above measure (Milestone 6d)
+        if (mDef.volta) {
+          const vNum = mDef.volta.number;
+          const vStartX = measureStartX;
+          const vEndX = measureEndX;
+          const vY = -3.8;
+          const hookEndY = -2.5;
+
+          // Label "1." or "2."
+          systemItems.push({
+            id: `volta-text-${mDef.id}`,
+            kind: 'text',
+            text: `${vNum}.`,
+            x: vStartX + 0.6,
+            y: vY + 1.0,
+            fontSize: 1.15,
+            fontWeight: 'bold',
+            fontFamily: '"Times New Roman", Times, "Liberation Serif", serif',
+          });
+
+          // Horizontal bracket line
+          systemItems.push({
+            id: `volta-line-${mDef.id}`,
             kind: 'line',
-            x: vEndX - 0.2,
+            x: vStartX,
             y: vY,
             x2: vEndX - 0.2,
+            y2: vY,
+            thickness: 0.16,
+          });
+
+          // Left hook (downward)
+          systemItems.push({
+            id: `volta-hook-left-${mDef.id}`,
+            kind: 'line',
+            x: vStartX,
+            y: vY,
+            x2: vStartX,
             y2: hookEndY,
             thickness: 0.16,
           });
+
+          // Closing hook at the right end of a volta ONLY if the volta's last measure has repeatEnd
+          const isLastMeasureOfVolta =
+            globalMIdx === score.measures.length - 1 ||
+            score.measures[globalMIdx + 1]?.volta?.number !== mDef.volta.number;
+
+          if (isLastMeasureOfVolta && mDef.repeatEnd) {
+            systemItems.push({
+              id: `volta-hook-right-${mDef.id}`,
+              kind: 'line',
+              x: vEndX - 0.2,
+              y: vY,
+              x2: vEndX - 0.2,
+              y2: hookEndY,
+              thickness: 0.16,
+            });
+          }
         }
+
+        contentOffset += chunk.naturalWidth * stretchRatio;
       }
 
-      contentOffset += chunk.naturalWidth * stretchRatio;
-    }
+      if (!isLastSystem && shouldJustify) {
+        staffEndEndX = targetWidth;
+      } else {
+        staffEndEndX = contentOffset;
+      }
 
-    let staffEndEndX: number;
-    if (!isLastSystem && shouldJustify) {
-      staffEndEndX = targetWidth;
-    } else {
-      staffEndEndX = contentOffset;
-    }
+      for (let line = 0; line <= 4; line++) {
+        systemItems.unshift({
+          id: `sys-${sIdx}-staffline-${line}`,
+          kind: 'line',
+          x: 0,
+          y: line,
+          x2: staffEndEndX,
+          y2: line,
+          thickness: STAFF_LINE_THICKNESS,
+        });
+      }
 
-    for (let line = 0; line <= 4; line++) {
-      systemItems.unshift({
-        id: `sys-${sIdx}-staffline-${line}`,
-        kind: 'line',
-        x: 0,
-        y: line,
-        x2: staffEndEndX,
-        y2: line,
-        thickness: STAFF_LINE_THICKNESS,
-      });
+      // If score has no overrides, generate beams right here and cache them with the system items
+      if (!hasOverrides) {
+        const tempSys: LayoutSystem = {
+          index: sIdx,
+          x: 0,
+          y: sIdx * (systemSpacing + 4) + preliminarySys0Y,
+          width: Math.max(staffEndEndX, targetWidth),
+          height: 6,
+          staves: [],
+          items: systemItems,
+        };
+        generateSingleSystemBeams(tempSys, plan);
+      }
+
+      if (sysKey) {
+        if (systemLayoutCache.size >= MAX_SYSTEM_CACHE) {
+          const firstKey = systemLayoutCache.keys().next().value;
+          if (firstKey) systemLayoutCache.delete(firstKey);
+        }
+        systemLayoutCache.set(sysKey, {
+          items: systemItems,
+          staffEndEndX,
+        });
+      }
     }
 
     const staffContainer: LayoutStaff = {
@@ -462,8 +518,10 @@ export function layoutScore(score: Score, options: LayoutOptions = {}): LayoutRe
   // Apply visual overrides
   const appliedOverrides = applyVisualOverrides(score, systems);
 
-  // Generate beam polygons
-  generateSystemBeams(systems, systemPlans);
+  // If score has manual overrides, generate beams after stem overrides are applied
+  if (hasOverrides) {
+    generateSystemBeams(systems, systemPlans);
+  }
 
   // Dynamic header clearance: guarantee that system 0 musical items start at least 2 staff spaces below header bottom
   if (headerLayout.height > 0 && systems.length > 0) {
@@ -485,7 +543,7 @@ export function layoutScore(score: Score, options: LayoutOptions = {}): LayoutRe
     }
   }
 
-  const allItems = systems.flatMap((s) => s.items);
+  let memoizedItems: LayoutItem[] | null = null;
   const headerExtra = headerLayout.height > 0 && systems.length > 0 ? systems[0].y - staffMarginTop : 0;
   const totalHeight = systems.length * (systemSpacing + 4) + staffMarginTop + staffMarginBottom + headerExtra;
   const maxSysWidth = Math.max(targetWidth, ...systems.map((s) => s.width));
@@ -494,7 +552,12 @@ export function layoutScore(score: Score, options: LayoutOptions = {}): LayoutRe
     width: maxSysWidth,
     height: totalHeight,
     systems,
-    items: allItems,
+    get items() {
+      if (!memoizedItems) {
+        memoizedItems = systems.flatMap((s) => s.items);
+      }
+      return memoizedItems;
+    },
     score,
     appliedOverrides,
   };

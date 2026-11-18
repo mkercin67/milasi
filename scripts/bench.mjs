@@ -305,14 +305,14 @@ async function runBenchmark() {
     const stats200App = latencies200App.length > 0 ? calculateStats(latencies200App) : null;
 
     console.log('\n--- 200-Measure Full-Featured Benchmark Results (n = 50) ---');
-    console.log(`Probe 1 (Double rAF / Next Paint): Median: ${stats200Double.median.toFixed(2)} ms, p95: ${stats200Double.p95.toFixed(2)} ms, Mean: ${stats200Double.mean.toFixed(2)} ms, Min/Max: ${stats200Double.min.toFixed(2)}/${stats200Double.max.toFixed(2)} ms (Target: < 40.0 ms)`);
+    console.log(`Probe 1 (Double rAF / Next Paint): Median: ${stats200Double.median.toFixed(2)} ms, p95: ${stats200Double.p95.toFixed(2)} ms, Mean: ${stats200Double.mean.toFixed(2)} ms, Min/Max: ${stats200Double.min.toFixed(2)}/${stats200Double.max.toFixed(2)} ms (Target: < 30.0 ms)`);
     console.log(`Probe 2 (Event Timing API):        ${stats200EventTiming ? `Median: ${stats200EventTiming.median.toFixed(2)} ms, p95: ${stats200EventTiming.p95.toFixed(2)} ms, Mean: ${stats200EventTiming.mean.toFixed(2)} ms` : 'N/A'}`);
     console.log(`Probe 3 (App Internal __perf):     ${stats200App ? `Median: ${stats200App.median.toFixed(2)} ms, p95: ${stats200App.p95.toFixed(2)} ms, Mean: ${stats200App.mean.toFixed(2)} ms` : 'N/A'}`);
     console.log(`Comparative (Single rAF):          Median: ${stats200Single.median.toFixed(2)} ms, p95: ${stats200Single.p95.toFixed(2)} ms, Mean: ${stats200Single.mean.toFixed(2)} ms, Min/Max: ${stats200Single.min.toFixed(2)}/${stats200Single.max.toFixed(2)} ms`);
 
     const stats200 = stats200Double;
-    if (stats200.p95 >= 40.0) {
-      throw new Error(`FAIL: 200-measure p95 (${stats200.p95.toFixed(2)} ms) exceeds 40 ms target!`);
+    if (stats200.p95 >= 30.0) {
+      throw new Error(`FAIL: 200-measure p95 (${stats200.p95.toFixed(2)} ms) exceeds 30 ms target!`);
     }
 
     await browser.close();

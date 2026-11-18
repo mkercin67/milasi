@@ -70,6 +70,7 @@ export interface MeasureLayoutChunk {
   naturalWidth: number;
   barlineItemIndex: number;
   beamGroups: MeasureBeamGroupMeta[];
+  cacheKey?: string;
 }
 
 export function createTimeSigItems(
