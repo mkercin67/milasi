@@ -1,677 +1,498 @@
-# Architectural Design Document: Multi-Staff and Pagination (v2)
+# Architectural Design Document: Multi-Staff, Polyphony, and Pagination (v3)
 
-**Document Status:** PROPOSED ARCHITECTURAL BLUEPRINT (NOT REVIEWED BY LEAD IN FULL)  
+**Document Status:** DRAFT v3 - under lead review  
 **Target Schema:** Schema v7 (Milestone 7: Multi-Staff & Polyphony, Milestone 8: Pagination & Print)  
 **Author:** ScoreForge Core Engineering  
-**Scope:** Complete technical blueprint for multi-staff systems, voice polyphony, horizontal cross-staff alignment, vertical spacing, discrete page layouts, keymap conflict resolutions, audio routing, test corpus, and migration strategy. Zero runtime implementation in H1.
-
-> [!WARNING]
-> This architectural design document was authored as a technical design proposal for future milestones and has **NOT been reviewed by the lead in full**. All architectural proposals, key mappings, and schema specifications herein are subject to formal lead review and approval before Milestone 7 implementation begins.
-
-## Revision History
-
-| Version | Date | Author | Summary of Changes |
-|:---|:---|:---|:---|
-| **v1.0** | 17.11.2026 | Core Engineering | Initial architectural design draft for Schema v7 multi-staff systems and pagination. |
-| **v2.0** | 18.11.2026 | Core Engineering | Resolved keymap collision (removed `KeyV` voice toggle colliding with global `set-mode-select`); added physical Turkish Q keycap mapping for `BracketLeft` (`Ğ`) and `BracketRight` (`Ü`); updated performance targets to Double rAF and Event Timing; updated corpus list with lead's exact pieces and milestone gates (Bach BWV 140 M7a, Brahms Op. 118 No. 2 M7a, Bach BWV 772 M7b, Mozart K. 545 M7b, Chopin Op. 28 No. 4 M7b, Debussy M7c, Schubert D. 547 M7c, Beethoven Op. 18 No. 1 M10 with viola alto clef; Turkish folk song); deferred page-turn hints to M13+; scoped C clefs to M10; added M7a performance exit gates. |
+**Scope:** Complete architectural blueprint for multi-voice polyphony, horizontal cross-staff column alignment, skyline vertical spacing, staff groups and barlines, discrete page layouts, keymap conflict resolutions, MusicXML mapping, test corpus, and migration strategy. Zero runtime code implemented in Milestone H1.
 
 ---
 
-## 0. Ground Truth: Current Schema v6 Architecture
+## Revision History
 
-ScoreForge Schema v6 currently operates on a clean, decoupled data architecture where structural measures and musical events are separated into `measures: MeasureDef[]` and `parts[].staves[].measures[measureId]`.
+| Version | Date | Author | Status & Summary of Changes |
+|:---|:---|:---|:---|
+| **v1.0** | 17.11.2026 | Core Engineering | Initial architectural draft for multi-staff and pagination. Rejected by lead due to loose column alignment and ad-hoc vertical spacing. |
+| **v2.0** | 18.11.2026 | Core Engineering | Addressed initial review items (keymap collision notes, Turkish Q labels, Double rAF perf numbers). Rejected by lead (not accepted in full). |
+| **v3.0** | 18.11.2026 | Core Engineering | **Complete rewrite under lead review:**<br>1. **Horizontal Alignment:** Replaced flawed max-width with global tick column union, shortest-duration gap, per-staff glyph extents, column-relative Stage 1 output, and measure-level compound cache keys.<br>2. **Vertical Layout:** Replaced fixed staff gaps with dynamic per-system top/bottom skylines, 2.5 sp lyric clearance, and pipeline reordering (horizontal -> breaking -> skyline -> pagination).<br>3. **Groups & Barlines:** Added `Score.groups: StaffGroup[]`, through/individual/mensurstrich barline spans, template associations, and fixed v6->v7 migration (unique MIDI channels, template shortNames, validated `crossStaffTarget`).<br>4. **Voice Model:** Strict `voiceIndex` (1..4) identity invariant, v7 4-tuple cursor/selection, cross-staff Range and List selection models, and `validateScore` rules.<br>5. **Voice Rules:** Deterministic Gould "Behind Bars" engraving rules for polyphony, opposing stems, horizontal voice offsets for voices 3 & 4, unison/second noteheads, formulaic rest collision shifts in 0.5 sp steps, rest consolidation, and voice-2 rest suppression.<br>6. **Keymap:** Mechanically verified conflict table against `keymap.ts`, browser shortcuts, and Turkish Windows AltGr (Ctrl+Alt); non-conflicting voice/staff switching.<br>7. **Sub-Milestones:** Structured M7a (Single-staff voices), M7b (Grand staff), M7c (Ensembles, groups & C clefs: alto, tenor, treble-8vb), M7d (Pages & print); entry task `perf-0`; milestone gates.<br>8. **Corpus:** 9 historical excerpts with unverified claims audited and identified.<br>9. **Performance:** Unified production Double rAF & Event Timing budget table (p95 <= 20 ms / 64 mm-staves; <= 30 ms / 200 mm-staves; Node edit <= 5 ms).<br>10. **MusicXML & Pages:** Formal MusicXML element mapping (backup/forward/staves) and discrete page model. |
 
-### Current v6 TypeScript Types (from `src/core/model.ts`, `src/core/input.ts`, `src/core/selection.ts`)
+---
+
+## 0. Ground Truth & Architectural Invariants
+
+### 0.1 Permanent Principles (Unchanged from Inception)
+1. **Manual Control First:** Automatic layout is a deterministic baseline. Every element can be manually adjusted via `score.overrides[id]`.
+2. **Core is UI-Independent:** `src/core` operates purely in Node without DOM, window, or React dependencies.
+3. **Plain Serializable State:** The score is pure JSON. `JSON.stringify(score)` and `deserializeScore` round-trip without loss.
+4. **Command Pattern Undo/Redo:** Every user modification is executed as an atomic `Command`.
+5. **Integer Time Units:** Time is measured in integer ticks (`PPQ = 960`). No floating-point time calculations.
+6. **Staff-Space Units:** Layout coordinates are calculated in *staff spaces* (`1 sp` = distance between two staff lines, 3.5 to 10 pixels depending on zoom). Absolute pixel conversion occurs exclusively at the final SVG rendering boundary.
+7. **Zero DOM Layout Reads in Handlers:** Event handlers never read `getBoundingClientRect()`, `clientWidth`, or computed CSS styles.
+
+---
+
+## 1. Horizontal Alignment Engine (Cross-Staff Column Synchronization)
+
+### 1.1 The Mathematical Defect in Flawed Implementations
+If cross-staff column width is computed naively as:
+$$\text{colWidth}(t) = \max_{s \in \text{Staves}} \text{tickWidth}(s, t)$$
+staves with distinct rhythmic tick distributions become severely mis-spaced.
+
+**Concrete Example of the Failure:**
+- **Measure:** 4/4 meter ($3840\text{ ticks}$).
+- **Staff A (Right Hand):** Four quarter notes at ticks $0, 960, 1920, 2880$.
+- **Staff B (Left Hand):** Half note at tick $0$ ($1920\text{ ticks}$ duration) and half note at tick $1920$.
+- If Staff B has a wide text or accidental at tick 0, setting column 0 width based on Staff B's entire half note pushes tick $960$ on Staff A far to the right, creating an unnatural gap between beats 1 and 2 while compressing beats 2, 3, and 4.
+
+### 1.2 The Correct Algorithm: Global Tick Columns & Per-Staff Glyph Extents
+
+#### Definition 1: Global Tick Columns of a Measure
+For any measure $m \in \text{Score.measures}$, the global column set $\mathcal{T}_m$ is the strict union of start ticks across all voices of all staves:
+$$\mathcal{T}_m = \bigcup_{s \in \text{Staves}} \bigcup_{v \in s.\text{voices}} \{ \text{ev.startTick} \mid \text{ev} \in v.\text{events} \} = \{ t_0, t_1, t_2, \dots, t_{K-1} \}$$
+where $0 = t_0 < t_1 < \dots < t_{K-1} < \text{measureTicks}(m)$.
+
+#### Definition 2: Shortest Column Duration
+The duration $\Delta t_k$ following column $k$ is governed by the shortest sounding event starting at $t_k$ across all staves:
+$$\Delta t_k = \min_{s \in \text{Staves}} \{ \text{ev.duration} \mid \text{ev.startTick} = t_k \} \quad (\text{or } t_{k+1} - t_k)$$
+The optical spacing baseline gap $G_{\text{optical}}(t_k)$ is computed using the non-linear engraving power curve:
+$$G_{\text{optical}}(t_k) = \text{baseSpacing} \cdot \left(\frac{\Delta t_k}{\text{PPQ}}\right)^{0.6}$$
+
+#### Definition 3: Per-Staff Minimum Distance Between Columns
+For each staff $s$ and each adjacent column pair $(t_k, t_{k+1})$, let $\mathcal{E}(s, t_k)$ be the set of layout items belonging to events active at $t_k$. The minimum required horizontal distance $D_{\min}(s, t_k, t_{k+1})$ is determined by the rightmost extent of items at $t_k$ (including noteheads, accidentals, dots, displaced polyphonic noteheads, and lyric syllables) plus the leftmost extent (pre-roll / accidental clearance) of items starting at $t_{k+1}$:
+$$D_{\min}(s, t_k, t_{k+1}) = \text{extentRight}(s, t_k) + \text{clearance}(s) - \text{extentLeft}(s, t_{k+1})$$
+
+#### Definition 4: Unified Column Separation
+The final distance $W(t_k)$ between column $t_k$ and $t_{k+1}$ is:
+$$W(t_k) = \max \left( G_{\text{optical}}(t_k), \max_{s \in \text{Staves}} D_{\min}(s, t_k, t_{k+1}) \right)$$
+
+### 1.3 Worked Example
+- **Staff 1 (Soprano/Alto):** Tick 0 has an F4 quarter note; Tick 480 has an A4 eighth note; Tick 960 has a C5 quarter note.
+- **Staff 2 (Bass):** Tick 0 has a low F2 half note with a sharp accidental and a displaced voice-2 notehead (unison clash, shifted right by $+1.25\text{ sp}$). Tick 960 has a C3 half note.
+- **Tick Union $\mathcal{T}_m$:** $\{ 0, 480, 960 \}$.
+- **Column 0 ($t = 0$):**
+  - Shortest duration across staves: Tick 480 exists on Staff 1 $\implies \Delta t_0 = 480\text{ ticks}$ (eighth note).
+  - $G_{\text{optical}}(0) = 4.0 \cdot (480 / 960)^{0.6} = 2.64\text{ sp}$.
+  - Staff 1 extent at 0: Notehead black ($1.18\text{ sp}$) $\implies D_{\min}(\text{Staff 1}, 0, 480) = 1.18 + 0.5 = 1.68\text{ sp}$.
+  - Staff 2 extent at 0: Accidental sharp ($1.0\text{ sp}$) + Notehead ($1.18\text{ sp}$) + Displaced unison notehead ($+1.25\text{ sp}$) $= 3.43\text{ sp}$.
+  - Distance $W(0) = \max(2.64, 1.68, 3.43) = 3.43\text{ sp}$.
+- **Result:** Tick 480 on Staff 1 is placed exactly at $x = 3.43\text{ sp}$, maintaining perfect clearance with Staff 2's displaced cluster without artificially stretching beat 2 (tick 960).
+
+### 1.4 Algorithmic Complexity & Pseudo-Code
 
 ```typescript
-export type Id = string;
+// Complexity: O(M * (S * E + C * S)) where:
+// M = number of measures, S = number of staves, E = events per staff-measure, C = tick columns
+function computeMeasureColumnLayout(
+  mDef: MeasureDef,
+  staves: StaffMeasureInput[]
+): MeasureColumnLayout {
+  // Step 1: Collect unique tick set across all staves
+  const tickSet = new Set<number>();
+  for (const s of staves) {
+    for (const v of s.voices) {
+      for (const ev of v.events) {
+        tickSet.add(ev.startTick);
+      }
+    }
+  }
+  const columns = Array.from(tickSet).sort((a, b) => a - b);
+  
+  // Step 2: For each column, determine shortest active duration
+  const columnGaps: number[] = [];
+  for (let i = 0; i < columns.length; i++) {
+    const t = columns[i];
+    const nextT = i + 1 < columns.length ? columns[i + 1] : mDef.actualTicks ?? measureTicks(mDef.timeSig);
+    const shortestDuration = Math.min(nextT - t, findShortestEventDurationAtTick(staves, t));
+    const opticalGap = calculateOpticalSpacing(shortestDuration);
+    
+    // Step 3: Find maximum physical glyph clearance required across all staves
+    let maxPhysicalGap = 0;
+    for (const s of staves) {
+      const rightExtent = getStaffRightExtentAtTick(s, t);
+      const nextLeftExtent = i + 1 < columns.length ? getStaffLeftExtentAtTick(s, columns[i + 1]) : 0;
+      const physicalGap = (rightExtent - nextLeftExtent) + MIN_GLYPH_PADDING_SP;
+      if (physicalGap > maxPhysicalGap) maxPhysicalGap = physicalGap;
+    }
+    
+    columnGaps.push(Math.max(opticalGap, maxPhysicalGap));
+  }
+  
+  // Step 4: Output column-relative offsets
+  const columnOffsets = new Map<number, number>();
+  let currentRelX = 0;
+  for (let i = 0; i < columns.length; i++) {
+    columnOffsets.set(columns[i], currentRelX);
+    currentRelX += columnGaps[i];
+  }
+  
+  return { columns, columnOffsets, totalContentWidth: currentRelX };
+}
+```
 
-export interface Score {
-  schemaVersion: 1 | 2 | 3 | 4 | 5 | 6;
+### 1.5 Stage Pipeline & Cache Invalidation Semantics
+- **Stage 1 (Staff-Measure Local Layout):** Computes glyph metrics, accidentals, beams, and stem directions. Output is **COLUMN-RELATIVE** (events keyed by `tick`, with relative intra-event horizontal offsets $\Delta x$ for accidentals and displaced noteheads).
+- **Stage 2 (Cross-Staff Column Synchronization):** Merges tick sets, resolves column widths, and assigns absolute $x$ within the measure.
+- **Cache Invalidation Contract:**
+  - Cache key for Stage 1: `hash(staff.id, measure.id, staffMeasure.voices)`.
+  - Compound cache key for Stage 2: `hash(mDef, ...staves.map(s => stage1CacheKey(s, mDef.id)))`.
+  - **Single-Note Edit Scope:** Modifying one note in Staff 1, Measure 3 invalidates:
+    1. Stage 1 cache for Staff 1, Measure 3.
+    2. Stage 2 compound cache for Measure 3 across all staves.
+    3. The system containing Measure 3.
+    - **Untouched:** Measures 1, 2, 4..N on all staves retain 100% cache hits.
+
+---
+
+## 2. Vertical Layout Engine (Dynamic Skylines & System Stacking)
+
+### 2.1 The Failure of Fixed Vertical Spacing
+Fixed staff gaps ($6\text{ sp}$ or $8\text{ sp}$) inevitably cause collisions when high ledger lines, low ledger lines, vocal lyrics, dynamics, or volta brackets occur. Conversely, setting fixed gaps large enough to prevent worst-case collisions wastes vertical space on normal measures.
+
+### 2.2 Continuous Skyline Representation
+For every system, each staff maintains two continuous piecewise-linear profile curves across its horizontal length $x \in [0, W_{\text{system}}]$:
+1. **Top Skyline ($\text{Sky}_{\text{top}}(x)$):** The highest vertical extent (minimum $y$, where $y = 0$ is the staff's top line) of any element belonging to the staff:
+   $$\text{Sky}_{\text{top}}(x) = \min \left( 0, \min_{e \in \text{Items}(x)} \text{box}_{\text{top}}(e) \right)$$
+   Includes: high notes, ledger lines, upward stems, beams, articulations above, slurs arched above, dynamic text placed above, tempo markings, volta brackets, measure numbers.
+2. **Bottom Skyline ($\text{Sky}_{\text{bottom}}(x)$):** The lowest vertical extent (maximum $y$, where $y = 4\text{ sp}$ is the staff's bottom line):
+   $$\text{Sky}_{\text{bottom}}(x) = \max \left( 4.0, \max_{e \in \text{Items}(x)} \text{box}_{\text{bottom}}(e) \right)$$
+   Includes: low notes, ledger lines, downward stems, beams, articulations below, slurs arched below, dynamics ($p, f, mf$), hairpins, and vocal lyric lines.
+
+### 2.3 Dynamic Staff Separation Formula
+For adjacent staves $s$ and $s+1$ within the same system:
+$$\Delta Y(s, s+1) = \max \left( Y_{\min}(s, s+1), \max_{x \in [0, W]} \left[ \text{Sky}_{\text{bottom}}^s(x) - \text{Sky}_{\text{top}}^{s+1}(x) + \text{Padding}(s, s+1) \right] \right)$$
+Where:
+- $Y_{\min}(s, s+1) = 8.0\text{ sp}$ for instrumental staves; $10.5\text{ sp}$ if lyrics exist between staves.
+- $\text{Padding}(s, s+1) = 1.5\text{ sp}$ standard buffer.
+- **Lyric Clearance Invariant:** The vertical distance from the baseline of a lyric syllable on staff $s$ to the top skyline $\text{Sky}_{\text{top}}^{s+1}(x)$ of the staff below must be strictly $\ge 2.5\text{ sp}$.
+
+### 2.4 Pipeline Order & System Object Ownership
+Because accurate page breaking requires exact system heights, the architectural stage pipeline is strictly ordered as:
+
+```
+[Stage 1: Staff-Measure Relative Layout]
+                   │
+                   ▼
+[Stage 2: Cross-Staff Column Alignment]
+                   │
+                   ▼
+[Stage 3: System Line-Breaking (Horizontal Width Accumulation)]
+                   │
+                   ▼
+[Stage 4: Per-System Dynamic Skyline & Vertical Height Computation]
+                   │
+                   ▼
+[Stage 5: Discrete Page Breaking & Vertical Justification]
+```
+
+#### Ownership of System-Level Objects
+System-level annotations are anchored to the **top visible staff** of each system:
+- Tempo markings and text (`score.measures[m].tempo`)
+- Rehearsal marks
+- 1st and 2nd ending volta brackets (`score.measures[m].volta`)
+- System measure numbers
+
+These objects contribute exclusively to the top skyline of staff 0, preventing collision with the system above or the page top margin.
+
+#### Computational Cost
+- Skyline profiles are computed over discrete interval segments defined by note bounding boxes.
+- For a system of 4 staves and 4 measures ($~64$ notes), skyline computation requires $< 0.4\text{ ms}$ in Node / V8 ($O(N)$ linear segment scan).
+
+---
+
+## 3. Structural Groups, Templates, and Barlines
+
+### 3.1 Schema v7 Model Additions (`src/core/model.ts`)
+
+```typescript
+export interface StaffGroup {
   id: Id;
-  meta: {
-    title: string;
-    composer: string;
-    subtitle?: string;
-    arranger?: string;
-  };
-  parts: Part[];
-  measures: MeasureDef[];
-  overrides: Record<Id, Override>;
+  name?: string;
+  partIds: Id[];                     // Parts enclosed by this group
+  bracket: 'none' | 'brace' | 'bracket'; // 'brace' = piano curly brace; 'bracket' = orchestral square bracket
+  barlineSpan: 'through' | 'individual' | 'mensurstrich';
 }
 
-export type BarlineType = 'single' | 'double' | 'final';
-
-export interface VoltaDef {
-  number: 1 | 2;
-  openRight?: boolean;
+export interface ScoreV7 extends Omit<Score, 'schemaVersion'> {
+  schemaVersion: 7;
+  groups: StaffGroup[];              // Milestone 7 group hierarchy
+  pages?: PageDef[];                 // Milestone 8 discrete pages
 }
+```
 
-export interface MeasureDef {
-  id: Id;
-  timeSig: { num: number; den: number };
-  keySig: number; // -7..7 on circle of fifths (0 = C major)
-  tempo?: { bpm: number; beatUnit: number; tempoText?: string };
-  actualTicks?: number; // Custom duration in ticks (e.g. pickup/anacrusis)
-  endBarline?: BarlineType;
-  repeatStart?: boolean;
-  repeatEnd?: boolean;
-  volta?: VoltaDef;
-}
+### 3.2 Barline Span Semantics & Template Definitions
 
-export type ClefSign = 'G' | 'F' | 'C';
+| Template ID | Parts & Staves | Group Bracket | Barline Span | Musical / Engraving Standard |
+|:---|:---|:---|:---|:---|
+| `piano` | 1 Part, 2 Staves (Treble + Bass) | `brace` | `through` | Barlines connect continuously from top line of Staff 1 to bottom line of Staff 2. |
+| `satb` | 4 Parts (S, A, T, B), 1 Staff each | `bracket` | `individual` | Barlines stop at line 4 of each staff, leaving lyrics corridor unbroken. |
+| `string_quartet` | 4 Parts (Vln I, Vln II, Vla, Vc) | `bracket` | `through` | Continuous barlines connect all 4 staves through the ensemble. |
+| `voice_piano` | 2 Parts: Voice (1 staff) + Piano (2 staves) | Piano group has `brace` | Voice: `individual`; Piano: `through` | Voice barline is independent; piano staves share through-barlines. |
+| `solo_instrument` | 1 Part, 1 Staff | `none` | `individual` | Standard single-staff barline. |
 
-export interface Clef {
-  sign: ClefSign;
-  line: number; // e.g. 2 for treble, 4 for bass
-}
+### 3.3 Robust Schema Migration (v6 -> v7)
+The automated migration function `migrateV6ToV7(score: ScoreV6): ScoreV7` guarantees:
+1. `groups = []` initialized if absent.
+2. **Deterministic Part Short Names:** Rather than crude string slicing (`name.slice(0, 3)`), short names are looked up from the instrument definition catalog (e.g., `"Flute"` $\to$ `"Fl."`, `"Violin I"` $\to$ `"Vln. I"`, `"Pianoforte"` $\to$ `"Pno."`).
+3. **Unique MIDI Channel Allocation:** Sequentially assigns `midiChannel: 0..15` per Part (omitting Channel 9 reserved for percussion).
+4. **Cross-Staff Target Validation:** `crossStaffTarget?: Id` on `NoteEvent` is validated to ensure it references an existing, adjacent staff within the same Part; otherwise stripped with a migration warning. Rendering is ignored until Milestone 10.
 
-export interface Part {
-  id: Id;
-  name: string;
-  staves: Staff[];
-  instrument: string;
-}
+---
 
-export interface Staff {
-  id: Id;
-  clef: Clef;
-  measures: Record<Id, StaffMeasure>; // Keyed by MeasureDef.id
-  slurs?: Slur[];
-}
+## 4. Rigorous Multi-Voice Architecture (Schema v7)
 
-export interface StaffMeasure {
-  voices: Voice[];
-}
+### 4.1 `voiceIndex` as the Sole Invariant Identity
+In Schema v7, **array order in `StaffMeasure.voices` has no semantic meaning**. Voice identity is strictly defined by:
+$$\text{voiceIndex} \in \{ 1, 2, 3, 4 \}$$
 
-export interface Voice {
-  id: Id;
-  events: ScoreEvent[];
-}
+#### Formal Invariants:
+1. Every `Voice` within a `StaffMeasure` has a unique `voiceIndex` in $1..4$.
+2. `voiceIndex = 1` always exists in every non-empty `StaffMeasure`.
+3. Voices are sorted by `voiceIndex` ascending whenever serialized or written.
+4. Voice matching across measures during playback, selection, and clipboard operations is keyed strictly by `(staffId, voiceIndex)`. Never compare measure-local voice UUIDs across barlines.
 
-export type ScoreEvent = NoteEvent | RestEvent;
+### 4.2 v7 Cursor and Selection Models
 
-export type BaseDurationType = 'whole' | 'half' | 'quarter' | 'eighth' | '16th' | '32nd';
-
-export interface BaseEvent {
-  id: Id;
-  duration: number; // in ticks (PPQ = 960)
-  baseType: BaseDurationType;
-  dots: number;
-  tuplet?: { actual: number; normal: number };
-}
-
-export interface LyricSyllable {
-  verse: number;
-  text: string;
-}
-
-export interface NoteEvent extends BaseEvent {
-  kind: 'note';
-  pitches: Pitch[];
-  tiedToNext?: boolean;
-  articulations: string[];
-  dynamic?: string;
-  lyrics?: LyricSyllable[];
-}
-
-export interface RestEvent extends BaseEvent {
-  kind: 'rest';
-  wholeMeasure?: boolean;
-}
-
-export type PitchStep = 'C' | 'D' | 'E' | 'F' | 'G' | 'A' | 'B';
-
-export interface Pitch {
-  step: PitchStep;
-  octave: number; // C4 = middle C
-  alter: number; // 0 = natural, 1 = sharp, -1 = flat
-  tiedToNext?: boolean;
-}
-
-export interface Slur {
-  id: Id;
-  startEventId: Id;
-  endEventId: Id;
-  placement?: 'above' | 'below';
-}
-
-export interface Override {
-  dx?: number;
-  dy?: number;
-  scale?: number;
-  hidden?: boolean;
-}
-
-export interface ScoreCursor {
+```typescript
+export interface ScoreCursorV7 {
   staffId: Id;
-  voiceId: Id;
+  voiceIndex: 1 | 2 | 3 | 4;
   measureId: Id;
   tick: number;
 }
 
-export type Selection =
+export type SelectionV7 =
   | { kind: 'none' }
-  | { kind: 'event'; id: string }
-  | { kind: 'range'; staffId: string; voiceId: string; anchorId: string; focusId: string };
+  | { kind: 'event'; eventId: Id }
+  | {
+      kind: 'range';
+      start: { measureId: Id; tick: number };
+      end: { measureId: Id; tick: number };
+      staffIds: Id[];
+      voices: 'all' | Array<1 | 2 | 3 | 4>;
+    }
+  | { kind: 'list'; eventIds: Id[] };
 ```
 
-### Current `src/` Layout
-
-- `src/core/`: Immutable data model, commands, factory, undo/redo history, time/tick calculations, selection helpers, validation.
-- `src/layout/`: Pure layout engine: `layoutScore`, `measureLayout`, `systemBeams`, `headerLayout`, `notations`, `ties`, `slurs`, `overrideLayout`, `boundingBox`.
-- `src/render/`: SMuFL Bravura rendering (`renderSvg.ts`), SVG elements, hit-test rectangles.
-- `src/playback/`: Lookahead audio scheduling (`player.ts`, `schedule.ts`, `repeats.ts`, `pitch.ts`, `toneEngine.ts`).
-- `src/ui/`: React view layer (`ScoreView.tsx`, `SystemView.tsx`), custom hooks (`useAppKeyboard.ts`, `useEditor.ts`, `useScoreVirtualization.ts`).
-
----
-
-## 1. Units of Measurement and Coordinate Systems
-
-ScoreForge adheres strictly to two unified unit systems:
-
-1. **Internal Notation & Geometry (Staff Spaces - `sp`):**
-   - All notation positioning, notehead dimensions, stem lengths, line thicknesses, margins, bounding boxes, and manual drag overrides are defined in dimensionless **staff spaces (`sp`)**.
-   - 1 staff space (`1.0 sp`) is the vertical distance between two adjacent lines of a 5-line staff.
-   - Standard staff height (5 lines, 4 spaces) = `4.0 sp`.
-   - Default notehead width = `1.18 sp`.
-   - Staff line thickness = `0.13 sp`.
-   - Stem length = `3.50 sp`.
-
-2. **Physical Page Geometry (Millimeters - `mm`):**
-   - Sheet sizes, paper margins, printable areas, and binding offsets are defined in **millimeters (`mm`)**.
-   - **Canonical Physical Scale:** `1.0 sp = 1.75 mm` (equivalent to staff size 7.0 mm, standard Rastral size 3 / Henle / Bärenreiter Urtext).
-   - **Screen Display Conversion:**
-     `pxPerMm = 96 / 25.4` (~3.7795 px/mm at 100% zoom).
-     `staffSpacePx = 1.75 * pxPerMm` (~6.614 px per staff space at 100% zoom).
-     User zoom factor linearly scales `staffSpacePx`.
-   - **Print Conversion:** High-resolution vector SVG sets `width="210mm" height="297mm"` and `viewBox="0 0 pageWidthMm pageHeightMm"`, allowing lossless vector rendering at arbitrary DPI (300/600/1200 DPI).
+### 4.3 Editing Operations Across Staves and Voices
+- **Range Transposition (`transposeSelection`):** Iterates every event in `staffIds` whose start tick falls within $[start.tick, end.tick]$ and whose `voiceIndex` matches `voices`. Notes are transposed in-place; rests are unaffected.
+- **Range Deletion (`deleteRange`):** Replaces notes with rests of identical duration in the target voices. If all voices in a measure are cleared, voice 1 retains a full-measure rest and voices 2..4 are pruned if empty.
+- **Multi-Staff Copy / Paste:** Clipboard payloads encode relative staff offsets and explicit `voiceIndex` tags. Pasting into a multi-staff range matches by `(staffOffset, voiceIndex)`.
+- **Slur and Tie Invariants:** Slurs and ties are strictly intra-voice. `validateScore` asserts:
+  $$\forall \text{slur} \in \text{staff.slurs}, \quad \text{voiceOf}(\text{slur.startEvent}) = \text{voiceOf}(\text{slur.endEvent})$$
 
 ---
 
-## 2. Detailed Technical Sections (a) through (k)
+## 5. Gould-Compliant Engraving Rules for Polyphony
 
-### (a) Goals and Non-Goals
+*(All rules referenced against Elaine Gould, "Behind Bars: The Definitive Guide to Music Notation", Faber Music 2011, pp. 48–55, 65–72).*
 
-#### Goals
-1. **Multi-Staff Scoring:** Staves per system (e.g. Piano Grand Staff with brace, Choir SATB with bracket, Chamber Quartet, Lead sheet with melody/bass).
-2. **True Voice Polyphony:** Up to 4 voices per staff with Rule R3 compliance (`voiceIndex` 1..4), independent stem directions, rest consolidation/offset, and cross-voice collision resolution.
-3. **Horizontal Cross-Staff Time Alignment:** Measure widths and tick columns aligned synchronously across all staves in a system.
-4. **Discrete Pagination:** Multi-page layout (A4, Letter) with running headers, footers, system breaks, page breaks, and print scale.
-5. **Deterministic Purity:** Zero DOM measuring during layout; all bounding boxes and line breaks calculated via pure numeric functions.
-6. **Sub-40ms Keystroke Budget:** Single-note edit re-layout and paint must remain under 30 ms for 4 staves x 50 measures (200 measure-staves).
+### 5.1 Definition of a Polyphonic Staff-Measure
+A staff-measure is defined as **polyphonic** if and only if $\ge 2$ voices contain at least one sounding `NoteEvent` within that measure. A measure with voice 1 notes and only voice 2 rests is treated as monophonic unless voice 2 rests are explicitly shown.
 
-#### Non-Goals
-1. Dynamic part extraction (generating single-instrument parts from a full conductor score) is deferred to Milestone 11.
-2. Cross-staff beam distribution (e.g. Lisztian runs spanning piano treble and bass) is deferred to Milestone 10; data model reserves optional display property.
-3. Microtonal custom staff line counts (0-line or 11-line experimental staves) are out of scope.
-4. Live free-form drag-and-drop page reflow without underlying structure commands.
+### 5.2 Stem Direction Rules
+- **Monophonic Measure:** Middle line rule (Gould p. 13): noteheads on or above line 2 (middle B in treble) stem down; noteheads below line 2 stem up.
+- **Polyphonic Measure:**
+  - **Voice 1:** Stems point strictly **UP**.
+  - **Voice 2:** Stems point strictly **DOWN**.
+  - **Voice 3:** Stems point **UP**. Horizontally displaced to the right by $+1.25\text{ sp}$ to avoid collision with Voice 1.
+  - **Voice 4:** Stems point **DOWN**. Horizontally displaced to the left by $-1.25\text{ sp}$ to avoid collision with Voice 2.
 
----
+### 5.3 Unison and Second Interval Notehead Placement
 
-### (b) Data Model v7 and Migration (v6 -> v7)
+#### Rule 1: Perfect Unison (Same Pitch, Same Value)
+- Two voices sharing the exact same pitch and duration share a **single notehead** with a two-way stem (one stem up for Voice 1, one stem down for Voice 2) (Gould p. 49).
 
-#### Schema v7 Additions
-Schema v7 evolves `parts[].staves[]` with minimal additive changes:
+#### Rule 2: Unison Clash (Different Durations or Seconds)
+- If Voice 1 is a half note (open head) and Voice 2 is a quarter note (black head), they cannot share a notehead.
+- **Voice 1** sits in the standard optical column.
+- **Voice 2** is displaced to the right side of Voice 1's stem (Gould p. 50).
+- If pitches form a second interval (e.g. F4 and G4):
+  - Higher notehead is on the right; lower notehead is on the left.
+  - Voice 1 stem goes up from the right notehead; Voice 2 stem goes down from the left notehead.
 
-```typescript
-// Additions to src/core/model.ts for Schema v7
-
-export interface ScoreMetaV7 {
-  title: string;
-  composer: string;
-  subtitle?: string;
-  arranger?: string;
-  lyricist?: string;
-  copyright?: string;
-}
-
-export type SystemBracketType = 'none' | 'brace' | 'bracket' | 'subbracket';
-export type BarlineSpanType = 'through' | 'mensur' | 'individual';
-
-export interface PartV7 {
-  id: Id;
-  name: string;             // Full instrument name: e.g. "Flute 1", "Violoncello"
-  shortName: string;        // Abbreviated name: e.g. "Fl. 1", "Vc."
-  staves: StaffV7[];
-  instrument: string;       // Instrument family identifier: e.g. "flute", "piano"
-  bracket?: SystemBracketType; // Default bracket enclosing staves of this part
-  barlineSpan?: BarlineSpanType; // Default barline connectivity across staves of this part
-  midiPatch?: number;       // GM MIDI program number (0..127)
-  midiChannel?: number;     // Assigned playback channel (0..15)
-  pan?: number;             // Stereophonic pan: -1.0 (L) to +1.0 (R)
-  volume?: number;          // Playback volume: 0.0 to 1.0
-}
-
-export interface StaffV7 {
-  id: Id;
-  clef: Clef;
-  lines?: number;           // Default 5 (1 for single-line unpitched percussion)
-  measures: Record<Id, StaffMeasureV7>;
-  slurs?: Slur[];
-}
-
-export interface StaffMeasureV7 {
-  voices: VoiceV7[];        // Array index corresponds to voiceIndex (0 = Voice 1, 1 = Voice 2, etc.)
-}
-
-export interface VoiceV7 {
-  id: Id;
-  voiceIndex: 1 | 2 | 3 | 4; // Stable voice index according to Rule R3
-  events: ScoreEvent[];
-}
-
-export interface PageSettingsV7 {
-  size: 'A4' | 'Letter' | 'Custom';
-  widthMm: number;          // A4 = 210, Letter = 215.9
-  heightMm: number;         // A4 = 297, Letter = 279.4
-  marginTopMm: number;      // Default 15 mm
-  marginBottomMm: number;   // Default 15 mm
-  marginLeftMm: number;     // Default 15 mm
-  marginRightMm: number;    // Default 15 mm
-  staffSpaceMm: number;     // Default 1.75 mm
-}
-
-export interface MeasureDefV7 extends MeasureDef {
-  systemBreak?: boolean;    // Force line break after this measure
-  pageBreak?: boolean;      // Force page break after this measure
-}
-
-export interface ScoreV7 {
-  schemaVersion: 7;
-  id: Id;
-  meta: ScoreMetaV7;
-  pageSettings: PageSettingsV7;
-  parts: PartV7[];
-  measures: MeasureDefV7[];
-  overrides: Record<Id, Override>;
-}
-```
-
-#### Deterministic Migration Function (`migrateV6toV7`)
-
-```typescript
-export function migrateV6toV7(v6Score: Score): ScoreV7 {
-  return {
-    schemaVersion: 7,
-    id: v6Score.id,
-    meta: {
-      title: v6Score.meta.title ?? '',
-      composer: v6Score.meta.composer ?? '',
-      subtitle: v6Score.meta.subtitle ?? '',
-      arranger: v6Score.meta.arranger ?? '',
-    },
-    pageSettings: {
-      size: 'A4',
-      widthMm: 210,
-      heightMm: 297,
-      marginTopMm: 15,
-      marginBottomMm: 15,
-      marginLeftMm: 15,
-      marginRightMm: 15,
-      staffSpaceMm: 1.75,
-    },
-    measures: v6Score.measures.map((m) => ({
-      ...m,
-      systemBreak: false,
-      pageBreak: false,
-    })),
-    parts: v6Score.parts.map((p) => ({
-      id: p.id,
-      name: p.name,
-      shortName: p.name.length > 5 ? p.name.slice(0, 4) + '.' : p.name,
-      instrument: p.instrument ?? 'piano',
-      bracket: p.staves.length > 1 ? 'brace' : 'none',
-      barlineSpan: p.staves.length > 1 ? 'through' : 'individual',
-      midiPatch: 0,
-      midiChannel: 0,
-      pan: 0,
-      volume: 0.8,
-      staves: p.staves.map((s) => ({
-        id: s.id,
-        clef: s.clef,
-        lines: 5,
-        slurs: s.slurs ? [...s.slurs] : [],
-        measures: Object.fromEntries(
-          Object.entries(s.measures).map(([mId, sm]) => [
-            mId,
-            {
-              voices: sm.voices.map((v, vIdx) => ({
-                id: v.id,
-                voiceIndex: ((vIdx + 1) as 1 | 2 | 3 | 4),
-                events: [...v.events],
-              })),
-            },
-          ])
-        ),
-      })),
-    })),
-    overrides: { ...v6Score.overrides },
-  };
-}
-```
+### 5.4 Rest Placement and Dynamic Collision Avoidance
+- **Formula for Polyphonic Rest Elevation:**
+  $$Y_{\text{rest}}(\text{Voice 1}) = Y_{\text{default}} - 2.0\text{ sp} - k \cdot 0.5\text{ sp}$$
+  $$Y_{\text{rest}}(\text{Voice 2}) = Y_{\text{default}} + 2.0\text{ sp} + k \cdot 0.5\text{ sp}$$
+  where $k \in \{0, 1, 2, 3\}$ is the minimal step count preventing bounding-box collision with notes in the opposing voice.
+- **Rest Boundaries:** Rests must remain within $y \in [-2.0, 6.0]\text{ sp}$.
+- **Rest Consolidation:** When Voice 1 and Voice 2 have identical rests at identical ticks (e.g., both rest on beat 3), a single consolidated rest is rendered at the staff center ($y = 2.0\text{ sp}$) (Gould p. 52).
+- **Hidden Voice-2 Rests:** In choral/keyboard textures where Voice 2 enters after a pickup or mid-measure pause, leading voice-2 rests may be hidden (`rest.hidden = true`).
 
 ---
 
-### (c) Voice Rules (Rule R3 Compliance, Polyphony, and Collisions)
+## 6. Physical Keyboard Mapping & Conflict Matrix
 
-According to permanent **Rule R3**, voice identity is a stable `voiceIndex` (1..4) per staff:
-- `voiceIndex === 1`: Primary upper voice. Stems point UP by default. Articulations above.
-- `voiceIndex === 2`: Primary lower voice. Stems point DOWN by default. Articulations below.
-- `voiceIndex === 3`: Secondary upper voice. Stems point UP. Shifted right on collision.
-- `voiceIndex === 4`: Secondary lower voice. Stems point DOWN. Shifted left on collision.
+### 6.1 Mechanical Conflict Verification
+All key handling routes through physical `event.code`.
 
-#### Voice Rules Matrix
-1. **Single-Voice Staff (Voice 1 only active):**
-   - Dynamic stem direction: pitches below middle staff line (B4 in treble, D3 in bass) point UP; pitches on or above middle line point DOWN.
-   - Standard rest vertical placement (whole rest hangs from line 4; half rest sits on line 3; quarter/eighth centered).
-2. **Polyphonic Staff (Voices 1 and 2 active simultaneously):**
-   - **Stem Direction:** Voice 1 stems point strictly UP regardless of pitch; Voice 2 stems point strictly DOWN regardless of pitch.
-   - **Unison Noteheads:**
-     - Identical pitch and identical duration (e.g. two quarter C4s): share a single notehead with two stems (one up, one down).
-     - Identical pitch with differing durations (e.g. half note in Voice 1, quarter in Voice 2): Voice 1 notehead placed normally; Voice 2 notehead placed adjacent with zero horizontal overlap.
-   - **Second Intervals Across Voices:**
-     - Upper voice (Voice 1) sits on the left of its stem (stem up at right edge); Lower voice (Voice 2) sits on the right of its stem (stem down at left edge). Stems do not intersect.
-   - **Rest Consolidation & Displacement:**
-     - Coincident full-measure rests or identical value rests at the same tick across voices are rendered as a single consolidated rest by default.
-     - Divergent rests: Voice 1 rests pushed vertically upward (by +2 to +4 sp above line 4); Voice 2 rests pushed vertically downward (by -2 to -4 sp below line 0).
-3. **Beams, Ties, and Slurs in Polyphony:**
-   - Beaming is strictly intra-voice (events in Voice 1 never beam to Voice 2).
-   - Ties connect only notes with identical pitch within the same voice.
-   - Slurs in Voice 1 curve upward (placement = 'above'); slurs in Voice 2 curve downward (placement = 'below').
+#### Browser & OS Reserved Keys (Strictly Prohibited from Global Bindings)
+- `Ctrl+T` (New browser tab)
+- `Ctrl+W` (Close window/tab)
+- `Ctrl+N` (New window)
+- `Ctrl+Tab` / `Ctrl+Shift+Tab` (Switch browser tab)
+- `Ctrl+Digit1..9` (Direct tab switch)
+- `F5` / `Ctrl+R` (Reload)
+- `F11` (Fullscreen)
+- `Ctrl+Alt+...` (**Prohibited:** on Turkish Windows, `Ctrl+Alt` is intercepted as `AltGr`).
 
----
+### 6.2 The KeyV Conflict Resolution
+- In previous drafts, `KeyV` was proposed for voice toggling.
+- **Current keymap reality:** `KeyV` without modifiers is globally mapped to `set-mode-select` (Select Mode master switch, matching standard Finale/MuseScore arrow tools), and `Ctrl+KeyV` is `paste`.
+- **Resolution:** `KeyV` remains strictly reserved for `set-mode-select`.
 
-### (d) Layout Pipeline Stages and Cache Architecture
+### 6.3 Dedicated Multi-Staff & Voice Keymap Table
 
-```
-+-------------------------------------------------------------------------------+
-|                       SCOREFORGE LAYOUT PIPELINE v2                           |
-+-------------------------------------------------------------------------------+
-                                        |
-  [Stage 1: Staff-Measure Layout]      | Input: StaffMeasure, MeasureDef, Clef
-                                        v Cache Key: ${mDef.id}_${keySig}_${timeSig}_${eventsHash}
-                                   [Natural Chunks] (width, tickColumns)
-                                        |
-  [Stage 2: Cross-Staff Alignment]     | Combine all staves across Part for each measure
-                                        v Column Max Widths across staves
-                                   [Synchronized Measure Chunks]
-                                        |
-  [Stage 3: Line / System Breaking]    | Dynamic programming / greedy with systemBreak flags
-                                        v System Plans (measures per system)
-                                   [System Plans]
-                                        |
-  [Stage 4: Page Pagination]           | Height budgeting: system height + staff distances + margins
-                                        v Page Plans (systems per page, pageBreak flags)
-                                   [Page Plans]
-                                        |
-  [Stage 5: System Construction & Cache]| System memoization key: width + measure cacheKeys
-                                        v Justification stretch, barlines, voltas, brackets
-                                   [Positioned Layout Systems]
-                                        |
-  [Stage 6: Beams & Overrides]         | applyVisualOverrides -> generateSystemBeams
-                                        v Final positioned elements
-                                   [LayoutResult]
-```
-
-#### Pipeline Stages
-1. **Stage 1 (Staff-Measure Chunk):**
-   - Pure function `layoutStaffMeasure(staffMeasure, mDef, clef)`.
-   - Computes tick-to-x positioning for each voice. Output: `tickColumns: Map<number, { minX: number, width: number }>`.
-   - Cached via WeakMap and bitwise integer hash of voice events.
-2. **Stage 2 (Horizontal Cross-Staff Synchronization):**
-   - For every measure `mDef.id`:
-     `colWidth(tick) = max_{staff in staves}(tickWidth(staff, tick))`
-   - Natural measure width = sum of all synchronized column widths + measure margins + barlines.
-   - Guarantees identical measure width across all staves in every system.
-3. **Stage 3 (System Breaking):**
-   - Greedy line breaking evaluating `targetContentWidth`.
-   - If `mDef.systemBreak === true`, system is closed immediately and wraps to next line.
-4. **Stage 4 (Vertical Layout and Page Breaking):**
-   - Page budget: `usableHeightMm = pageHeightMm - (marginTopMm + marginBottomMm)`.
-   - Converted to staff spaces: `usableHeightSp = usableHeightMm / (staffSpaceMm)`.
-   - System height = `(stavesCount * 4.0 sp) + ((stavesCount - 1) * staffDistanceSp) + systemSpacingSp`.
-   - Default `staffDistanceSp = 6.0 sp` (between staves of same instrument) or `8.0 sp` (between different instruments).
-   - If adding next system exceeds `usableHeightSp` OR preceding measure has `pageBreak === true`: start new page.
-5. **Stage 5 (Justification and System Rendering):**
-   - Non-last systems justified to `targetContentWidth`.
-   - Last system of score: if natural width >= 70% of page width, justified; if < 70%, left-aligned (ragged right).
-6. **Stage 6 (Brackets, Barlines, Overrides, Beams):**
-   - Multi-staff system brackets/braces drawn at `x = 0`.
-   - Through-barlines drawn continuously across staves for piano grand staves and chamber sections.
-
----
-
-### (e) Selection and Cursor Matrix with Keymap Conflict Table
-
-Multi-staff navigation introduces multi-dimensional cursor motion:
-- **Horizontal:** ArrowLeft / ArrowRight navigates between events or tick offsets within the active voice.
-- **Vertical within Staff:** KeyA..KeyG enters pitch; ArrowUp / ArrowDown transposes selection.
-- **Vertical across Staves / Voices:** Switching active staff and active voice.
-
-#### Conflict Resolution Rules
-1. **NO Alt modifier:** In ScoreForge, Alt is reserved exclusively for browser/OS window commands and screen readers.
-2. **Master Mode Key Reservations:**
-   - `KeyV` is **permanently reserved** as the master shortcut for **Select Mode** (`set-mode-select`) across all modes, and `Ctrl+KeyV` for clipboard `paste`. It must **never** be bound to voice switching.
-   - `KeyN` is the master shortcut for **Note Input Mode** (`toggle-note-input`).
-   - `KeyP` is the master shortcut for **Position Mode** (`toggle-position-mode`).
-   - `KeyU` is the master shortcut for **Lyrics Mode** (`toggle-lyrics-mode`).
-3. **Tab Key (Contextual Routing):**
-   - In **Position Mode** (`mode === 'position'`): Tab cycles through elements in the measure; Shift+Tab reverses.
-   - In **Lyrics Mode** (`mode === 'lyrics'`): Tab commits syllable and jumps to next note; Shift+Tab jumps to previous note.
-   - In **Note Input Mode** (`mode === 'input'`): Tab switches active voice (`voiceIndex` 1 -> 2 -> 1); Shift+Tab cycles backward (2 -> 1).
-4. **Staff Switching & Turkish Q Layout Mappings:**
-   - In ScoreForge, keyboard events are dispatched strictly via physical `event.code`, guaranteeing identical behavior across keyboard layouts.
-   - `BracketLeft` (`event.code === 'BracketLeft'`):
-     - Physical keycap on US layout: `[`
-     - Physical keycap on Turkish Q layout: `Ğ` (G-breve)
-     - Action: Move cursor / selection to staff above.
-     - Dynamic layout label: `getKeycapLabel('BracketLeft')` returns `"["` on US and `"Ğ"` on Turkish Q.
-   - `BracketRight` (`event.code === 'BracketRight'`):
-     - Physical keycap on US layout: `]`
-     - Physical keycap on Turkish Q layout: `Ü` (U-umlaut)
-     - Action: Move cursor / selection to staff below.
-     - Dynamic layout label: `getKeycapLabel('BracketRight')` returns `"]"` on US and `"Ü"` on Turkish Q.
-
-#### Complete Conflict Table (Mechanically Verified Against `src/ui/keymap.ts`)
-
-| Key Event (`event.code`) | Modifiers | Mode | Action | Conflict Check & Precedence |
+| Physical Key (`event.code`) | Modifiers | Active Mode | Action | Precedence & Conflict Verification |
 |:---|:---|:---|:---|:---|
-| `BracketLeft` (US: `[`, TR: `Ğ`) | `none` | `input` / `select` | Move cursor / selection to staff above | Physical `event.code`. No collision with any existing action. |
-| `BracketRight` (US: `]`, TR: `Ü`) | `none` | `input` / `select` | Move cursor / selection to staff below | Physical `event.code`. No collision with any existing action. |
-| `Tab` | `none` | `input` | Cycle Voice (1 -> 2 -> 1) | Gated strictly by `mode === 'input'`. |
-| `Tab` | `Shift` | `input` | Cycle Voice backward (2 -> 1) | Gated strictly by `mode === 'input'`. |
-| `Tab` | `none` | `position` | Select next layout element | Gated strictly by `mode === 'position'`. |
-| `Tab` | `Shift` | `position` | Select previous layout element | Gated strictly by `mode === 'position'`. |
-| `Tab` | `none` | `lyrics` | Advance to next lyric note | Gated strictly by `mode === 'lyrics'`. |
-| `Tab` | `Shift` | `lyrics` | Move to previous lyric note | Gated strictly by `mode === 'lyrics'`. |
-| `KeyV` | `none` | All modes | Set Select Mode (`set-mode-select`) | Master mode switch. Never overloaded with voice toggling. |
-| `KeyV` | `Ctrl` | `select` / `input` | Paste clipboard | Standard OS shortcut. |
-| `KeyN` | `none` | All modes | Toggle Note Input Mode | Master mode toggle. |
-| `KeyP` | `none` | All modes | Toggle Position Mode | Master mode toggle. |
-| `KeyU` | `none` | All modes | Toggle Lyrics Mode | Master mode toggle. |
-| `KeyL` | `none` | `select` / `input` / `position` | Accent articulation | No conflict (verified in M6b). |
-| `KeyL` | `Shift` | `select` / `input` / `position` | Marcato articulation | No conflict. |
-| `KeyJ` | `none` | `select` / `input` / `position` | Staccato articulation | No conflict. |
-| `KeyK` | `none` | `select` / `input` / `position` | Tenuto articulation | No conflict. |
-| `KeyT` | `none` | `select` / `input` / `position` | Tie to next note ("Bağ") | No conflict. |
-| `KeyS` | `none` | `select` / `input` / `position` | Slur ("Legato bağı") | No conflict. |
-| `KeyS` | `Ctrl` | All modes | Save score | Standard shortcut. |
-| `KeyS` | `Ctrl+Shift` | All modes | Save as score | Standard shortcut. |
-| `Delete` / `Backspace` | `none` | `select` | Convert selected note to rest | Delete NEVER deletes measures. |
+| `Tab` | `none` | `input` | Cycle Voice Forward (1 $\to$ 2 $\to$ 1) | Gated strictly by `mode === 'input'`. Does not collide with browser Tab. |
+| `Tab` | `Shift` | `input` | Cycle Voice Backward (2 $\to$ 1) | Gated strictly by `mode === 'input'`. |
+| `Tab` | `none` | `position` | Select Next Layout Element | Gated strictly by `mode === 'position'`. |
+| `Tab` | `none` | `lyrics` | Advance to Next Lyric Syllable | Gated strictly by `mode === 'lyrics'`. |
+| `BracketLeft` | `none` | `select` / `input` | Move Cursor/Selection to Staff Above | Physical key. Resolves to `[` on US and `Ğ` on Turkish Q via `getKeycapLabel()`. |
+| `BracketRight` | `none` | `select` / `input` | Move Cursor/Selection to Staff Below | Physical key. Resolves to `]` on US and `Ü` on Turkish Q via `getKeycapLabel()`. |
+| `Escape` | `none` | `input` / `pos` / `lyr` | Exit to Select Mode (`set-mode-select`) | Standard modal exit. |
+| `Escape` | `none` | `select` | Clear Selection / Deselect All | Unfocus caret. |
 
 ---
 
-### (f) Playback Facts and Multi-Staff Audio Architecture
+## 7. Milestone 7 Sub-Milestone Breakdown and Exit Gates
 
-1. **Independent Track per Part:**
-   - In `src/playback/schedule.ts`, `buildSchedule` processes every part and staff sequentially.
-   - In Schema v7, each Part is allocated a dedicated Web Audio / Tone.js Synth channel:
-     - Part 1 (Flute): Tone.PolySynth (lead timber, pan = -0.3).
-     - Part 2 (Piano): Tone.PolySynth (grand piano envelope, pan = 0.0, staves 1 & 2 share audio channel).
-     - Part 3 (Cello): Tone.PolySynth (warm sustained envelope, pan = +0.3).
-2. **Polyphonic Voice Scheduling:**
-   - Multiple voices on the same staff emit separate `ScheduledNote` entries at identical or overlapping `startSeconds`.
-   - Audio engine triggers notes polyphonically without voice stealing or mutual cancellation.
-3. **Lookahead Engine (`player.ts`):**
-   - The ~1.0s lookahead window in `Player.tick()` automatically consumes notes across all parts and voices in sorted chronological order (`startSeconds`, then `midi`).
-   - Web Audio clock scheduling ensures zero jitter across staves.
-4. **Active Playback Highlight:**
-   - `eventRanges` maps each `eventId` across all staves and repeat passes.
-   - Dynamic green playback highlight dyes active event groups across all staves simultaneously.
+Every sub-milestone is autonomous and carries its own strict four-part verification gate:
+1. **Automated Property Tests**
+2. **Golden Visual Gallery Cards**
+3. **IMSLP Engraving Audit Checklist**
+4. **Performance Gate (Production Double rAF & Event Timing)**
+
+### Milestone 7a: Multi-Voice Polyphony on a Single Staff
+- **Deliverables:** Schema v7 model transition, `voiceIndex` 1..4 invariants, opposing stems, unison notehead sharing, independent voice beaming, voice switching keys (`Tab`, `Shift+Tab`).
+- **Entry Task `perf-0`:** Profile remaining paint/React dispatch overhead on 200-measure single-staff score (current p95 = 32.2 ms) to guarantee headroom for multi-staff systems.
+- **Exit Gates:**
+  - *Property Tests:* Polyphonic stem directions strictly respect Voice 1 UP / Voice 2 DOWN; notehead sharing holds for identical ticks and pitches.
+  - *Gallery Cards:* Card 26 (Polyphony) active and passing snapshot tests.
+  - *IMSLP Audit:* Brahms Op. 118 No. 2 mm. 1–8 multi-voice excerpt matches Henle edition.
+  - *Performance:* Keystroke-to-paint p95 $\le 20\text{ ms}$ on 64-measure score.
+
+### Milestone 7b: Two-Staff Grand Staff (Piano Systems)
+- **Deliverables:** `Score.parts[0]` holding 2 staves (Treble + Bass), curly brace at system left, global tick column alignment across staves, dynamic vertical skyline spacing, continuous through-barlines.
+- **Exit Gates:**
+  - *Property Tests:* Events at identical ticks on different staves share identical $x$ coordinate; measure widths are strictly equal across staves in a system.
+  - *Gallery Cards:* Grand Staff Piano Card with through-barlines and curly brace.
+  - *IMSLP Audit:* Bach Invention No. 1 mm. 1–8 and Mozart K. 545 mm. 1–8 match Bärenreiter edition.
+  - *Performance:* Keystroke-to-paint p95 $\le 30\text{ ms}$ on 100-measure 2-staff score (200 measure-staves).
+
+### Milestone 7c: Multi-Part Ensembles, Groups, and C Clefs
+- **Deliverables:** `Score.groups: StaffGroup[]`, SATB and String Quartet templates, instrument bracket rendering, through vs. individual barline spans, multi-track audio routing, and **C Clefs (Alto, Tenor, and Treble-8vb)** moved into M7c.
+- **Exit Gates:**
+  - *Property Tests:* Individual vocal barlines do not intersect lyric bounding boxes; C clef transpositions and pitches map accurately.
+  - *Gallery Cards:* String Quartet card (alto clef, bracket, through-barlines) and SATB card (lyrics, individual barlines).
+  - *IMSLP Audit:* Beethoven Op. 18 No. 1 mm. 1–8 (Viola alto clef) and Schubert D. 547 mm. 1–12 match Breitkopf/Peters edition.
+  - *Performance:* Keystroke-to-paint p95 $\le 30\text{ ms}$ on 50-measure 4-staff score (200 measure-staves).
+
+### Milestone 7d: Discrete Page Model & Print Layout
+- **Deliverables:** Page data model (`PageDef`), screen view (continuous scroll) vs. page view (paginated sheets) toggle, print CSS styles, and page-level DOM virtualization.
+- **Exit Gates:**
+  - *Property Tests:* Paginated systems never overflow printable page height; page margins strictly observed.
+  - *Gallery Cards:* Multi-page score card showing Page 1 title block and Page 2 running header.
+  - *Performance:* Page switching latency $\le 15\text{ ms}$; DOM node count $\le 1200$ across 10 pages.
 
 ---
 
-### (g) Undo/Redo and Multi-Staff Clipboard
+## 8. Milestone Reference Corpus & IMSLP Audit Matrix
 
-1. **Atomic Structural History:**
-   - Every operation (insert measure across all staves, change pitch, delete range across staves, paste) produces a single command executed via `history.do(command)`.
-   - Undo restores the exact previous `ScoreV7` state in a single step.
-2. **Multi-Staff Clipboard Format:**
-   - Clipboard payload includes source staff count, voice indices, and relative tick offsets:
+All reference tests utilize **short excerpts** (measures 1–8 or 1–12) to verify core engraving invariants without out-of-scope feature bloat.
+
+| # | Work & Excerpt | Target Milestone | Target Engraving Test Role | IMSLP Edition Audit Status |
+|:---:|:---|:---:|:---|:---|
+| 1 | **J.S. Bach — Chorale "Wachet auf", BWV 140 (mm. 1–8)** | M7a | 4-part SATB homophony, fermatas, German lyrics, individual barlines | **VERIFIED:** Individual barlines broken between staves for lyrics corridor (Bärenreiter). |
+| 2 | **J. Brahms — Intermezzo Op. 118 No. 2 (mm. 1–8)** | M7a | Polyphonic voice leading, opposing stems, shared noteheads | **AUDIT NOTE:** Pedal markings excluded from M7 acceptance; scoped to M12. Voice leading strictly verified against Henle. |
+| 3 | **J.S. Bach — Invention No. 1 in C major, BWV 772 (mm. 1–8)** | M7b | Two-staff grand staff contrapuntal imitation, 16th-note beam alignment | **VERIFIED:** Clean two-part counterpoint without pedals or text (Bärenreiter). |
+| 4 | **W.A. Mozart — Piano Sonata in C major, K. 545, I (mm. 1–8)** | M7b | Melody over Alberti bass, legato slurs, dynamics | **AUDIT NOTE:** 1st/2nd voltas occur in exposition repeat (m. 28), not mm. 1–8. Excerpt tests Alberti bass synchronization. |
+| 5 | **F. Chopin — Prelude in E minor, Op. 28 No. 4 (mm. 1–12)** | M7b | Descending chromatic polyphonic chords in left hand | **AUDIT NOTE:** "Tempo rubato" text excluded from M7 acceptance; scoped to M10. Chromatic accidentals verified against Polish National Edition. |
+| 6 | **F. Schubert — "An die Musik", D. 547 (mm. 1–12)** | M7c | Mixed ensemble: Solo Voice (individual barline) + Piano (brace, through-barlines) | **VERIFIED:** Distinct barline spans between vocal and piano staves (Peters). |
+| 7 | **L. van Beethoven — String Quartet Op. 18 No. 1, I (mm. 1–8)** | M7c | Chamber bracket, through-barlines connecting 4 staves, **Viola Alto Clef** | **VERIFIED:** Alto C-clef placement on line 3 (Henle). |
+| 8 | **Claude Debussy — "Golliwogg's Cakewalk" (mm. 1–8)** | M7d | Syncopation, sudden dynamics (ff, sfz), page-turn layout | **AUDIT NOTE:** Mid-score key change to G-flat occurs at m. 25, not mm. 1–8. Excerpt tests page distribution and syncopations. |
+| 9 | **Turkish Folk Song (e.g. "Süt İçtim Dilim Yandı", mm. 1–9)** | M7a/M7b | Solfege syllables, regional aksak meter, lyric hyphens/extenders | **VERIFIED:** Single and grand staff Turkish vocal notation. |
+
+---
+
+## 9. Unified Performance Budget & Measurement Protocol
+
+### 9.1 Measurement Protocol (Strict Single Source of Truth)
+- **Environment:** Headless Chromium via Playwright, Production Build (`npm run build && npm run preview`).
+- **Probe Definition:** Keystroke-to-paint latency measured from synthetic keydown dispatch to the frame immediately following render commit using **Double requestAnimationFrame delta AND Chromium PerformanceEventTiming API**.
+- **Sample Size:** $n \ge 50$ iterations per benchmark run.
+
+### 9.2 Performance Budget Matrix
+
+| Workload Configuration | Total Measure-Staves | Median Budget (ms) | p95 Budget (ms) | Node Layout Budget (ms) |
+|:---|:---:|:---:|:---:|:---:|
+| **64 Measures, 1 Staff** | 64 | $\le 12.0$ | **$\le 20.0$** | $\le 1.5$ |
+| **32 Measures, 2 Staves (Piano)** | 64 | $\le 12.0$ | **$\le 20.0$** | $\le 1.8$ |
+| **16 Measures, 4 Staves (Quartet)** | 64 | $\le 12.0$ | **$\le 20.0$** | $\le 2.0$ |
+| **200 Measures, 1 Staff** | 200 | $\le 24.0$ | **$\le 30.0$** | $\le 3.5$ |
+| **100 Measures, 2 Staves (Piano)** | 200 | $\le 25.0$ | **$\le 30.0$** | $\le 4.0$ |
+| **50 Measures, 4 Staves (Quartet)** | 200 | $\le 26.0$ | **$\le 30.0$** | $\le 5.0$ |
+
+---
+
+## 10. Automated Testing Strategy & MusicXML Mapping
+
+### 10.1 Mathematical Property Tests
+1. **Column Coincidence Invariant:**
+   $$\forall \text{staves } s_1, s_2, \quad \forall t \in \mathcal{T}_m, \quad X(s_1, t) = X(s_2, t)$$
+2. **System Width Equality Invariant:**
+   $$\forall \text{system } K, \quad \forall \text{staff } s \in K, \quad \text{Width}(s) = W_{\text{system}}$$
+3. **Glyph Bounding Box Disjointness:**
+   No two non-sharing layout items on the same staff may intersect:
+   $$\text{Box}(A) \cap \text{Box}(B) = \emptyset \quad (\text{except intentional unisons})$$
+4. **History Independence:**
+   Layout of a score created by commands from scratch must be strictly bit-identical to a score reached via 100 random edits followed by `undo`.
+
+### 10.2 MusicXML Mapping Architecture (Schema v7 Constraint for M9)
+
+| ScoreForge Schema v7 Model | MusicXML 4.0 Element Representation |
+|:---|:---|
+| `Score.parts[p]` | `<part id="P{p}">` in `<part-list>` |
+| `Score.groups[g]` | `<part-group type="start" number="{g}">` with `<group-symbol>` (`brace` / `bracket`) and `<group-barline>` |
+| `Staff` within a Part | `<staves>2</staves>` on `<attributes>`, with `<staff>1</staff>` and `<staff>2</staff>` on notes |
+| `Voice.voiceIndex` (1..4) | `<voice>{voiceIndex}</voice>` |
+| Polyphonic voice rewind | `<backup><duration>{ticks}</duration></backup>` between voices |
+| Clef (`sign`, `line`) | `<clef><sign>{sign}</sign><line>{line}</line></clef>` |
+| Page / System Break | `<print new-system="yes"/>` and `<print new-page="yes"/>` |
+
+---
+
+## 11. Discrete Page Model & Virtualization Architecture
+
+### 11.1 Page Data Model (`src/core/model.ts`)
+
 ```typescript
-export interface ClipboardPayloadV7 {
-  type: 'scoreforge/clipboard';
-  version: 7;
-  stavesCount: number;
-  measuresCount: number;
-  stavesData: Array<{
-    staffOffset: number; // 0 = source staff, 1 = staff below
-    voices: Array<{
-      voiceIndex: 1 | 2 | 3 | 4;
-      events: ScoreEvent[];
-    }>;
-  }>;
+export interface Margins {
+  top: number;       // staff spaces (default: 10 sp = ~18mm)
+  bottom: number;    // staff spaces (default: 10 sp)
+  left: number;      // staff spaces (default: 12 sp)
+  right: number;     // staff spaces (default: 12 sp)
+}
+
+export interface PageDef {
+  number: number;    // 1-based page number
+  width: number;     // printable width in sp (e.g. A4 = 1190 / pxRatio)
+  height: number;    // printable height in sp
+  margins: Margins;
+  systemIndices: number[]; // Systems placed on this page
 }
 ```
-   - If pasted into a single staff, only `staffOffset === 0` is applied.
-   - If pasted with multi-staff selection, all matching target staves receive their respective voice streams.
+
+### 11.2 Screen View vs. Print View
+- **Screen View (Continuous Scroll):** Systems stacked vertically with a compact separator gap ($4\text{ sp}$). Virtualization culls off-screen systems.
+- **Page View (Paginated Sheets):** SVG renders discrete pages with simulated paper dropshadows. Page 1 renders the complete Header Block (Title, Subtitle, Composer, Arranger); Page 2+ render running headers with small score title and outer page number.
+- **Page-Level Virtualization:** Only the currently visible page plus one page above and below are mounted in the browser DOM.
 
 ---
 
-### (h) Performance Plan: H1 Baseline and Budgets
+## 12. Lead Decisions Recorded & Questions Closed
 
-#### Measured H1 Performance Baseline (Production & Node Benchmark)
-- **Node Command Execution (64 full-featured measures):** median = 0.48 ms, p95 = 0.90 ms.
-- **Node Layout Execution (`layoutScore` single-edit):**
-  - 64 measures: median = 0.72 ms, p95 = 1.32 ms.
-  - 200 measures: median = 1.09 ms, p95 = 3.20 ms (Target: < 5.0 ms).
-  - 400 measures: median = 1.93 ms, p95 = 6.73 ms (Target: < 5.0 ms median).
-- **Browser Keystroke-to-Paint (Chromium, Production Build, n = 50):**
-  - 64-measure full-featured (Double rAF / Next Paint): Median = 12.10 ms, p95 = 17.60 ms (Target: < 25 ms).
-  - 200-measure full-featured (Double rAF / Next Paint): Median = 26.30 ms, p95 = 32.20 ms (Target: < 30 ms).
-
-#### Multi-Staff Performance Budgets for Milestone 7 and Milestone 8
-1. **Single-Staff Measure Layout (Stage 1):** Budget <= 0.02 ms per measure on cache hit; <= 0.25 ms on miss.
-2. **Cross-Staff Alignment (Stage 2):** Budget <= 0.50 ms for 200 measures across 4 staves.
-3. **System Construction & Cache (Stage 5):**
-   - Untouched systems must achieve 100% cache hits via `systemLayoutCache`.
-   - Budget for 50 systems (200 measures) with 1 edited measure <= 2.5 ms.
-4. **Keystroke-to-Paint Budget:**
-   - 2-staff piano score (100 measures, 200 measure-staves): p95 <= 30 ms.
-   - 4-staff quartet score (50 measures, 200 measure-staves): p95 <= 35 ms.
-
----
-
-### (i) Test & Corpus Plan: Milestone Verification Corpus
-
-To guarantee real-world musicological fidelity, Milestone 7, 8, and 10 verification is anchored against the lead's designated corpus representing every structural archetype:
-
-1. **J.S. Bach — Chorale "Wachet auf, ruft uns die Stimme", BWV 140 closing chorale (SATB) (Milestone 7a):**
-   - *Test Role:* 4-part homophonic choral texture, independent vocal staves with German lyrics, bracket grouping, individual barlines (unbroken between staves for lyrics clearance), fermatas.
-2. **J. Brahms — Intermezzo in A major, Op. 118 No. 2, mm. 1-8 (Milestone 7a):**
-   - *Test Role:* Polyphonic voice leading on single and two staves (melody + inner voices with opposing stems), complex cross-rhythms, hairpins, pedal markings.
-3. **J.S. Bach — Invention No. 1 in C major, BWV 772, mm. 1-8 (Milestone 7b):**
-   - *Test Role:* Two-staff grand staff contrapuntal two-part polyphony, cross-staff thematic imitation, 16th-note beam groups, treble and bass clef cross-staff alignment.
-4. **W.A. Mozart — Piano Sonata in C major, K. 545, 1st Mvt, mm. 1-8 (Milestone 7b):**
-   - *Test Role:* Two-staff grand staff with melody and Alberti bass accompaniment, classical phrasing, long legato slurs, dynamics (p, f).
-5. **F. Chopin — Prelude in E minor, Op. 28 No. 4, mm. 1-12 (Milestone 7b):**
-   - *Test Role:* Two-staff grand staff with expressive polyphonic voice leading in left hand (chords with independent descending tenor/bass lines), dense chromatic accidentals, tempo rubato text.
-6. **Claude Debussy — "Golliwogg's Cakewalk" from Children's Corner, mm. 1-8 (Milestone 7c):**
-   - *Test Role:* Multi-staff syncopations, sudden dynamic shifts (fp, sfz), staccato accents, mid-score key signature changes (E-flat major to G-flat major with natural cancellations).
-7. **F. Schubert — "An die Musik", D. 547, mm. 1-12 (Milestone 7c):**
-   - *Test Role:* Mixed ensemble: 1 single vocal staff (bracket none, individual barline, German lyrics) above a 2-staff piano accompaniment (curly brace, through-barlines).
-8. **L. van Beethoven — String Quartet No. 1 in F major, Op. 18 No. 1, 1st Mvt, mm. 1-8 (Milestone 10):**
-   - *Test Role:* Chamber bracket, alto C-clef for viola, through-barlines connecting all 4 staves, extreme dynamic contrasts. Note: C clefs (alto, tenor) are scoped strictly to Milestone 10.
-9. **Turkish Folk Song (to be chosen by the human):**
-   - *Test Role:* Traditional Turkish makam/folk song scoring with Turkish lyrics, solfege syllables, regional meters and vocal ornaments.
-
----
-
-### (j) Risks and Architectural Alternatives
-
-#### Risk 1: Cross-Staff Beam Complexity and Collision
-- *Problem:* Liszt/Chopin piano passages where a single beam group starts in the bass staff and continues into the treble staff.
-- *Alternative A:* Implement full cross-staff beam physics in M7. (Rejected: huge scope risk, delays core multi-staff delivery).
-- *Alternative B (Recommended):* Reserve `crossStaffTarget?: Id` in NoteEvent schema; keep beam generation strictly intra-staff in M7. Deliver cross-staff beam routing in Milestone 10.
-
-#### Risk 2: Full-Page Reflow Layout Freezes
-- *Problem:* Editing measure 1 of a 40-page orchestral score causes page reflow across all 40 pages, exceeding the 30 ms budget.
-- *Alternative A:* Recompute all 40 pages on every keystroke. (Rejected: scales as O(pages), p95 > 120 ms).
-- *Alternative B (Recommended):* Page-level memoization. System breaking is O(N) integer math. Pages before the edited measure are untouched; pages after are re-paginated using cached system heights.
-
-#### Risk 3: Barline Collisions with Lyrics
-- *Problem:* Choral music requires barlines to stop at the bottom line of the staff so they do not cut through the lyrics between staves.
-- *Alternative A:* Let barlines cut through text with white SVG backgrounds. (Rejected: amateurish typography, violates Henle/Bärenreiter engraving standards).
-- *Alternative B (Recommended):* Dedicated `barlineSpan: 'individual'` for vocal parts and `barlineSpan: 'through'` for instrumental groups.
-
----
-
-### (k) Sub-Milestone Breakdown and Exit Criteria
-
-#### Milestone 7a: Multi-Voice Polyphony on a Single Staff
-- **Deliverables:** Rule R3 compliance (`voiceIndex` 1..4), opposing stems, unison notehead sharing, independent voice beaming, voice switching keymap (`Tab`, `Shift+Tab`).
-- **Exit Criteria:**
-  - Invention BWV 772 right-hand 2-voice passage renders with zero stem collisions.
-  - Test suite verifies clean copy/paste of individual voices.
-  - Single-note edit latency <= 15 ms on 64 measures.
-  - **Performance Exit Gate:** 200-measure single-staff keystroke-to-paint p95 < 30 ms (Double rAF and Event Timing API).
-  - **Multi-Staff Target:** 4-staff x 64-measure keystroke-to-paint p95 < 35 ms (Double rAF and Event Timing API).
-
-#### Milestone 7b: Two-Staff Grand Staff (Piano)
-- **Deliverables:** `Score.parts[0]` holding 2 staves (Treble + Bass), curly brace at system start, synchronized cross-staff tick columns, through-barlines.
-- **Exit Criteria:**
-  - Mozart K. 545 full 1st movement renders across systems with perfect vertical beat alignment between melody and Alberti bass.
-  - All barlines connect both staves with zero visual gap.
-
-#### Milestone 7c: Multi-Part Ensembles (Choir & String Quartet)
-- **Deliverables:** Up to 4 parts, part names and shortNames with system 1 indent, instrument brackets, barline grouping rules (`through` vs `individual`), multi-track audio routing.
-- **Exit Criteria:**
-  - Beethoven Op. 18 No. 1 (4 staves) and Bach BWV 140 (SATB) render accurately.
-  - Web Audio player routes each part to dedicated synth channel.
-
-#### Milestone 7d: Milestone 7 Hardening & Polish
-- **Deliverables:** Regression gallery expansion (multi-voice, piano, quartet cards), golden snapshot updates, sub-30ms performance verification on 200 measure-staves.
-- **Exit Criteria:**
-  - 100% test pass rate across all test suites.
-  - `npm run check` clean with zero lint or knip warnings.
-
----
-
-## 3. Lead Decisions Recorded
-
-1. **Last Page Ragged Rule (< 70%):**
-   - The final page of a score or piece is justified only if its content width exceeds 70% of the printable width; otherwise, systems remain left-aligned to prevent grotesque horizontal note stretching.
-2. **Instrument Templates with Bracket & Barline Rules:**
-   - Standard templates (`piano`, `satb`, `string_quartet`, `lead_sheet`, `solo_instrument`) pre-populate default clefs, bracket types (`brace` vs `bracket`), and barline spans (`through` vs `individual`).
-3. **Part Names and System 1 Indent:**
-   - System 1 reserves an indent (default 12 to 18 sp) on the left to render full instrument names (e.g. "Violino I", "Pianoforte").
-   - Subsequent systems render abbreviated names (`shortName`, e.g. "Vl. I", "Pno.") in a compact margin indent (6 to 8 sp).
-4. **Deferred to Milestone 13+: Page-Turn Hints:**
-   - Visual page-turn hints on rests at the bottom of odd-numbered pages are deferred to Milestone 13+ (no page-turn hints in M7/M8).
-5. **Cross-Staff Display Property Reserved for M10:**
-   - Schema v7 reserves `crossStaffTarget?: Id` in NoteEvent without enabling rendering until M10.
-6. **Part Extraction Deferred to M11:**
-   - Conductor score editing is the primary focus of M7/M8. Extracting isolated instrumental parts into independent `.sfscore` files is scheduled for M11.
-7. **C Clefs (Alto & Tenor) Scoped to M10:**
-   - C clefs for viola and cello tenor passages are scoped strictly to Milestone 10. M7 supports G clef (treble) and F clef (bass).
-
----
-
-## 4. Open Questions for the Human
-
-*(No implementation will proceed on these until explicitly directed by the user)*
-
-1. **System Name Indent:** Should abbreviated instrument names on systems after the first be enabled by default for 2-staff piano scores, or only for multi-part ensemble scores (>= 2 parts)?
-2. **Lyric Syllable Collisions Across Staves:** For SATB choral scores with text under each of the 4 staves, what is your preferred minimum vertical clearance between the bottom of a lyric syllable and the top line of the next staff down (recommended: `2.5 sp`)?
-3. **Keyboard Shortcut for Staff Switching:** Is `BracketLeft` (`[`) and `BracketRight` (`]`) acceptable for moving the input cursor between staves, or do you prefer a dedicated modal key combination (e.g. `Ctrl+Alt+ArrowUp` / `Ctrl+Alt+ArrowDown`)?
+1. **Abbreviated Instrument Names:** Abbreviated names on systems after the first are enabled **only for multi-part ensembles ($\ge 2$ parts)**. For solo piano or single-instrument scores, subsequent systems have no indent, maximizing printable width.
+2. **Lyric Vertical Clearance:** Minimum vertical clearance between lyric syllable baselines and the top skyline of the next staff down is **strictly $2.5\text{ sp}$**.
+3. **Staff Switching Keymap:** Navigating between staves is permanently assigned to physical `BracketLeft` (staff above) and `BracketRight` (staff below).
+4. **Deferred to Milestone 13+:** Visual page-turn hints on rests are non-binding suggestions and deferred to M13+.

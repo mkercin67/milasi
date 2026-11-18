@@ -1,6 +1,6 @@
 # ScoreForge Review Pack
 
-**Generated:** 2026-11-18T11:43:24.935Z  
+**Generated:** 2026-11-18T11:51:31.646Z  
 **Target Milestone:** Foundation Hardening (Milestone H1) Closed  
 **Architecture Version:** Schema v6 (Preparing Schema v7)  
 
@@ -19,7 +19,7 @@
 
 ## 2. Recent Git Log (Last 30 Commits)
 
-* `c8d5c9a` H1 closing 3: align architecture facts, fix design document keymap and corpus, pin CI node 22, add reviewpack generator (2026-11-18)
+* `256a785` H1 closing 3: align architecture facts, fix design document keymap and corpus, pin CI node 22, add reviewpack generator (2026-11-18)
 * `51d85ba` H1 closing 3: repo hygiene, delete stale root screenshots, add README and gitignore rules (2026-11-18)
 * `eb3f63a` H1 closing 2: comprehensive v2 design document for multi-staff and pagination (2026-11-18)
 * `da76dc7` H1 closing 2: system-level layout memoization, lazy override scanning, and sub-5ms layout budget (2026-11-18)
@@ -66,7 +66,7 @@
 
 ## 4. Tracked Files and Line Counts
 
-Total Tracked Files: 346 | Total Lines: 194240
+Total Tracked Files: 346 | Total Lines: 194061
 
 | Tracked File | Lines |
 |:---|---:|
@@ -81,7 +81,6 @@ Total Tracked Files: 346 | Total Lines: 194240
 | `scripts/assets/Bravura.otf` | 867 |
 | `scripts/run_m6a_e2e_verification.mjs` | 777 |
 | `tests/render/__snapshots__/renderSvg.test.ts.snap` | 739 |
-| `docs/design/multi-staff-and-pages.md` | 678 |
 | `tests/layout/mouseInput.test.ts` | 667 |
 | `src/ui/keymap.ts` | 588 |
 | `src/layout/measureLayout.ts` | 586 |
@@ -96,6 +95,7 @@ Total Tracked Files: 346 | Total Lines: 194240
 | `src/ui/editor/useEditorSelection.ts` | 529 |
 | `src/ui/ScoreView.tsx` | 524 |
 | `scripts/run_m3c_e2e_verification.mjs` | 517 |
+| `docs/design/multi-staff-and-pages.md` | 499 |
 | `src/core/notationCommands.ts` | 497 |
 | `src/ui/galleryCases.ts` | 495 |
 | `tests/core/commands.test.ts` | 487 |
