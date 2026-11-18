@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 /**
  * Memoized React component rendering a single layout system into SVG elements.
  *

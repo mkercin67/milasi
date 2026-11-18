@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 import { Score } from '../core/model';
 import { buildSchedule } from './schedule';
 import { AudioEngine, ScheduleResult } from './types';

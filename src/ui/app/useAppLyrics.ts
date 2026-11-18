@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Score } from '../../core/model';
 import { autoSolfege, pasteLyrics, setLyrics, Command } from '../../core/commands';

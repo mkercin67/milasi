@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 import { PPQ, measureTicks } from '../core/time';
 import { Pitch, Score } from '../core/model';
 import { pitchToMidi } from './pitch';

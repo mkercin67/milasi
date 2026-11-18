@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 import { describe, expect, it } from 'vitest';
 import { EditorMode, getCompleteKeyTable, KeyEventLike, mapKeyEvent } from '../../src/ui/keymap';
 

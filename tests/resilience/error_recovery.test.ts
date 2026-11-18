@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 /**
  * Resilience & Error Recovery Tests (Milestone H1 Task 5).
  *

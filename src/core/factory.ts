@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 /**
  * Factory functions for initializing ScoreForge model objects.
  */

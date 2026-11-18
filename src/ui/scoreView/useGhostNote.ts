@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 import { useRef, useState } from 'react';
 import { BaseDurationType, Pitch, Score } from '../../core/model';
 import { LayoutResult } from '../../layout/types';

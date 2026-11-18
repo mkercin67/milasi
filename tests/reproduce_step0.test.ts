@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 import { describe, it } from 'vitest';
 import { createNote, createPitch, createRest, createEmptyScore } from '../src/core/factory';
 import { groupBeams } from '../src/layout/beams';

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 import React from 'react';
 import { BarlineType, Score } from '../../../core/model';
 import { SelectedEventInfo } from '../types';

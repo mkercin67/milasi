@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 /**
  * Status bar presenting the active editor mode, details of the currently selected event,
  * temporary error messages, drag offset/pitch feedback, and context shortcuts.

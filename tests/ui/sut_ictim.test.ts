@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 import { describe, expect, it } from 'vitest';
 import { buildSutIctimScore } from '../../src/ui/sutIctimScore';
 import { validateScore } from '../../src/core/validate';

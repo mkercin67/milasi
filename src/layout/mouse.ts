@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 /**
  * Mouse interaction, cursor positioning, and manual drag helpers for ScoreForge.
  *

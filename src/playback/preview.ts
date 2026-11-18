@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 import { Pitch } from '../core/model';
 import { pitchToMidi } from './pitch';
 import { AudioEngine } from './types';

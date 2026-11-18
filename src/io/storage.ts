@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 /**
  * IndexedDB storage management for ScoreForge autosave and recovery.
  *

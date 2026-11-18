@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 import { spawn } from 'child_process';
 import fs from 'fs';
 import http from 'http';

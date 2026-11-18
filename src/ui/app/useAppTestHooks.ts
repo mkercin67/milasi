@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 import { useEffect, useLayoutEffect } from 'react';
 import { Score } from '../../core/model';
 import { setOverride, Command } from '../../core/commands';

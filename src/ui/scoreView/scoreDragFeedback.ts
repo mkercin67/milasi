@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 import { LayoutResult } from '../../layout/types';
 import { getLedgerLineYs } from '../../layout/pitch';
 

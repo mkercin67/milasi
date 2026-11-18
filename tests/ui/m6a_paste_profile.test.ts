@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 import { describe, expect, it } from 'vitest';
 import { createBenchmark64Score } from '../../src/ui/Demo';
 import { pasteEvents } from '../../src/core/clipboard';

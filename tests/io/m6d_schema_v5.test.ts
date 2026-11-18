@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 import { describe, expect, it } from 'vitest';
 import { CURRENT_SCHEMA_VERSION, deserializeScore, serializeScore } from '../../src/io/json';
 import { createEmptyScore } from '../../src/core/factory';

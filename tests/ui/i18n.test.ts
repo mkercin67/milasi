@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 import { describe, expect, it, vi } from 'vitest';
 import { createPitch } from '../../src/core/factory';
 import { formatPitchName } from '../../src/ui/i18n/formatPitch';

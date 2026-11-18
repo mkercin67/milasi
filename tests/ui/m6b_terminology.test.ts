@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 import { describe, expect, it } from 'vitest';
 import trLocale from '../../src/ui/i18n/locales/tr.json';
 import enLocale from '../../src/ui/i18n/locales/en.json';

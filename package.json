@@ -2,6 +2,7 @@
   "name": "scoreforge",
   "private": true,
   "version": "0.1.0",
+  "license": "GPL-3.0-or-later",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -10,12 +11,15 @@
     "test": "vitest run",
     "bench": "npm run build && node scripts/bench.mjs",
     "smoke": "npm run build && node scripts/smoke.mjs",
+    "test:i18n": "node scripts/test_i18n_dom.mjs",
     "typecheck": "tsc --noEmit",
     "licenses": "node scripts/checkLicenses.mjs",
+    "spdx": "node scripts/checkSpdx.mjs --fix",
+    "spdx:check": "node scripts/checkSpdx.mjs",
     "shortcuts": "node scripts/generateShortcuts.mjs",
     "shortcuts:check": "node scripts/generateShortcuts.mjs --check",
     "reviewpack": "node scripts/generateReviewPack.mjs",
-    "check": "tsc --noEmit && node scripts/checkImports.mjs && node scripts/checkLicenses.mjs && node scripts/generateShortcuts.mjs --check && eslint src/ && npx knip && npm test && npm run build"
+    "check": "tsc --noEmit && node scripts/checkImports.mjs && node scripts/checkLicenses.mjs && node scripts/checkSpdx.mjs && node scripts/generateShortcuts.mjs --check && eslint src/ && npx knip && npm test && npm run build"
   },
   "dependencies": {
     "immer": "^10.1.1",

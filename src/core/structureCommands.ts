@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 /**
  * Score structure commands: metadata, key signatures, time signatures, barlines, tempo, measures, repeats, voltas.
  */

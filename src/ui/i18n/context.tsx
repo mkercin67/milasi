@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 /**
  * Internationalization (i18n) React context and hook for ScoreForge.
  *

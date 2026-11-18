@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 /**
  * Accidental state tracking within a measure according to standard engraving rules.
  *

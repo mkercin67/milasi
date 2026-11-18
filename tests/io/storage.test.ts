@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 import { describe, expect, it, beforeEach } from 'vitest';
 import { createScore } from '../../src/core/factory';
 import { clearAutosave, loadAutosave, saveAutosave, STORE_NAME } from '../../src/io/storage';

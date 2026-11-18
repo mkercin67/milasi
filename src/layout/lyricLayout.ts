@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 /**
  * Lyric layout rendering for single measures: syllables, centered hyphens, and melisma extender lines.
  */

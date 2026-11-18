@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 /**
  * Header block layout calculation (Title, Subtitle, Composer, Arranger).
  */

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 /**
  * Pure pitch manipulation and transposition functions for the ScoreForge core model.
  *

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 /**
  * Key signature layout calculation for treble and bass clefs.
  *

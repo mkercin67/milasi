@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 import { BaseDurationType, Pitch, Score, ScoreEvent } from '../../core/model';
 import { RangeSelection } from '../../core/selection';
 import { ScoreCursor } from '../../core/input';

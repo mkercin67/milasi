@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 /**
  * Measure layout engine for single-measure layout, caching, and glyph positioning.
  */

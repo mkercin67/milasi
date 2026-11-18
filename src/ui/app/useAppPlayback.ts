@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 import { useCallback, useEffect, useState } from 'react';
 import { Pitch, Score } from '../../core/model';
 import { AudioEngine, FakeEngine, Player, PreviewPlayer, ToneEngine } from '../../playback';

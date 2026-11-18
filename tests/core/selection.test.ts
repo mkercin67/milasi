@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 import { describe, expect, it } from 'vitest';
 import { createMeasure, createNote, createPart, createPitch, createRest, createScore } from '../../src/core/factory';
 import { eventExists, nextEventId } from '../../src/core/selection';

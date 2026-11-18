@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 /**
  * Pointer drag thresholds, snapping, axis-lock, and cursor positioning helpers.
  */

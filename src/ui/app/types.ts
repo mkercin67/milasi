@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 import { Pitch, ScoreEvent } from '../../core/model';
 
 export interface SelectedEventInfo {

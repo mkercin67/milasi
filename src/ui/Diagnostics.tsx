@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 /**
  * Hidden Diagnostics Overlay Panel (toggled via Ctrl+Alt+D).
  *

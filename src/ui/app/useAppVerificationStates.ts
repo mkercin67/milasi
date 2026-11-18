@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 import { useEffect, useRef } from 'react';
 import { PitchStep, Score, ScoreEvent } from '../../core/model';
 import { createEmptyScore } from '../../core/factory';

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 /**
  * Pure clipboard operations, serialization, duration splitting and pasting.
  */

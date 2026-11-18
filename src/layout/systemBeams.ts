@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 /**
  * Beam polygon generation across stretched & overridden system stems.
  */

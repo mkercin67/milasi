@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 /**
  * Physical keyboard shortcut mapping for ScoreForge editor.
  *

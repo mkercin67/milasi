@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 /**
  * Linear playback scheduling and repeat expansion for ScoreForge.
  *

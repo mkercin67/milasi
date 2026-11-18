@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 /**
  * SMuFL (Standard Music Font Layout) glyph metadata and codepoint resolver for Bravura.
  *

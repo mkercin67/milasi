@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 import React, { useMemo, useState } from 'react';
 import { GalleryCase, getGalleryCases } from './galleryCases';
 import { Score } from '../core/model';

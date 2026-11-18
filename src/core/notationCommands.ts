@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 /**
  * Notation commands: ties, accidentals, dynamics, articulations, slurs, lyrics, and auto-solfege.
  */

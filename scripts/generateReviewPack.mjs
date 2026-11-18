@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// SPDX-License-Identifier: GPL-3.0-or-later
 /**
  * ScoreForge Review Pack Generator
  * Generates docs/review/REVIEW_PACK.md (< 200 KB) with complete audit trail.

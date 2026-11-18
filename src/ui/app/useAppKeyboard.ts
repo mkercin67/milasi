@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 import { useEffect } from 'react';
 import { ArticulationType, DynamicType, Pitch, PitchStep, Score, ScoreEvent } from '../../core/model';
 import { Command, convertToRest, transposeEvent } from '../../core/commands';

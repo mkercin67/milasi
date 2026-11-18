@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 import React from 'react';
 import { Score } from '../../../core/model';
 import { useI18n } from '../../i18n';

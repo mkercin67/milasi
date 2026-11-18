@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 import { useCallback, useRef, useState } from 'react';
 import { BaseDurationType, Pitch, PitchStep, Score } from '../../core/model';
 import { EditorMode } from '../keymap';

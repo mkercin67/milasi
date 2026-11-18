@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { BaseDurationType, NoteEvent, Pitch, Score } from '../../core/model';
 import { LayoutResult } from '../../layout/types';

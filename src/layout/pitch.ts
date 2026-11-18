@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 /**
  * Pitch-to-staff mapping, ledger lines, and stem direction rules.
  *

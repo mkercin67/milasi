@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 import React from 'react';
 import { useI18n } from '../i18n';
 import { EditorMode } from '../keymap';

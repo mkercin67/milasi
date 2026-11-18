@@ -1,25 +1,36 @@
 #!/usr/bin/env node
+// SPDX-License-Identifier: GPL-3.0-or-later
 import fs from 'node:fs';
 import path from 'node:path';
 
-const ALLOWED_LICENSES = new Set([
+/**
+ * Permissive and copyleft licenses compatible with GPL-3.0-or-later
+ * for runtime production dependencies.
+ */
+const GPL3_COMPATIBLE_LICENSES = new Set([
   'MIT',
   '0BSD',
   'BSD-2-Clause',
   'BSD-3-Clause',
   'Apache-2.0',
   'ISC',
+  'CC0-1.0',
+  'Unlicense',
   'OFL-1.1',
-  'SIL OFL 1.1'
+  'SIL OFL 1.1',
+  'LGPL-2.1-or-later',
+  'LGPL-3.0-or-later',
+  'GPL-3.0-or-later',
+  'GPL-3.0',
 ]);
 
 const FORBIDDEN_PATTERNS = [
-  /GPL/i,
-  /AGPL/i,
-  /SSPL/i,
-  /COMMONS/i,
   /NON-COMMERCIAL/i,
-  /PROPRIETARY/i
+  /PROPRIETARY/i,
+  /COMMERCIAL/i,
+  /SSPL/i,
+  /AGPL/i,
+  /CC-BY-NC/i,
 ];
 
 function checkLicenses() {
@@ -60,9 +71,9 @@ function checkLicenses() {
         }
       }
 
-      // Check allowed list
-      if (!ALLOWED_LICENSES.has(license)) {
-        errors.push(`Disallowed or unapproved license in ${depName}@${depPkg.version}: ${license}`);
+      // Check allowed list for GPL-3.0 compatibility
+      if (!GPL3_COMPATIBLE_LICENSES.has(license)) {
+        errors.push(`Disallowed or GPL-3.0-incompatible license in ${depName}@${depPkg.version}: ${license}`);
       }
 
       auditResults.push({
@@ -111,7 +122,7 @@ function checkLicenses() {
     process.exit(1);
   }
 
-  console.log('\n✓ All production dependencies comply with permissive license standards (MIT, 0BSD, OFL-1.1).');
+  console.log('\n✓ All production dependencies comply with GPL-3.0 compatibility standards (MIT, 0BSD, OFL-1.1).');
 }
 
 checkLicenses();

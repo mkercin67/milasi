@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 import { describe, expect, it } from 'vitest';
 import { createMeasure, createNote, createPart, createPitch, createScore } from '../../src/core/factory';
 import { layoutScore } from '../../src/layout/layoutScore';

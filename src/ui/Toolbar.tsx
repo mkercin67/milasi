@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 /**
  * Main application toolbar containing score management, explicit 3-mode segmented control,
  * duration palette, position reset actions, zoom selector, and localization controls.

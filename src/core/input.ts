@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 /**
  * Core musical input engine: note and rest replacement, greedy gap filling,
  * measure appending, cursor arithmetic, and octave-nearest pitch calculation.

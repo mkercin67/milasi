@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 import React, { useRef } from 'react';
 import { useI18n } from '../i18n';
 

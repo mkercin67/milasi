@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 import { describe, expect, it } from 'vitest';
 import { pitchFromLetter } from '../../src/core/input';
 import { Clef, Pitch, PitchStep } from '../../src/core/model';

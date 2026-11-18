@@ -48,6 +48,12 @@ npm install
   ```
   Executes unit and integration test suites via Vitest.
 
+- **Run Playwright i18n DOM Verification:**
+  ```bash
+  npm run test:i18n
+  ```
+  Runs headless Playwright DOM inspection verifying that no visible text node in the toolbar, status bar, or dialogs displays untranslated translation keys in Turkish and English with all dialogs opened.
+
 - **Run Production Performance Benchmark:**
   ```bash
   npm run bench
@@ -81,7 +87,14 @@ npm install
 
 ## License
 
-License to be designated by the repository owner. All third-party dependencies are strictly audited under permissive open-source licenses (MIT, 0BSD, OFL-1.1).
+ScoreForge is free software licensed under the **GNU General Public License v3.0 or later (GPL-3.0-or-later)**. See the [LICENSE](LICENSE) file for the complete license text.
+
+Copyright (C) 2026 [TODO: Copyright Holder Full Name]
+
+### Third-Party Licenses & Musical Scores
+- **Bravura Font & Metadata:** The Bravura musical font and metadata assets (`public/fonts/`) remain licensed under the **SIL Open Font License, Version 1.1 (OFL-1.1)**. See [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md) and [LICENSE-Bravura.txt](public/fonts/LICENSE-Bravura.txt).
+- **Third-Party Musical Scores:** Proprietary engravings and copyrighted third-party scores are strictly **not** part of this repository. All committed musical fixtures conform to [docs/CORPUS_POLICY.md](docs/CORPUS_POLICY.md).
+- **Runtime Dependencies:** All runtime production dependencies are verified by `npm run licenses` to be strictly compatible with GPL-3.0-or-later (MIT, 0BSD, OFL-1.1).
 
 ---
 

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 /**
  * Layout and geometry computation for Dynamics, Articulations, and Slurs (Milestone 6b).
  *

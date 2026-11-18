@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 import { Component, ErrorInfo, ReactNode } from 'react';
 import { Score } from '../core/model';
 import { serializeScore } from '../io/json';

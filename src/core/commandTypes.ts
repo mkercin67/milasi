@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 /**
  * Command interfaces and History stack for ScoreForge core.
  */

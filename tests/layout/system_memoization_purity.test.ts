@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 import { describe, expect, it } from 'vitest';
 import { clearSystemLayoutCache, layoutScore } from '../../src/layout/layoutScore';
 import { createBenchmarkFullFeaturedScore } from '../../src/ui/Demo';
