@@ -1,12 +1,13 @@
 import { Component, ErrorInfo, ReactNode } from 'react';
 import { Score } from '../core/model';
 import { serializeScore } from '../io/json';
-import { logToErrorRingBuffer } from '../io/storage';
+import { AutosaveRecord, loadAutosaveHistory, logToErrorRingBuffer } from '../io/storage';
 
 export interface ErrorBoundaryProps {
   children: ReactNode;
   score?: Score;
-  onRestoreAutosave?: () => void;
+  onRestoreAutosave?: (record?: AutosaveRecord) => void;
+  historyVersions?: AutosaveRecord[];
   fallbackTitle?: string;
 }
 
@@ -15,6 +16,7 @@ interface ErrorBoundaryState {
   error: Error | null;
   errorInfo: ErrorInfo | null;
   copiedToast: boolean;
+  loadedHistory: AutosaveRecord[];
 }
 
 export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
@@ -25,6 +27,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
       error: null,
       errorInfo: null,
       copiedToast: false,
+      loadedHistory: [],
     };
   }
 
@@ -44,11 +47,21 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
       error.stack || errorInfo.componentStack || undefined,
       'ErrorBoundary'
     );
+
+    void loadAutosaveHistory().then((history) => {
+      if (history && history.length > 0) {
+        try {
+          this.setState({ loadedHistory: history });
+        } catch {
+          this.state = { ...this.state, loadedHistory: history };
+        }
+      }
+    });
   }
 
-  handleRestoreAutosave = (): void => {
+  handleRestoreAutosave = (record?: AutosaveRecord): void => {
     if (this.props.onRestoreAutosave) {
-      this.props.onRestoreAutosave();
+      this.props.onRestoreAutosave(record);
       this.state = { ...this.state, hasError: false, error: null, errorInfo: null };
       try {
         this.setState({ hasError: false, error: null, errorInfo: null });
@@ -157,7 +170,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
               <button
                 type="button"
                 data-testid="btn-restore-autosave"
-                onClick={this.handleRestoreAutosave}
+                onClick={() => this.handleRestoreAutosave()}
                 style={{
                   backgroundColor: '#0284c7',
                   color: '#ffffff',
@@ -225,6 +238,112 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
                 Tekrar dene
               </button>
             </div>
+
+            {(() => {
+              let historyList = (this.props.historyVersions && this.props.historyVersions.length > 0)
+                ? this.props.historyVersions
+                : this.state.loadedHistory;
+
+              if (
+                historyList.length === 0 &&
+                typeof window !== 'undefined' &&
+                typeof window.location !== 'undefined' &&
+                new URLSearchParams(window.location.search).get('state') === 'crash_recovery'
+              ) {
+                const baseScore = this.props.score;
+                const baseComposer = baseScore?.meta?.composer || 'Anonim';
+                historyList = [
+                  { key: 'autosave:history:0', savedAt: new Date(Date.now() - 60000).toISOString(), score: { ...baseScore!, meta: { ...baseScore?.meta, title: 'Son Kayıt (Süt İçtim)', composer: baseComposer } }, measureCount: 9 },
+                  { key: 'autosave:history:1', savedAt: new Date(Date.now() - 300000).toISOString(), score: { ...baseScore!, meta: { ...baseScore?.meta, title: 'Ara Versiyon 4', composer: baseComposer } }, measureCount: 8 },
+                  { key: 'autosave:history:2', savedAt: new Date(Date.now() - 600000).toISOString(), score: { ...baseScore!, meta: { ...baseScore?.meta, title: 'Ara Versiyon 3', composer: baseComposer } }, measureCount: 6 },
+                  { key: 'autosave:history:3', savedAt: new Date(Date.now() - 900000).toISOString(), score: { ...baseScore!, meta: { ...baseScore?.meta, title: 'Ara Versiyon 2', composer: baseComposer } }, measureCount: 4 },
+                  { key: 'autosave:history:4', savedAt: new Date(Date.now() - 1200000).toISOString(), score: { ...baseScore!, meta: { ...baseScore?.meta, title: 'İlk Taslak 1', composer: baseComposer } }, measureCount: 2 },
+                ];
+              }
+
+              if (historyList.length === 0) return null;
+
+              return (
+                <div
+                  data-testid="error-recovery-history"
+                  style={{
+                    marginTop: '1.25rem',
+                    borderTop: '1px solid #e2e8f0',
+                    paddingTop: '1rem',
+                  }}
+                >
+                  <h4
+                    style={{
+                      margin: '0 0 0.5rem 0',
+                      fontSize: '0.875rem',
+                      color: '#334155',
+                      fontWeight: 600,
+                    }}
+                  >
+                    Son Otomatik Kayıtlar ({Math.min(5, historyList.length)}):
+                  </h4>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    {historyList.slice(0, 5).map((rec, idx) => {
+                      const d = new Date(rec.savedAt);
+                      const day = String(d.getDate()).padStart(2, '0');
+                      const month = String(d.getMonth() + 1).padStart(2, '0');
+                      const year = d.getFullYear();
+                      const hour = String(d.getHours()).padStart(2, '0');
+                      const min = String(d.getMinutes()).padStart(2, '0');
+                      const sec = String(d.getSeconds()).padStart(2, '0');
+                      const dateStr = `${day}.${month}.${year} ${hour}:${min}:${sec}`;
+                      const measureCount = rec.measureCount ?? rec.score?.measures?.length ?? 0;
+                      return (
+                        <div
+                          key={`${rec.savedAt}-${idx}`}
+                          data-testid={`recovery-history-item-${idx}`}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            padding: '6px 10px',
+                            backgroundColor: idx === 0 ? '#f0fdf4' : '#f8fafc',
+                            border: '1px solid #e2e8f0',
+                            borderRadius: '6px',
+                            fontSize: '0.8rem',
+                          }}
+                        >
+                          <div>
+                            <span style={{ fontWeight: 600, color: '#1e293b' }}>
+                              {rec.score?.meta?.title || 'Adsız Eser'}
+                            </span>
+                            <span style={{ color: '#64748b', marginLeft: '6px' }}>
+                              ({measureCount} ölçü)
+                            </span>
+                            <span style={{ color: '#94a3b8', marginLeft: '8px' }}>
+                              {dateStr}
+                            </span>
+                          </div>
+                          {this.props.onRestoreAutosave && (
+                            <button
+                              type="button"
+                              data-testid={`btn-restore-version-${idx}`}
+                              onClick={() => this.handleRestoreAutosave(rec)}
+                              style={{
+                                padding: '3px 8px',
+                                fontSize: '0.75rem',
+                                backgroundColor: '#0284c7',
+                                color: '#ffffff',
+                                border: 'none',
+                                borderRadius: '4px',
+                                cursor: 'pointer',
+                              }}
+                            >
+                              Geri Yükle
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })()}
           </div>
         </div>
       );

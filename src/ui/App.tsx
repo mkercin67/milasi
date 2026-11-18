@@ -407,10 +407,11 @@ const EditorShell: React.FC = () => {
 
       <ErrorBoundary
         score={score}
-        onRestoreAutosave={async () => {
-          const record = await loadAutosave();
-          if (record?.score) {
-            resetScore(record.score);
+        historyVersions={historyVersions}
+        onRestoreAutosave={async (record) => {
+          const target = record ?? (await loadAutosave());
+          if (target?.score) {
+            resetScore(target.score);
             markClean();
           }
         }}

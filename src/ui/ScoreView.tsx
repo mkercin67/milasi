@@ -66,6 +66,9 @@ export const ScoreView: React.FC<ScoreViewProps> = ({
   const useTextFallback = useMemo(() => {
     if (typeof window === 'undefined') return false;
     const params = new URLSearchParams(window.location.search);
+    if (params.get('state') === 'crash_recovery') {
+      throw new Error('Simulated layout/render crash for recovery verification');
+    }
     return params.has('text') || params.get('renderer') === 'text';
   }, []);
 

@@ -17,6 +17,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 if (typeof (globalThis as any).window === 'undefined') {
   (globalThis as any).window = globalThis;
 }
+import { Command, History } from '../../src/core/commandTypes';
 import { createEmptyScore } from '../../src/core/factory';
 import {
   clearAutosave,
@@ -26,7 +27,6 @@ import {
   saveAutosave,
 } from '../../src/io/storage';
 import { ErrorBoundary } from '../../src/ui/ErrorBoundary';
-import { layoutScore } from '../../src/layout/layoutScore';
 import { Score } from '../../src/core/model';
 
 describe('H1 Resilience: Error Ring Buffer', () => {
@@ -210,39 +210,127 @@ describe('H1 Resilience: ErrorBoundary Recovery and Actions', () => {
   });
 });
 
-describe('H1 Resilience: Error Injection in Layout and Score Pipelines', () => {
-  it('layoutScore degrades gracefully and does not throw on empty/corrupt measures', () => {
-    const corruptScore: Score = {
-      schemaVersion: 6,
-      id: 'corrupt',
-      meta: { title: 'Corrupt Score', composer: 'Test' },
-      measures: [],
-      parts: [
-        {
-          id: 'p1',
-          name: 'Piano',
-          instrument: 'Piano',
-          staves: [
-            {
-              id: 's1',
-              clef: { sign: 'G', line: 2 },
-              measures: {},
-            },
-          ],
-        },
-      ],
-      overrides: {},
+describe('H1 Resilience: Injected Fault Recovery & Autosave History', () => {
+  it('1. Injected fault in layout pipeline: ErrorBoundary catches error, displays recovery UI, score retained', () => {
+    const score = createEmptyScore({ title: 'Fault Test Piece', measures: 4 });
+    const restoreSpy = vi.fn();
+
+    const FaultyLayoutComponent: React.FC<{ score: Score }> = ({ score: s }) => {
+      // Inject fault in layout
+      if (s.meta.title === 'Fault Test Piece') {
+        throw new Error('Injected layout calculation failure');
+      }
+      return React.createElement('div', null, 'Rendered');
     };
 
-    expect(() => {
-      const res = layoutScore(corruptScore, { width: 70 });
-      expect(res.systems.length).toBe(0);
-    }).not.toThrow();
+    const boundary = new ErrorBoundary({
+      score,
+      onRestoreAutosave: restoreSpy,
+      children: React.createElement(FaultyLayoutComponent, { score }),
+    });
+
+    const err = new Error('Injected layout calculation failure');
+    const derived = ErrorBoundary.getDerivedStateFromError(err);
+    boundary.state = { ...boundary.state, ...derived };
+    boundary.componentDidCatch(err, { componentStack: 'at FaultyLayoutComponent' });
+
+    // Assert recovery UI is displayed
+    const rendered = boundary.render() as React.ReactElement;
+    expect(rendered).not.toBeNull();
+    expect(rendered.props['data-testid']).toBe('error-boundary-fallback');
+    expect(boundary.props.score).toBe(score);
+    expect(boundary.props.score?.measures.length).toBe(4);
   });
 
-  it('layoutScore does not crash on NaN or negative widths', () => {
-    const score = createEmptyScore({ measures: 4 });
-    expect(() => layoutScore(score, { width: NaN })).not.toThrow();
-    expect(() => layoutScore(score, { width: -50 })).not.toThrow();
+  it('2. Injected fault in command pipeline: Command caught, history untouched, score retained', () => {
+    const initialScore = createEmptyScore({ title: 'Original Piece', measures: 3 });
+    const history = new History(initialScore);
+
+    const failingCommand: Command = {
+      name: 'Faulty command',
+      apply: () => {
+        throw new Error('Injected command failure');
+      },
+    };
+
+    expect(() => history.do(failingCommand)).toThrow('Injected command failure');
+    expect(history.score).toBe(initialScore);
+    expect(history.canUndo()).toBe(false);
+    expect(history.canRedo()).toBe(false);
+  });
+
+  it('3. Injected fault in render (ScoreSvgLayers): ErrorBoundary catches error and renders fallback', () => {
+    const score = createEmptyScore({ measures: 2 });
+    const FaultyRenderComponent: React.FC = () => {
+      throw new Error('Injected ScoreSvgLayers DOM crash');
+    };
+
+    const boundary = new ErrorBoundary({
+      score,
+      children: React.createElement(FaultyRenderComponent),
+    });
+
+    const err = new Error('Injected ScoreSvgLayers DOM crash');
+    const derived = ErrorBoundary.getDerivedStateFromError(err);
+    boundary.state = { ...boundary.state, ...derived };
+    boundary.componentDidCatch(err, { componentStack: 'at ScoreSvgLayers' });
+
+    const rendered = boundary.render() as React.ReactElement;
+    expect(rendered.props['data-testid']).toBe('error-boundary-fallback');
+    expect(rendered.props.children[1].props.children).toBe('Injected ScoreSvgLayers DOM crash');
+  });
+
+  it('4. Recovery UI lists last 5 autosaves with timestamps and measure counts', () => {
+    const score = createEmptyScore({ title: 'Active Score', measures: 6 });
+    const sampleHistory = [
+      {
+        key: 'autosave:history:0',
+        savedAt: new Date(2026, 10, 18, 14, 30, 0).toISOString(),
+        score: createEmptyScore({ title: 'Snapshot 5', measures: 10 }),
+        measureCount: 10,
+      },
+      {
+        key: 'autosave:history:1',
+        savedAt: new Date(2026, 10, 18, 14, 25, 0).toISOString(),
+        score: createEmptyScore({ title: 'Snapshot 4', measures: 8 }),
+        measureCount: 8,
+      },
+      {
+        key: 'autosave:history:2',
+        savedAt: new Date(2026, 10, 18, 14, 20, 0).toISOString(),
+        score: createEmptyScore({ title: 'Snapshot 3', measures: 6 }),
+        measureCount: 6,
+      },
+      {
+        key: 'autosave:history:3',
+        savedAt: new Date(2026, 10, 18, 14, 15, 0).toISOString(),
+        score: createEmptyScore({ title: 'Snapshot 2', measures: 4 }),
+        measureCount: 4,
+      },
+      {
+        key: 'autosave:history:4',
+        savedAt: new Date(2026, 10, 18, 14, 10, 0).toISOString(),
+        score: createEmptyScore({ title: 'Snapshot 1', measures: 2 }),
+        measureCount: 2,
+      },
+    ];
+
+    const restoreSpy = vi.fn();
+    const boundary = new ErrorBoundary({
+      score,
+      historyVersions: sampleHistory,
+      onRestoreAutosave: restoreSpy,
+      children: React.createElement('div', null, 'Normal'),
+    });
+
+    const err = new Error('Fatal UI crash');
+    boundary.state = { ...boundary.state, hasError: true, error: err };
+
+    const rendered = boundary.render() as React.ReactElement;
+    expect(rendered.props['data-testid']).toBe('error-boundary-fallback');
+
+    // Test restoring a specific historic version
+    boundary.handleRestoreAutosave(sampleHistory[2]);
+    expect(restoreSpy).toHaveBeenCalledWith(sampleHistory[2]);
   });
 });

@@ -7,21 +7,25 @@
 
 ---
 
-## 1. Overview and Design Objectives
+## (a) Goals and Non-Goals
 
-ScoreForge currently operates on a single-staff, continuous vertically stacked system layout (one staff per system, single page container with virtualized system rendering). Milestones M7 and M8 will introduce:
+### Goals
 1. **Multi-Staff Scoring:** Scores with multiple staves per system (e.g. Piano Grand Staff with brace, SATB choir with bracket, chamber ensembles, lead sheets with chord/vocal staves).
 2. **Page Pagination:** Discrete page layouts (A4, US Letter, Custom), margins, running headers/footers, explicit system and page break markers, and print-ready SVG exports.
+3. **Single Source of Truth:** Immutable score state managed with Immer.
+4. **Pure Layout Calculations:** Layout functions remain pure, deterministic, and isolated from React and DOM measurements.
+5. **Sub-40ms Keystroke Budget:** Full score keystroke-to-paint budget must remain under 40 ms on modern hardware for 4 staves × 100 measures (400 measure-staves).
+6. **Stable Voice Identity:** Rule R3 (`voiceIndex` 1..4 per staff) is strictly maintained across all staves.
 
-The design principles established in M1-H1 remain invariant:
-- **Single Source of Truth:** Immutable score state managed with Immer.
-- **Pure Layout Calculations:** Layout functions remain pure, deterministic, and isolated from React and DOM measurements.
-- **Sub-40ms Keystroke Budget:** Full score keystroke-to-paint budget must remain under 40 ms on modern hardware for 4 staves × 100 measures (400 measure-staves).
-- **Stable Voice Identity:** Rule R3 (`voiceIndex` 1..4 per staff) is strictly maintained across all staves.
+### Non-Goals
+1. Dynamic part extraction (generating single-instrument parts from a full conductor score) is deferred to M8b.
+2. Microtonal custom staff line counts (0-line or 11-line experimental staves) are out of scope for M7; standard 5-line and 1-line percussion staves are supported.
+3. Complex nested orchestral bracket hierarchies exceeding 3 levels of nesting are deferred.
+4. Real-time WYSIWYG free-form drag-and-drop page reflow without underlying structure commands.
 
 ---
 
-## 2. Multi-Staff Data Model Extensions
+## (b) Data Model Changes (Multi-Staff, Parts, Bracket/Brace, Barline Across Staves)
 
 ### 2.1 Staves and Instrument Hierarchy
 
@@ -92,7 +96,7 @@ interface MeasureStaff {
 
 ---
 
-## 3. Pagination Model
+## (c) Page Model (Margins, Headers/Footers, System Breaks, Page Breaks)
 
 ### 3.1 Page Dimensions and Page Layout Hierarchy
 
@@ -130,7 +134,7 @@ interface PageLayout {
 
 ---
 
-## 4. Multi-Staff Layout Algorithm
+## (d) Layout Algorithm Changes (Stage 1 Horizontal Sync, Stage 2 Vertical Staff Spacing & Collision Avoidance, Stage 3 Pages)
 
 The layout algorithm operates in three pure, sequential stages:
 
@@ -164,7 +168,7 @@ The layout algorithm operates in three pure, sequential stages:
 
 ---
 
-## 5. Multi-Staff Selection and Cursor Model
+## (e) Selection and Cursor Model Across Staves (Keyboard Navigation, Range Selection)
 
 ### 5.1 Cursor Coordinates
 The single-staff cursor `(measureIndex, voiceIndex, noteIndex)` is extended to:
@@ -195,7 +199,7 @@ interface CursorLocation {
 
 ---
 
-## 6. Multi-Staff Playback Routing
+## (f) Playback Architecture (Multi-Synth Tone.js Routing, Pan/Volume per Staff, Scheduling)
 
 ### 6.1 Audio Architecture with Tone.js
 - **Synthesizer Allocation:**
@@ -211,7 +215,7 @@ interface CursorLocation {
 
 ---
 
-## 7. Performance Budget: 4 Staves × 100 Measures
+## (g) Performance Budget (4 Staves × 100 Measures < 40 ms Keystroke, Memory Budget)
 
 ### 7.1 Quantitative Budget Targets (Production Build)
 - Total Score Volume: 4 staves × 100 measures = 400 measure-staves (~1,600 notes).
@@ -232,7 +236,7 @@ interface CursorLocation {
 
 ---
 
-## 8. Schema Migration Path (v6 -> v7)
+## (h) File Format and Migration (v6 -> v7, Backward Compatibility)
 
 ### 8.1 Migration Logic
 - All existing v1..v6 scores have a single implicit staff.
@@ -254,13 +258,29 @@ interface CursorLocation {
 
 ---
 
-## 9. Open Questions and Tradeoffs
+## (i) Open Questions for the Human
 
-1. **Cross-Staff Beaming:**
-   - *Question:* Should notes in piano music be allowed to beam across staves (e.g. left hand notes beamed into right hand staff)?
-   - *Recommendation for M7:* Defer cross-staff beams to M7b; initial M7 will confine beams to a single staff.
-2. **Collision Resolution vs Layout Speed:**
-   - *Question:* Should vertical staff spacing use continuous quadratic programming (like LilyPond / Gould) or segmented bounding box bounding?
-   - *Recommendation:* Segmented bounding box bounding (horizontal slices per measure). It runs in $O(M)$ time and meets the sub-40ms performance budget.
-3. **Continuous Scrolling vs Page View Toggle:**
-   - *Recommendation:* Provide a user toggle between "Sürekli Akış" (Continuous single-column ribbon) and "Sayfa Görünümü" (Paginated A4/Letter sheets). Continuous view remains default for editing; Page view is used for layout polishing and printing.
+1. **Vertical Justification & Page Bottoms (Engraving Tradeoffs):**
+   - *Issue:* When a piece ends on the last page with only 1 or 2 systems, standard classical engraving leaves the bottom of the page open (ragged bottom) to avoid unnatural, overly loose vertical gaps between staves.
+   - *Question for Human:* Should ScoreForge enforce ragged bottom automatically whenever page fullness is $< 70\%$, or should the user have an explicit toggle in Score Settings between "Justify All Pages" vs "Leave Final Page Open"?
+   - *Recommendation:* Default to ragged bottom on the final page (threshold $< 70\%$) with a Score Settings toggle.
+
+2. **Instrument Bracket and Brace Defaults (Style Conventions):**
+   - *Issue:* Piano scores require curly braces (`brace`) with continuous barlines (`barlineSpan: 'through'`), while choral SATB requires square brackets (`bracket`) with separated barlines (`barlineSpan: 'individual'`) so vocal lyrics between staves are not sliced by vertical barlines.
+   - *Question for Human:* In the New Score dialog, should instrument templates (e.g. "Piano", "SATB Koro", "Yaylı Dörtlüsü", "Solo Enstrüman") automatically set the appropriate bracket style and barline span rules, while still allowing manual override in Part Properties?
+   - *Recommendation:* Yes, bundle standard templates with predefined bracket and barline rules, fully editable in Part Properties.
+
+3. **Part Names on First System vs Subsequent Systems:**
+   - *Issue:* Professional scores display full instrument names (e.g. "Piyano", "Keman I") on the left of system 1, and abbreviated names (e.g. "Pno.", "Vln. I") on subsequent systems to conserve horizontal measure width.
+   - *Question for Human:* Should the data model mandate both `name` and `shortName` on `InstrumentDef`, and should system 1 reserve an extra indentation margin for full names automatically?
+   - *Recommendation:* Yes; system 1 reserves indentation based on the longest full name, and subsequent systems use `shortName`. If `shortName` is blank, no abbreviation is drawn.
+
+4. **Page-Turn Optimization (Performability Layout):**
+   - *Issue:* Performing musicians (pianists, chamber musicians) need page turns placed at measures with resting hands or whole rests, rather than in the middle of dense, continuous passage work.
+   - *Question for Human:* Should ScoreForge's pagination engine include an optional heuristic that slightly compresses or expands systems to align page breaks with rest measures when possible?
+   - *Recommendation:* Introduce an "Akıllı Sayfa Çevirme Önerisi" (Smart Page-Turn Hint) in the Status Bar / Inspector rather than moving barlines autonomously without user consent.
+
+5. **Cross-Staff Beaming Representation & Voice Ownership:**
+   - *Issue:* In keyboard music, rapid runs frequently cross from the bass staff to the treble staff under a single continuous beam.
+   - *Question for Human:* In the data model, should a cross-staff note remain owned by its home voice/staff with a visual property `staffDisplayOverride: 'above' | 'below'`, or should cross-staff beams be a separate higher-level structure grouping events from multiple staves?
+   - *Recommendation:* Keep note ownership in the originating staff/voice and add `staffDisplay: 'targetStaffId'` to `NoteEvent`. This preserves Rule R3 (`voiceIndex` stability) and prevents corrupting playback voice assignment.

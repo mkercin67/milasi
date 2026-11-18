@@ -61,10 +61,18 @@ export class History {
    * @returns The updated current score.
    */
   do(command: Command): Score {
-    this.past.push(this.current);
-    this.current = command.apply(this.current);
-    this.future = [];
-    return this.current;
+    const prev = this.current;
+    try {
+      const next = command.apply(prev);
+      this.past.push(prev);
+      this.current = next;
+      this.future = [];
+      return this.current;
+    } catch (err) {
+      // Command failed: keep current score and history completely untouched
+      this.current = prev;
+      throw err;
+    }
   }
 
   /**
