@@ -125,8 +125,9 @@ describe('Schema v7 validateScore Rules (Plan Section 5)', () => {
       baseType: 'half',
     });
 
+    const voice1Id = newId();
     part.staves[0].measures[m.id].voices = [
-      { id: newId(), voiceIndex: 1, events: [tiedNote, restVoice1] },
+      { id: voice1Id, voiceIndex: 1, events: [tiedNote, restVoice1] },
       { id: newId(), voiceIndex: 2 as any, events: [restVoice2, matchingNoteVoice2] },
     ];
 
@@ -134,6 +135,8 @@ describe('Schema v7 validateScore Rules (Plan Section 5)', () => {
     const err = problems.find((p) => p.code === 'tie-cross-voice');
     expect(err).toBeDefined();
     expect(err?.severity).toBe('error');
+    expect(err?.voiceId).toBe(voice1Id);
+    expect(err?.eventId).toBe(tiedNote.id);
   });
 
   // Rule 6: Slurs are intra-voice

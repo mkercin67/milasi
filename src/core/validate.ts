@@ -356,7 +356,7 @@ export function validateScore(score: Score): ValidationProblem[] {
 
       // Tie validation (Schema v7 intra-voice)
       if (score.schemaVersion === 7) {
-        const voiceNotesMap = new Map<number, Array<{ note: NoteEvent; measureId: Id; tickStart: number }>>();
+        const voiceNotesMap = new Map<number, Array<{ note: NoteEvent; measureId: Id; voiceId: Id; tickStart: number }>>();
         const allStaffNotes: Array<{ note: NoteEvent; voiceIndex: number; measureId: Id; tickStart: number }> = [];
         let runningStaffTick = 0;
         for (const mDef of score.measures) {
@@ -372,7 +372,7 @@ export function validateScore(score: Score): ValidationProblem[] {
               let vTick = runningStaffTick;
               for (const ev of v.events) {
                 if (ev.kind === 'note') {
-                  const entry = { note: ev, measureId: mDef.id, tickStart: vTick };
+                  const entry = { note: ev, measureId: mDef.id, voiceId: v.id, tickStart: vTick };
                   list.push(entry);
                   allStaffNotes.push({ note: ev, voiceIndex: vIndex, measureId: mDef.id, tickStart: vTick });
                 }
@@ -415,7 +415,7 @@ export function validateScore(score: Score): ValidationProblem[] {
                       partId: part.id,
                       staffId: staff.id,
                       measureId: current.measureId,
-                      voiceId: current.note.id,
+                      voiceId: current.voiceId,
                       eventId: current.note.id,
                     });
                   }
