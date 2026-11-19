@@ -1,0 +1,13 @@
+diff --git a/src/core/input.ts b/src/core/input.ts
+index c076816..431ed8d 100644
+--- a/src/core/input.ts
++++ b/src/core/input.ts
+@@ -237,7 +237,7 @@ export function enterEventCommand(cursor: ScoreCursor, spec: InputNoteSpec): Com
+             const mDef = draft.measures.find((m) => m.id === cursor.measureId);
+             const mLength = mDef?.actualTicks ?? (mDef ? measureTicks(mDef.timeSig) : 3840);
+             const eventDuration = plan.newEvent.duration;
+-            const leadingRests = cursor.tick > 0 ? fillMeasureWithRests(cursor.tick, () => newId()) : [];
++            const leadingRests: RestEvent[] = [];
+             const trailingSpan = mLength - (cursor.tick + eventDuration);
+             const trailingRests = trailingSpan > 0 ? fillMeasureWithRests(trailingSpan, () => newId()) : [];
+ 

@@ -4,6 +4,7 @@ import { enterNote, ScoreCursor } from '../../src/core/input';
 import { createMeasure, createPart, createRest, createScore, newId } from '../../src/core/factory';
 import { Score } from '../../src/core/model';
 import { validateScore } from '../../src/core/validate';
+import { History } from '../../src/core/commands';
 
 describe('T2 & T3: Voice Creation on Entry (Decisions D3, D4)', () => {
   function createEmpty44Score(): { score: Score; staffId: string; measureId: string } {
@@ -105,5 +106,21 @@ describe('T2 & T3: Voice Creation on Entry (Decisions D3, D4)', () => {
     const problems = validateScore(newScore);
     const errors = problems.filter((p) => p.severity === 'error');
     expect(errors).toHaveLength(0);
+  });
+
+  it('T4: undo voice creation restores score without the newly created voice', () => {
+    const { score, staffId, measureId } = createEmpty44Score();
+    const history = new History(score);
+    const cursor: ScoreCursor = { staffId, measureId, voiceIndex: 2, tick: 0 };
+    const cmd = enterNote(cursor, {
+      baseType: 'quarter',
+      pitch: { step: 'E', octave: 4, alter: 0 },
+    });
+    const nextScore = history.do(cmd);
+    expect(nextScore.parts[0].staves[0].measures[measureId].voices).toHaveLength(2);
+
+    const undoneScore = history.undo()!;
+    expect(undoneScore.parts[0].staves[0].measures[measureId].voices).toHaveLength(1);
+    expect(undoneScore.parts[0].staves[0].measures[measureId].voices[0].voiceIndex).toBe(1);
   });
 });

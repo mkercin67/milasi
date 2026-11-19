@@ -1,0 +1,15 @@
+diff --git a/src/core/input.ts b/src/core/input.ts
+index c076816..d949313 100644
+--- a/src/core/input.ts
++++ b/src/core/input.ts
+@@ -230,6 +230,10 @@ export function enterEventCommand(cursor: ScoreCursor, spec: InputNoteSpec): Com
+           }
+           let voice = sm.voices.find((v) => v.voiceIndex === cursor.voiceIndex);
+           if (!voice) {
++            const origStaff = score.parts.find((p) => p.staves.some((s) => s.id === cursor.staffId))?.staves.find((s) => s.id === cursor.staffId);
++            if (origStaff && origStaff.measures[cursor.measureId]) {
++              origStaff.measures[cursor.measureId].voices.push({ id: newId(), voiceIndex: cursor.voiceIndex, events: [] });
++            }
+             // Decision D3: First entry into a missing voice creates the voice in that
+             // measure in the SAME undo step: rests fill [0, t) via fillMeasureWithRests,
+             // then the entered event, then rests to the barline. Voices stay sorted by

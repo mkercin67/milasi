@@ -1,0 +1,13 @@
+diff --git a/src/core/input.ts b/src/core/input.ts
+index c076816..042f615 100644
+--- a/src/core/input.ts
++++ b/src/core/input.ts
+@@ -247,7 +247,7 @@ export function enterEventCommand(cursor: ScoreCursor, spec: InputNoteSpec): Com
+               events: [...leadingRests, plan.newEvent, ...trailingRests],
+             };
+             sm.voices.push(voice);
+-            sm.voices.sort((a, b) => a.voiceIndex - b.voiceIndex);
++            // sm.voices.sort((a, b) => a.voiceIndex - b.voiceIndex);
+             return;
+           }
+ 

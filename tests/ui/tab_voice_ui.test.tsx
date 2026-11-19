@@ -45,6 +45,7 @@ describe('T5: UI Voice Switching & PreventDefault (Decision D1, D6)', () => {
       </I18nProvider>
     );
     expect(htmlV2Tr).toContain('Ses 2');
+    expect(htmlV2Tr).not.toContain('Nota girişiNota girişi');
 
     // 3. In English locale: shows "Voice 2"
     const htmlV2En = renderToStaticMarkup(
@@ -58,6 +59,7 @@ describe('T5: UI Voice Switching & PreventDefault (Decision D1, D6)', () => {
       </I18nProvider>
     );
     expect(htmlV2En).toContain('Voice 2');
+    expect(htmlV2En).not.toContain('Note inputNote input');
   });
 
   it('Tab in input mode is mapped and default-prevented; Tab outside input mode is NOT default-prevented', () => {
