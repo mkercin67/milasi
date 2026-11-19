@@ -99,7 +99,7 @@ export function eventsInRange(
   range: RangeSelection
 ): ScoreEvent[] {
   const anchorCtx = findEventContext(score, range.anchorId);
-  const vIndex = range.voiceIndex ?? (anchorCtx ? anchorCtx.voiceIndex : 1);
+  const vIndex = anchorCtx ? anchorCtx.voiceIndex : 1;
   const ordered = getOrderedVoiceEvents(score, range.staffId, vIndex);
   const anchorIdx = ordered.findIndex((item) => item.event.id === range.anchorId);
   const focusIdx = ordered.findIndex((item) => item.event.id === range.focusId);
