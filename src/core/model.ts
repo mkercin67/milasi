@@ -107,6 +107,7 @@ export interface StaffMeasure {
 /** A voice channel within a measure holding a sequential list of score events. */
 export interface Voice {
   id: Id;
+  voiceIndex?: number; // 1-based index (1..4)
   events: ScoreEvent[];
 }
 

@@ -41,12 +41,13 @@ export function findEventContext(
           const voice = staffMeasure.voices[vIdx];
           const evIdx = voice.events.findIndex((e) => e.id === eventId);
           if (evIdx !== -1) {
+            const vIndex = voice.voiceIndex ?? (vIdx + 1);
             return {
               staffId: staff.id,
               measureId: mDef.id,
               measureIndex: mIdx,
               voiceId: voice.id,
-              voiceIndex: vIdx,
+              voiceIndex: vIndex,
               eventIndex: evIdx,
             };
           }
@@ -59,12 +60,12 @@ export function findEventContext(
 
 /**
  * Returns all events in a specific voice across all measures in score reading order.
- * Resolves by voice ID or by voice index within each measure.
+ * Follows voiceIndex (1..4) strictly across measures per Rule R3.
  */
 export function getOrderedVoiceEvents(
   score: Score,
   staffId: string,
-  voiceIndexOrId: number | string = 0
+  targetVoiceIndex: number = 1
 ): Array<{ event: ScoreEvent; measureId: string; measureIndex: number }> {
   const result: Array<{ event: ScoreEvent; measureId: string; measureIndex: number }> = [];
 
@@ -77,11 +78,8 @@ export function getOrderedVoiceEvents(
         if (!staffMeasure) continue;
         for (let vIdx = 0; vIdx < staffMeasure.voices.length; vIdx++) {
           const voice = staffMeasure.voices[vIdx];
-          const matches =
-            typeof voiceIndexOrId === 'number'
-              ? vIdx === voiceIndexOrId
-              : voice.id === voiceIndexOrId || vIdx === 0;
-          if (!matches) continue;
+          const vIndex = voice.voiceIndex ?? (vIdx + 1);
+          if (vIndex !== targetVoiceIndex) continue;
           for (const ev of voice.events) {
             result.push({ event: ev, measureId: mDef.id, measureIndex: mIdx });
           }
@@ -101,7 +99,7 @@ export function eventsInRange(
   range: RangeSelection
 ): ScoreEvent[] {
   const anchorCtx = findEventContext(score, range.anchorId);
-  const vIndex = anchorCtx ? anchorCtx.voiceIndex : 0;
+  const vIndex = range.voiceIndex ?? (anchorCtx ? anchorCtx.voiceIndex : 1);
   const ordered = getOrderedVoiceEvents(score, range.staffId, vIndex);
   const anchorIdx = ordered.findIndex((item) => item.event.id === range.anchorId);
   const focusIdx = ordered.findIndex((item) => item.event.id === range.focusId);

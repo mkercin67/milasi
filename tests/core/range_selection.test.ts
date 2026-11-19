@@ -142,4 +142,44 @@ describe('Milestone 6a: Range Selection (src/core/selection.ts)', () => {
       expect(evs.map((e) => e.id)).toEqual([n0.id, n1.id, n2.id, n3.id, n4.id, n5.id]);
     }
   });
+
+  it('FAILING-FIRST: asserts selection follows voiceIndex (1..4) regardless of array storage order across measures', () => {
+    const score = createEmptyScore({ measures: 2 });
+    const staff = score.parts[0].staves[0];
+    const m0Id = score.measures[0].id;
+    const m1Id = score.measures[1].id;
+
+    // Measure 0: Voice 1 at index 0, Voice 2 at index 1
+    const m0_v1_n0 = createNote({ pitches: [createPitch('C', 4)], baseType: 'quarter' });
+    const m0_v1_n1 = createNote({ pitches: [createPitch('D', 4)], baseType: 'quarter' });
+    const m0_v2_n0 = createNote({ pitches: [createPitch('E', 3)], baseType: 'quarter' });
+    const m0_v2_n1 = createNote({ pitches: [createPitch('F', 3)], baseType: 'quarter' });
+
+    staff.measures[m0Id].voices = [
+      { id: 'm0-v1', voiceIndex: 1, events: [m0_v1_n0, m0_v1_n1] },
+      { id: 'm0-v2', voiceIndex: 2, events: [m0_v2_n0, m0_v2_n1] },
+    ];
+
+    // Measure 1: Voice 2 at index 0, Voice 1 at index 1 (REVERSED array storage order)
+    const m1_v2_n0 = createNote({ pitches: [createPitch('G', 3)], baseType: 'quarter' });
+    const m1_v2_n1 = createNote({ pitches: [createPitch('A', 3)], baseType: 'quarter' });
+    const m1_v1_n0 = createNote({ pitches: [createPitch('E', 4)], baseType: 'quarter' });
+    const m1_v1_n1 = createNote({ pitches: [createPitch('F', 4)], baseType: 'quarter' });
+
+    staff.measures[m1Id].voices = [
+      { id: 'm1-v2', voiceIndex: 2, events: [m1_v2_n0, m1_v2_n1] },
+      { id: 'm1-v1', voiceIndex: 1, events: [m1_v1_n0, m1_v1_n1] },
+    ];
+
+    // Range selection on Voice 1: from m0_v1_n0 to m1_v1_n0
+    const rangeV1 = {
+      staffId: staff.id,
+      voiceId: 'm0-v1',
+      anchorId: m0_v1_n0.id,
+      focusId: m1_v1_n0.id,
+    };
+
+    const evsV1 = eventsInRange(score, rangeV1);
+    expect(evsV1.map((e) => e.id)).toEqual([m0_v1_n0.id, m0_v1_n1.id, m1_v1_n0.id]);
+  });
 });
