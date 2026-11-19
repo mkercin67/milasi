@@ -144,8 +144,8 @@ function normalizeVoices(staffMeasures, measureIds) {
 }
 
 export async function runVoiceEntryE2E(options = {}) {
-  const { mutationBreakTab = false } = options;
-  console.log(`\n=== Running Playwright Voice Entry E2E (mutationBreakTab: ${mutationBreakTab}) ===`);
+  const { mutationBreakTab = false, mutationBreakUndo = false } = options;
+  console.log(`\n=== Running Playwright Voice Entry E2E (mutationBreakTab: ${mutationBreakTab}, mutationBreakUndo: ${mutationBreakUndo}) ===`);
 
   const devUrl = 'http://localhost:5173';
   const isDevRunning = await checkServer(devUrl);
@@ -279,8 +279,19 @@ export async function runVoiceEntryE2E(options = {}) {
     const voice2Status = await page.textContent('[data-testid="status-bar"]');
     console.log(`Status bar after Tab: "${voice2Status?.trim()}"`);
 
+    // Capture cropped status bar screenshot for C4
+    const statusBarEl = await page.waitForSelector('[data-testid="status-bar"]');
+    const statusBarBox = await statusBarEl.boundingBox();
+    if (statusBarBox) {
+      const statusBarCropPath = path.join(outDir, 'status_bar_ses2.png');
+      if (fs.existsSync(statusBarCropPath)) { try { fs.unlinkSync(statusBarCropPath); } catch {} }
+      await page.screenshot({ path: statusBarCropPath, clip: statusBarBox });
+      console.log(`Saved cropped status bar screenshot: ${statusBarCropPath}`);
+    }
+
     // Screenshot 1: virtual voice-2 cursor at start of m.1 + status bar showing Ses 2
     const screenshot1Path = path.join(outDir, '01_voice2_mid_entry.png');
+    if (fs.existsSync(screenshot1Path)) { try { fs.unlinkSync(screenshot1Path); } catch {} }
     await page.screenshot({ path: screenshot1Path });
     console.log(`Saved screenshot 1: ${screenshot1Path}`);
 
@@ -322,6 +333,7 @@ export async function runVoiceEntryE2E(options = {}) {
 
     // Screenshot 2: Final 2-voice score
     const screenshot2Path = path.join(outDir, '02_voice_entry_final.png');
+    if (fs.existsSync(screenshot2Path)) { try { fs.unlinkSync(screenshot2Path); } catch {} }
     await page.screenshot({ path: screenshot2Path });
     console.log(`Saved screenshot 2: ${screenshot2Path}`);
 
@@ -337,6 +349,27 @@ export async function runVoiceEntryE2E(options = {}) {
     const envelope = JSON.parse(rawContent);
     const savedScore = envelope.score;
     console.log(`Downloaded score: ${download.suggestedFilename()}, schemaVersion=${savedScore.schemaVersion}`);
+
+    // C3: Assert exact measure count and endBarline values from exported score
+    console.log(`\n--- C3 EXPORTED MEASURES INSPECTION ---`);
+    console.log(`Total measure count: ${savedScore.measures.length}`);
+    savedScore.measures.forEach((m, idx) => {
+      console.log(`Measure ${idx + 1} (id=${m.id}): endBarline=${m.endBarline ?? 'none'}`);
+    });
+
+    if (savedScore.measures.length !== 3) {
+      throw new Error(`Expected exactly 3 measures in exported score, got ${savedScore.measures.length}`);
+    }
+    if (savedScore.measures[0].endBarline !== 'single') {
+      throw new Error(`Expected Measure 1 endBarline to be 'single', got ${savedScore.measures[0].endBarline}`);
+    }
+    if (savedScore.measures[1].endBarline !== 'final') {
+      throw new Error(`Expected Measure 2 endBarline to be 'final', got ${savedScore.measures[1].endBarline}`);
+    }
+    if (savedScore.measures[2].endBarline !== undefined) {
+      throw new Error(`Expected Measure 3 endBarline to be undefined, got ${savedScore.measures[2].endBarline}`);
+    }
+    console.log('✓ C3 PASS: Exact measure count (3) and endBarline values (m1: single, m2: final, m3: undefined) verified.');
 
     // Compare savedScore mm. 1-2 against EXPECTED_BWV140_MM1_2
     const savedMIds = savedScore.measures.slice(0, 2).map((m) => m.id);
@@ -356,9 +389,13 @@ export async function runVoiceEntryE2E(options = {}) {
     // 8. T8: E2E Undo and Redo of Voice 2 Entry
     console.log('Testing T8: Undo voice 2 until alto is completely gone...');
     // Alto had 8 note entries + 1 transposition step = 9 commands.
-    for (let u = 0; u < 9; u++) {
-      await page.keyboard.press('Control+z');
-      await sleep(60);
+    if (!mutationBreakUndo) {
+      for (let u = 0; u < 9; u++) {
+        await page.keyboard.press('Control+z');
+        await sleep(60);
+      }
+    } else {
+      console.log('[MUTATION TEST] Skipping undo commands so alto remains present!');
     }
 
     // Now intercept save of the undone score
@@ -422,6 +459,12 @@ test('E2E undo and redo of voice 2 entry restores previous state', async () => {
 if (process.argv[1] && process.argv[1].endsWith('test_voice_entry_e2e.mjs')) {
   (async () => {
     try {
+      if (process.argv.includes('--break-undo')) {
+        console.log('--- RUNNING T8 FAILING-FIRST CHECK (--break-undo) ---');
+        await runVoiceEntryE2E({ mutationBreakUndo: true });
+        return;
+      }
+
       // 1. Run mutation test M first to prove test fails when Tab is broken
       console.log('--- RUNNING MUTATION CHECK M (Tab broken) ---');
       let mutationCaught = false;
