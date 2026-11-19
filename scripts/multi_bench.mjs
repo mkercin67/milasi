@@ -119,10 +119,11 @@ async function runScenario(page, stateName, editCount = 50) {
 async function main() {
   const args = process.argv.slice(2);
   const disableVsync = args.includes('--no-vsync');
+  const isPoly = args.includes('--poly');
   const runsCount = 5;
   const editsPerRun = 50;
 
-  console.log(`=== Multi-Bench: ${runsCount} runs x ${editsPerRun} edits (vsync: ${disableVsync ? 'OFF' : 'ON'}) ===`);
+  console.log(`=== Multi-Bench: ${runsCount} runs x ${editsPerRun} edits (vsync: ${disableVsync ? 'OFF' : 'ON'}, mode: ${isPoly ? 'POLYPHONIC' : 'MONOPHONIC'}) ===`);
 
   const port = 4199;
   const baseUrl = `http://localhost:${port}`;
@@ -148,32 +149,36 @@ async function main() {
 
     const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
 
-    // Scenario 64 measures
-    console.log(`\n--- Running 64-measure (${runsCount} runs x ${editsPerRun} edits) ---`);
     const results64 = [];
-    for (let r = 0; r < runsCount; r++) {
-      process.stdout.write(`  Run ${r + 1}/${runsCount}... `);
-      const res = await runScenario(page, 'benchmark_64_full', editsPerRun);
-      results64.push(res);
-      console.log(`Double rAF Med: ${res.doubleRaf.median.toFixed(2)} ms, p95: ${res.doubleRaf.p95.toFixed(2)} ms, Max: ${res.doubleRaf.max.toFixed(2)} ms`);
+    if (!isPoly) {
+      // Scenario 64 measures
+      console.log(`\n--- Running 64-measure (${runsCount} runs x ${editsPerRun} edits) ---`);
+      for (let r = 0; r < runsCount; r++) {
+        process.stdout.write(`  Run ${r + 1}/${runsCount}... `);
+        const res = await runScenario(page, 'benchmark_64_full', editsPerRun);
+        results64.push(res);
+        console.log(`Double rAF Med: ${res.doubleRaf.median.toFixed(2)} ms, p95: ${res.doubleRaf.p95.toFixed(2)} ms, Max: ${res.doubleRaf.max.toFixed(2)} ms`);
+      }
     }
 
     // Scenario 200 measures
-    console.log(`\n--- Running 200-measure (${runsCount} runs x ${editsPerRun} edits) ---`);
+    const state200 = isPoly ? 'benchmark_200_poly' : 'benchmark_200_full';
+    console.log(`\n--- Running 200-measure ${isPoly ? 'Polyphonic' : 'Full'} (${runsCount} runs x ${editsPerRun} edits) ---`);
     const results200 = [];
     for (let r = 0; r < runsCount; r++) {
       process.stdout.write(`  Run ${r + 1}/${runsCount}... `);
-      const res = await runScenario(page, 'benchmark_200_full', editsPerRun);
+      const res = await runScenario(page, state200, editsPerRun);
       results200.push(res);
       console.log(`Double rAF Med: ${res.doubleRaf.median.toFixed(2)} ms, p95: ${res.doubleRaf.p95.toFixed(2)} ms, Max: ${res.doubleRaf.max.toFixed(2)} ms`);
     }
 
     // Scenario 400 measures
-    console.log(`\n--- Running 400-measure (${runsCount} runs x ${editsPerRun} edits) ---`);
+    const state400 = isPoly ? 'benchmark_400_poly' : 'benchmark_400_full';
+    console.log(`\n--- Running 400-measure ${isPoly ? 'Polyphonic' : 'Full'} (${runsCount} runs x ${editsPerRun} edits) ---`);
     const results400 = [];
     for (let r = 0; r < runsCount; r++) {
       process.stdout.write(`  Run ${r + 1}/${runsCount}... `);
-      const res = await runScenario(page, 'benchmark_400_full', editsPerRun);
+      const res = await runScenario(page, state400, editsPerRun);
       results400.push(res);
       console.log(`Double rAF Med: ${res.doubleRaf.median.toFixed(2)} ms, p95: ${res.doubleRaf.p95.toFixed(2)} ms, Max: ${res.doubleRaf.max.toFixed(2)} ms`);
     }
@@ -228,7 +233,7 @@ async function main() {
     console.log(`  Medians: ${summary.scenario400.runs.map((r) => r.median).join(', ')} (Spread: ${summary.scenario400.summary.medianSpread} ms)`);
     console.log(`  p95s:    ${summary.scenario400.runs.map((r) => r.p95).join(', ')} (Spread: ${summary.scenario400.summary.p95Spread} ms, Avg: ${summary.scenario400.summary.p95Avg} ms)`);
 
-    const outPath = `docs/review/perf/multi-bench-${disableVsync ? 'no-vsync' : 'vsync'}.json`;
+    const outPath = `docs/review/perf/multi-bench-${isPoly ? 'poly-' : ''}${disableVsync ? 'no-vsync' : 'vsync'}.json`;
     fs.writeFileSync(outPath, JSON.stringify(summary, null, 2));
     console.log(`Saved summary to ${outPath}`);
   } finally {

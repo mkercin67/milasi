@@ -356,11 +356,17 @@ A staff-measure is defined as **polyphonic** if and only if $\ge 2$ voices conta
 - **Voice 1** sits in the standard optical column.
 - **Voice 2** is displaced to the right side of Voice 1's stem.
 
-#### Rule 3: Second Intervals (PROPOSED)
-- When pitches in opposing voices form a second interval (e.g. F4 and G4):
-  - Higher notehead is placed on the right; lower notehead is placed on the left.
-  - Voice 1 stem goes up from the right notehead; Voice 2 stem goes down from the left notehead.
-  - *Validation Procedure for Second Intervals:* A dedicated gallery card will be rendered with second intervals across various stem configurations and reviewed by the human against reference engraving examples before final acceptance.
+#### Rule 3: Second Intervals (OBSERVED & PROPOSED)
+- **Two-Voice Seconds (OBSERVED, BWV 140/7 m.5 beat 3):**
+  - When pitches in Voice 1 and Voice 2 form a second interval at the same tick (e.g. F4 and G4):
+  - Both noteheads share **ONE common stem line** passing between them.
+  - **Voice 1 head is placed to the LEFT** of the stem line (with stem pointing UP on its right edge).
+  - **Voice 2 head is placed to the RIGHT** of the stem line (with stem pointing DOWN on its left edge).
+  - This replaces the earlier naive proposal of "higher notehead always on the right" for standard two-voice polyphony.
+- **What Remains PROPOSED (Subject to Future Milestone Verification):**
+  - **Voices 3 & 4 Horizontal Offsets:** Fixed $\pm 1.25\text{ sp}$ lateral shift for voices 3 and 4 remains PROPOSED until tested against 3- and 4-voice literature benchmarks.
+  - **Voice Crossing:** Behavior when Voice 2 pitch rises strictly above Voice 1 pitch remains PROPOSED (currently stems maintain standard v1-up / v2-down polarity).
+  - **Seconds Inside Chords:** Interaction between opposing-voice seconds and intra-voice chord seconds remains PROPOSED.
 
 ### 5.4 Rest Placement and Dynamic Collision Avoidance
 - **Formula for Polyphonic Rest Elevation:**

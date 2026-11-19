@@ -1,0 +1,122 @@
+{
+  "timestamp": "2026-11-19T17:52:51.662Z",
+  "vsyncDisabled": false,
+  "scenario64": {
+    "runs": [],
+    "summary": {
+      "medianAvg": null,
+      "medianSpread": null,
+      "p95Avg": null,
+      "p95Min": null,
+      "p95Max": null,
+      "p95Spread": null,
+      "maxOverall": null
+    }
+  },
+  "scenario200": {
+    "runs": [
+      {
+        "run": 1,
+        "median": 10.6,
+        "p95": 17.6,
+        "max": 18.9,
+        "eventTimingMed": 16,
+        "eventTimingP95": 24
+      },
+      {
+        "run": 2,
+        "median": 10.2,
+        "p95": 18.2,
+        "max": 18.3,
+        "eventTimingMed": 24,
+        "eventTimingP95": 24
+      },
+      {
+        "run": 3,
+        "median": 10.6,
+        "p95": 17.4,
+        "max": 18,
+        "eventTimingMed": 16,
+        "eventTimingP95": 16
+      },
+      {
+        "run": 4,
+        "median": 9.5,
+        "p95": 16.7,
+        "max": 17.1,
+        "eventTimingMed": 16,
+        "eventTimingP95": 16
+      },
+      {
+        "run": 5,
+        "median": 10.8,
+        "p95": 17.8,
+        "max": 17.8,
+        "eventTimingMed": 16,
+        "eventTimingP95": 16
+      }
+    ],
+    "summary": {
+      "medianAvg": 10.34,
+      "medianSpread": 1.3,
+      "p95Avg": 17.54,
+      "p95Min": 16.7,
+      "p95Max": 18.2,
+      "p95Spread": 1.5,
+      "maxOverall": 18.9
+    }
+  },
+  "scenario400": {
+    "runs": [
+      {
+        "run": 1,
+        "median": 10.4,
+        "p95": 17,
+        "max": 17.8,
+        "eventTimingMed": 16,
+        "eventTimingP95": 24
+      },
+      {
+        "run": 2,
+        "median": 11.3,
+        "p95": 18.1,
+        "max": 18.3,
+        "eventTimingMed": 16,
+        "eventTimingP95": 24
+      },
+      {
+        "run": 3,
+        "median": 11.2,
+        "p95": 18,
+        "max": 23.6,
+        "eventTimingMed": 16,
+        "eventTimingP95": 24
+      },
+      {
+        "run": 4,
+        "median": 10.9,
+        "p95": 17.6,
+        "max": 18.9,
+        "eventTimingMed": 16,
+        "eventTimingP95": 24
+      },
+      {
+        "run": 5,
+        "median": 10.8,
+        "p95": 17.8,
+        "max": 18.1,
+        "eventTimingMed": 16,
+        "eventTimingP95": 32
+      }
+    ],
+    "summary": {
+      "medianAvg": 10.92,
+      "medianSpread": 0.9,
+      "p95Avg": 17.7,
+      "p95Min": 17,
+      "p95Max": 18.1,
+      "p95Spread": 1.1,
+      "maxOverall": 23.6
+    }
+  }
+}

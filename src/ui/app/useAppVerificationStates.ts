@@ -3,7 +3,12 @@ import { useEffect, useRef } from 'react';
 import { PitchStep, Score, ScoreEvent } from '../../core/model';
 import { createEmptyScore } from '../../core/factory';
 import { buildBeamDemoScore } from '../beamDemoScore';
-import { buildSampleScore, createBenchmark64Score, createBenchmarkFullFeaturedScore } from '../Demo';
+import {
+  buildSampleScore,
+  createBenchmark64Score,
+  createBenchmarkFullFeaturedScore,
+  createBenchmarkPolyphonicScore,
+} from '../Demo';
 import { buildSutIctimScore } from '../sutIctimScore';
 import { EditorMode } from '../keymap';
 
@@ -94,6 +99,18 @@ export function useAppVerificationStates({
       }
       if (stateParam === 'benchmark_400_full') {
         const bScore = createBenchmarkFullFeaturedScore(400);
+        resetScore(bScore);
+        setMode('select');
+        return;
+      }
+      if (stateParam === 'benchmark_200_poly') {
+        const bScore = createBenchmarkPolyphonicScore(200);
+        resetScore(bScore);
+        setMode('select');
+        return;
+      }
+      if (stateParam === 'benchmark_400_poly') {
+        const bScore = createBenchmarkPolyphonicScore(400);
         resetScore(bScore);
         setMode('select');
         return;

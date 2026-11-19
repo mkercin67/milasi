@@ -272,5 +272,41 @@ export function createBenchmarkFullFeaturedScore(measureCount: number = 64): Sco
   return score;
 }
 
+export function createBenchmarkPolyphonicScore(measureCount: number = 200): Score {
+  const score = createEmptyScore({
+    title: `Benchmark ${measureCount} Measures — Two-Voice Polyphonic`,
+    composer: 'ScoreForge Perf Benchmark',
+    clef: { sign: 'G', line: 2 },
+    keySig: 1,
+    timeSig: { num: 4, den: 4 },
+    measures: measureCount,
+  });
+
+  const staff = score.parts[0].staves[0];
+  staff.slurs = [];
+
+  for (let m = 0; m < measureCount; m++) {
+    const mDef = score.measures[m];
+    const v1_notes = [
+      createNote({ pitches: [createPitch('E', 5, 0)], baseType: 'half' }),
+      createNote({ pitches: [createPitch('G', 5, 0)], baseType: 'half' }),
+    ];
+    const v2_notes = [
+      createNote({ pitches: [createPitch('C', 4, 0)], baseType: 'quarter' }),
+      createNote({ pitches: [createPitch('E', 4, 0)], baseType: 'quarter' }),
+      createNote({ pitches: [createPitch('G', 4, 0)], baseType: 'quarter' }),
+      createNote({ pitches: [createPitch('C', 5, 0)], baseType: 'quarter' }),
+    ];
+
+    staff.measures[mDef.id].voices = [
+      { id: `m${m}-v1`, voiceIndex: 1, events: v1_notes },
+      { id: `m${m}-v2`, voiceIndex: 2, events: v2_notes },
+    ];
+  }
+
+  return score;
+}
+
+
 
 
