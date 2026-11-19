@@ -20,7 +20,7 @@ export function buildSampleScore(clefSign: 'G' | 'F'): Score {
   const isBass = clefSign === 'F';
   const score = createScore({
     title: isBass ? 'Demo Score — Bass Clef' : 'Demo Score — Treble Clef',
-    composer: 'ScoreForge Demo',
+    composer: 'MiLaSi Demo',
   });
 
   // Measure 1: Rising scale (G major = 1 sharp)
@@ -125,7 +125,7 @@ export function buildSampleScore(clefSign: 'G' | 'F'): Score {
 export function createBenchmark64Score(): Score {
   const score = createScore({
     title: 'Benchmark 64 Measures — Sixteenths & Chords',
-    composer: 'ScoreForge Benchmark',
+    composer: 'MiLaSi Benchmark',
   });
 
   const part = createPart({
@@ -202,7 +202,7 @@ export function createBenchmark64Score(): Score {
 export function createBenchmarkFullFeaturedScore(measureCount: number = 64): Score {
   const score = createEmptyScore({
     title: `Benchmark ${measureCount} Measures — Full Featured`,
-    composer: 'ScoreForge Perf Benchmark',
+    composer: 'MiLaSi Perf Benchmark',
     clef: { sign: 'G', line: 2 },
     keySig: 1,
     timeSig: { num: 4, den: 4 },
@@ -275,7 +275,7 @@ export function createBenchmarkFullFeaturedScore(measureCount: number = 64): Sco
 export function createBenchmarkPolyphonicScore(measureCount: number = 200): Score {
   const score = createEmptyScore({
     title: `Benchmark ${measureCount} Measures — Two-Voice Polyphonic`,
-    composer: 'ScoreForge Perf Benchmark',
+    composer: 'MiLaSi Perf Benchmark',
     clef: { sign: 'G', line: 2 },
     keySig: 1,
     timeSig: { num: 4, den: 4 },

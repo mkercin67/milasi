@@ -141,7 +141,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
             <span style={{ fontSize: '2rem', color: '#ef4444' }}>⚠️</span>
             <div>
               <h2 style={{ margin: 0, fontSize: '1.25rem', color: '#b91c1c' }}>
-                {this.props.fallbackTitle || 'Bir Hata Oluştu (ScoreForge Kurtarma)'}
+                {this.props.fallbackTitle || 'Bir Hata Oluştu (MiLaSi Kurtarma)'}
               </h2>
               <p style={{ margin: '4px 0 0 0', color: '#64748b', fontSize: '0.9rem' }}>
                 Nota çizimi veya durum işlenirken beklenmeyen bir hata yakalandı.

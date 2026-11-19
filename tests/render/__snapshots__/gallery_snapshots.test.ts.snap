@@ -772,7 +772,7 @@ exports[`H1 Regression Gallery: Golden Snapshot Tests > golden snapshot matches 
     <rect class="event-hit-area" data-event-id="uuid-normalized" x="302.20000000000005" y="121.5" width="21.999999999999993" height="25" fill="transparent" pointer-events="all" style="cursor: pointer;" />
     <rect class="event-hit-area" data-event-id="uuid-normalized" x="424.79999999999995" y="111.5" width="22.00000000000003" height="25" fill="transparent" pointer-events="all" style="cursor: pointer;" />
   </g>
-  <path data-slur-id="slur-uuid-normalized" class="score-slur notranslate" d="M 19.64 5 C 22.41 6.2, 27.95 4.2, 30.72 3 C 27.95 3.98, 22.41 5.98, 19.64 5 Z" fill="currentColor" stroke="none" pointer-events="none" />
+  <path data-slur-id="uuid-normalized" class="score-slur notranslate" d="M 19.64 5 C 22.41 6.2, 27.95 4.2, 30.72 3 C 27.95 3.98, 22.41 5.98, 19.64 5 Z" transform="translate(0, 111.5) scale(10)" fill="currentColor" stroke="none" pointer-events="none" />
 </svg>"
 `;
 
@@ -815,7 +815,7 @@ exports[`H1 Regression Gallery: Golden Snapshot Tests > golden snapshot matches 
     <rect class="event-hit-area" data-event-id="uuid-normalized" x="289.6" y="116.5" width="21.999999999999993" height="55" fill="transparent" pointer-events="all" style="cursor: pointer;" />
     <rect class="event-hit-area" data-event-id="uuid-normalized" x="372.2" y="111.5" width="22.00000000000003" height="25" fill="transparent" pointer-events="all" style="cursor: pointer;" />
   </g>
-  <path data-slur-id="slur-uuid-normalized" class="score-slur notranslate" d="M 7.38 4.5 C 11.38 1.5, 33.72 -2, 37.72 1 C 33.72 -1.78, 11.38 1.72, 7.38 4.5 Z" fill="currentColor" stroke="none" pointer-events="none" />
+  <path data-slur-id="uuid-normalized" class="score-slur notranslate" d="M 7.38 4.5 C 11.38 1.5, 33.72 -2, 37.72 1 C 33.72 -1.78, 11.38 1.72, 7.38 4.5 Z" transform="translate(0, 111.5) scale(10)" fill="currentColor" stroke="none" pointer-events="none" />
 </svg>"
 `;
 
@@ -852,7 +852,7 @@ exports[`H1 Regression Gallery: Golden Snapshot Tests > golden snapshot matches 
     <rect class="event-hit-area" data-event-id="uuid-normalized" x="167" y="101.5" width="21.999999999999993" height="55" fill="transparent" pointer-events="all" style="cursor: pointer;" />
     <rect class="event-hit-area" data-event-id="uuid-normalized" x="222" y="111.5" width="21.999999999999993" height="55" fill="transparent" pointer-events="all" style="cursor: pointer;" />
   </g>
-  <path data-slur-id="slur-uuid-normalized" class="score-slur notranslate" d="M 7.38 1 C 11.21 -0.2, 18.87 -0.2, 22.7 1 C 18.87 0.02, 11.21 0.02, 7.38 1 Z" fill="currentColor" stroke="none" pointer-events="none" />
+  <path data-slur-id="uuid-normalized" class="score-slur notranslate" d="M 7.38 1 C 11.21 -0.2, 18.87 -0.2, 22.7 1 C 18.87 0.02, 11.21 0.02, 7.38 1 Z" transform="translate(0, 111.5) scale(10)" fill="currentColor" stroke="none" pointer-events="none" />
 </svg>"
 `;
 
@@ -890,7 +890,7 @@ exports[`H1 Regression Gallery: Golden Snapshot Tests > golden snapshot matches 
     <rect class="event-hit-area" data-event-id="uuid-normalized" x="167" y="111.5" width="21.999999999999993" height="50" fill="transparent" pointer-events="all" style="cursor: pointer;" />
     <rect class="event-hit-area" data-event-id="uuid-normalized" x="222" y="106.5" width="21.999999999999993" height="50" fill="transparent" pointer-events="all" style="cursor: pointer;" />
   </g>
-  <path data-slur-id="slur-uuid-normalized" class="score-slur notranslate" d="M 7.38 4.5 C 11.21 3.3, 18.87 1.8, 22.7 3 C 18.87 2.02, 11.21 3.52, 7.38 4.5 Z" fill="currentColor" stroke="none" pointer-events="none" />
+  <path data-slur-id="uuid-normalized" class="score-slur notranslate" d="M 7.38 4.5 C 11.21 3.3, 18.87 1.8, 22.7 3 C 18.87 2.02, 11.21 3.52, 7.38 4.5 Z" transform="translate(0, 111.5) scale(10)" fill="currentColor" stroke="none" pointer-events="none" />
 </svg>"
 `;
 
@@ -954,7 +954,7 @@ exports[`H1 Regression Gallery: Golden Snapshot Tests > golden snapshot matches 
     <rect class="event-hit-area" data-event-id="uuid-normalized" x="56.99999999999999" y="111.5" width="22" height="25" fill="transparent" pointer-events="all" style="cursor: pointer;" />
     <rect class="event-hit-area" data-event-id="uuid-normalized" x="179.60000000000002" y="111.5" width="21.999999999999993" height="25" fill="transparent" pointer-events="all" style="cursor: pointer;" />
   </g>
-  <path data-tie-id="tie_uuid-normalized_uuid-normalized" class="score-tie notranslate" d="M 7.26 1.15 Q 12.81 -0.18 18.36 1.15 Q 12.81 0.24 7.26 1.15 Z" fill="currentColor" stroke="none" pointer-events="none" />
+  <path data-tie-id="tie_uuid-normalized_uuid-normalized" class="score-tie notranslate" d="M 7.26 1.15 Q 12.81 -0.18 18.36 1.15 Q 12.81 0.24 7.26 1.15 Z" transform="translate(0, 111.5) scale(10)" fill="currentColor" stroke="none" pointer-events="none" />
 </svg>"
 `;
 
@@ -991,7 +991,7 @@ exports[`H1 Regression Gallery: Golden Snapshot Tests > golden snapshot matches 
     <rect class="event-hit-area" data-event-id="uuid-normalized" x="302.20000000000005" y="136.5" width="21.999999999999993" height="25" fill="transparent" pointer-events="all" style="cursor: pointer;" />
     <rect class="event-hit-area" data-event-id="uuid-normalized" x="424.79999999999995" y="126.5" width="22.00000000000003" height="25" fill="transparent" pointer-events="all" style="cursor: pointer;" />
   </g>
-  <path data-tie-id="tie_uuid-normalized_uuid-normalized" class="score-tie notranslate" d="M 19.52 4.35 Q 25.07 5.68 30.62 4.35 Q 25.07 5.26 19.52 4.35 Z" fill="currentColor" stroke="none" pointer-events="none" />
+  <path data-tie-id="tie_uuid-normalized_uuid-normalized" class="score-tie notranslate" d="M 19.52 4.35 Q 25.07 5.68 30.62 4.35 Q 25.07 5.26 19.52 4.35 Z" transform="translate(0, 111.5) scale(10)" fill="currentColor" stroke="none" pointer-events="none" />
 </svg>"
 `;
 
@@ -1022,7 +1022,7 @@ exports[`H1 Regression Gallery: Golden Snapshot Tests > golden snapshot matches 
     <rect class="event-hit-area" data-event-id="uuid-normalized" x="56.99999999999999" y="101.5" width="22" height="50" fill="transparent" pointer-events="all" style="cursor: pointer;" />
     <rect class="event-hit-area" data-event-id="uuid-normalized" x="132" y="101.5" width="21.999999999999993" height="50" fill="transparent" pointer-events="all" style="cursor: pointer;" />
   </g>
-  <path data-tie-id="tie_uuid-normalized_uuid-normalized" class="score-tie notranslate" d="M 7.26 3.35 Q 10.43 4.11 13.6 3.35 Q 10.43 3.69 7.26 3.35 Z" fill="currentColor" stroke="none" pointer-events="none" />
+  <path data-tie-id="tie_uuid-normalized_uuid-normalized" class="score-tie notranslate" d="M 7.26 3.35 Q 10.43 4.11 13.6 3.35 Q 10.43 3.69 7.26 3.35 Z" transform="translate(0, 111.5) scale(10)" fill="currentColor" stroke="none" pointer-events="none" />
 </svg>"
 `;
 

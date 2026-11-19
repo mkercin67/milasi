@@ -25,6 +25,7 @@ export interface PolyphonyGalleryCard {
 
 /**
  * Builds the hand-entered corpus fixture for BWV 140/7 mm. 1-6.
+ * Entered per the lead's table; reading uncertain; verified by the human against the scan.
  */
 export function buildBwv140Reduction(): Score {
   const score = createEmptyScore({ measures: 6 });
@@ -324,7 +325,7 @@ export function getPolyphonyGalleryCards(): PolyphonyGalleryCard[] {
       id: 'poly-4-rests-shared-and-elevated',
       title: 'Card 4: Shared Rest vs One-Voice Rests (RE)',
       tag: 'OBSERVED / PROPOSED',
-      description: 'Identical rests at same tick merge at staff center; one-voice rests elevated (V1) or depressed (V2).',
+      description: 'shared rest = OBSERVED (m.3 and m.6 beat 3); one-voice rests = PROPOSED.',
       build: () => {
         const score = createEmptyScore({ measures: 1 });
         const staff = score.parts[0].staves[0];
@@ -364,10 +365,38 @@ export function getPolyphonyGalleryCards(): PolyphonyGalleryCard[] {
         const staff = score.parts[0].staves[0];
         const mId = score.measures[0].id;
         staff.measures[mId].voices = [
-          { id: 'v1', voiceIndex: 1, events: [createNote({ pitches: [createPitch('C', 5)], baseType: 'whole' })] },
-          { id: 'v2', voiceIndex: 2, events: [createNote({ pitches: [createPitch('E', 4)], baseType: 'whole' })] },
-          { id: 'v3', voiceIndex: 3, events: [createNote({ pitches: [createPitch('G', 4)], baseType: 'whole' })] },
-          { id: 'v4', voiceIndex: 4, events: [createNote({ pitches: [createPitch('C', 4)], baseType: 'whole' })] },
+          {
+            id: 'v1',
+            voiceIndex: 1,
+            events: [
+              createNote({ pitches: [createPitch('C', 5)], baseType: 'half' }),
+              createNote({ pitches: [createPitch('D', 5)], baseType: 'half' }),
+            ],
+          },
+          {
+            id: 'v2',
+            voiceIndex: 2,
+            events: [
+              createNote({ pitches: [createPitch('E', 4)], baseType: 'half' }),
+              createNote({ pitches: [createPitch('D', 4)], baseType: 'half' }),
+            ],
+          },
+          {
+            id: 'v3',
+            voiceIndex: 3,
+            events: [
+              createNote({ pitches: [createPitch('G', 4)], baseType: 'half' }),
+              createNote({ pitches: [createPitch('A', 4)], baseType: 'half' }),
+            ],
+          },
+          {
+            id: 'v4',
+            voiceIndex: 4,
+            events: [
+              createNote({ pitches: [createPitch('C', 4)], baseType: 'half' }),
+              createNote({ pitches: [createPitch('B', 3)], baseType: 'half' }),
+            ],
+          },
         ];
         return score;
       },
@@ -375,8 +404,8 @@ export function getPolyphonyGalleryCards(): PolyphonyGalleryCard[] {
     {
       id: 'poly-6-ties-in-both-voices',
       title: 'Card 6: Ties in Both Voices Following Voice Curve (RF)',
-      tag: 'OBSERVED',
-      description: 'Voice 1 tie curves above; Voice 2 tie curves below (observed in Bach BWV 140/7 m.5).',
+      tag: 'OBSERVED / PROPOSED',
+      description: 'voice 2 tie below = OBSERVED (alto C5 tie, m.5); voice 1 tie above = PROPOSED (no soprano tie in reference).',
       build: () => {
         const score = createEmptyScore({ measures: 2 });
         const staff = score.parts[0].staves[0];

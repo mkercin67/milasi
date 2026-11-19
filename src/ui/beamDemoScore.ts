@@ -2,8 +2,8 @@
 /**
  * Comprehensive 8-measure Beam Demo Score covering all Milestone 3d Section D cases.
  *
- * Source: Original synthetic test score created for ScoreForge beaming engine verification
- * Composer: ScoreForge Engineering
+ * Source: Original synthetic test score created for MiLaSi beaming engine verification
+ * Composer: MiLaSi Engineering
  * Composer Death Year: Original Work (2026)
  * License: GPL-3.0-or-later
  */
@@ -38,7 +38,7 @@ export function buildBeamDemoScore(clefSign: 'G' | 'F' = 'G'): Score {
 
   const score = createScore({
     title: isBass ? 'M3d Beam Demo — Bass Clef' : 'M3d Beam Demo — Treble Clef',
-    composer: 'ScoreForge M3d',
+    composer: 'MiLaSi M3d',
   });
 
   const p = (step: PitchStep, octOffset = 0, alter = 0) =>

@@ -29,6 +29,8 @@ export interface RenderSvgOptions {
   viewBoxMargin?: number;
   /** Optional score to compute and render overlays (ties, slurs, dynamics, articulations). */
   score?: Score;
+  /** When true, scales the SVG responsively to 100% width of its container using viewBox. */
+  responsive?: boolean;
 }
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -192,20 +194,26 @@ export function renderSvg(
   const articulations = score ? layoutArticulations(score, layout) : [];
 
   for (const t of ties) {
+    const sys = layout.systems[t.systemIndex];
+    const sysY = sys ? sys.y : 0;
     const path = document.createElementNS(SVG_NS, 'path');
     path.setAttribute('data-tie-id', t.id);
     path.setAttribute('class', 'score-tie notranslate');
     path.setAttribute('d', t.d);
+    path.setAttribute('transform', `translate(0, ${sysY * staffSpacePx}) scale(${staffSpacePx})`);
     path.setAttribute('fill', 'currentColor');
     path.setAttribute('stroke', 'none');
     path.setAttribute('pointer-events', 'none');
     svg.appendChild(path);
   }
   for (const s of slurs) {
+    const sys = layout.systems[s.systemIndex];
+    const sysY = sys ? sys.y : 0;
     const path = document.createElementNS(SVG_NS, 'path');
-    path.setAttribute('data-slur-id', s.id);
+    path.setAttribute('data-slur-id', s.slurId);
     path.setAttribute('class', 'score-slur notranslate');
     path.setAttribute('d', s.d);
+    path.setAttribute('transform', `translate(0, ${sysY * staffSpacePx}) scale(${staffSpacePx})`);
     path.setAttribute('fill', 'currentColor');
     path.setAttribute('stroke', 'none');
     path.setAttribute('pointer-events', 'none');
@@ -513,10 +521,14 @@ export function renderSvgToString(
   const articulations = score ? layoutArticulations(score, layout) : [];
 
   for (const t of ties) {
-    elementsXml += `  <path data-tie-id="${t.id}" class="score-tie notranslate" d="${t.d}" fill="currentColor" stroke="none" pointer-events="none" />\n`;
+    const sys = layout.systems[t.systemIndex];
+    const sysY = sys ? sys.y : 0;
+    elementsXml += `  <path data-tie-id="${t.id}" class="score-tie notranslate" d="${t.d}" transform="translate(0, ${sysY * staffSpacePx}) scale(${staffSpacePx})" fill="currentColor" stroke="none" pointer-events="none" />\n`;
   }
   for (const s of slurs) {
-    elementsXml += `  <path data-slur-id="${s.id}" class="score-slur notranslate" d="${s.d}" fill="currentColor" stroke="none" pointer-events="none" />\n`;
+    const sys = layout.systems[s.systemIndex];
+    const sysY = sys ? sys.y : 0;
+    elementsXml += `  <path data-slur-id="${s.slurId}" class="score-slur notranslate" d="${s.d}" transform="translate(0, ${sysY * staffSpacePx}) scale(${staffSpacePx})" fill="currentColor" stroke="none" pointer-events="none" />\n`;
   }
   for (const item of dynamics) {
     const sysIdx = item.systemIndex ?? 0;
@@ -563,6 +575,8 @@ export function renderSvgToString(
   </style>\n`
     : '';
 
-  return `<svg xmlns="${SVG_NS}" viewBox="${minXPx} ${minYPx} ${totalWidthPx} ${totalHeightPx}" width="${totalWidthPx}px" height="${totalHeightPx}px" style="color: ${color}; overflow: visible; user-select: none;">
+  const responsiveStyle = options.responsive ? 'max-width: 100%; height: auto; ' : '';
+  const widthAttr = options.responsive ? 'width="100%"' : `width="${totalWidthPx}px"`;
+  return `<svg xmlns="${SVG_NS}" viewBox="${minXPx} ${minYPx} ${totalWidthPx} ${totalHeightPx}" ${widthAttr} height="${totalHeightPx}px" style="${responsiveStyle}color: ${color}; overflow: visible; user-select: none;">
 ${textStyleBlock}${defsXml}${elementsXml}</svg>`;
 }

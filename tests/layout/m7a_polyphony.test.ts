@@ -1,9 +1,11 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import { describe, expect, it } from 'vitest';
 import { createEmptyScore, createNote, createPitch } from '../../src/core/factory';
+import { NoteEvent } from '../../src/core/model';
 import { layoutScore } from '../../src/layout/layoutScore';
 import { layoutSingleMeasure, measureLayoutCacheStats } from '../../src/layout/measureLayout';
 import { layoutTies } from '../../src/layout/ties';
+import { getPolyphonyGalleryCards } from '../../src/ui/polyphonyBuilders';
 
 describe('Milestone 7a-2a: Polyphonic Layout Rules (RA - RH)', () => {
   describe('Rule RB: Shared Columns and All-Voice Cache Keys', () => {
@@ -73,6 +75,62 @@ describe('Milestone 7a-2a: Polyphonic Layout Rules (RA - RH)', () => {
       // Must be a cache miss because voice 2 changed
       expect(measureLayoutCacheStats.misses).toBe(2);
       expect(chunk1).not.toBe(chunk2);
+    });
+
+    it('Card 7 staggered onsets: shared ticks (0, 960, 1920) share column X; non-shared onsets have independent X', () => {
+      const card7 = getPolyphonyGalleryCards().find((c) => c.id === 'poly-7-beams-in-both-voices')!;
+      const score = card7.build();
+      const layout = layoutScore(score, { width: 70 });
+      const sys = layout.systems[0];
+
+      const staff = score.parts[0].staves[0];
+      const m0 = staff.measures[score.measures[0].id];
+
+      const rows: Array<{ voiceIndex: number; tick: number; x: number; id: string; baseType: string; pitch: string }> = [];
+
+      for (const v of m0.voices) {
+        let curTick = 0;
+        for (const ev of v.events) {
+          if (ev.kind === 'note') {
+            const nh = sys.items.find((it) => it.id === ev.id && it.glyph?.startsWith('notehead'));
+            rows.push({
+              voiceIndex: v.voiceIndex,
+              tick: curTick,
+              x: nh?.x ?? -1,
+              id: ev.id,
+              baseType: ev.baseType,
+              pitch: `${(ev as NoteEvent).pitches[0].step}${(ev as NoteEvent).pitches[0].octave}`,
+            });
+          }
+          curTick += ev.duration;
+        }
+      }
+
+      // Voice 1: E5 (0), F5 (480), G5 (960), C5 (1920)
+      // Voice 2: G4 (0), C4 (960), E4 (1920), F4 (2400), G4 (2880)
+      const v1At0 = rows.find((r) => r.voiceIndex === 1 && r.tick === 0)!;
+      const v2At0 = rows.find((r) => r.voiceIndex === 2 && r.tick === 0)!;
+      expect(v1At0.x).toBeCloseTo(v2At0.x, 2);
+
+      const v1At960 = rows.find((r) => r.voiceIndex === 1 && r.tick === 960)!;
+      const v2At960 = rows.find((r) => r.voiceIndex === 2 && r.tick === 960)!;
+      expect(v1At960.x).toBeCloseTo(v2At960.x, 2);
+
+      const v1At1920 = rows.find((r) => r.voiceIndex === 1 && r.tick === 1920)!;
+      const v2At1920 = rows.find((r) => r.voiceIndex === 2 && r.tick === 1920)!;
+      expect(v1At1920.x).toBeCloseTo(v2At1920.x, 2);
+
+      // Non-shared onset at tick 480 (Voice 1 only)
+      const v1At480 = rows.find((r) => r.voiceIndex === 1 && r.tick === 480)!;
+      expect(v1At480).toBeDefined();
+      expect(v1At480.x).toBeGreaterThan(v1At0.x);
+      expect(v1At480.x).toBeLessThan(v1At960.x);
+
+      // Non-shared onsets at ticks 2400, 2880 (Voice 2 only)
+      const v2At2400 = rows.find((r) => r.voiceIndex === 2 && r.tick === 2400)!;
+      const v2At2880 = rows.find((r) => r.voiceIndex === 2 && r.tick === 2880)!;
+      expect(v2At2400.x).toBeGreaterThan(v1At1920.x);
+      expect(v2At2880.x).toBeGreaterThan(v2At2400.x);
     });
   });
 

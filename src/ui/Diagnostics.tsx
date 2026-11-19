@@ -123,7 +123,7 @@ export const Diagnostics: React.FC<DiagnosticsProps> = ({ isOpen, onClose, sampl
 
   const handleCopy = () => {
     const report = [
-      '=== ScoreForge Diagnostics Report ===',
+      '=== MiLaSi Diagnostics Report ===',
       `Tarih: ${new Date().toISOString()}`,
       `Render Modu: ${isTextFallback ? 'TEXT (?text fallback)' : 'PATH (<use> vector glyphs)'}`,
       `Son 20 Tuş Örneği:`,

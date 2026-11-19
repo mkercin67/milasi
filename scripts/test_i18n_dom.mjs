@@ -123,6 +123,53 @@ async function checkVisibleTextNodes(page, contextName) {
   return true;
 }
 
+async function checkNoScoreForgeInDom(page, contextName) {
+  const pageTitle = await page.title();
+  if (/scoreforge/i.test(pageTitle)) {
+    console.error(`[FAIL] User-visible <title> contains "ScoreForge": "${pageTitle}" in ${contextName}`);
+    return false;
+  }
+
+  const forbiddenMatches = await page.evaluate(() => {
+    const walker = document.createTreeWalker(
+      document.body,
+      NodeFilter.SHOW_TEXT,
+      {
+        acceptNode(node) {
+          const parent = node.parentElement;
+          if (!parent) return NodeFilter.FILTER_REJECT;
+          const tag = parent.tagName.toLowerCase();
+          if (tag === 'script' || tag === 'style' || tag === 'noscript') {
+            return NodeFilter.FILTER_REJECT;
+          }
+          const style = window.getComputedStyle(parent);
+          if (style.display === 'none' || style.visibility === 'hidden') {
+            return NodeFilter.FILTER_REJECT;
+          }
+          return NodeFilter.FILTER_ACCEPT;
+        },
+      }
+    );
+
+    const matches = [];
+    let currentNode = walker.nextNode();
+    while (currentNode) {
+      const val = (currentNode.nodeValue || '').trim();
+      if (/scoreforge/i.test(val)) {
+        matches.push({ text: val, parentTag: currentNode.parentElement?.tagName });
+      }
+      currentNode = walker.nextNode();
+    }
+    return matches;
+  });
+
+  if (forbiddenMatches.length > 0) {
+    console.error(`[FAIL] Found user-visible "ScoreForge" in ${contextName}:`, forbiddenMatches);
+    return false;
+  }
+  return true;
+}
+
 async function runI18nPlaywrightCheck() {
   let serverUrl = 'http://localhost:5173';
   let previewProcess = null;
@@ -177,6 +224,8 @@ async function runI18nPlaywrightCheck() {
   // Check main view (toolbar + status bar)
   let trPass = await checkVisibleTextNodes(page, 'Turkish Main View');
   if (!trPass) allPassed = false;
+  let trBrandPass = await checkNoScoreForgeInDom(page, 'Turkish Main View');
+  if (!trBrandPass) allPassed = false;
 
   // Modals to open and check
   const modalButtons = [
@@ -225,6 +274,8 @@ async function runI18nPlaywrightCheck() {
 
   let enPass = await checkVisibleTextNodes(page, 'English Main View');
   if (!enPass) allPassed = false;
+  let enBrandPass = await checkNoScoreForgeInDom(page, 'English Main View');
+  if (!enBrandPass) allPassed = false;
 
   const modalButtonsEn = [
     { name: 'New Score', btn: '[data-testid="btn-new-score"]', cancel: 'button:has-text("Cancel")' },
@@ -257,6 +308,13 @@ async function runI18nPlaywrightCheck() {
     }
   }
 
+  // 3. REGRESSION GALLERY VIEW
+  console.log('\n--- Verifying Regression Gallery View for Brand Name ---');
+  await page.goto(serverUrl + '/?state=gallery', { waitUntil: 'networkidle' });
+  await sleep(300);
+  let galleryBrandPass = await checkNoScoreForgeInDom(page, 'Regression Gallery View');
+  if (!galleryBrandPass) allPassed = false;
+
   } finally {
     if (browser) {
       await browser.close();
@@ -267,11 +325,11 @@ async function runI18nPlaywrightCheck() {
   }
 
   if (!allPassed) {
-    console.error('\nFAILED: One or more raw i18n translation keys were displayed in the UI!');
+    console.error('\nFAILED: One or more raw i18n translation keys or forbidden brand names were displayed in the UI!');
     process.exit(1);
   }
 
-  console.log('\nSUCCESS: All toolbar, status bar, and dialog text nodes are fully translated in Turkish and English!');
+  console.log('\nSUCCESS: All toolbar, status bar, dialogs, and gallery text nodes are fully translated in Turkish and English with no legacy brand names!');
 }
 
 runI18nPlaywrightCheck().catch((err) => {

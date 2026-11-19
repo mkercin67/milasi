@@ -386,7 +386,7 @@ function layoutPolyphonicEvents(
           noteX = sharedStemLineX;
           voiceStemX = sharedStemLineX;
         } else if (isUnison && !isSameDurationUnison) {
-          // RD: Unison with different durations: v2 displaced to RIGHT
+          // Rule RD (PROPOSED): Unison with different durations: v2 displaced to RIGHT
           noteX = colCenterX + NOTEHEAD_WIDTH;
           voiceStemX = noteX;
         } else {
@@ -412,7 +412,7 @@ function layoutPolyphonicEvents(
       if (ev.baseType === 'whole') noteheadGlyph = 'noteheadWhole';
       else if (ev.baseType === 'half') noteheadGlyph = 'noteheadHalf';
 
-      // Accidentals (Rule RH)
+      // Accidentals (Rule RH - PROPOSED)
       for (let pIdx = 0; pIdx < sortedPitches.length; pIdx++) {
         const pitch = sortedPitches[pIdx];
         const accGlyph = tracker.processPitch(pitch);

@@ -124,7 +124,7 @@ export function useAppStorage({
               suggestedName: filename,
               types: [
                 {
-                  description: 'ScoreForge Score (*.sfscore)',
+                  description: 'MiLaSi Score (*.sfscore)',
                   accept: { 'application/json': ['.sfscore'] },
                 },
               ],

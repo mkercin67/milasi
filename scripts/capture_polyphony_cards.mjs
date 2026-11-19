@@ -41,7 +41,7 @@ async function main() {
     args: ['--no-sandbox', '--disable-gpu'],
   });
 
-  const page = await browser.newPage({ viewport: { width: 1400, height: 1200 } });
+  const page = await browser.newPage({ viewport: { width: 1400, height: 1200 }, deviceScaleFactor: 2 });
   console.log('Navigating to Regression Gallery on localhost:5173...');
   await page.goto('http://localhost:5173/?state=gallery', { waitUntil: 'networkidle' });
   await page.waitForSelector('[data-testid="regression-gallery"]', { timeout: 15000 });
@@ -71,10 +71,11 @@ async function main() {
     const outPath = path.join(outDir, filename);
     const artifactPath = path.join(artifactDir, filename);
 
-    await cardEl.screenshot({ path: outPath });
-    fs.copyFileSync(outPath, artifactPath);
+    const cardBuf = await cardEl.screenshot();
+    fs.writeFileSync(outPath, cardBuf);
+    try { fs.writeFileSync(artifactPath, cardBuf); } catch {}
 
-    const size = fs.statSync(outPath).size;
+    const size = cardBuf.length;
     console.log(`Captured ${cardId}: DOM total = ${domCounts.total} (glyphs: ${domCounts.glyphs}, lines: ${domCounts.lines}, paths: ${domCounts.paths}), size = ${size} bytes`);
 
     summary.push({
@@ -90,9 +91,17 @@ async function main() {
   // Also capture full gallery screenshot
   const fullGalleryPath = path.join(outDir, 'polyphony_gallery_full.png');
   const fullArtifactPath = path.join(artifactDir, 'polyphony_gallery_full.png');
-  await page.screenshot({ path: fullGalleryPath, fullPage: true });
-  fs.copyFileSync(fullGalleryPath, fullArtifactPath);
-  console.log(`Captured full gallery screenshot (${fs.statSync(fullGalleryPath).size} bytes)`);
+  try {
+    if (fs.existsSync(fullGalleryPath)) {
+      try { fs.unlinkSync(fullGalleryPath); } catch {}
+    }
+    const buf = await page.screenshot({ fullPage: true });
+    fs.writeFileSync(fullGalleryPath, buf);
+    try { fs.writeFileSync(fullArtifactPath, buf); } catch {}
+    console.log(`Captured full gallery screenshot (${buf.length} bytes)`);
+  } catch (err) {
+    console.warn(`Could not overwrite full gallery screenshot directly: ${err.message}`);
+  }
 
   await browser.close();
 

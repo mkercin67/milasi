@@ -25,7 +25,7 @@ export const RegressionGallery: React.FC = () => {
     const standardCases: RenderedGalleryCase[] = cases.map((c) => {
       const score = c.build();
       const layout = layoutScore(score, { width: 70 });
-      const svgHtml = renderSvgToString(layout, { staffSpacePx: 10, score });
+      const svgHtml = renderSvgToString(layout, { staffSpacePx: 10, score, responsive: true });
 
       if (c.id === 'wrapping-three-widths') {
         const layout385 = layoutScore(score, { width: 38.5 });
@@ -58,7 +58,7 @@ export const RegressionGallery: React.FC = () => {
     const polyCases: RenderedGalleryCase[] = polyCards.map((pc) => {
       const score = pc.build();
       const layout = layoutScore(score, { width: pc.id === 'poly-9-bwv-140-reduction-whole-fixture' ? 140 : 70 });
-      const svgHtml = renderSvgToString(layout, { staffSpacePx: 10, score });
+      const svgHtml = renderSvgToString(layout, { staffSpacePx: 10, score, responsive: true });
       return {
         id: pc.id,
         title: pc.title,
@@ -92,7 +92,7 @@ export const RegressionGallery: React.FC = () => {
     >
       <header style={{ marginBottom: '2rem' }}>
         <h1 style={{ fontSize: '1.75rem', fontWeight: 700, margin: '0 0 0.5rem 0' }}>
-          ScoreForge Notation Regression Gallery
+          MiLaSi Notation Regression Gallery
         </h1>
         <p style={{ color: '#64748b', margin: '0 0 1rem 0' }}>
           Standard notation test cases built exclusively through score commands.
@@ -156,6 +156,7 @@ export const RegressionGallery: React.FC = () => {
               display: 'flex',
               flexDirection: 'column',
               overflow: 'hidden',
+              gridColumn: (selectedCaseId === 'all' && c.id === 'poly-9-bwv-140-reduction-whole-fixture') ? '1 / -1' : undefined,
             }}
           >
             <div style={{ marginBottom: '1rem' }}>

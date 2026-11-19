@@ -49,9 +49,10 @@ function runFullLayoutPipeline(score: Score, availableSpaces: number) {
 }
 
 /**
- * Runs the legacy unindexed lookup path (O(N^2)) where each query linearly scans all systems and items.
+ * Simulates the pre-O(1) unindexed lookup path (commit 76bbe11) where notation passes
+ * linearly scanned all systems and items for every note query (informational reporting only).
  */
-function runLegacyUnindexedPipeline(score: Score, availableSpaces: number) {
+function simulateUnindexedLinearScan(score: Score, availableSpaces: number) {
   const t0 = performance.now();
   const layout = layoutScore(score, { width: availableSpaces });
 
@@ -196,8 +197,8 @@ describe('Full Pipeline Layout Cost & Scaling Complexity (Rule R6 Compliant)', (
 
     // Warmup
     for (let i = 0; i < 5; i++) {
-      runLegacyUnindexedPipeline(score200, 100);
-      runLegacyUnindexedPipeline(score400, 100);
+      simulateUnindexedLinearScan(score200, 100);
+      simulateUnindexedLinearScan(score400, 100);
     }
 
     const runs = 15;
@@ -205,8 +206,8 @@ describe('Full Pipeline Layout Cost & Scaling Complexity (Rule R6 Compliant)', (
     const legacy400: number[] = [];
 
     for (let i = 0; i < runs; i++) {
-      legacy200.push(runLegacyUnindexedPipeline(score200, 100).dt);
-      legacy400.push(runLegacyUnindexedPipeline(score400, 100).dt);
+      legacy200.push(simulateUnindexedLinearScan(score200, 100).dt);
+      legacy400.push(simulateUnindexedLinearScan(score400, 100).dt);
     }
 
     const min200 = Math.min(...legacy200);

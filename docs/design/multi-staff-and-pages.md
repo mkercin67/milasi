@@ -348,15 +348,11 @@ A staff-measure is defined as **polyphonic** if and only if $\ge 2$ voices conta
 
 ### 5.3 Unison and Second Interval Notehead Placement
 
-#### Rule 1: Perfect Unison (Same Pitch, Same Value)
-- Two voices sharing the exact same pitch and duration share a **single notehead** with a two-way stem (one stem up for Voice 1, one stem down for Voice 2).
+#### Rule RD: Unisons — Shared Head vs Displaced Head (PROPOSED)
+- **Same Duration Unison (PROPOSED):** Two voices sharing the exact same pitch and duration share a **single notehead** with a two-way stem (one stem up for Voice 1, one stem down for Voice 2). Tagged strictly as PROPOSED (not yet verified against an explicit reference chorale unison measure).
+- **Different Duration Unison / Clash (PROPOSED):** If Voice 1 is an open head and Voice 2 is a black head, they cannot share a notehead. Voice 1 sits in the standard optical column, Voice 2 is displaced to the right side of Voice 1's stem. Tagged strictly as PROPOSED.
 
-#### Rule 2: Unison Clash (Different Durations)
-- If Voice 1 is a half note (open head) and Voice 2 is a quarter note (black head), they cannot share a notehead.
-- **Voice 1** sits in the standard optical column.
-- **Voice 2** is displaced to the right side of Voice 1's stem.
-
-#### Rule 3: Second Intervals (OBSERVED & PROPOSED)
+#### Rule RC: Second Intervals (OBSERVED & PROPOSED)
 - **Two-Voice Seconds (OBSERVED, BWV 140/7 m.5 beat 3):**
   - When pitches in Voice 1 and Voice 2 form a second interval at the same tick (e.g. F4 and G4):
   - Both noteheads share **ONE common stem line** passing between them.
@@ -368,14 +364,24 @@ A staff-measure is defined as **polyphonic** if and only if $\ge 2$ voices conta
   - **Voice Crossing:** Behavior when Voice 2 pitch rises strictly above Voice 1 pitch remains PROPOSED (currently stems maintain standard v1-up / v2-down polarity).
   - **Seconds Inside Chords:** Interaction between opposing-voice seconds and intra-voice chord seconds remains PROPOSED.
 
-### 5.4 Rest Placement and Dynamic Collision Avoidance
+### 5.4 Rest Placement and Dynamic Collision Avoidance (Rule RE)
 - **Formula for Polyphonic Rest Elevation:**
   $$Y_{\text{rest}}(\text{Voice 1}) = Y_{\text{default}} - 2.0\text{ sp} - k \cdot 0.5\text{ sp}$$
   $$Y_{\text{rest}}(\text{Voice 2}) = Y_{\text{default}} + 2.0\text{ sp} + k \cdot 0.5\text{ sp}$$
   where $k \in \{0, 1, 2, 3\}$ is the minimal step count preventing bounding-box collision with notes in the opposing voice.
 - **Rest Boundaries:** Rests must remain within $y \in [-2.0, 6.0]\text{ sp}$.
-- **Rest Consolidation:** When Voice 1 and Voice 2 have identical rests at identical ticks (e.g., both rest on beat 3), a single consolidated rest is rendered at the staff center ($y = 2.0\text{ sp}$).
+- **Rest Consolidation (OBSERVED & PROPOSED):**
+  - Shared rest = OBSERVED (m.3 and m.6 beat 3 in BWV 140/7 where both voices rest and merge at staff center $y = 2.0\text{ sp}$).
+  - One-voice rests = PROPOSED (elevation/depression formulas for independent single-voice rests).
 - **Hidden Voice-2 Rests:** In choral/keyboard textures where Voice 2 enters after a pickup or mid-measure pause, leading voice-2 rests may be hidden (`rest.hidden = true`).
+
+### 5.5 Accidental Placement and Notehead Clearance (Rule RH - PROPOSED)
+- **Rule RH Status:** Strictly PROPOSED. OBSERVED status requires naming the exact measure and beat in reference where an accidental sits directly next to a notehead of the opposing voice. In the BWV 140/7 mm. 1-6 reference reduction, all accidentals occur in independent voices or with natural horizontal separation. Therefore, Rule RH is designated PROPOSED.
+
+### 5.6 Ties and Slurs Direction (Rule RF - OBSERVED & PROPOSED)
+- **Rule RF Status:**
+  - Voice 2 tie below = OBSERVED (alto C5 tie across m.5 beat 2 to beat 3 in BWV 140/7).
+  - Voice 1 tie above = PROPOSED (no soprano tie occurs in the reference mm. 1-6).
 
 ---
 

@@ -72,7 +72,7 @@ export const ToolbarFileHistory: React.FC<ToolbarFileHistoryProps> = ({
           marginRight: '0.25rem',
         }}
       >
-        ScoreForge
+        MiLaSi
       </h1>
 
       <button
