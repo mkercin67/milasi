@@ -9,6 +9,7 @@
 
 import { NoteEvent, Score } from '../core/model';
 import { NOTEHEAD_WIDTH } from './layoutScore';
+import { notationOpCounter } from './notations';
 import { LayoutResult } from './types';
 
 export interface TieLayoutItem {
@@ -28,22 +29,23 @@ export function findNoteheadPos(layout: LayoutResult, eventId: string): Notehead
   for (let sysIdx = 0; sysIdx < layout.systems.length; sysIdx++) {
     const sys = layout.systems[sysIdx];
     const items = sys.items ?? [];
-    const nh = items.find(
-      (it) => it.eventId === eventId && it.kind === 'glyph' && it.glyph?.startsWith('notehead')
-    );
-    if (nh) {
-      // Find stem to determine direction
-      const stem = items.find((it) => it.eventId === eventId && it.kind === 'line');
-      let stemDirection: 'up' | 'down' = nh.y >= 2.0 ? 'up' : 'down';
-      if (stem && stem.y2 !== undefined) {
-        stemDirection = stem.y2 < stem.y ? 'up' : 'down';
+    for (let i = 0; i < items.length; i++) {
+      if (notationOpCounter.enabled) notationOpCounter.itemVisits++;
+      const it = items[i];
+      if (it.eventId === eventId && it.kind === 'glyph' && it.glyph?.startsWith('notehead')) {
+        // Find stem to determine direction
+        const stem = items.find((st) => st.eventId === eventId && st.kind === 'line');
+        let stemDirection: 'up' | 'down' = it.y >= 2.0 ? 'up' : 'down';
+        if (stem && stem.y2 !== undefined) {
+          stemDirection = stem.y2 < it.y ? 'up' : 'down';
+        }
+        return {
+          systemIndex: sysIdx,
+          x: it.x,
+          y: it.y,
+          stemDirection,
+        };
       }
-      return {
-        systemIndex: sysIdx,
-        x: nh.x,
-        y: nh.y,
-        stemDirection,
-      };
     }
   }
   return null;
@@ -104,9 +106,8 @@ export function layoutTies(
         const mDef = score.measures[mIdx];
         const sm = staff.measures[mDef.id];
         if (!sm) continue;
-        for (let vIdx = 0; vIdx < sm.voices.length; vIdx++) {
-          const v = sm.voices[vIdx];
-          const vIndex = v.voiceIndex ?? (vIdx + 1);
+        for (const v of sm.voices) {
+          const vIndex = v.voiceIndex;
           let list = voiceNotesMap.get(vIndex);
           if (!list) {
             list = [];
@@ -137,6 +138,7 @@ export function layoutTies(
           );
 
           if (hasMatchingPitch) {
+            if (notationOpCounter.enabled && noteheadIndex) notationOpCounter.mapLookups += 2;
             const posA = noteheadIndex ? noteheadIndex.get(sourceNote.id) ?? null : findNoteheadPos(layout, sourceNote.id);
             const posB = noteheadIndex ? noteheadIndex.get(targetNote.id) ?? null : findNoteheadPos(layout, targetNote.id);
 

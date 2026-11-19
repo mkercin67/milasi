@@ -45,11 +45,10 @@ export function findEventContext(
         const mDef = score.measures[mIdx];
         const staffMeasure = staff.measures[mDef.id];
         if (!staffMeasure) continue;
-        for (let vIdx = 0; vIdx < staffMeasure.voices.length; vIdx++) {
-          const voice = staffMeasure.voices[vIdx];
+        for (const voice of staffMeasure.voices) {
           const evIdx = voice.events.findIndex((e) => e.id === eventId);
           if (evIdx !== -1) {
-            const vIndex = (voice.voiceIndex ?? (vIdx + 1)) as 1 | 2 | 3 | 4;
+            const vIndex = voice.voiceIndex;
             return {
               staffId: staff.id,
               measureId: mDef.id,
@@ -84,10 +83,8 @@ export function getOrderedVoiceEvents(
         const mDef = score.measures[mIdx];
         const staffMeasure = staff.measures[mDef.id];
         if (!staffMeasure) continue;
-        for (let vIdx = 0; vIdx < staffMeasure.voices.length; vIdx++) {
-          const voice = staffMeasure.voices[vIdx];
-          const vIndex = voice.voiceIndex ?? (vIdx + 1);
-          if (vIndex !== targetVoiceIndex) continue;
+        for (const voice of staffMeasure.voices) {
+          if (voice.voiceIndex !== targetVoiceIndex) continue;
           for (const ev of voice.events) {
             result.push({ event: ev, measureId: mDef.id, measureIndex: mIdx });
           }

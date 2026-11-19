@@ -25,12 +25,11 @@ export function toggleTie(eventId: string, pitchIndex: number = 0): Command {
             const mDef = score.measures[mIdx];
             const sm = staff.measures[mDef.id];
             if (!sm) continue;
-            for (let vIdx = 0; vIdx < sm.voices.length; vIdx++) {
-              const v = sm.voices[vIdx];
+            for (const v of sm.voices) {
               const idx = v.events.findIndex((e) => e.id === eventId);
               if (idx !== -1) {
                 foundStaffId = staff.id;
-                foundVoiceIndex = v.voiceIndex ?? (vIdx + 1);
+                foundVoiceIndex = v.voiceIndex;
                 startMIdx = mIdx;
                 startEvIdx = idx;
                 const ev = v.events[idx];

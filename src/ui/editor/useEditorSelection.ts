@@ -409,6 +409,7 @@ export function useEditorSelection({
 
     let startMId = curScore.measures[0]?.id;
     let startOffset = 0;
+    let targetVoiceIndex: 1 | 2 | 3 | 4 = 1;
     let voiceId = staff.measures[startMId]?.voices.find((v) => v.voiceIndex === 1)?.id;
 
     if (curSel.kind === 'range') {
@@ -418,6 +419,7 @@ export function useEditorSelection({
         if (loc) {
           startMId = loc.measureId;
           voiceId = loc.voiceId;
+          targetVoiceIndex = loc.voiceIndex;
           const sm = staff.measures[startMId];
           const v = sm?.voices.find((vo) => vo.id === voiceId);
           if (v) {
@@ -437,6 +439,7 @@ export function useEditorSelection({
       if (loc) {
         startMId = loc.measureId;
         voiceId = loc.voiceId;
+        targetVoiceIndex = loc.voiceIndex;
         const sm = staff.measures[startMId];
         const v = sm?.voices.find((vo) => vo.id === voiceId);
         if (v) {
@@ -452,12 +455,13 @@ export function useEditorSelection({
       }
     } else if (curCursor) {
       startMId = curCursor.measureId;
+      targetVoiceIndex = curCursor.voiceIndex;
       const targetVoice = scoreRef.current.parts[0]?.staves[0]?.measures[curCursor.measureId]?.voices.find((vo) => vo.voiceIndex === curCursor.voiceIndex);
       voiceId = targetVoice?.id ?? '';
       startOffset = curCursor.tick;
     }
 
-    if (startMId && voiceId) {
+    if (startMId && (voiceId || targetVoiceIndex)) {
       const placedIds: string[] = [];
       executeCommand({
         name: 'Paste Events',
@@ -467,6 +471,7 @@ export function useEditorSelection({
             {
               staffId: staff.id,
               voiceId,
+              voiceIndex: targetVoiceIndex,
               startMeasureId: startMId,
               startOffsetTicks: startOffset,
             },

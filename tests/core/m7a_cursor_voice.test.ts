@@ -8,6 +8,8 @@ import {
 } from '../../src/core/input';
 import { createEmptyScore } from '../../src/core/factory';
 import { History } from '../../src/core/commandTypes';
+import { computeCursorPosition } from '../../src/layout/cursor';
+import { layoutScore } from '../../src/layout/layoutScore';
 import { validateScore } from '../../src/core/validate';
 
 describe('Cursor Keyed by voiceIndex (Item 1)', () => {
@@ -135,5 +137,66 @@ describe('Cursor Keyed by voiceIndex (Item 1)', () => {
     expect(
       history.score.parts[0].staves[0].measures[mId].voices[1].voiceIndex
     ).toBe(2);
+  });
+
+  it('undo/redo restores cursor voiceIndex: enter note in voice 2, undo, redo leaves cursor voiceIndex as 2', () => {
+    const score = createEmptyScore();
+    const staffId = score.parts[0].staves[0].id;
+    const mId = score.measures[0].id;
+
+    let cursor: ScoreCursor = {
+      staffId,
+      voiceIndex: 2,
+      measureId: mId,
+      tick: 0,
+    };
+
+    const history = new History(score);
+    const cmd = enterNote(cursor, {
+      baseType: 'quarter',
+      pitch: { step: 'E', octave: 4, alter: 0 },
+    });
+
+    history.do(cmd);
+    // After entering quarter note, cursor advances in voice 2
+    cursor = advanceCursor(history.score, cursor, 960);
+    expect(cursor.voiceIndex).toBe(2);
+    expect(cursor.tick).toBe(960);
+
+    // Undo: score reverts, cursor voiceIndex is maintained
+    history.undo();
+    expect(cursor.voiceIndex).toBe(2);
+
+    // Redo: score re-applies, cursor voiceIndex is maintained
+    history.redo();
+    expect(cursor.voiceIndex).toBe(2);
+  });
+
+  it('moving into a measure that has no such voice keeps cursor voiceIndex and computes position at measureStartX + 0.8', () => {
+    const score = createEmptyScore();
+    const staffId = score.parts[0].staves[0].id;
+    const m1Id = score.measures[0].id;
+    const m2Id = score.measures[1].id;
+
+    // Measure 1 and 2 only have voice 1
+    const cursor: ScoreCursor = {
+      staffId,
+      voiceIndex: 2,
+      measureId: m1Id,
+      tick: 0,
+    };
+
+    // Move cursor into measure 2 (which has no voice 2)
+    const nextCursor = moveCursor(score, cursor, 'next');
+    expect(nextCursor.measureId).toBe(m2Id);
+    expect(nextCursor.voiceIndex).toBe(2);
+    expect(nextCursor.tick).toBe(0);
+
+    // Compute cursor position: rendered at measureStartX + 0.8
+    const layout = layoutScore(score, { width: 100 });
+    const pos = computeCursorPosition(layout, score, nextCursor);
+    expect(pos).not.toBeNull();
+    // System 0 measure 2 start
+    expect(pos?.x).toBeGreaterThan(0.8);
   });
 });

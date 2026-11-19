@@ -1,0 +1,298 @@
+[
+  {
+    "planItemId": "Invariant 1",
+    "description": "Voice.voiceIndex is mandatory, an integer 1..4, and is the SOLE voice identity. Array order has no meaning. voices are sorted by voiceIndex ascending on every write.",
+    "codeLocation": "src/core/model.ts:Voice",
+    "testFile": "tests/core/validate.test.ts",
+    "testName": "validateScore rejects duplicate voiceIndex in the same measure",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "Invariant 2",
+    "description": "Voice 1 exists in every StaffMeasure. A StaffMeasure never has zero voices.",
+    "codeLocation": "src/core/validate.ts:validateScore",
+    "testFile": "tests/core/validate.test.ts",
+    "testName": "validateScore rejects measure with empty voices array",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "Invariant 3",
+    "description": "Score.groups: StaffGroup[] exists (empty for migrated scores).",
+    "codeLocation": "src/core/model.ts:StaffGroup",
+    "testFile": "tests/core/validate.test.ts",
+    "testName": "rejects group whose partIds contains an id that is not a part with group-unknown-part",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "Invariant 4",
+    "description": "Part.midiChannel (0..15) and Part.shortName exist. Percussion=9, non-percussion pool, >15 warning, shortName fallback.",
+    "codeLocation": "src/core/instruments.ts:resolvePartShortName",
+    "testFile": "tests/io/m7a_v7_migration.test.ts",
+    "testName": "assigns channel 9 to percussion and distinct non-percussion channels from [0..8, 10..15]",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "Invariant 5",
+    "description": "schemaVersion = 7. Storage keys, .sfscore extension, and envelope stay as listed in LEGACY_IDENTIFIERS.md.",
+    "codeLocation": "src/core/model.ts:CURRENT_SCHEMA_VERSION",
+    "testFile": "tests/io/m7a_v7_migration.test.ts",
+    "testName": "defines CURRENT_SCHEMA_VERSION as 7",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "Invariant 6",
+    "description": "Existing ids (voice ids, event ids, measure ids, override keys) are never regenerated.",
+    "codeLocation": "src/io/migrations.ts:migrateV6ToV7",
+    "testFile": "tests/core/m7a_unproven_proofs.test.ts",
+    "testName": "Item 2b: Invariant 6: existing voice, event, measure and override IDs are preserved unchanged after migration",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "P1",
+    "description": "schemaVersion is 6 after earlier migrations. Greater than 7 rejected with Turkish message.",
+    "codeLocation": "src/io/migrations.ts:migrateV6ToV7",
+    "testFile": "tests/io/m7a_v7_migration.test.ts",
+    "testName": "rejects schemaVersion 8 with Turkish message",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "P2",
+    "description": "Every StaffMeasure has at most 4 voices. Greater than 4 voices rejected with Turkish message naming measure.",
+    "codeLocation": "src/io/migrations.ts:migrateV6ToV7",
+    "testFile": "tests/io/m7a_v7_migration.test.ts",
+    "testName": "rejects measures with more than 4 voices with Turkish message naming measure",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "S1",
+    "description": "Work on a deep copy. The original object is never mutated.",
+    "codeLocation": "src/io/migrations.ts:migrateV6ToV7",
+    "testFile": "tests/core/m7a_unproven_proofs.test.ts",
+    "testName": "Item 2c: Step S1: the input object is not mutated during migration (deep-freeze verification)",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "S2",
+    "description": "For each StaffMeasure: voiceIndex = array position + 1 (1..4). Existing voice ids kept. Voices sorted by voiceIndex.",
+    "codeLocation": "src/io/migrations.ts:migrateV6ToV7",
+    "testFile": "tests/io/m7a_v7_migration.test.ts",
+    "testName": "migrates v6 files carrying 0-based, 1-based, and contradictory voiceIndex values to position + 1",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "S3",
+    "description": "If StaffMeasure missing or no voice 1, create voice 1 filled with rests using fill measure with rests helper.",
+    "codeLocation": "src/core/time.ts:fillMeasureWithRests",
+    "testFile": "tests/core/m7a_fill_measure_with_rests.test.ts",
+    "testName": "decomposes correctly and validates for 3/4",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "S4",
+    "description": "Newly created ids are DETERMINISTIC: derived from stable inputs with pure hash function. No randomUUID / Math.random.",
+    "codeLocation": "src/io/migrations.ts:getSafeDeterministicId",
+    "testFile": "tests/io/m7a_v7_migration.test.ts",
+    "testName": "aborts migration with descriptive error and leaves input untouched when an ID collides",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "S5",
+    "description": "Part.midiChannel and Part.shortName per invariant 4.",
+    "codeLocation": "src/io/migrations.ts:migrateV6ToV7",
+    "testFile": "tests/io/m7a_v7_migration.test.ts",
+    "testName": "falls back to name <= 6 chars or first 4 chars + \".\" when instrument is unknown",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "S6",
+    "description": "groups = [].",
+    "codeLocation": "src/io/migrations.ts:migrateV6ToV7",
+    "testFile": "tests/core/m7a_unproven_proofs.test.ts",
+    "testName": "Item 2e: Undo back to load point keeps voiceIndex and groups intact",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "S7",
+    "description": "schemaVersion = 7.",
+    "codeLocation": "src/io/migrations.ts:migrateV6ToV7",
+    "testFile": "tests/io/m7a_v7_migration.test.ts",
+    "testName": "defines CURRENT_SCHEMA_VERSION as 7",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "S8",
+    "description": "Postcondition: validateScore(v7 score) returns no errors. Warnings allowed. If postcondition fails, abort.",
+    "codeLocation": "src/core/validate.ts:validateScore",
+    "testFile": "tests/core/m7a_unproven_proofs.test.ts",
+    "testName": "Item 2a: Fuzz/property test over 200 random valid v6 scores validates, is idempotent, round-trips, and preserves rendering",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "Section 4 - Ties",
+    "description": "A tie across a barline connects the pitch in measure N to the matching pitch in the NEXT measure of the SAME voiceIndex.",
+    "codeLocation": "src/layout/ties.ts:layoutTies",
+    "testFile": "tests/core/m7a_unproven_proofs.test.ts",
+    "testName": "Item 2d: Section 4: ties and slurs preserve identical event connections across migration in multi-voice scores",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "Section 4 - Slurs",
+    "description": "Slurs keep their event ids and must stay inside one voice (validateScore).",
+    "codeLocation": "src/layout/notations.ts:layoutSlurs",
+    "testFile": "tests/core/validate.test.ts",
+    "testName": "validateScore rejects ties or slurs that cross voices",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "Section 4 - Migration",
+    "description": "Migrating a v6 score must not change which events a tie or slur connects.",
+    "codeLocation": "src/io/migrations.ts:migrateV6ToV7",
+    "testFile": "tests/core/m7a_unproven_proofs.test.ts",
+    "testName": "Item 2d: Section 4: ties and slurs preserve identical event connections across migration in multi-voice scores",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "Section 5 - Rule 1",
+    "description": "Unique voiceIndex per StaffMeasure; at most 4 voices; voice 1 exists.",
+    "codeLocation": "src/core/validate.ts:validateScore",
+    "testFile": "tests/core/validate.test.ts",
+    "testName": "validateScore rejects single voice with voiceIndex != 1",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "Section 5 - Rule 2",
+    "description": "Per-voice tick sum equals the measure length (actualTicks when present).",
+    "codeLocation": "src/core/validate.ts:validateScore",
+    "testFile": "tests/core/validate.test.ts",
+    "testName": "validateScore rejects voice whose event durations do not match measure length",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "Section 5 - Rule 3",
+    "description": "Ties and slurs are intra-voice.",
+    "codeLocation": "src/core/validate.ts:validateScore",
+    "testFile": "tests/core/validate.test.ts",
+    "testName": "validateScore rejects ties or slurs that cross voices",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "Section 5 - Rule 4",
+    "description": "A StaffMeasure exists for every MeasureDef in every staff.",
+    "codeLocation": "src/core/validate.ts:validateScore",
+    "testFile": "tests/core/validate.test.ts",
+    "testName": "validateScore rejects score when a StaffMeasure is missing for a MeasureDef",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "Section 5 - Rule 5",
+    "description": "WARNING (not error): more than 15 non-percussion parts share channels.",
+    "codeLocation": "src/core/validate.ts:validateScore",
+    "testFile": "tests/core/validate.test.ts",
+    "testName": "validateScore warns when more than 15 non-percussion parts share MIDI channels",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "Section 6 - Abort Safety",
+    "description": "A failed migration changes nothing: not the loaded file, not the autosave.",
+    "codeLocation": "src/io/migrations.ts:migrateV6ToV7",
+    "testFile": "tests/core/m7a_unproven_proofs.test.ts",
+    "testName": "Item 2f: Section 6: Failure policy P1 and P2 leave storage record and loaded input untouched",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "Section 6 - Future Versions",
+    "description": "Unknown future versions (> 7) are rejected with a clear message.",
+    "codeLocation": "src/io/migrations.ts:migrateV6ToV7",
+    "testFile": "tests/io/m7a_v7_migration.test.ts",
+    "testName": "rejects schemaVersion 8 with Turkish message",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "Section 6 - Save Safety",
+    "description": "Saving a migrated score writes schemaVersion 7; original v6 file is never overwritten unless user saves over it.",
+    "codeLocation": "src/ui/storageActions.ts:saveScoreToStorage",
+    "testFile": "tests/core/m7a_unproven_proofs.test.ts",
+    "testName": "Item 2f: Section 6: Failure policy P1 and P2 leave storage record and loaded input untouched",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "Section 7 - Bullet 1 (Fixtures)",
+    "description": "Real saved .sfscore fixtures for v1..v6 created through real app path migrate to valid v7 score.",
+    "codeLocation": "src/io/migrations.ts:migrateV6ToV7",
+    "testFile": "tests/io/m7a_fixtures_migration.test.ts",
+    "testName": "loads generated v6_generated.sfscore and migrates to a valid v7 score",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "Section 7 - Bullet 2 (Idempotence)",
+    "description": "Idempotent: migrating a v7 score again changes nothing; migrate(v6) twice gives byte-identical output.",
+    "codeLocation": "src/io/migrations.ts:migrateV6ToV7",
+    "testFile": "tests/io/m7a_v7_migration.test.ts",
+    "testName": "is idempotent: migrating a v7 score changes nothing, migrateV6ToV7 twice produces byte-identical JSON",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "Section 7 - Bullet 3 (Property/Fuzz)",
+    "description": "Property/fuzz test over random valid v6 scores: validates, serialises/deserialises, 25 golden snapshots unchanged.",
+    "codeLocation": "src/io/migrations.ts:migrateV6ToV7",
+    "testFile": "tests/core/m7a_unproven_proofs.test.ts",
+    "testName": "Item 2a: Fuzz/property test over 200 random valid v6 scores validates, is idempotent, round-trips, and preserves rendering",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "Section 7 - Bullet 4 (Voice Order)",
+    "description": "Voice order: voices stored in different array order across measures keep same voiceIndex identity in migration and selection.",
+    "codeLocation": "src/core/selection.ts:getOrderedVoiceEvents",
+    "testFile": "tests/core/range_selection.test.ts",
+    "testName": "FAILING-FIRST: asserts selection follows voiceIndex (1..4) regardless of array storage order across measures",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "Section 7 - Bullet 5 (Missing Voice 1 Rests)",
+    "description": "Missing voice 1 in 3/4, 5/8, 7/8, and pickup measure with actualTicks: rests are valid.",
+    "codeLocation": "src/core/time.ts:fillMeasureWithRests",
+    "testFile": "tests/core/m7a_fill_measure_with_rests.test.ts",
+    "testName": "decomposes correctly and validates for 5/8",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "Section 7 - Bullet 6 (More than 4 voices)",
+    "description": "More than 4 voices in one measure: load rejected, input untouched, Turkish message.",
+    "codeLocation": "src/io/migrations.ts:migrateV6ToV7",
+    "testFile": "tests/io/m7a_v7_migration.test.ts",
+    "testName": "rejects measures with more than 4 voices with Turkish message naming measure",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "Section 7 - Bullet 7 (schemaVersion 8)",
+    "description": "schemaVersion 8: rejected.",
+    "codeLocation": "src/io/migrations.ts:migrateV6ToV7",
+    "testFile": "tests/io/m7a_v7_migration.test.ts",
+    "testName": "rejects schemaVersion 8 with Turkish message",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "Section 7 - Bullet 8 (MIDI Channels)",
+    "description": "MIDI: 15 non-percussion parts get 15 distinct channels, none=9; 16-part reuses and emits warning; percussion gets 9.",
+    "codeLocation": "src/io/migrations.ts:migrateV6ToV7",
+    "testFile": "tests/io/m7a_v7_migration.test.ts",
+    "testName": "assigns channel 9 to percussion and distinct non-percussion channels from [0..8, 10..15]",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "Section 7 - Bullet 9 (Multi-voice Ties)",
+    "description": "Ties across a barline in voice 1 and in voice 2 survive migration unchanged.",
+    "codeLocation": "src/layout/ties.ts:layoutTies",
+    "testFile": "tests/core/m7a_unproven_proofs.test.ts",
+    "testName": "Item 2d: Section 4: ties and slurs preserve identical event connections across migration in multi-voice scores",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "Section 7 - Bullet 10 (Undo back to load)",
+    "description": "Undo back to the load point keeps voiceIndex and groups.",
+    "codeLocation": "src/core/history.ts:History",
+    "testFile": "tests/core/m7a_unproven_proofs.test.ts",
+    "testName": "Item 2e: Undo back to load point keeps voiceIndex and groups intact",
+    "status": "DONE"
+  }
+]

@@ -27,56 +27,52 @@ describe('Milestone 7a-1: Schema v7, Migration, and Voice-Aware Selection', () =
 
   // D4: fillMeasureWithRests tests
   describe('D4: fillMeasureWithRests and decomposeTicksToRests', () => {
-    const testCases: Array<{ label: string; timeSig: { num: number; den: number }; actualTicks?: number }> = [
-      { label: '2/4', timeSig: { num: 2, den: 4 } },
-      { label: '3/4', timeSig: { num: 3, den: 4 } },
-      { label: '4/4', timeSig: { num: 4, den: 4 } },
-      { label: '6/8', timeSig: { num: 6, den: 8 } },
-      { label: '5/8', timeSig: { num: 5, den: 8 } },
-      { label: '7/8', timeSig: { num: 7, den: 8 } },
-      { label: '9/16', timeSig: { num: 9, den: 16 } },
-      { label: 'pickup measure', timeSig: { num: 4, den: 4 }, actualTicks: 960 }, // 1 beat pickup
-    ];
+    function testDecompose(label: string, timeSig: { num: number; den: number }, actualTicks?: number) {
+      const expectedTotal = actualTicks ?? measureTicks(timeSig);
+      const rests = fillMeasureWithRests(expectedTotal);
 
-    testCases.forEach(({ label, timeSig, actualTicks }) => {
-      it(`decomposes ticks into valid rests for ${label}`, () => {
-        const expectedTotal = actualTicks ?? measureTicks(timeSig);
-        const rests = fillMeasureWithRests(expectedTotal);
+      // Acceptance criteria from lead:
+      // 1. Output sums to exactly target length
+      const totalDuration = rests.reduce((sum, r) => sum + r.duration, 0);
+      expect(totalDuration).toBe(expectedTotal);
 
-        // Acceptance criteria from lead:
-        // 1. Output sums to exactly target length
-        const totalDuration = rests.reduce((sum, r) => sum + r.duration, 0);
-        expect(totalDuration).toBe(expectedTotal);
+      // 2. Every rest has valid baseType and at most one dot
+      for (const r of rests) {
+        expect(['whole', 'half', 'quarter', 'eighth', '16th', '32nd']).toContain(r.baseType);
+        expect(r.dots).toBeLessThanOrEqual(1);
+      }
 
-        // 2. Every rest has valid baseType and at most one dot
-        for (const r of rests) {
-          expect(['whole', 'half', 'quarter', 'eighth', '16th', '32nd']).toContain(r.baseType);
-          expect(r.dots).toBeLessThanOrEqual(1);
-        }
+      // 3. 3/4 measure gives exactly one dotted half rest (fewest events possible)
+      if (label === '3/4') {
+        expect(rests).toHaveLength(1);
+        expect(rests[0].baseType).toBe('half');
+        expect(rests[0].dots).toBe(1);
+        expect(rests[0].duration).toBe(2880);
+      }
 
-        // 3. 3/4 measure gives exactly one dotted half rest (fewest events possible)
-        if (label === '3/4') {
-          expect(rests).toHaveLength(1);
-          expect(rests[0].baseType).toBe('half');
-          expect(rests[0].dots).toBe(1);
-          expect(rests[0].duration).toBe(2880);
-        }
+      // 4. Must pass validateScore inside a score
+      const score = createScore();
+      const mDef = createMeasure(timeSig, 0, undefined, actualTicks);
+      const part = createPart('Violin');
+      score.measures.push(mDef);
+      score.parts.push(part);
+      part.staves[0].measures[mDef.id] = {
+        voices: [{ id: 'v1', voiceIndex: 1, events: rests }],
+      };
 
-        // 4. Must pass validateScore inside a score
-        const score = createScore();
-        const mDef = createMeasure(timeSig, 0, undefined, actualTicks);
-        const part = createPart('Violin');
-        score.measures.push(mDef);
-        score.parts.push(part);
-        part.staves[0].measures[mDef.id] = {
-          voices: [{ id: 'v1', voiceIndex: 1, events: rests }],
-        };
+      const problems = validateScore(score);
+      const errors = problems.filter((p) => p.severity === 'error');
+      expect(errors).toEqual([]);
+    }
 
-        const problems = validateScore(score);
-        const errors = problems.filter((p) => p.severity === 'error');
-        expect(errors).toEqual([]);
-      });
-    });
+    it('decomposes ticks into valid rests for 2/4', () => testDecompose('2/4', { num: 2, den: 4 }));
+    it('decomposes ticks into valid rests for 3/4', () => testDecompose('3/4', { num: 3, den: 4 }));
+    it('decomposes ticks into valid rests for 4/4', () => testDecompose('4/4', { num: 4, den: 4 }));
+    it('decomposes ticks into valid rests for 6/8', () => testDecompose('6/8', { num: 6, den: 8 }));
+    it('decomposes ticks into valid rests for 5/8', () => testDecompose('5/8', { num: 5, den: 8 }));
+    it('decomposes ticks into valid rests for 7/8', () => testDecompose('7/8', { num: 7, den: 8 }));
+    it('decomposes ticks into valid rests for 9/16', () => testDecompose('9/16', { num: 9, den: 16 }));
+    it('decomposes ticks into valid rests for pickup measure', () => testDecompose('pickup measure', { num: 4, den: 4 }, 960));
   });
 
   // D2: Stale voiceIndex handling in v6 data

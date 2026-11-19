@@ -7,6 +7,7 @@ import {
   layoutArticulations,
   layoutDynamics,
   layoutSlurs,
+  notationOpCounter,
 } from '../../src/layout/notations';
 import { layoutTies } from '../../src/layout/ties';
 import { createBenchmarkFullFeaturedScore } from '../../src/ui/Demo';
@@ -91,70 +92,36 @@ function runLegacyUnindexedPipeline(score: Score, availableSpaces: number) {
 }
 
 /**
- * Instruments and counts the exact number of item visits / map lookups performed by notation passes.
+ * Instruments and counts the exact number of item visits and map lookups performed by real notation passes.
+ * Reads directly from production notationOpCounter.
  */
 export function countNotationLookupOperations(
   score: Score,
   availableSpaces: number,
   mode: 'indexed' | 'unindexed' = 'indexed'
 ): number {
-  const layout = layoutScore(score, { width: availableSpaces });
-  let operationCount = 0;
+  notationOpCounter.reset();
+  notationOpCounter.enabled = true;
 
-  const totalItems = layout.systems.reduce((acc, sys) => acc + sys.items.length, 0);
+  const layout = layoutScore(score, { width: availableSpaces });
 
   if (mode === 'indexed') {
-    // 1. buildNoteheadIndex visits every item in layout exactly once: O(N)
-    operationCount += totalItems;
-
-    // 2. Each notation pass executes 1 Map lookup per query: O(1)
-    for (const part of score.parts) {
-      for (const staff of part.staves) {
-        for (const mId in staff.measures) {
-          const sm = staff.measures[mId];
-          for (const v of sm.voices) {
-            for (const ev of v.events) {
-              if (ev.kind === 'note' && (ev as any).tiedToNext) {
-                operationCount += 1;
-              }
-            }
-          }
-        }
-        for (const _slur of staff.slurs ?? []) {
-          operationCount += 2;
-        }
-      }
-    }
-    for (const _evId in score.overrides) {
-      operationCount += 1;
-    }
+    const noteheadIndex = buildNoteheadIndex(layout);
+    layoutTies(score, layout, noteheadIndex);
+    layoutSlurs(score, layout, noteheadIndex);
+    layoutDynamics(score, layout, noteheadIndex);
+    layoutArticulations(score, layout, noteheadIndex);
   } else {
-    // Unindexed legacy scan: every notation query linearly scans all items in layout: O(N * N)
-    let queryCount = 0;
-    for (const part of score.parts) {
-      for (const staff of part.staves) {
-        for (const mId in staff.measures) {
-          const sm = staff.measures[mId];
-          for (const v of sm.voices) {
-            for (const ev of v.events) {
-              if (ev.kind === 'note' && (ev as any).tiedToNext) {
-                queryCount += 1;
-              }
-            }
-          }
-        }
-        for (const _slur of staff.slurs ?? []) {
-          queryCount += 2;
-        }
-      }
-    }
-    for (const _evId in score.overrides) {
-      queryCount += 1;
-    }
-    operationCount = queryCount * totalItems;
+    // Unindexed mode: layoutTies uses findNoteheadPos linear scan for each tied note
+    layoutTies(score, layout, undefined);
+    layoutSlurs(score, layout, undefined);
+    layoutDynamics(score, layout, undefined);
+    layoutArticulations(score, layout, undefined);
   }
 
-  return operationCount;
+  const ops = notationOpCounter.total;
+  notationOpCounter.enabled = false;
+  return ops;
 }
 
 describe('Full Pipeline Layout Cost & Scaling Complexity (Rule R6 Compliant)', () => {

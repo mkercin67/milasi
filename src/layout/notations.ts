@@ -42,6 +42,31 @@ const DYNAMIC_GLYPHS: Record<string, string> = {
   fp: 'dynamicFortePiano',
 };
 
+/**
+ * Lightweight deterministic operation counter for notation passes.
+ * Zero overhead when enabled is false.
+ */
+export interface NotationOpCounter {
+  enabled: boolean;
+  itemVisits: number;
+  mapLookups: number;
+  reset(): void;
+  get total(): number;
+}
+
+export const notationOpCounter: NotationOpCounter = {
+  enabled: false,
+  itemVisits: 0,
+  mapLookups: 0,
+  reset() {
+    this.itemVisits = 0;
+    this.mapLookups = 0;
+  },
+  get total() {
+    return this.itemVisits + this.mapLookups;
+  },
+};
+
 export function buildNoteheadIndex(layout: LayoutResult): Map<string, NoteheadInfo> {
   const map = new Map<string, NoteheadInfo>();
   const firstLineDir = new Map<string, StemDirection>();
@@ -56,6 +81,7 @@ export function buildNoteheadIndex(layout: LayoutResult): Map<string, NoteheadIn
     const len = items.length;
 
     for (let i = 0; i < len; i++) {
+      if (notationOpCounter.enabled) notationOpCounter.itemVisits++;
       const it = items[i];
       const evId = it.eventId;
       if (!evId) continue;
@@ -156,6 +182,7 @@ export function layoutDynamics(
               const glyph = DYNAMIC_GLYPHS[ev.dynamic];
               if (!glyph) continue;
 
+              if (notationOpCounter.enabled) notationOpCounter.mapLookups++;
               const nh = index.get(ev.id);
               if (!nh) continue;
 
@@ -212,6 +239,7 @@ export function layoutArticulations(
         for (const v of sm.voices) {
           for (const ev of v.events) {
             if (ev.kind === 'note' && ev.articulations && ev.articulations.length > 0) {
+              if (notationOpCounter.enabled) notationOpCounter.mapLookups++;
               const nh = index.get(ev.id);
               if (!nh) continue;
 
@@ -339,6 +367,7 @@ export function layoutSlurs(
       if (!staff.slurs || staff.slurs.length === 0) continue;
 
       for (const slur of staff.slurs) {
+        if (notationOpCounter.enabled) notationOpCounter.mapLookups += 2;
         const startNh = index.get(slur.startEventId);
         const endNh = index.get(slur.endEventId);
         if (!startNh || !endNh) continue;

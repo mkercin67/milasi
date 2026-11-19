@@ -362,9 +362,8 @@ export function validateScore(score: Score): ValidationProblem[] {
         for (const mDef of score.measures) {
           const sm = staff.measures[mDef.id];
           if (sm) {
-            for (let vIdx = 0; vIdx < sm.voices.length; vIdx++) {
-              const v = sm.voices[vIdx];
-              const vIndex = (v.voiceIndex ?? (vIdx + 1)) as number;
+            for (const v of sm.voices) {
+              const vIndex = v.voiceIndex;
               let list = voiceNotesMap.get(vIndex);
               if (!list) {
                 list = [];
@@ -436,9 +435,8 @@ export function validateScore(score: Score): ValidationProblem[] {
         for (const mDef of score.measures) {
           const sm = staff.measures[mDef.id];
           if (sm) {
-            for (let vIdx = 0; vIdx < sm.voices.length; vIdx++) {
-              const v = sm.voices[vIdx];
-              const vIndex = v.voiceIndex ?? (vIdx + 1);
+            for (const v of sm.voices) {
+              const vIndex = v.voiceIndex;
               for (const ev of v.events) {
                 eventIndexMap.set(ev.id, order++);
                 eventVoiceMap.set(ev.id, vIndex);
@@ -488,6 +486,22 @@ export function validateScore(score: Score): ValidationProblem[] {
               });
             }
           }
+        }
+      }
+    }
+  }
+
+  // StaffGroup validation (Milestone 7)
+  if (score.groups && score.groups.length > 0) {
+    const partIdSet = new Set(score.parts.map((p) => p.id));
+    for (const group of score.groups) {
+      for (const partId of group.partIds) {
+        if (!partIdSet.has(partId)) {
+          problems.push({
+            code: 'group-unknown-part',
+            message: `StaffGroup "${group.id}" references unknown partId "${partId}"`,
+            severity: 'error',
+          });
         }
       }
     }

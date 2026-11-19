@@ -296,6 +296,7 @@ $$\text{voiceIndex} \in \{ 1, 2, 3, 4 \}$$
 2. `voiceIndex = 1` always exists in every non-empty `StaffMeasure`.
 3. Voices are sorted by `voiceIndex` ascending whenever serialized or written.
 4. Voice matching across measures during playback, selection, and clipboard operations is keyed strictly by `(staffId, voiceIndex)`. Never compare measure-local voice UUIDs across barlines.
+5. When the cursor moves into a measure that does not contain that `voiceIndex`, the cursor strictly retains its `voiceIndex` and is positioned at `measureStartX + 0.8` (measure start, tick 0) without switching voices. Any note or rest entered at that cursor automatically instantiates the missing voice via `fillMeasureWithRests` without modifying voice 1.
 
 ### 4.2 v7 Cursor and Selection Models
 

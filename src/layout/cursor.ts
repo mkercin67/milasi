@@ -86,6 +86,10 @@ export function computeCursorPosition(
   const sm = staff?.measures[cursor.measureId];
   const voice = sm?.voices.find((v) => v.voiceIndex === cursor.voiceIndex);
 
+  // When the cursor moves into a measure that does not contain that voiceIndex,
+  // the cursor voiceIndex is strictly preserved, and the visual cursor is rendered
+  // at the measure start position (measureStartX + 0.8) without switching voices.
+  // Any subsequent event input will instantiate the missing voice via fillMeasureWithRests.
   if (!voice || voice.events.length === 0) {
     return { systemIndex, x: measureStartX + 0.8, y1, y2 };
   }

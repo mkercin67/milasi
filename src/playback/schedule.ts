@@ -128,9 +128,8 @@ export function buildSchedule(
       for (const mDef of score.measures) {
         const sm = staff.measures[mDef.id];
         if (sm) {
-          for (let vIdx = 0; vIdx < sm.voices.length; vIdx++) {
-            const v = sm.voices[vIdx];
-            voiceIndicesSet.add(v.voiceIndex ?? (vIdx + 1));
+          for (const v of sm.voices) {
+            voiceIndicesSet.add(v.voiceIndex);
           }
         }
       }
@@ -148,7 +147,7 @@ export function buildSchedule(
           const mDef = sequence[sIdx].measureDef;
           const sm = staff.measures[mDef.id];
           if (!sm) continue;
-          const voice = sm.voices.find((v, vIdx) => (v.voiceIndex ?? (vIdx + 1)) === targetVoiceIndex);
+          const voice = sm.voices.find((v) => v.voiceIndex === targetVoiceIndex);
           if (!voice) continue;
 
           const tempo = measureTempos[sIdx];
