@@ -1,0 +1,13 @@
+diff --git a/src/ui/scoreView/useScoreMarquee.ts b/src/ui/scoreView/useScoreMarquee.ts
+index c460a04..c80b13a 100644
+--- a/src/ui/scoreView/useScoreMarquee.ts
++++ b/src/ui/scoreView/useScoreMarquee.ts
+@@ -96,7 +96,7 @@ export function useScoreMarquee(
+             const firstEv = orderedEvents[0];
+             const lastEv = orderedEvents[orderedEvents.length - 1];
+             const firstCtx = findEventContext(score, firstEv.id);
+-            const voiceIndex = (firstCtx?.voiceIndex ?? 1) as 1 | 2 | 3 | 4;
++            const voiceIndex = 1 as 1 | 2 | 3 | 4;
+             onSelectRange?.({
+               staffId: staff.id,
+               voiceIndex,

@@ -27,7 +27,8 @@ const TARGET_TESTS = {
   'T2-leading-rests': 'tests/core/voice_creation_entry.test.ts',
   'T4-undo-voice-creation': 'tests/core/voice_creation_entry.test.ts',
   'T4-sort-voices': 'tests/core/voice_property.test.ts',
-  'MARQUEE-v1-fallback': 'tests/ui/marquee_voice_selection.test.ts',
+  'MARQUEE-always-v1': 'tests/ui/marquee_voice_selection.test.ts',
+  'TIE-wrong-voice': 'tests/core/m7a_voice_selection_ops.test.ts',
   'T2-wrong-voice-op': 'tests/core/m7a_voice_selection_ops.test.ts',
   'T4-paste-wrong-voice': 'tests/core/voice_property_m7a3.test.ts',
 };
@@ -86,7 +87,15 @@ try {
 
   // Apply patch to temporary worktree
   console.log(`Applying patch ${id}.patch to isolated worktree...`);
-  execSync(`git -C "${tempWorktreePath}" apply "${patchPath}"`, { stdio: 'pipe' });
+  try {
+    execSync(`git -C "${tempWorktreePath}" apply "${patchPath}"`, { stdio: 'pipe' });
+  } catch (err) {
+    console.error(`ERROR: PATCH DID NOT APPLY: ${id}.patch failed to apply to isolated worktree.`);
+    if (err.stderr) {
+      console.error(err.stderr.toString().trim());
+    }
+    process.exit(2);
+  }
 
   // Run target test inside isolated worktree
   console.log(`Running test ${targetTest} in worktree...`);

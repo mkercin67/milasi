@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import { describe, expect, it } from 'vitest';
 import { createEmptyScore, createNote, createPitch, createRest } from '../../src/core/factory';
-import { eventsInRange, extendSelection, getRangeMeasureSpan, RangeSelection, Selection } from '../../src/core/selection';
+import { eventsInRange, extendSelection, getRangeMeasureSpan, nextEventId, RangeSelection, Selection } from '../../src/core/selection';
 
 describe('Milestone 6a: Range Selection (src/core/selection.ts)', () => {
   function makeTestScore() {
@@ -212,5 +212,55 @@ describe('Milestone 6a: Range Selection (src/core/selection.ts)', () => {
 
     const events = eventsInRange(score, range);
     expect(events.map((e) => e.id)).toEqual([n2.id, n3.id, n4.id, n5.id]);
+  });
+
+  it('S6: Shift+Right in voice 2 extends within voice 2 and across measures to next measure in same voice', () => {
+    const score = createEmptyScore({ measures: 2 });
+    const staff = score.parts[0].staves[0];
+    const m0Id = score.measures[0].id;
+    const m1Id = score.measures[1].id;
+
+    // In m0, Voice 2 has two quarter notes v2_m0_0, v2_m0_1
+    const v2_m0_0 = createNote({ pitches: [createPitch('E', 4)], baseType: 'quarter' });
+    const v2_m0_1 = createNote({ pitches: [createPitch('F', 4)], baseType: 'quarter' });
+    staff.measures[m0Id].voices.push({ id: 'v2-m0', voiceIndex: 2, events: [v2_m0_0, v2_m0_1] });
+
+    // In m1, Voice 2 has two quarter notes v2_m1_0, v2_m1_1
+    const v2_m1_0 = createNote({ pitches: [createPitch('G', 4)], baseType: 'quarter' });
+    const v2_m1_1 = createNote({ pitches: [createPitch('A', 4)], baseType: 'quarter' });
+    staff.measures[m1Id].voices.push({ id: 'v2-m1', voiceIndex: 2, events: [v2_m1_0, v2_m1_1] });
+
+    // Start with selection on first event of voice 2
+    let sel: Selection = { kind: 'event', id: v2_m0_0.id };
+
+    // Shift+Right step 1: within same measure
+    const next1 = nextEventId(score, staff.id, v2_m0_0.id, 'next', 2);
+    expect(next1).toBe(v2_m0_1.id);
+    sel = extendSelection(score, sel, next1!);
+    expect(sel).toEqual({
+      kind: 'range',
+      staffId: staff.id,
+      voiceIndex: 2,
+      anchorId: v2_m0_0.id,
+      focusId: v2_m0_1.id,
+    });
+    expect(eventsInRange(score, sel as RangeSelection).map((e) => e.id)).toEqual([v2_m0_0.id, v2_m0_1.id]);
+
+    // Shift+Right step 2: across measure boundary into measure 1
+    const next2 = nextEventId(score, staff.id, v2_m0_1.id, 'next', 2);
+    expect(next2).toBe(v2_m1_0.id);
+    sel = extendSelection(score, sel, next2!);
+    expect(sel).toEqual({
+      kind: 'range',
+      staffId: staff.id,
+      voiceIndex: 2,
+      anchorId: v2_m0_0.id,
+      focusId: v2_m1_0.id,
+    });
+    expect(eventsInRange(score, sel as RangeSelection).map((e) => e.id)).toEqual([
+      v2_m0_0.id,
+      v2_m0_1.id,
+      v2_m1_0.id,
+    ]);
   });
 });

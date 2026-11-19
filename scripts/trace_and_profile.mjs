@@ -1,9 +1,29 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-import { spawn } from 'child_process';
+import { spawn, execSync } from 'child_process';
 import http from 'http';
 import fs from 'fs';
 import path from 'path';
 import { chromium } from 'playwright';
+
+function killProcessTree(proc) {
+  if (!proc || !proc.pid) return;
+  try {
+    if (process.platform === 'win32') {
+      execSync(`taskkill /pid ${proc.pid} /f /t`, { stdio: 'ignore' });
+    } else {
+      try {
+        execSync(`pkill -P ${proc.pid}`, { stdio: 'ignore' });
+      } catch {}
+      try {
+        process.kill(-proc.pid, 'SIGKILL');
+      } catch {
+        try {
+          proc.kill('SIGKILL');
+        } catch {}
+      }
+    }
+  } catch {}
+}
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -44,8 +64,10 @@ async function runTraceAndProfile() {
   const baseUrl = `http://localhost:${port}`;
   console.log(`Starting Vite preview server on port ${port}...`);
 
+  const isWin = process.platform === 'win32';
   const preview = spawn('npx', ['vite', 'preview', '--port', String(port), '--strictPort'], {
-    shell: true,
+    shell: isWin,
+    detached: !isWin,
     stdio: 'pipe',
   });
 
@@ -293,7 +315,7 @@ async function runTraceAndProfile() {
     console.log(`Affected System Targets in DOM: ${uniqueTargets.join(', ')}`);
     console.log('======================================================\n');
   } finally {
-    preview.kill();
+    killProcessTree(preview);
   }
 }
 

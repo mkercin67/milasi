@@ -47,3 +47,14 @@ jobs:
           name: smoke-failure-artifacts
           path: artifacts/
           retention-days: 7
+
+      - name: Verify no orphan background preview or vite processes
+        if: always()
+        run: |
+          echo "Checking for orphan vite processes..."
+          if pgrep -af "vite preview|vite.js"; then
+            echo "Error: Orphan vite/preview process detected!"
+            exit 1
+          else
+            echo "No orphan vite processes found."
+          fi

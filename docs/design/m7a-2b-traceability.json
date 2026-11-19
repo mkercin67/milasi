@@ -67,9 +67,9 @@
     "planItemId": "D9",
     "description": "Out of scope: Voice colours, moving notes between voices, voice crossing, deleting voices, selection across voices, grand staff, new entry keys.",
     "codeLocation": "docs/design/m7a-2b-voice-input.md:D9",
-    "testFile": "tests/ui/cursor_voice.test.ts",
-    "testName": "FAILING-FIRST: cycles forward (Tab) 1 -> 2 -> 3 -> 4 -> 1 and backward (Shift+Tab) 1 -> 4 -> 3 -> 2 -> 1",
-    "status": "DONE"
+    "testFile": "docs/design/m7a-2b-voice-input.md",
+    "testName": "Out of scope",
+    "status": "OUT_OF_SCOPE"
   },
   {
     "planItemId": "T1",
@@ -115,8 +115,8 @@
     "planItemId": "T6",
     "description": "Status bar voice indicator i18n keys: Ses N in Turkish and Voice N in English.",
     "codeLocation": "src/ui/StatusBar.tsx:StatusBar",
-    "testFile": "tests/ui/tab_voice_ui.test.tsx",
-    "testName": "Tab in input mode changes the status bar voice text immediately",
+    "testFile": "scripts/test_i18n_dom.mjs",
+    "testName": "Turkish status bar shows \"Ses 2\" after entering input mode and pressing Tab",
     "status": "DONE"
   },
   {

@@ -1,8 +1,28 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-import { spawn } from 'child_process';
+import { spawn, execSync } from 'child_process';
 import http from 'http';
 import fs from 'fs';
 import { chromium } from 'playwright';
+
+function killProcessTree(proc) {
+  if (!proc || !proc.pid) return;
+  try {
+    if (process.platform === 'win32') {
+      execSync(`taskkill /pid ${proc.pid} /f /t`, { stdio: 'ignore' });
+    } else {
+      try {
+        execSync(`pkill -P ${proc.pid}`, { stdio: 'ignore' });
+      } catch {}
+      try {
+        process.kill(-proc.pid, 'SIGKILL');
+      } catch {
+        try {
+          proc.kill('SIGKILL');
+        } catch {}
+      }
+    }
+  } catch {}
+}
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -127,8 +147,10 @@ async function main() {
 
   const port = 4199;
   const baseUrl = `http://localhost:${port}`;
+  const isWin = process.platform === 'win32';
   const preview = spawn('npx', ['vite', 'preview', '--port', String(port), '--strictPort'], {
-    shell: true,
+    shell: isWin,
+    detached: !isWin,
     stdio: 'pipe',
   });
 
@@ -237,15 +259,7 @@ async function main() {
     fs.writeFileSync(outPath, JSON.stringify(summary, null, 2));
     console.log(`Saved summary to ${outPath}`);
   } finally {
-    try {
-      if (preview.pid) {
-        if (process.platform === 'win32') {
-          spawn('taskkill', ['/pid', String(preview.pid), '/f', '/t'], { stdio: 'ignore' });
-        } else {
-          preview.kill('SIGTERM');
-        }
-      }
-    } catch {}
+    killProcessTree(preview);
   }
 }
 

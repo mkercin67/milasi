@@ -1,23 +1,23 @@
 [
   {
     "planItemId": "S1",
-    "description": "Single voice per selection: A selection (event or range) belongs to EXACTLY ONE voice (voiceIndex: 1 | 2 | 3 | 4). Range selection across voices is rejected.",
-    "codeLocation": "src/core/selection.ts:makeRangeSelection",
+    "description": "RangeSelection strictly defined with staffId, voiceIndex (1..4), anchorId, focusId; voiceId completely removed from selection; range strictly within ONE voice; may span multiple measures.",
+    "codeLocation": "src/core/selection.ts:RangeSelection",
     "testFile": "tests/core/m7a_voice_selection_ops.test.ts",
     "testName": "range-selects across m.1 and m.2 strictly in voice 2, excluding voice 1 notes",
     "status": "DONE"
   },
   {
     "planItemId": "S2",
-    "description": "Range measure span: Range selection across measures in the same voice is supported; returns start/end measure numbers, count of events, and measureCount.",
-    "codeLocation": "src/core/selection.ts:getRangeMeasureSpan",
-    "testFile": "tests/core/m7a_voice_selection_ops.test.ts",
-    "testName": "range-selects across m.1 and m.2 strictly in voice 2, excluding voice 1 notes",
+    "description": "Voice.id remains on model for completeness and keys; voiceId is never used in selection, clipboard, marquee, or UI state; checkVoiceIdUsage asserts no voiceId in src/ outside validate.ts and migrations.ts.",
+    "codeLocation": "src/core/model.ts:Voice",
+    "testFile": "scripts/checkVoiceIdUsage.mjs",
+    "testName": "asserts no voiceId in src/ outside validate.ts and migrations.ts",
     "status": "DONE"
   },
   {
     "planItemId": "S3",
-    "description": "Cross-voice paste auto-creation: Pasting into a voice that does not exist in the target measure auto-creates the voice with D3 semantics in the same undo step (rests fill [0, totalMTicks) via fillMeasureWithRests, sorted by voiceIndex).",
+    "description": "ClipboardPayload carries events without voice identity; paste target voice resolved from cursor.voiceIndex, selection.voiceIndex, or firstCtx.voiceIndex; missing voice auto-created in same undo step.",
     "codeLocation": "src/core/clipboard.ts:pasteEvents",
     "testFile": "tests/core/m7a_voice_selection_ops.test.ts",
     "testName": "b) copy 2 notes from voice 2, paste into voice 2 of a measure with ONLY voice 1 -> voice 2 created in 1 undo step, surrounded by rests",
@@ -25,51 +25,51 @@
   },
   {
     "planItemId": "S4",
-    "description": "Voice isolation of operations: Operations on a voice selection (transpose, delete/convert-to-rest, tie, slur, articulation, dynamic) touch only the selected voice and leave other voices untouched.",
-    "codeLocation": "src/core/commands.ts:transposeRange",
-    "testFile": "tests/core/m7a_voice_selection_ops.test.ts",
-    "testName": "transpose semitone up (+1)",
-    "status": "DONE"
-  },
-  {
-    "planItemId": "S5",
-    "description": "Status bar range info: Shows count and measure span in active locale ({count} öge seçildi ({measures}) / {count} items selected ({measures})).",
-    "codeLocation": "src/ui/StatusBar.tsx:StatusBar",
-    "testFile": "tests/ui/m7a_statusbar_badges.test.tsx",
-    "testName": "renders Turkish range selection info with count and measure span: 8 öge seçildi (Ölçü 1–2)",
-    "status": "DONE"
-  },
-  {
-    "planItemId": "S6",
-    "description": "Marquee single voice resolution: Marquee drag encloses notes of both voices but selects ONLY the voice of the first-hit event without voiceId.",
-    "codeLocation": "src/ui/scoreView/useScoreMarquee.ts:useScoreMarquee",
-    "testFile": "tests/ui/marquee_voice_selection.test.ts",
-    "testName": "T6: marquee enclosing notes of BOTH voices selects ONLY voice of the first-hit event without voiceId",
-    "status": "DONE"
-  },
-  {
-    "planItemId": "S7",
-    "description": "Memory and system clipboard: Copy and paste preserve notes and rests with voiceIndex; system clipboard serialization and deserialization without voiceId.",
-    "codeLocation": "src/core/clipboard.ts:copyEvents",
-    "testFile": "tests/core/m7a_voice_selection_ops.test.ts",
-    "testName": "a) copy 2 notes from voice 2, paste into voice 1 of measure 1 -> pasted notes in voice 1, voice 2 unchanged",
-    "status": "DONE"
-  },
-  {
-    "planItemId": "S8",
-    "description": "Undo/redo deep-equality: Every operation, paste, and delete on voice selections is fully reversible, restoring score deep-equal to initial with 0 validation errors.",
+    "description": "Deleting a selection in voice N converts selected events to rests of matching durations; all other voices on the staff remain completely untouched.",
     "codeLocation": "src/core/commands.ts:deleteRange",
     "testFile": "tests/core/m7a_voice_selection_ops.test.ts",
     "testName": "delete (notes become rests)",
     "status": "DONE"
   },
   {
-    "planItemId": "S9",
-    "description": "Property-based fuzz verification: 20 seeds x 100 steps of random voice range selection, transposition, clipboard, and deletion with invariant checking and reversibility.",
-    "codeLocation": "src/core/selection.ts:extendSelection",
-    "testFile": "tests/core/voice_property_m7a3.test.ts",
-    "testName": "verifies 20 seeds x 100 steps of random voice operations, isolation, and undo/redo reversibility",
+    "planItemId": "S5",
+    "description": "Marquee rectangle selects only events belonging to the voice of the first hit element in reading order; hits in other voices are ignored.",
+    "codeLocation": "src/ui/scoreView/useScoreMarquee.ts:useScoreMarquee",
+    "testFile": "tests/ui/marquee_voice_selection.test.ts",
+    "testName": "T6: marquee enclosing notes of BOTH voices selects ONLY voice of the first-hit event without voiceId",
     "status": "DONE"
+  },
+  {
+    "planItemId": "S6",
+    "description": "ArrowLeft/Right moves within current voice; Shift+ArrowLeft/Right extends range within voice and across measures; editing keys operate strictly on selected voice.",
+    "codeLocation": "src/core/selection.ts:extendSelection",
+    "testFile": "tests/core/range_selection.test.ts",
+    "testName": "S6: Shift+Right in voice 2 extends within voice 2 and across measures to next measure in same voice",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "S7",
+    "description": "Every editing operation on voice N leaves all other voices deep-equal; undo() restores exact previous score with deep-equality.",
+    "codeLocation": "src/core/commands.ts:transposeRange",
+    "testFile": "tests/core/m7a_voice_selection_ops.test.ts",
+    "testName": "transpose semitone up (+1)",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "S8",
+    "description": "validateScore(score) produces zero errors after every editing, clipboard, deletion, and undo/redo operation.",
+    "codeLocation": "src/core/validate.ts:validateScore",
+    "testFile": "tests/core/m7a_voice_selection_ops.test.ts",
+    "testName": "c) copy 2 notes from voice 2, paste into voice 2 that already has content -> replaces content, validateScore 0 errors",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "S9",
+    "description": "Multi-voice simultaneous selection, moving notes between voices via drag-and-drop, voice crossing, voice deletion commands, grand staff multi-staff selection.",
+    "codeLocation": "docs/design/m7a-3-selection-by-voice.md:S9",
+    "testFile": "docs/design/m7a-3-selection-by-voice.md",
+    "testName": "Out of Scope",
+    "status": "OUT_OF_SCOPE"
   },
   {
     "planItemId": "T1",

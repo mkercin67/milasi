@@ -249,6 +249,7 @@ async function runI18nPlaywrightCheck() {
   let trBrandPass = await checkNoScoreForgeInDom(page, 'Turkish Main View');
   if (!trBrandPass) allPassed = false;
 
+  // test('Turkish status bar shows "Ses 2" after entering input mode and pressing Tab')
   // T6: Enter input mode (KeyN), press Tab, and verify status bar shows "Ses 2" in Turkish
   await page.keyboard.press('KeyN');
   await sleep(250);

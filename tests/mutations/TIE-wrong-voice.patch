@@ -1,0 +1,13 @@
+diff --git a/src/core/notationCommands.ts b/src/core/notationCommands.ts
+index daf7dc5..6d4c43a 100644
+--- a/src/core/notationCommands.ts
++++ b/src/core/notationCommands.ts
+@@ -29,7 +29,7 @@ export function toggleTie(eventId: string, pitchIndex: number = 0): Command {
+               const idx = v.events.findIndex((e) => e.id === eventId);
+               if (idx !== -1) {
+                 foundStaffId = staff.id;
+-                foundVoiceIndex = v.voiceIndex;
++                foundVoiceIndex = 1;
+                 startMIdx = mIdx;
+                 startEvIdx = idx;
+                 const ev = v.events[idx];

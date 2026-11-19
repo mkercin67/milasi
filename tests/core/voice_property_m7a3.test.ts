@@ -43,6 +43,7 @@ describe('T4: Seeded Property Test for Multi-Voice Operations and Clipboard (Rul
   const SEEDS = Array.from({ length: 20 }, (_, i) => 2001 + i * 43);
 
   it('verifies 20 seeds x 100 steps of random voice operations, isolation, and undo/redo reversibility', () => {
+    console.log('T4 Seeds: ' + JSON.stringify(SEEDS));
     for (const seed of SEEDS) {
       const rng = mulberry32(seed);
 
