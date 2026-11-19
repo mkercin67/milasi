@@ -82,6 +82,7 @@ const EditorShell: React.FC = () => {
     exitInputMode,
     setCursorToMeasure,
     moveCursorDirection,
+    cycleVoiceDirection,
     enterPitchAtCursor,
     enterPitchDirect,
     changeEventPitch,
@@ -254,6 +255,7 @@ const EditorShell: React.FC = () => {
     applySlur,
     clearNotations,
     moveCursorDirection,
+    cycleVoiceDirection,
     transposeSelection,
     executeCommand,
     previewPlayer,
@@ -489,6 +491,7 @@ const EditorShell: React.FC = () => {
             dragStatus={dragStatus}
             errorCount={errorCount}
             warningCount={warningCount}
+            voiceIndex={cursor?.voiceIndex ?? 1}
           />
         );
       })()}

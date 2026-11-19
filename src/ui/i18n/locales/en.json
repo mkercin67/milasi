@@ -35,6 +35,7 @@
   "status.restInfo": "Measure {measure} · {duration}",
   "status.inputMode": "Note input · {duration} · Measure {measure}",
   "status.inputModeRest": "Rest input · {duration} · Measure {measure}",
+  "status.voice": "Voice {num}",
   "status.inputOff": "Note input off. Press N",
   "duration.whole.note": "Whole note",
   "duration.half.note": "Half note",

@@ -69,7 +69,17 @@ export function useEditor(initialScore?: Score) {
     setDirtyVersion((v) => v + 1);
   }, []);
 
+  const currentCursorRef = useRef<ScoreCursor | null>(null);
+  const cursorHistoryRef = useRef<{
+    past: Array<ScoreCursor | null>;
+    future: Array<ScoreCursor | null>;
+  }>({ past: [], future: [] });
+
   const executeCommand = useCallback((cmd: Command) => {
+    cursorHistoryRef.current.past.push(
+      currentCursorRef.current ? { ...currentCursorRef.current } : null
+    );
+    cursorHistoryRef.current.future = [];
     const nextScore = historyRef.current.do(cmd);
     scoreRef.current = nextScore;
     setScore(nextScore);
@@ -133,35 +143,52 @@ export function useEditor(initialScore?: Score) {
     } else {
       inputHook.setCursor(null);
     }
+    cursorHistoryRef.current = { past: [], future: [] };
   }, [selectionHook, inputHook]);
 
+  currentCursorRef.current = inputHook.cursor;
+
   const undo = useCallback(() => {
-    const prevScore = historyRef.current.undo();
-    if (prevScore) {
-      scoreRef.current = prevScore;
-      setScore(prevScore);
-      setDirtyVersion((v) => v + 1);
-      selectionHook.setSelectedEventId((curr) => (curr && eventExists(prevScore, curr) ? curr : null));
-      inputHook.setCursor((c) => {
-        const nextC = c ? snapCursor(prevScore, c) : null;
-        inputHook.lastEnteredPitchRef.current = getLastNotePitchBeforeCursor(prevScore, nextC);
-        return nextC;
-      });
+    if (historyRef.current.canUndo()) {
+      cursorHistoryRef.current.future.push(
+        currentCursorRef.current ? { ...currentCursorRef.current } : null
+      );
+      const prevCursor = cursorHistoryRef.current.past.pop() ?? null;
+      const prevScore = historyRef.current.undo();
+      if (prevScore) {
+        scoreRef.current = prevScore;
+        setScore(prevScore);
+        setDirtyVersion((v) => v + 1);
+        selectionHook.setSelectedEventId((curr) => (curr && eventExists(prevScore, curr) ? curr : null));
+        if (prevCursor) {
+          inputHook.setCursor(prevCursor);
+          inputHook.lastEnteredPitchRef.current = getLastNotePitchBeforeCursor(prevScore, prevCursor);
+        } else {
+          inputHook.setCursor((c) => (c ? snapCursor(prevScore, c) : null));
+        }
+      }
     }
   }, [selectionHook, inputHook]);
 
   const redo = useCallback(() => {
-    const nextScore = historyRef.current.redo();
-    if (nextScore) {
-      scoreRef.current = nextScore;
-      setScore(nextScore);
-      setDirtyVersion((v) => v + 1);
-      selectionHook.setSelectedEventId((curr) => (curr && eventExists(nextScore, curr) ? curr : null));
-      inputHook.setCursor((c) => {
-        const nextC = c ? snapCursor(nextScore, c) : null;
-        inputHook.lastEnteredPitchRef.current = getLastNotePitchBeforeCursor(nextScore, nextC);
-        return nextC;
-      });
+    if (historyRef.current.canRedo()) {
+      cursorHistoryRef.current.past.push(
+        currentCursorRef.current ? { ...currentCursorRef.current } : null
+      );
+      const nextCursor = cursorHistoryRef.current.future.pop() ?? null;
+      const nextScore = historyRef.current.redo();
+      if (nextScore) {
+        scoreRef.current = nextScore;
+        setScore(nextScore);
+        setDirtyVersion((v) => v + 1);
+        selectionHook.setSelectedEventId((curr) => (curr && eventExists(nextScore, curr) ? curr : null));
+        if (nextCursor) {
+          inputHook.setCursor(nextCursor);
+          inputHook.lastEnteredPitchRef.current = getLastNotePitchBeforeCursor(nextScore, nextCursor);
+        } else {
+          inputHook.setCursor((c) => (c ? snapCursor(nextScore, c) : null));
+        }
+      }
     }
   }, [selectionHook, inputHook]);
 
@@ -222,6 +249,7 @@ export function useEditor(initialScore?: Score) {
     changeEventPitch: selectionHook.changeEventPitch,
     enterRestAtCursor: inputHook.enterRestAtCursor,
     moveCursorDirection: inputHook.moveCursorDirection,
+    cycleVoiceDirection: inputHook.cycleVoiceDirection,
     selection: selectionHook.selection,
     selectedRange: selectionHook.selectedRange,
     rangeEvents: selectionHook.rangeEvents,

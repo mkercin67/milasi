@@ -51,6 +51,7 @@ export interface UseAppKeyboardParams {
   applySlur: () => void;
   clearNotations: () => void;
   moveCursorDirection: (direction: 'prev' | 'next') => void;
+  cycleVoiceDirection: (direction: 'next' | 'prev') => void;
   transposeSelection: (semitones: number) => void;
   executeCommand: (cmd: Command) => Score;
   previewPlayer: PreviewPlayer;
@@ -117,6 +118,7 @@ export function useAppKeyboard(params: UseAppKeyboardParams) {
     applySlur,
     clearNotations,
     moveCursorDirection,
+    cycleVoiceDirection,
     transposeSelection,
     executeCommand,
     previewPlayer,
@@ -318,6 +320,12 @@ export function useAppKeyboard(params: UseAppKeyboardParams) {
           case 'reset-accidental':
             resetAccidentalSelection();
             break;
+          case 'next-voice':
+            cycleVoiceDirection('next');
+            break;
+          case 'prev-voice':
+            cycleVoiceDirection('prev');
+            break;
           case 'toggle-tie':
             toggleTieSelection();
             break;
@@ -506,6 +514,7 @@ export function useAppKeyboard(params: UseAppKeyboardParams) {
     applySlur,
     clearNotations,
     moveCursorDirection,
+    cycleVoiceDirection,
     transposeSelection,
     executeCommand,
     previewPlayer,

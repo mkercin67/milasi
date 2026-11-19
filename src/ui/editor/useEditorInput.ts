@@ -5,6 +5,7 @@ import { EditorMode } from '../keymap';
 import {
   advanceCursor,
   appendMeasure,
+  cycleVoice,
   enterNote,
   enterRest,
   getLastNotePitchBeforeCursor,
@@ -324,6 +325,16 @@ export function useEditorInput({
     [score]
   );
 
+  const cycleVoiceDirection = useCallback(
+    (direction: 'next' | 'prev') => {
+      setCursor((curr) => {
+        if (!curr) return null;
+        return cycleVoice(score, curr, direction);
+      });
+    },
+    [score]
+  );
+
   return {
     mode,
     setMode,
@@ -348,6 +359,7 @@ export function useEditorInput({
     enterPitchDirect,
     enterRestAtCursor,
     moveCursorDirection,
+    cycleVoiceDirection,
     setCursorToMeasure,
   };
 }

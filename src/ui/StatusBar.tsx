@@ -29,6 +29,7 @@ export interface StatusBarProps {
   dragStatus?: string | null;
   errorCount?: number;
   warningCount?: number;
+  voiceIndex?: 1 | 2 | 3 | 4;
 }
 
 const MODE_COLORS: Record<EditorMode, { bg: string; fg: string; border: string }> = {
@@ -52,6 +53,7 @@ export const StatusBar: React.FC<StatusBarProps> = ({
   dragStatus = null,
   errorCount,
   warningCount,
+  voiceIndex,
 }) => {
   if (typeof window !== 'undefined') {
     const w = window as unknown as { __componentRenders?: Record<string, number> };
@@ -80,6 +82,7 @@ export const StatusBar: React.FC<StatusBarProps> = ({
 
     if (mode === 'input') {
       const durationText = t(`duration.${activeDuration}.note`);
+      const voiceText = t('status.voice', { num: voiceIndex ?? 1 });
       let pointerText = '';
       if (hoverInfo) {
         pointerText = ` · ${t('status.pointerInfo', {
@@ -96,6 +99,8 @@ export const StatusBar: React.FC<StatusBarProps> = ({
             duration: durationText,
             measure: currentMeasureNumber,
           })}
+          {' · '}
+          <span data-testid="status-voice-indicator">{voiceText}</span>
           {pointerText}
         </span>
       );
@@ -214,6 +219,7 @@ export const StatusBar: React.FC<StatusBarProps> = ({
 
   return (
     <footer
+      data-testid="status-bar"
       style={{
         display: 'flex',
         alignItems: 'center',

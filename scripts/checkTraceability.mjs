@@ -2,26 +2,29 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-const TRACEABILITY_FILE = path.resolve('docs/design/schema-v7-traceability.json');
+const TRACEABILITY_FILES = [
+  path.resolve('docs/design/schema-v7-traceability.json'),
+  path.resolve('docs/design/m7a-2b-traceability.json'),
+];
 
 function escapeRegex(str) {
   return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-function checkTraceability() {
-  console.log('--- Checking Schema v7 Machine Traceability Matrix ---');
+function checkTraceabilityFile(filePath) {
+  console.log(`--- Checking Machine Traceability Matrix: ${path.basename(filePath)} ---`);
 
-  if (!fs.existsSync(TRACEABILITY_FILE)) {
-    console.error(`ERROR: Traceability file not found: ${TRACEABILITY_FILE}`);
+  if (!fs.existsSync(filePath)) {
+    console.error(`ERROR: Traceability file not found: ${filePath}`);
     process.exit(1);
   }
 
-  const raw = fs.readFileSync(TRACEABILITY_FILE, 'utf-8');
+  const raw = fs.readFileSync(filePath, 'utf-8');
   let entries;
   try {
     entries = JSON.parse(raw);
   } catch (err) {
-    console.error(`ERROR: Failed to parse JSON in ${TRACEABILITY_FILE}:`, err.message);
+    console.error(`ERROR: Failed to parse JSON in ${filePath}:`, err.message);
     process.exit(1);
   }
 
@@ -100,11 +103,19 @@ function checkTraceability() {
 
   console.log('----------------------------------------------------');
   if (errors > 0) {
-    console.error(`FAILED: Traceability check failed with ${errors} error(s).`);
+    console.error(`FAILED: Traceability check failed with ${errors} error(s) in ${path.basename(filePath)}.`);
     process.exit(1);
   }
 
   console.log(`✓ All ${doneCount} DONE traceability rows statically verified against actual test files.`);
+}
+
+function checkTraceability() {
+  for (const file of TRACEABILITY_FILES) {
+    if (fs.existsSync(file)) {
+      checkTraceabilityFile(file);
+    }
+  }
 }
 
 checkTraceability();

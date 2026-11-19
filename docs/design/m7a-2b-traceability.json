@@ -1,0 +1,122 @@
+[
+  {
+    "planItemId": "D1",
+    "description": "Keymap & shortcuts: Tab / Shift+Tab in input mode cycle voice forward / backward. Outside input mode Tab keeps normal focus behaviour. Escape leaves input mode. No Ctrl+Alt+digit shortcuts.",
+    "codeLocation": "src/ui/keymap.ts:KEYMAP",
+    "testFile": "tests/ui/tab_voice_ui.test.tsx",
+    "testName": "Tab in input mode is mapped and default-prevented; Tab outside input mode is NOT default-prevented",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "D2",
+    "description": "Pure cursor functions: Cursor = { staffId, voiceIndex, measureId, tick }. Voice switching changes cursor only: never creates, never deletes, never modifies events or voices, never creates an undo entry. Invariant: tick is always at the START of a sounding event in that voice (or the barline); switching voices snaps to the start of the event sounding at the old tick, NEVER forward into silence or the next event. If the voice does not exist in that measure, cursor stays at the same tick (virtual cursor).",
+    "codeLocation": "src/core/input.ts:cycleVoice",
+    "testFile": "tests/ui/cursor_voice.test.ts",
+    "testName": "FAILING-FIRST: cycles forward (Tab) 1 -> 2 -> 3 -> 4 -> 1 and backward (Shift+Tab) 1 -> 4 -> 3 -> 2 -> 1",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "D3",
+    "description": "Voice creation on entry: First entry into a missing voice creates the voice in that measure in the SAME undo step: rests fill [0, t) via fillMeasureWithRests, then the entered event, then rests to the barline. Voices stay sorted by voiceIndex; gaps are allowed (voices 1 and 3 without 2).",
+    "codeLocation": "src/core/input.ts:enterEventCommand",
+    "testFile": "tests/core/voice_creation_entry.test.ts",
+    "testName": "T2: entry in missing voice 2 at tick 1920 of an empty 4/4 measure gives rests for [0, 1920) + the note + rests to the barline, total 3840; validateScore zero errors; voices sorted",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "D4",
+    "description": "Entry into existing voice: Reuses the existing entry path with voiceIndex.",
+    "codeLocation": "src/core/commands.ts:insertNote",
+    "testFile": "tests/core/m7a_commands_v7.test.ts",
+    "testName": "inserts notes in voice 2 addressed by voiceIndex and leaves voice 1 untouched",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "D5",
+    "description": "Cursor advance after entry: Advances in the same voice, never dropping to voice 1; crossing barlines keeps voiceIndex (virtual if the target measure lacks that voice).",
+    "codeLocation": "src/core/input.ts:advanceCursor",
+    "testFile": "tests/core/voice_property.test.ts",
+    "testName": "verifies 20 seeds x 200 steps of random voice navigation, entry, and undo/redo",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "D6",
+    "description": "Status bar voice indicator: Shows 'Ses {N}' (tr) / 'Voice {N}' (en) in input mode, with data-testid='status-voice-indicator', reactive to cursor.voiceIndex.",
+    "codeLocation": "src/ui/StatusBar.tsx:StatusBar",
+    "testFile": "tests/ui/tab_voice_ui.test.tsx",
+    "testName": "Tab in input mode changes the status bar voice text immediately",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "D7",
+    "description": "Undo/Redo cursor restoration: Undo and redo restore the exact cursor state (including voiceIndex).",
+    "codeLocation": "src/ui/useEditor.ts:useEditor",
+    "testFile": "tests/core/voice_property.test.ts",
+    "testName": "verifies 20 seeds x 200 steps of random voice navigation, entry, and undo/redo",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "D8",
+    "description": "Invariants: Voice 1 always exists. Voices cannot be deleted except by undo.",
+    "codeLocation": "src/core/validate.ts:validateScore",
+    "testFile": "tests/core/voice_property.test.ts",
+    "testName": "verifies 20 seeds x 200 steps of random voice navigation, entry, and undo/redo",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "D9",
+    "description": "Out of scope: Voice colours, moving notes between voices, voice crossing, deleting voices, selection across voices, grand staff, new entry keys.",
+    "codeLocation": "docs/design/m7a-2b-voice-input.md:D9",
+    "testFile": "tests/ui/cursor_voice.test.ts",
+    "testName": "FAILING-FIRST: cycles forward (Tab) 1 -> 2 -> 3 -> 4 -> 1 and backward (Shift+Tab) 1 -> 4 -> 3 -> 2 -> 1",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "T1",
+    "description": "Pure cursor functions: cycleVoice wraps 1..4 forward and backward, snaps to start of sounding event, never snaps forward.",
+    "codeLocation": "src/core/input.ts:cycleVoice",
+    "testFile": "tests/ui/cursor_voice.test.ts",
+    "testName": "FAILING-FIRST: snaps cursor in the middle of a longer event to event start (never forward)",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "T2",
+    "description": "First entry into missing voice 2 at tick 1920 fills [0, 1920) with rests, inserts event, fills to barline.",
+    "codeLocation": "src/core/input.ts:enterEventCommand",
+    "testFile": "tests/core/voice_creation_entry.test.ts",
+    "testName": "T2: entry in missing voice 2 at tick 1920 of an empty 4/4 measure gives rests for [0, 1920) + the note + rests to the barline, total 3840; validateScore zero errors; voices sorted",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "T3",
+    "description": "Gap case: voice 3 created while voice 2 is missing, sorted voices with gap allowed.",
+    "codeLocation": "src/core/input.ts:enterEventCommand",
+    "testFile": "tests/core/voice_creation_entry.test.ts",
+    "testName": "T3: gap case: voice 3 created while voice 2 is missing, sorted voices with gap allowed",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "T4",
+    "description": "Seeded property test: 20 seeds x 200 steps across multi-voice operations, all invariants checked at every step.",
+    "codeLocation": "src/core/input.ts:enterEventCommand",
+    "testFile": "tests/core/voice_property.test.ts",
+    "testName": "verifies 20 seeds x 200 steps of random voice navigation, entry, and undo/redo",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "T5",
+    "description": "Tab in input mode changes status bar voice text immediately and is default-prevented.",
+    "codeLocation": "src/ui/app/useAppKeyboard.ts:useAppKeyboard",
+    "testFile": "tests/ui/tab_voice_ui.test.tsx",
+    "testName": "Tab in input mode changes the status bar voice text immediately",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "T6",
+    "description": "Status bar voice indicator i18n keys: Ses N in Turkish and Voice N in English.",
+    "codeLocation": "src/ui/StatusBar.tsx:StatusBar",
+    "testFile": "tests/ui/tab_voice_ui.test.tsx",
+    "testName": "Tab in input mode changes the status bar voice text immediately",
+    "status": "DONE"
+  }
+]

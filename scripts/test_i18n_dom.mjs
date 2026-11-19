@@ -227,6 +227,24 @@ async function runI18nPlaywrightCheck() {
   let trBrandPass = await checkNoScoreForgeInDom(page, 'Turkish Main View');
   if (!trBrandPass) allPassed = false;
 
+  // T6: Enter input mode (KeyN), press Tab, and verify status bar shows "Ses 2" in Turkish
+  await page.keyboard.press('KeyN');
+  await sleep(250);
+  await page.keyboard.press('Tab');
+  await sleep(250);
+  const trStatusText = await page.textContent('[data-testid="status-bar"]');
+  console.log(`Turkish input mode after Tab status bar: "${trStatusText?.trim()}"`);
+  if (!trStatusText || !trStatusText.includes('Ses 2')) {
+    console.error(`FAILED (T6): Turkish status bar does not contain "Ses 2" after Tab! Found: "${trStatusText}"`);
+    allPassed = false;
+  } else {
+    console.log('PASS (T6): Turkish status bar shows "Ses 2" after entering input mode and pressing Tab.');
+  }
+  await page.keyboard.press('Shift+Tab'); // return to voice 1
+  await sleep(100);
+  await page.keyboard.press('Escape');
+  await sleep(200);
+
   // Modals to open and check
   const modalButtons = [
     { name: 'New Score', btn: '[data-testid="btn-new-score"]', cancel: 'button:has-text("İptal")' },
@@ -276,6 +294,22 @@ async function runI18nPlaywrightCheck() {
   if (!enPass) allPassed = false;
   let enBrandPass = await checkNoScoreForgeInDom(page, 'English Main View');
   if (!enBrandPass) allPassed = false;
+
+  // T6: Enter input mode (KeyN), press Tab, and verify status bar shows "Voice 2" in English
+  await page.keyboard.press('KeyN');
+  await sleep(250);
+  await page.keyboard.press('Tab');
+  await sleep(250);
+  const enStatusText = await page.textContent('[data-testid="status-bar"]');
+  console.log(`English input mode after Tab status bar: "${enStatusText?.trim()}"`);
+  if (!enStatusText || !enStatusText.includes('Voice 2')) {
+    console.error(`FAILED (T6): English status bar does not contain "Voice 2" after Tab! Found: "${enStatusText}"`);
+    allPassed = false;
+  } else {
+    console.log('PASS (T6): English status bar shows "Voice 2" after entering input mode and pressing Tab.');
+  }
+  await page.keyboard.press('Escape');
+  await sleep(200);
 
   const modalButtonsEn = [
     { name: 'New Score', btn: '[data-testid="btn-new-score"]', cancel: 'button:has-text("Cancel")' },

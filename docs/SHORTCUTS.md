@@ -89,6 +89,8 @@ Activated via `KeyN`. Enter pitches, rests, and note durations.
 | `6` | `Digit6` | `Shift` | apply-dynamic: ff |
 | `7` | `Digit7` | `Shift` | apply-dynamic: sfz |
 | `8` | `Digit8` | `Shift` | apply-dynamic: fp |
+| `Tab` | `Tab` | - | next-voice |
+| `Tab` | `Tab` | `Shift` | prev-voice |
 | `C..B` | `KeyC..KeyB` | - | enter-pitch |
 | `0` | `Digit0` | - | enter-rest |
 | `B` | `KeyB` | `Ctrl` | insert-measure |

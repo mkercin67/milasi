@@ -138,7 +138,7 @@ export function planEnter(
   const voice = sm?.voices.find((v) => v.voiceIndex === cursor.voiceIndex);
 
   // If voice does not exist yet in this measure, simulate initial rests via addVoice semantics
-  const events = voice ? voice.events : fillMeasureWithRests(mLength);
+  const events = voice ? voice.events : fillMeasureWithRests(mLength, () => newId());
 
   // Check for tuplet collision
   let t = 0;
@@ -230,17 +230,25 @@ export function enterEventCommand(cursor: ScoreCursor, spec: InputNoteSpec): Com
           }
           let voice = sm.voices.find((v) => v.voiceIndex === cursor.voiceIndex);
           if (!voice) {
-            // Create voice via addVoice semantics
+            // Decision D3: First entry into a missing voice creates the voice in that
+            // measure in the SAME undo step: rests fill [0, t) via fillMeasureWithRests,
+            // then the entered event, then rests to the barline. Voices stay sorted by
+            // voiceIndex; gaps are allowed (voices 1 and 3 without 2).
             const mDef = draft.measures.find((m) => m.id === cursor.measureId);
-            const targetLength = mDef?.actualTicks ?? (mDef ? measureTicks(mDef.timeSig) : 3840);
-            const initialRests = fillMeasureWithRests(targetLength);
+            const mLength = mDef?.actualTicks ?? (mDef ? measureTicks(mDef.timeSig) : 3840);
+            const eventDuration = plan.newEvent.duration;
+            const leadingRests = cursor.tick > 0 ? fillMeasureWithRests(cursor.tick, () => newId()) : [];
+            const trailingSpan = mLength - (cursor.tick + eventDuration);
+            const trailingRests = trailingSpan > 0 ? fillMeasureWithRests(trailingSpan, () => newId()) : [];
+
             voice = {
               id: newId(),
               voiceIndex: cursor.voiceIndex,
-              events: initialRests,
+              events: [...leadingRests, plan.newEvent, ...trailingRests],
             };
             sm.voices.push(voice);
             sm.voices.sort((a, b) => a.voiceIndex - b.voiceIndex);
+            return;
           }
 
           // Find where spanStart begins in voice.events
@@ -490,7 +498,7 @@ export function snapCursor(score: Score, cursor: ScoreCursor): ScoreCursor {
   const voice = sm?.voices.find((v) => v.voiceIndex === cursor.voiceIndex);
 
   if (!voice || voice.events.length === 0) {
-    return { ...cursor, tick: 0 };
+    return { ...cursor };
   }
 
   let bestTick = 0;
@@ -505,6 +513,64 @@ export function snapCursor(score: Score, cursor: ScoreCursor): ScoreCursor {
   }
 
   return { ...cursor, tick: bestTick };
+}
+
+/**
+ * Cycles the score cursor to the next or previous voiceIndex (1 > 2 > 3 > 4 > 1).
+ *
+ * If the target voice exists in the measure, the tick snaps to the START of the
+ * event of that voice sounding at the current tick (never forward).
+ * If the target voice does not exist in the measure, a virtual cursor is kept
+ * at the same tick (Decision D2).
+ */
+export function cycleVoice(
+  score: Score,
+  cursor: ScoreCursor,
+  direction: 'next' | 'prev' = 'next'
+): ScoreCursor {
+  const currentVoiceIndex = cursor.voiceIndex ?? 1;
+  let targetVoiceIndex: 1 | 2 | 3 | 4;
+  if (direction === 'next') {
+    targetVoiceIndex = (currentVoiceIndex === 4 ? 1 : (currentVoiceIndex + 1)) as 1 | 2 | 3 | 4;
+  } else {
+    targetVoiceIndex = (currentVoiceIndex === 1 ? 4 : (currentVoiceIndex - 1)) as 1 | 2 | 3 | 4;
+  }
+
+  const part = score.parts.find((p) => p.staves.some((s) => s.id === cursor.staffId));
+  const staff = part?.staves.find((s) => s.id === cursor.staffId);
+  const sm = staff?.measures[cursor.measureId];
+  const targetVoice = sm?.voices.find((v) => v.voiceIndex === targetVoiceIndex);
+
+  if (!targetVoice || targetVoice.events.length === 0) {
+    return {
+      staffId: cursor.staffId,
+      measureId: cursor.measureId,
+      voiceIndex: targetVoiceIndex,
+      tick: cursor.tick,
+    };
+  }
+
+  let bestTick = 0;
+  let t = 0;
+  for (const ev of targetVoice.events) {
+    const evStart = t;
+    const evEnd = t + ev.duration;
+    if (cursor.tick >= evStart && cursor.tick < evEnd) {
+      bestTick = evStart;
+      break;
+    }
+    if (evStart <= cursor.tick) {
+      bestTick = evStart;
+    }
+    t = evEnd;
+  }
+
+  return {
+    staffId: cursor.staffId,
+    measureId: cursor.measureId,
+    voiceIndex: targetVoiceIndex,
+    tick: bestTick,
+  };
 }
 
 const STEP_DIATONIC: Record<PitchStep, number> = {

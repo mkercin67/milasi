@@ -55,6 +55,8 @@ export type UserAction =
   | 'save-as-score'
   | 'open-score'
   | 'toggle-diagnostics'
+  | 'next-voice'
+  | 'prev-voice'
   | { type: 'apply-dynamic'; dynamic: DynamicType }
   | { type: 'toggle-articulation'; articulation: ArticulationType }
   | { type: 'nudge-override'; dx: number; dy: number }
@@ -378,6 +380,11 @@ export function mapKeyEvent(
 
   // INPUT MODE
   if (mode === 'input') {
+    // Tab and Shift+Tab for voice cycling (Decision D1)
+    if (e.code === 'Tab' || e.key === 'Tab') {
+      return isShift ? 'prev-voice' : 'next-voice';
+    }
+
     if (isShift) {
       if (e.code === 'KeyL') {
         return { type: 'toggle-articulation', articulation: 'marcato' };
@@ -535,6 +542,8 @@ export function getCompleteKeyTable(): KeyTableEntry[] {
     ),
 
     // Input mode shortcuts
+    { key: 'Tab', code: 'Tab', modifiers: 'none', mode: 'input', action: 'next-voice' },
+    { key: 'Tab', code: 'Tab', modifiers: 'Shift', mode: 'input', action: 'prev-voice' },
     { key: 'C..B', code: 'KeyC..KeyB', modifiers: 'none', mode: 'input', action: 'enter-pitch' },
     { key: '0', code: 'Digit0', modifiers: 'none', mode: 'input', action: 'enter-rest' },
     { key: 'B', code: 'KeyB', modifiers: 'Ctrl', mode: 'input', action: 'insert-measure' },
