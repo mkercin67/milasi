@@ -74,7 +74,7 @@ describe('M6a Closing: Selection and Multi-Measure Bug Verification (R1 & Step 0
 
     const rangeSel = {
       staffId: staff.id,
-      voiceId: firstCtx!.voiceId,
+      voiceIndex: (firstCtx!.voiceIndex ?? 1) as 1 | 2 | 3 | 4,
       anchorId: firstEv.id,
       focusId: lastEv.id,
     };
@@ -91,7 +91,7 @@ describe('M6a Closing: Selection and Multi-Measure Bug Verification (R1 & Step 0
     // Select 12 notes (measures 1 to 3)
     const rangeSel = {
       staffId: staff.id,
-      voiceId: staff.measures[score.measures[0].id].voices[0].id,
+      voiceIndex: 1 as const,
       anchorId: allNotes[0].id,
       focusId: allNotes[11].id,
     };
@@ -111,7 +111,7 @@ describe('M6a Closing: Selection and Multi-Measure Bug Verification (R1 & Step 0
       score,
       {
         staffId: staff.id,
-        voiceId: staff.measures[targetMDef.id].voices[0].id,
+        voiceIndex: 1,
         startMeasureId: targetMDef.id,
         startOffsetTicks: 0,
       },

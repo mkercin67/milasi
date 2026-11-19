@@ -29,16 +29,16 @@ describe('Milestone 6a: Range Selection (src/core/selection.ts)', () => {
     staff.measures[m1Id].voices[0] = { id: voiceId, voiceIndex: 1, events: [n4, n5, n6, n7] };
     staff.measures[m2Id].voices[0] = { id: voiceId, voiceIndex: 1, events: [r8] };
 
-    return { score, staffId: staff.id, voiceId, notes: [n0, n1, n2, n3, n4, n5, n6, n7, r8] };
+    return { score, staffId: staff.id, notes: [n0, n1, n2, n3, n4, n5, n6, n7, r8] };
   }
 
   it('eventsInRange returns all events contiguously in reading order forward and backward', () => {
-    const { score, staffId, voiceId, notes } = makeTestScore();
+    const { score, staffId, notes } = makeTestScore();
 
     // Range forward from n1 to n5 (5 events: D4, E4, F4 in m1, G4, A4 in m2)
     const rangeForward = {
       staffId,
-      voiceId,
+      voiceIndex: 1 as const,
       anchorId: notes[1].id,
       focusId: notes[5].id,
     };
@@ -54,7 +54,7 @@ describe('Milestone 6a: Range Selection (src/core/selection.ts)', () => {
     // Range backward (focus before anchor: n5 to n1) must return same events in reading order
     const rangeBackward = {
       staffId,
-      voiceId,
+      voiceIndex: 1 as const,
       anchorId: notes[5].id,
       focusId: notes[1].id,
     };
@@ -69,7 +69,7 @@ describe('Milestone 6a: Range Selection (src/core/selection.ts)', () => {
   });
 
   it('extendSelection handles none, single event, and existing range', () => {
-    const { score, staffId, voiceId, notes } = makeTestScore();
+    const { score, staffId, notes } = makeTestScore();
 
     // From none -> range with anchor=focus
     const sel0: Selection = { kind: 'none' };
@@ -78,7 +78,6 @@ describe('Milestone 6a: Range Selection (src/core/selection.ts)', () => {
       kind: 'range',
       staffId,
       voiceIndex: 1,
-      voiceId,
       anchorId: notes[2].id,
       focusId: notes[2].id,
     });
@@ -90,7 +89,6 @@ describe('Milestone 6a: Range Selection (src/core/selection.ts)', () => {
       kind: 'range',
       staffId,
       voiceIndex: 1,
-      voiceId,
       anchorId: notes[1].id,
       focusId: notes[4].id,
     });
@@ -101,7 +99,6 @@ describe('Milestone 6a: Range Selection (src/core/selection.ts)', () => {
       kind: 'range',
       staffId,
       voiceIndex: 1,
-      voiceId,
       anchorId: notes[1].id,
       focusId: notes[6].id,
     });
@@ -177,7 +174,7 @@ describe('Milestone 6a: Range Selection (src/core/selection.ts)', () => {
     // Range selection on Voice 1: from m0_v1_n0 to m1_v1_n0
     const rangeV1 = {
       staffId: staff.id,
-      voiceId: 'm0-v1',
+      voiceIndex: 1 as const,
       anchorId: m0_v1_n0.id,
       focusId: m1_v1_n0.id,
     };

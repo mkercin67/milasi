@@ -54,7 +54,6 @@ describe('Milestone 6a: Clipboard & Paste (src/core/clipboard.ts)', () => {
     });
     const staff = score.parts[0].staves[0];
     const m0Id = score.measures[0].id;
-    const v0Id = staff.measures[m0Id].voices[0].id;
 
     // Paste 3 quarter notes starting at beat 3 (offset 1920 ticks in 3/4)
     // Measure 1 has 960 ticks left -> gets 1 quarter note tied to measure 2
@@ -69,7 +68,7 @@ describe('Milestone 6a: Clipboard & Paste (src/core/clipboard.ts)', () => {
       score,
       {
         staffId: staff.id,
-        voiceId: v0Id,
+        voiceIndex: 1,
         startMeasureId: m0Id,
         startOffsetTicks: 1920,
       },
@@ -95,7 +94,6 @@ describe('Milestone 6a: Clipboard & Paste (src/core/clipboard.ts)', () => {
     const score = createEmptyScore({ measures: 1 });
     const staff = score.parts[0].staves[0];
     const m0Id = score.measures[0].id;
-    const v0Id = staff.measures[m0Id].voices[0].id;
 
     // Paste 8 quarter notes (needs 2 measures in 4/4)
     const toPaste: ScoreEvent[] = Array.from({ length: 8 }, () =>
@@ -106,7 +104,7 @@ describe('Milestone 6a: Clipboard & Paste (src/core/clipboard.ts)', () => {
       score,
       {
         staffId: staff.id,
-        voiceId: v0Id,
+        voiceIndex: 1,
         startMeasureId: m0Id,
         startOffsetTicks: 0,
       },
@@ -127,7 +125,6 @@ describe('Milestone 6a: Clipboard & Paste (src/core/clipboard.ts)', () => {
       const score = createEmptyScore({ measures: numMeasures });
       const staff = score.parts[0].staves[0];
       const m0Id = score.measures[0].id;
-      const v0Id = staff.measures[m0Id].voices[0].id;
 
       // Generate 1 to 5 random events
       const eventCount = 1 + (run % 5);
@@ -154,7 +151,7 @@ describe('Milestone 6a: Clipboard & Paste (src/core/clipboard.ts)', () => {
         score,
         {
           staffId: staff.id,
-          voiceId: v0Id,
+          voiceIndex: 1,
           startMeasureId: m0Id,
           startOffsetTicks,
         },

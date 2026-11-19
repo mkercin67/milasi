@@ -84,7 +84,7 @@ describe('M6b UI Notations & useEditor integration', () => {
   });
 
   it('toggles slur on range selection and triggers error toast on single note', () => {
-    const { ed, staff, m0Def, notes } = setupEditor();
+    const { ed, staff, notes } = setupEditor();
     const ev1 = notes[0];
     const ev2 = notes[1];
 
@@ -96,7 +96,7 @@ describe('M6b UI Notations & useEditor integration', () => {
     // Range selection across ev1 and ev2
     ed.setRangeSelection({
       staffId: staff.id,
-      voiceId: staff.measures[m0Def.id].voices[0].id,
+      voiceIndex: 1,
       anchorId: ev1.id,
       focusId: ev2.id,
     });
@@ -120,7 +120,7 @@ describe('M6b UI Notations & useEditor integration', () => {
 
     ed.setRangeSelection({
       staffId: staff.id,
-      voiceId: staff.measures[m0Def.id].voices[0].id,
+      voiceIndex: 1,
       anchorId: ev1.id,
       focusId: ev2.id,
     });

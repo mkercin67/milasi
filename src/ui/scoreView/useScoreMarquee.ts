@@ -97,12 +97,9 @@ export function useScoreMarquee(
             const lastEv = orderedEvents[orderedEvents.length - 1];
             const firstCtx = findEventContext(score, firstEv.id);
             const voiceIndex = (firstCtx?.voiceIndex ?? 1) as 1 | 2 | 3 | 4;
-            const voiceId =
-              firstCtx?.voiceId ?? staff.measures[score.measures[0]?.id]?.voices.find((v) => v.voiceIndex === 1)?.id;
             onSelectRange?.({
               staffId: staff.id,
               voiceIndex,
-              ...(voiceId ? { voiceId } : {}),
               anchorId: firstEv.id,
               focusId: lastEv.id,
             });

@@ -11,16 +11,15 @@ export type Selection =
   | {
       kind: 'range';
       staffId: string;
-      voiceIndex?: 1 | 2 | 3 | 4;
-      voiceId?: string;
+      voiceIndex: 1 | 2 | 3 | 4;
       anchorId: string;
       focusId: string;
     };
 
 export interface RangeSelection {
+  kind?: 'range';
   staffId: string;
-  voiceIndex?: 1 | 2 | 3 | 4;
-  voiceId?: string;
+  voiceIndex: 1 | 2 | 3 | 4;
   anchorId: string;
   focusId: string;
 }
@@ -35,7 +34,6 @@ export function findEventContext(
   staffId: string;
   measureId: string;
   measureIndex: number;
-  voiceId: string;
   voiceIndex: 1 | 2 | 3 | 4;
   eventIndex: number;
 } | null {
@@ -53,7 +51,6 @@ export function findEventContext(
               staffId: staff.id,
               measureId: mDef.id,
               measureIndex: mIdx,
-              voiceId: voice.id,
               voiceIndex: vIndex,
               eventIndex: evIdx,
             };
@@ -135,7 +132,6 @@ export function extendSelection(
       kind: 'range',
       staffId: targetCtx.staffId,
       voiceIndex: targetCtx.voiceIndex,
-      voiceId: targetCtx.voiceId,
       anchorId: targetEventId,
       focusId: targetEventId,
     };
@@ -148,7 +144,6 @@ export function extendSelection(
         kind: 'range',
         staffId: targetCtx.staffId,
         voiceIndex: targetCtx.voiceIndex,
-        voiceId: targetCtx.voiceId,
         anchorId: targetEventId,
         focusId: targetEventId,
       };
@@ -157,7 +152,6 @@ export function extendSelection(
       kind: 'range',
       staffId: targetCtx.staffId,
       voiceIndex: anchorCtx.voiceIndex,
-      voiceId: anchorCtx.voiceId,
       anchorId: current.id,
       focusId: targetEventId,
     };
@@ -170,7 +164,6 @@ export function extendSelection(
         kind: 'range',
         staffId: targetCtx.staffId,
         voiceIndex: targetCtx.voiceIndex,
-        voiceId: targetCtx.voiceId,
         anchorId: targetEventId,
         focusId: targetEventId,
       };
@@ -179,7 +172,6 @@ export function extendSelection(
       kind: 'range',
       staffId: current.staffId,
       voiceIndex: anchorCtx.voiceIndex,
-      voiceId: current.voiceId,
       anchorId: current.anchorId,
       focusId: targetEventId,
     };
@@ -249,41 +241,36 @@ export function eventExists(score: Score, eventId: string): boolean {
 }
 
 /**
- * Returns the next or previous event ID in reading order on a staff.
+ * Returns the next or previous event ID in reading order on a staff, restricted to the active voice.
  */
 export function nextEventId(
   score: Score,
   staffId: string,
   currentId: string | null,
-  direction: 'prev' | 'next'
+  direction: 'prev' | 'next',
+  targetVoiceIndex?: 1 | 2 | 3 | 4
 ): string | null {
   const staff = score.parts.flatMap((p) => p.staves).find((s) => s.id === staffId);
   if (!staff) return null;
 
-  const events: ScoreEvent[] = [];
-  for (const mDef of score.measures) {
-    const sm = staff.measures[mDef.id];
-    if (sm) {
-      for (const v of sm.voices) {
-        events.push(...v.events);
-      }
-    }
-  }
+  const currentCtx = currentId ? findEventContext(score, currentId) : null;
+  const vIndex = targetVoiceIndex ?? currentCtx?.voiceIndex ?? 1;
+  const ordered = getOrderedVoiceEvents(score, staffId, vIndex);
 
-  if (events.length === 0) return null;
+  if (ordered.length === 0) return null;
 
   if (!currentId) {
-    return direction === 'next' ? events[0].id : events[events.length - 1].id;
+    return direction === 'next' ? ordered[0].event.id : ordered[ordered.length - 1].event.id;
   }
 
-  const idx = events.findIndex((e) => e.id === currentId);
+  const idx = ordered.findIndex((item) => item.event.id === currentId);
   if (idx === -1) {
-    return direction === 'next' ? events[0].id : events[events.length - 1].id;
+    return direction === 'next' ? ordered[0].event.id : ordered[ordered.length - 1].event.id;
   }
 
   if (direction === 'next') {
-    return idx < events.length - 1 ? events[idx + 1].id : events[idx].id;
+    return idx < ordered.length - 1 ? ordered[idx + 1].event.id : ordered[idx].event.id;
   } else {
-    return idx > 0 ? events[idx - 1].id : events[idx].id;
+    return idx > 0 ? ordered[idx - 1].event.id : ordered[idx].event.id;
   }
 }

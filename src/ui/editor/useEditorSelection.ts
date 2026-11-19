@@ -166,21 +166,19 @@ export function useEditorSelection({
       const firstEv = allEvents[0];
       const lastEv = allEvents[allEvents.length - 1];
       const firstCtx = findEventContext(curScore, firstEv.id);
-      const voiceId = firstCtx?.voiceId ?? staff.measures[curScore.measures[0]?.id]?.voices.find((v) => v.voiceIndex === 1)?.id;
-      if (voiceId) {
-        const nextSel: Selection = {
-          kind: 'range',
-          staffId: staff.id,
-          voiceId,
-          anchorId: firstEv.id,
-          focusId: lastEv.id,
-        };
-        selectionRef.current = nextSel;
-        selectedEventIdRef.current = null;
-        rangeEventsRef.current = eventsInRange(curScore, nextSel);
-        setSelection(nextSel);
-        setSelectedEventId(null);
-      }
+      const voiceIndex = (firstCtx?.voiceIndex ?? 1) as 1 | 2 | 3 | 4;
+      const nextSel: Selection = {
+        kind: 'range',
+        staffId: staff.id,
+        voiceIndex,
+        anchorId: firstEv.id,
+        focusId: lastEv.id,
+      };
+      selectionRef.current = nextSel;
+      selectedEventIdRef.current = null;
+      rangeEventsRef.current = eventsInRange(curScore, nextSel);
+      setSelection(nextSel);
+      setSelectedEventId(null);
     }
   }, [scoreRef]);
 
@@ -410,7 +408,6 @@ export function useEditorSelection({
     let startMId = curScore.measures[0]?.id;
     let startOffset = 0;
     let targetVoiceIndex: 1 | 2 | 3 | 4 = 1;
-    let voiceId = staff.measures[startMId]?.voices.find((v) => v.voiceIndex === 1)?.id;
 
     if (curSel.kind === 'range') {
       const firstEv = curRangeEvents[0];
@@ -418,10 +415,9 @@ export function useEditorSelection({
         const loc = findEventContext(curScore, firstEv.id);
         if (loc) {
           startMId = loc.measureId;
-          voiceId = loc.voiceId;
           targetVoiceIndex = loc.voiceIndex;
           const sm = staff.measures[startMId];
-          const v = sm?.voices.find((vo) => vo.id === voiceId);
+          const v = sm?.voices.find((vo) => vo.voiceIndex === targetVoiceIndex);
           if (v) {
             let t = 0;
             for (const ev of v.events) {
@@ -438,10 +434,9 @@ export function useEditorSelection({
       const loc = findEventContext(curScore, curEventId);
       if (loc) {
         startMId = loc.measureId;
-        voiceId = loc.voiceId;
         targetVoiceIndex = loc.voiceIndex;
         const sm = staff.measures[startMId];
-        const v = sm?.voices.find((vo) => vo.id === voiceId);
+        const v = sm?.voices.find((vo) => vo.voiceIndex === targetVoiceIndex);
         if (v) {
           let t = 0;
           for (const ev of v.events) {
@@ -456,12 +451,10 @@ export function useEditorSelection({
     } else if (curCursor) {
       startMId = curCursor.measureId;
       targetVoiceIndex = curCursor.voiceIndex;
-      const targetVoice = scoreRef.current.parts[0]?.staves[0]?.measures[curCursor.measureId]?.voices.find((vo) => vo.voiceIndex === curCursor.voiceIndex);
-      voiceId = targetVoice?.id ?? '';
       startOffset = curCursor.tick;
     }
 
-    if (startMId && (voiceId || targetVoiceIndex)) {
+    if (startMId) {
       const placedIds: string[] = [];
       executeCommand({
         name: 'Paste Events',
@@ -470,7 +463,6 @@ export function useEditorSelection({
             s,
             {
               staffId: staff.id,
-              voiceId,
               voiceIndex: targetVoiceIndex,
               startMeasureId: startMId,
               startOffsetTicks: startOffset,
@@ -488,7 +480,7 @@ export function useEditorSelection({
         } else {
           setRangeSelection({
             staffId: staff.id,
-            voiceId,
+            voiceIndex: targetVoiceIndex,
             anchorId: firstId,
             focusId: lastId,
           });

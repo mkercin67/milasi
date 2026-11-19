@@ -135,7 +135,7 @@ describe('Milestone 6b: Model, Validation and Commands (src/core)', () => {
       const range: Selection = {
         kind: 'range',
         staffId: staff.id,
-        voiceId: staff.measures[score.measures[0].id].voices[0].id,
+        voiceIndex: 1,
         anchorId: notes[0].id,
         focusId: notes[2].id,
       };
@@ -162,7 +162,7 @@ describe('Milestone 6b: Model, Validation and Commands (src/core)', () => {
       const sel: Selection = {
         kind: 'range',
         staffId: staff.id,
-        voiceId: staff.measures[score.measures[0].id].voices[0].id,
+        voiceIndex: 1,
         anchorId: notes[0].id,
         focusId: notes[1].id,
       };
@@ -207,7 +207,7 @@ describe('Milestone 6b: Model, Validation and Commands (src/core)', () => {
         score,
         {
           staffId: score.parts[0].staves[0].id,
-          voiceId: score.parts[0].staves[0].measures[score.measures[1].id].voices[0].id,
+          voiceIndex: 1,
           startMeasureId: score.measures[1].id,
           startOffsetTicks: 0,
         },

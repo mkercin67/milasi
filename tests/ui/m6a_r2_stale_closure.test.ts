@@ -43,7 +43,7 @@ describe('R2: Synchronous State Ref & Anti-Stale-Closure Verification', () => {
     // CRITICAL: We do NOT trigger a React re-render.
     const targetRange = {
       staffId: staff.id,
-      voiceId: staff.measures[m0Def.id].voices[0].id,
+      voiceIndex: 1 as const,
       anchorId: noteB.id,
       focusId: noteC.id,
     };

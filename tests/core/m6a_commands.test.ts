@@ -18,7 +18,6 @@ describe('Milestone 6a Commands (src/core/commands.ts)', () => {
     const score = createEmptyScore({ measures: 1 });
     const staff = score.parts[0].staves[0];
     const mId = score.measures[0].id;
-    const vId = staff.measures[mId].voices[0].id;
 
     const n1 = createNote({ pitches: [createPitch('C', 4)], baseType: 'quarter' });
     const n2 = createNote({ pitches: [createPitch('D', 4)], baseType: 'quarter' });
@@ -28,7 +27,7 @@ describe('Milestone 6a Commands (src/core/commands.ts)', () => {
 
     const range = {
       staffId: staff.id,
-      voiceId: vId,
+      voiceIndex: 1 as const,
       anchorId: n2.id,
       focusId: n3.id,
     };
@@ -48,13 +47,12 @@ describe('Milestone 6a Commands (src/core/commands.ts)', () => {
     const score = createEmptyScore({ measures: 1 });
     const staff = score.parts[0].staves[0];
     const mId = score.measures[0].id;
-    const vId = staff.measures[mId].voices[0].id;
 
     const n1 = createNote({ pitches: [createPitch('C', 4)], baseType: 'quarter' }); // MIDI 60
     const n2 = createNote({ pitches: [createPitch('D', 4)], baseType: 'quarter' }); // MIDI 62
     staff.measures[mId].voices[0].events = [n1, n2, createRest({ baseType: 'half', duration: 1920 })];
 
-    const range = { staffId: staff.id, voiceId: vId, anchorId: n1.id, focusId: n2.id };
+    const range = { staffId: staff.id, voiceIndex: 1 as const, anchorId: n1.id, focusId: n2.id };
     const transposed = transposeRange(range, 2).apply(score);
     const evs = transposed.parts[0].staves[0].measures[mId].voices[0].events;
     expect((evs[0] as any).pitches[0].step).toBe('D');
@@ -63,7 +61,7 @@ describe('Milestone 6a Commands (src/core/commands.ts)', () => {
     // Bounds check: pitch at C8 (MIDI 108) cannot transpose up (+1)
     const highNote = createNote({ pitches: [createPitch('C', 8)], baseType: 'quarter' });
     staff.measures[mId].voices[0].events = [highNote, createRest({ baseType: 'half', duration: 2880 })];
-    const rangeHigh = { staffId: staff.id, voiceId: vId, anchorId: highNote.id, focusId: highNote.id };
+    const rangeHigh = { staffId: staff.id, voiceIndex: 1 as const, anchorId: highNote.id, focusId: highNote.id };
     expect(() => transposeRange(rangeHigh, 1).apply(score)).toThrow(/MIDI bounds/);
   });
 

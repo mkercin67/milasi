@@ -46,7 +46,6 @@ describe('D3d & 0.3: Marquee selection on voice 2', () => {
     const rangeSel: RangeSelection = {
       staffId: staff.id,
       voiceIndex: (ctx!.voiceIndex ?? 1) as 1 | 2 | 3 | 4,
-      voiceId: ctx!.voiceId,
       anchorId: firstEv.id,
       focusId: lastEv.id,
     };

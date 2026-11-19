@@ -31,7 +31,7 @@ describe('M6a: 8-measure paste profiling breakdown', () => {
       const placed: string[] = [];
       const target = {
         staffId: staff.id,
-        voiceId: staff.measures[measureIds[0]].voices[0].id,
+        voiceIndex: 1 as const,
         startMeasureId: measureIds[0],
         startOffsetTicks: 0,
       };

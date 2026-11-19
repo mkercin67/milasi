@@ -4,8 +4,8 @@
  */
 
 import { createMeasure, createNote, createRest, newId } from './factory';
-import { BaseDurationType, NoteEvent, Pitch, Score, ScoreEvent } from './model';
-import { measureTicks } from './time';
+import { BaseDurationType, NoteEvent, Pitch, Score, ScoreEvent, Voice } from './model';
+import { fillMeasureWithRests, measureTicks } from './time';
 
 export interface ClipboardPayload {
   app: 'scoreforge-clip';
@@ -130,7 +130,7 @@ function ticksToBaseType(ticks: number): BaseDurationType {
  */
 export function pasteEvents(
   score: Score,
-  target: { staffId: string; voiceId?: string; voiceIndex?: 1 | 2 | 3 | 4; startMeasureId: string; startOffsetTicks: number },
+  target: { staffId: string; voiceIndex: 1 | 2 | 3 | 4; startMeasureId: string; startOffsetTicks: number },
   pastedEvents: ScoreEvent[],
   placedEventIds?: string[]
 ): Score {
@@ -163,20 +163,31 @@ export function pasteEvents(
       // Append measures if needed
       while (curMIdx >= nextScore.measures.length) {
         const lastM = nextScore.measures[nextScore.measures.length - 1];
-        const newM = createMeasure(lastM.timeSig, lastM.keySig);
+        const hadFinal = lastM?.endBarline === 'final';
+        if (hadFinal && lastM) {
+          lastM.endBarline = 'single';
+        }
+        const newM = createMeasure(lastM.timeSig, lastM.keySig, undefined, undefined, hadFinal ? 'final' : 'single');
         nextScore.measures.push(newM);
         const newDur = measureTicks(newM.timeSig);
         for (const p of nextScore.parts) {
           for (const st of p.staves) {
-            st.measures[newM.id] = {
-              voices: [
-                {
-                  id: newId(),
-                  voiceIndex: (target.voiceIndex ?? 1) as 1 | 2 | 3 | 4,
-                  events: [createRest({ baseType: 'whole', duration: newDur, wholeMeasure: true })],
-                },
-              ],
-            };
+            const vList: Voice[] = [
+              {
+                id: newId(),
+                voiceIndex: 1,
+                events: [createRest({ baseType: 'whole', duration: newDur, wholeMeasure: true })],
+              },
+            ];
+            if (target.voiceIndex !== 1) {
+              vList.push({
+                id: newId(),
+                voiceIndex: target.voiceIndex,
+                events: fillMeasureWithRests(newDur),
+              });
+              vList.sort((a, b) => a.voiceIndex - b.voiceIndex);
+            }
+            st.measures[newM.id] = { voices: vList };
           }
         }
       }
@@ -232,12 +243,19 @@ export function pasteEvents(
     const staffMeasure = staff.measures[mDef.id];
     if (!staffMeasure) continue;
 
-    const voice =
-      target.voiceIndex !== undefined
-        ? staffMeasure.voices.find((v) => v.voiceIndex === target.voiceIndex)
-        : (target.voiceId ? staffMeasure.voices.find((v) => v.id === target.voiceId) : null) ??
-          staffMeasure.voices.find((v) => v.voiceIndex === 1);
-    if (!voice) continue;
+    const targetVoiceIndex = target.voiceIndex;
+    let voice = staffMeasure.voices.find((v) => v.voiceIndex === targetVoiceIndex);
+    if (!voice) {
+      // S3: If the target measure lacks that voice, create it with D3 semantics:
+      // initial rests filling [0, totalMTicks) via fillMeasureWithRests, sorted by voiceIndex.
+      voice = {
+        id: newId(),
+        voiceIndex: targetVoiceIndex,
+        events: fillMeasureWithRests(totalMTicks),
+      };
+      staffMeasure.voices.push(voice);
+      staffMeasure.voices.sort((a, b) => a.voiceIndex - b.voiceIndex);
+    }
 
     const existing = voice.events;
     const additions = measureAdditions.get(mIdx) ?? [];

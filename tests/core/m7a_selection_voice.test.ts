@@ -139,7 +139,6 @@ describe('Voice-Aware Selection and Multi-Voice Isolation (Item 6)', () => {
       score,
       {
         staffId: part.staves[0].id,
-        voiceId: 'v2-id',
         voiceIndex: 2,
         startMeasureId: m1.id,
         startOffsetTicks: 0,

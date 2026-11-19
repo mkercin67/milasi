@@ -182,7 +182,7 @@ export function getGalleryCases(): GalleryCase[] {
         score = toggleSlur({
           kind: 'range',
           staffId: staff.id,
-          voiceId: staff.measures[score.measures[0].id].voices.find((v) => v.voiceIndex === 1)!.id,
+          voiceIndex: 1,
           anchorId: n1.id,
           focusId: n4.id,
         }).apply(score);
@@ -204,7 +204,7 @@ export function getGalleryCases(): GalleryCase[] {
         score = toggleSlur({
           kind: 'range',
           staffId: staff.id,
-          voiceId: staff.measures[score.measures[0].id].voices.find((v) => v.voiceIndex === 1)!.id,
+          voiceIndex: 1,
           anchorId: n1.id,
           focusId: n4.id,
         }).apply(score);
@@ -229,7 +229,7 @@ export function getGalleryCases(): GalleryCase[] {
         score = toggleSlur({
           kind: 'range',
           staffId: staff.id,
-          voiceId: staff.measures[score.measures[0].id].voices.find((v) => v.voiceIndex === 1)!.id,
+          voiceIndex: 1,
           anchorId: n1.id,
           focusId: n5.id,
         }).apply(score);
@@ -252,7 +252,7 @@ export function getGalleryCases(): GalleryCase[] {
         score = toggleSlur({
           kind: 'range',
           staffId: staff.id,
-          voiceId: staff.measures[score.measures[0].id].voices.find((v) => v.voiceIndex === 1)!.id,
+          voiceIndex: 1,
           anchorId: n1.id,
           focusId: n2.id,
         }).apply(score);
