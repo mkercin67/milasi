@@ -40,6 +40,10 @@ jobs:
         timeout-minutes: 10
         run: node scripts/test_voice_entry_e2e.mjs
 
+      - name: Run Playwright voice selection E2E
+        timeout-minutes: 10
+        run: node scripts/test_voice_selection_e2e.mjs
+
       - name: Upload artifacts on failure
         if: failure()
         uses: actions/upload-artifact@v6
