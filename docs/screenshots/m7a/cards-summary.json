@@ -1,0 +1,119 @@
+[
+  {
+    "cardId": "poly-1-stems-opposite-thirds-aligned",
+    "filename": "poly-1-stems-opposite-thirds-aligned.png",
+    "domCounts": {
+      "glyphs": 10,
+      "lines": 14,
+      "paths": 4,
+      "total": 28
+    },
+    "sizeBytes": 21930,
+    "outPath": "C:\\Users\\Murat\\Desktop\\proje_mls1\\docs\\screenshots\\m7a\\poly-1-stems-opposite-thirds-aligned.png",
+    "artifactPath": "C:\\Users\\Murat\\.gemini\\antigravity\\brain\\0e08571a-6366-416f-a983-aad9fe52732a\\poly-1-stems-opposite-thirds-aligned.png"
+  },
+  {
+    "cardId": "poly-2-second-shared-stem-line",
+    "filename": "poly-2-second-shared-stem-line.png",
+    "domCounts": {
+      "glyphs": 10,
+      "lines": 12,
+      "paths": 5,
+      "total": 27
+    },
+    "sizeBytes": 20191,
+    "outPath": "C:\\Users\\Murat\\Desktop\\proje_mls1\\docs\\screenshots\\m7a\\poly-2-second-shared-stem-line.png",
+    "artifactPath": "C:\\Users\\Murat\\.gemini\\antigravity\\brain\\0e08571a-6366-416f-a983-aad9fe52732a\\poly-2-second-shared-stem-line.png"
+  },
+  {
+    "cardId": "poly-3-unison-shared-and-displaced",
+    "filename": "poly-3-unison-shared-and-displaced.png",
+    "domCounts": {
+      "glyphs": 9,
+      "lines": 14,
+      "paths": 4,
+      "total": 27
+    },
+    "sizeBytes": 21015,
+    "outPath": "C:\\Users\\Murat\\Desktop\\proje_mls1\\docs\\screenshots\\m7a\\poly-3-unison-shared-and-displaced.png",
+    "artifactPath": "C:\\Users\\Murat\\.gemini\\antigravity\\brain\\0e08571a-6366-416f-a983-aad9fe52732a\\poly-3-unison-shared-and-displaced.png"
+  },
+  {
+    "cardId": "poly-4-rests-shared-and-elevated",
+    "filename": "poly-4-rests-shared-and-elevated.png",
+    "domCounts": {
+      "glyphs": 11,
+      "lines": 13,
+      "paths": 4,
+      "total": 28
+    },
+    "sizeBytes": 21438,
+    "outPath": "C:\\Users\\Murat\\Desktop\\proje_mls1\\docs\\screenshots\\m7a\\poly-4-rests-shared-and-elevated.png",
+    "artifactPath": "C:\\Users\\Murat\\.gemini\\antigravity\\brain\\0e08571a-6366-416f-a983-aad9fe52732a\\poly-4-rests-shared-and-elevated.png"
+  },
+  {
+    "cardId": "poly-5-voices-3-and-4-offsets",
+    "filename": "poly-5-voices-3-and-4-offsets.png",
+    "domCounts": {
+      "glyphs": 8,
+      "lines": 9,
+      "paths": 3,
+      "total": 20
+    },
+    "sizeBytes": 21419,
+    "outPath": "C:\\Users\\Murat\\Desktop\\proje_mls1\\docs\\screenshots\\m7a\\poly-5-voices-3-and-4-offsets.png",
+    "artifactPath": "C:\\Users\\Murat\\.gemini\\antigravity\\brain\\0e08571a-6366-416f-a983-aad9fe52732a\\poly-5-voices-3-and-4-offsets.png"
+  },
+  {
+    "cardId": "poly-6-ties-in-both-voices",
+    "filename": "poly-6-ties-in-both-voices.png",
+    "domCounts": {
+      "glyphs": 8,
+      "lines": 11,
+      "paths": 5,
+      "total": 24
+    },
+    "sizeBytes": 20760,
+    "outPath": "C:\\Users\\Murat\\Desktop\\proje_mls1\\docs\\screenshots\\m7a\\poly-6-ties-in-both-voices.png",
+    "artifactPath": "C:\\Users\\Murat\\.gemini\\antigravity\\brain\\0e08571a-6366-416f-a983-aad9fe52732a\\poly-6-ties-in-both-voices.png"
+  },
+  {
+    "cardId": "poly-7-beams-in-both-voices",
+    "filename": "poly-7-beams-in-both-voices.png",
+    "domCounts": {
+      "glyphs": 13,
+      "lines": 18,
+      "paths": 6,
+      "total": 37
+    },
+    "sizeBytes": 19899,
+    "outPath": "C:\\Users\\Murat\\Desktop\\proje_mls1\\docs\\screenshots\\m7a\\poly-7-beams-in-both-voices.png",
+    "artifactPath": "C:\\Users\\Murat\\.gemini\\antigravity\\brain\\0e08571a-6366-416f-a983-aad9fe52732a\\poly-7-beams-in-both-voices.png"
+  },
+  {
+    "cardId": "poly-8-dots-in-both-voices",
+    "filename": "poly-8-dots-in-both-voices.png",
+    "domCounts": {
+      "glyphs": 11,
+      "lines": 12,
+      "paths": 6,
+      "total": 29
+    },
+    "sizeBytes": 19904,
+    "outPath": "C:\\Users\\Murat\\Desktop\\proje_mls1\\docs\\screenshots\\m7a\\poly-8-dots-in-both-voices.png",
+    "artifactPath": "C:\\Users\\Murat\\.gemini\\antigravity\\brain\\0e08571a-6366-416f-a983-aad9fe52732a\\poly-8-dots-in-both-voices.png"
+  },
+  {
+    "cardId": "poly-9-bwv-140-reduction-whole-fixture",
+    "filename": "poly-9-bwv-140-reduction-whole-fixture.png",
+    "domCounts": {
+      "glyphs": 64,
+      "lines": 62,
+      "paths": 13,
+      "total": 139
+    },
+    "sizeBytes": 46748,
+    "outPath": "C:\\Users\\Murat\\Desktop\\proje_mls1\\docs\\screenshots\\m7a\\poly-9-bwv-140-reduction-whole-fixture.png",
+    "artifactPath": "C:\\Users\\Murat\\.gemini\\antigravity\\brain\\0e08571a-6366-416f-a983-aad9fe52732a\\poly-9-bwv-140-reduction-whole-fixture.png"
+  }
+]

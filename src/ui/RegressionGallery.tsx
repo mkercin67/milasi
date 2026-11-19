@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import React, { useMemo, useState } from 'react';
 import { GalleryCase, getGalleryCases } from './galleryCases';
+import { getPolyphonyGalleryCards } from './polyphonyBuilders';
 import { Score } from '../core/model';
 import { LayoutResult } from '../layout/types';
 import { layoutScore } from '../layout/layoutScore';
@@ -10,15 +11,18 @@ interface RenderedGalleryCase extends GalleryCase {
   score: Score;
   layout: LayoutResult;
   svgHtml: string;
+  tag?: string;
+  notesChecklist?: string[];
   multiWidthSvgs?: Array<{ label: string; svg: string }>;
 }
 
 export const RegressionGallery: React.FC = () => {
   const cases = useMemo(() => getGalleryCases(), []);
+  const polyCards = useMemo(() => getPolyphonyGalleryCards(), []);
   const [selectedCaseId, setSelectedCaseId] = useState<string>('all');
 
   const renderedCases = useMemo((): RenderedGalleryCase[] => {
-    return cases.map((c) => {
+    const standardCases: RenderedGalleryCase[] = cases.map((c) => {
       const score = c.build();
       const layout = layoutScore(score, { width: 70 });
       const svgHtml = renderSvgToString(layout, { staffSpacePx: 10, score });
@@ -50,7 +54,26 @@ export const RegressionGallery: React.FC = () => {
         svgHtml,
       };
     });
-  }, [cases]);
+
+    const polyCases: RenderedGalleryCase[] = polyCards.map((pc) => {
+      const score = pc.build();
+      const layout = layoutScore(score, { width: pc.id === 'poly-9-bwv-140-reduction-whole-fixture' ? 140 : 70 });
+      const svgHtml = renderSvgToString(layout, { staffSpacePx: 10, score });
+      return {
+        id: pc.id,
+        title: pc.title,
+        description: pc.description,
+        tag: pc.tag,
+        notesChecklist: pc.notesChecklist,
+        build: pc.build,
+        score,
+        layout,
+        svgHtml,
+      };
+    });
+
+    return [...standardCases, ...polyCases];
+  }, [cases, polyCards]);
 
   const displayedCases = selectedCaseId === 'all'
     ? renderedCases
@@ -140,6 +163,22 @@ export const RegressionGallery: React.FC = () => {
                 <h2 style={{ fontSize: '1.15rem', fontWeight: 600, margin: 0 }}>
                   {c.title}
                 </h2>
+                {c.tag && (
+                  <span
+                    data-testid={`gallery-tag-${c.id}`}
+                    style={{
+                      fontSize: '0.75rem',
+                      fontWeight: 600,
+                      backgroundColor: c.tag.includes('OBSERVED') ? '#dcfce7' : '#e0e7ff',
+                      color: c.tag.includes('OBSERVED') ? '#15803d' : '#4338ca',
+                      padding: '0.15rem 0.5rem',
+                      borderRadius: '4px',
+                      border: '1px solid #cbd5e1',
+                    }}
+                  >
+                    {c.tag}
+                  </span>
+                )}
                 {c.pending && (
                   <span
                     style={{
@@ -202,6 +241,30 @@ export const RegressionGallery: React.FC = () => {
                 }}
                 dangerouslySetInnerHTML={{ __html: c.svgHtml }}
               />
+            )}
+
+            {c.notesChecklist && (
+              <div
+                data-testid={`notes-checklist-${c.id}`}
+                style={{
+                  marginTop: '1rem',
+                  padding: '0.75rem 1rem',
+                  backgroundColor: '#f8fafc',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '8px',
+                }}
+              >
+                <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#334155', marginBottom: '0.4rem' }}>
+                  Reference Measure Checklist (BWV 140/7):
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '0.25rem' }}>
+                  {c.notesChecklist.map((item, idx) => (
+                    <div key={idx} style={{ fontSize: '0.75rem', fontFamily: 'monospace', color: '#475569' }}>
+                      [ ] {item}
+                    </div>
+                  ))}
+                </div>
+              </div>
             )}
           </div>
         ))}
