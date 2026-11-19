@@ -36,6 +36,10 @@ export function insertNote(params: InsertNoteParams): Command {
   return {
     name: 'insertNote',
     apply(score: Score): Score {
+      if (params.voiceIndex !== undefined && (params.voiceIndex < 1 || params.voiceIndex > 4)) {
+        return score;
+      }
+
       return produce(score, (draft) => {
         const part = draft.parts.find((p) => p.id === params.partId);
         if (!part) {
@@ -56,32 +60,16 @@ export function insertNote(params: InsertNoteParams): Command {
         }
 
         const staffMeasure = staff.measures[params.measureId];
-        let voice = params.voiceId
-          ? staffMeasure.voices.find((v) => v.id === params.voiceId)
-          : undefined;
+        const targetVoiceIndex: 1 | 2 | 3 | 4 = (params.voiceIndex ?? 1) as 1 | 2 | 3 | 4;
 
-        if (!voice && params.voiceIndex !== undefined) {
-          voice = staffMeasure.voices.find(
-            (v, idx) => (v.voiceIndex ?? (idx + 1)) === params.voiceIndex
-          );
-        }
+        let voice = staffMeasure.voices.find(
+          (v, idx) => (v.voiceIndex ?? (idx + 1)) === targetVoiceIndex
+        );
 
         if (!voice) {
-          if (params.voiceIndex !== undefined && params.voiceIndex >= 1 && params.voiceIndex <= 4) {
-            voice = { id: newId(), voiceIndex: params.voiceIndex as 1 | 2 | 3 | 4, events: [] };
-            staffMeasure.voices.push(voice);
-            staffMeasure.voices.sort((a, b) => a.voiceIndex - b.voiceIndex);
-          } else if (staffMeasure.voices.length === 0) {
-            voice = { id: newId(), voiceIndex: 1, events: [] };
-            staffMeasure.voices.push(voice);
-          } else {
-            voice = staffMeasure.voices.find((v) => v.voiceIndex === 1);
-            if (!voice) {
-              voice = { id: newId(), voiceIndex: 1, events: [] };
-              staffMeasure.voices.push(voice);
-              staffMeasure.voices.sort((a, b) => a.voiceIndex - b.voiceIndex);
-            }
-          }
+          voice = { id: newId(), voiceIndex: targetVoiceIndex, events: [] };
+          staffMeasure.voices.push(voice);
+          staffMeasure.voices.sort((a, b) => a.voiceIndex - b.voiceIndex);
         }
 
         const targetIndex =

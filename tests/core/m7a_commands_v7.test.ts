@@ -242,4 +242,31 @@ describe('Multi-Voice Commands (Item 5)', () => {
     // Voice 1 is completely intact
     expect(sm.voices[0].events).toHaveLength(2);
   });
+
+  it('rejects voiceIndex outside 1..4 (0, 5) leaving score completely unchanged', () => {
+    const { score, staffId, measureId, partId } = setupScore();
+    const initialSnapshot = JSON.parse(JSON.stringify(score));
+
+    const note = createNote({ pitches: [createPitch('E', 4)], baseType: 'quarter' });
+
+    // Try inserting at voiceIndex 5
+    const result5 = insertNote({
+      partId,
+      staffId,
+      measureId,
+      voiceIndex: 5 as any,
+      event: note,
+    }).apply(score);
+    expect(result5).toEqual(initialSnapshot);
+
+    // Try inserting at voiceIndex 0
+    const result0 = insertNote({
+      partId,
+      staffId,
+      measureId,
+      voiceIndex: 0 as any,
+      event: note,
+    }).apply(score);
+    expect(result0).toEqual(initialSnapshot);
+  });
 });

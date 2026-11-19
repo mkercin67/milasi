@@ -130,8 +130,7 @@ export interface InsertNoteParams {
   partId: Id;
   staffId?: Id;
   measureId: Id;
-  voiceIndex?: number;
-  voiceId?: Id;
+  voiceIndex?: 1 | 2 | 3 | 4;
   index?: number;
   event: NoteEvent | RestEvent;
 }
