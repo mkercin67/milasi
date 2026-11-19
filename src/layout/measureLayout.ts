@@ -51,6 +51,514 @@ const measureChunkCache = new WeakMap<StaffMeasure, Map<string, MeasureLayoutChu
 import { layoutMeasureLyrics, LyricLayoutEntry } from './lyricLayout';
 
 /**
+ * Checks whether a StaffMeasure is polyphonic.
+ * Definition: at least 2 voices each contain at least one sounding NoteEvent.
+ */
+export function isStaffMeasurePolyphonic(staffMeasure: StaffMeasure | undefined): boolean {
+  if (!staffMeasure || !staffMeasure.voices) return false;
+  let soundingCount = 0;
+  for (let i = 0; i < staffMeasure.voices.length; i++) {
+    const v = staffMeasure.voices[i];
+    if (v.events.some((e) => e.kind === 'note')) {
+      soundingCount++;
+      if (soundingCount >= 2) return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * Lays out events in a polyphonic StaffMeasure according to Rules RA-RH.
+ */
+function layoutPolyphonicEvents(
+  staffMeasure: StaffMeasure,
+  mDef: MeasureDef,
+  clef: Clef,
+  relXStart: number,
+  tracker: MeasureAccidentalTracker,
+  measureItems: MeasureItemEntry[],
+  beamGroupsMeta: MeasureBeamGroupMeta[]
+): number {
+  let relX = relXStart;
+  const fullTicks = (mDef.timeSig.num * 4 * PPQ) / mDef.timeSig.den;
+  const pickupOffset =
+    mDef.actualTicks && mDef.actualTicks < fullTicks ? fullTicks - mDef.actualTicks : 0;
+
+  // 1. Gather all events by voice with their start ticks and durations
+  interface PolyEventEntry {
+    voiceIndex: 1 | 2 | 3 | 4;
+    event: ScoreEvent;
+    startTick: number;
+    duration: number;
+  }
+  const allEntries: PolyEventEntry[] = [];
+  const voiceEntriesMap = new Map<number, PolyEventEntry[]>();
+
+  for (const voice of staffMeasure.voices) {
+    const vIndex = voice.voiceIndex;
+    let runningTick = 0;
+    const list: PolyEventEntry[] = [];
+    for (const ev of voice.events) {
+      const entry: PolyEventEntry = {
+        voiceIndex: vIndex,
+        event: ev,
+        startTick: runningTick + pickupOffset,
+        duration: ev.duration,
+      };
+      list.push(entry);
+      allEntries.push(entry);
+      runningTick += ev.duration;
+    }
+    voiceEntriesMap.set(vIndex, list);
+  }
+
+  // 2. Precompute beam groups per voice (RA: Beams follow voice stem direction, never cross voices)
+  for (const voice of staffMeasure.voices) {
+    const vIndex = voice.voiceIndex;
+    const vEvents = voice.events;
+    const rawGroups = groupBeams(vEvents, mDef.timeSig);
+    const stemDir: StemDirection = vIndex === 1 || vIndex === 3 ? 'up' : 'down';
+    const vList = voiceEntriesMap.get(vIndex) ?? [];
+
+    for (let gIdx = 0; gIdx < rawGroups.length; gIdx++) {
+      const g = rawGroups[gIdx];
+      const beamGroupId = `beam-${mDef.id}-v${vIndex}-${gIdx}`;
+      beamGroupsMeta.push({
+        beamGroupId,
+        stemDir,
+        events: g.eventIds.map((id) => {
+          const evObj = vEvents.find((e) => e.id === id)!;
+          const entry = vList.find((e) => e.event.id === id);
+          const stepPositions =
+            evObj.kind === 'note'
+              ? (evObj as NoteEvent).pitches
+                  .map((p) => pitchToStaffPosition(p, clef))
+                  .sort((a, b) => a - b)
+              : [];
+          return {
+            eventId: id,
+            baseType: evObj.baseType,
+            stepPositions,
+            startTick: entry?.startTick ?? 0,
+          };
+        }),
+      });
+    }
+  }
+
+  const beamedEventIds = new Set<string>();
+  for (const bg of beamGroupsMeta) {
+    for (const ev of bg.events) {
+      beamedEventIds.add(ev.eventId);
+    }
+  }
+
+  // 3. Union of start ticks (Rule RB)
+  const uniqueStartTicks = Array.from(new Set(allEntries.map((e) => e.startTick))).sort(
+    (a, b) => a - b
+  );
+
+  const measureEndTick = pickupOffset + (mDef.actualTicks ?? fullTicks);
+
+  for (let colIdx = 0; colIdx < uniqueStartTicks.length; colIdx++) {
+    const curTick = uniqueStartTicks[colIdx];
+    const nextTick = uniqueStartTicks[colIdx + 1] ?? measureEndTick;
+    const colDuration = nextTick - curTick;
+    const durationFactor = colDuration / PPQ;
+    const colWidth = Math.max(3.5 + durationFactor * 2.0, 3.5);
+
+    const colEntries = allEntries.filter((e) => e.startTick === curTick);
+
+    // Check accidentals in this column (Rule RH)
+    let hasAccidental = false;
+    for (const entry of colEntries) {
+      if (entry.event.kind === 'note') {
+        const ne = entry.event as NoteEvent;
+        for (const p of ne.pitches) {
+          const activeAlter = getKeySignatureAlter(p.step, mDef.keySig);
+          if (
+            p.alter !== activeAlter &&
+            Number.isInteger(p.alter) &&
+            p.alter >= -2 &&
+            p.alter <= 2
+          ) {
+            hasAccidental = true;
+          }
+        }
+      }
+    }
+
+    const firstEventPadding = colIdx === 0 && hasAccidental ? 1.2 : hasAccidental ? 0.8 : 0;
+    const colCenterX = relX + 0.8 + firstEventPadding;
+
+    // Check for rests at this tick (Rule RE)
+    const restEntries = colEntries.filter((e) => e.event.kind === 'rest');
+    const noteEntries = colEntries.filter((e) => e.event.kind === 'note');
+
+    // Rule RE: Identical rests in v1 and v2 at same tick merge visually at staff center
+    const v1Rest = restEntries.find((e) => e.voiceIndex === 1);
+    const v2Rest = restEntries.find((e) => e.voiceIndex === 2);
+    let restsMerged = false;
+
+    if (
+      v1Rest &&
+      v2Rest &&
+      v1Rest.event.baseType === v2Rest.event.baseType &&
+      v1Rest.event.duration === v2Rest.event.duration &&
+      v1Rest.event.dots === v2Rest.event.dots
+    ) {
+      const ev = v1Rest.event as RestEvent;
+      let restGlyph = 'restQuarter';
+      let restY = 2.0;
+      switch (ev.baseType) {
+        case 'whole':
+          restGlyph = 'restWhole';
+          restY = 1.0;
+          break;
+        case 'half':
+          restGlyph = 'restHalf';
+          restY = 2.0;
+          break;
+        case 'quarter':
+          restGlyph = 'restQuarter';
+          restY = 2.0;
+          break;
+        case 'eighth':
+          restGlyph = 'rest8th';
+          restY = 2.0;
+          break;
+        case '16th':
+          restGlyph = 'rest16th';
+          restY = 2.0;
+          break;
+        case '32nd':
+          restGlyph = 'rest32nd';
+          restY = 2.0;
+          break;
+      }
+
+      measureItems.push({
+        item: {
+          id: ev.id,
+          eventId: ev.id,
+          kind: 'glyph',
+          glyph: restGlyph,
+          x: colCenterX,
+          y: restY,
+        },
+      });
+
+      if (ev.dots > 0) {
+        for (let d = 0; d < ev.dots; d++) {
+          measureItems.push({
+            item: {
+              id: `${ev.id}-dot-${d}`,
+              eventId: ev.id,
+              kind: 'glyph',
+              glyph: 'augmentationDot',
+              x: colCenterX + 1.2 + d * 0.5,
+              y: restY,
+            },
+          });
+        }
+      }
+      restsMerged = true;
+    }
+
+    // Individual rests (either not merged, or in v3/v4)
+    for (const re of restEntries) {
+      if (restsMerged && (re.voiceIndex === 1 || re.voiceIndex === 2)) {
+        continue;
+      }
+      const ev = re.event as RestEvent;
+      let restGlyph = 'restQuarter';
+      switch (ev.baseType) {
+        case 'whole':
+          restGlyph = 'restWhole';
+          break;
+        case 'half':
+          restGlyph = 'restHalf';
+          break;
+        case 'quarter':
+          restGlyph = 'restQuarter';
+          break;
+        case 'eighth':
+          restGlyph = 'rest8th';
+          break;
+        case '16th':
+          restGlyph = 'rest16th';
+          break;
+        case '32nd':
+          restGlyph = 'rest32nd';
+          break;
+      }
+
+      // Rule RE elevation: v1 moves UP, v2 moves DOWN
+      let restY = 2.0;
+      if (re.voiceIndex === 1 || re.voiceIndex === 3) {
+        restY = 0.0; // elevated
+      } else {
+        restY = 4.0; // depressed
+      }
+
+      measureItems.push({
+        item: {
+          id: ev.id,
+          eventId: ev.id,
+          kind: 'glyph',
+          glyph: restGlyph,
+          x: colCenterX,
+          y: restY,
+        },
+      });
+
+      if (ev.dots > 0) {
+        for (let d = 0; d < ev.dots; d++) {
+          measureItems.push({
+            item: {
+              id: `${ev.id}-dot-${d}`,
+              eventId: ev.id,
+              kind: 'glyph',
+              glyph: 'augmentationDot',
+              x: colCenterX + 1.2 + d * 0.5,
+              y: restY,
+            },
+          });
+        }
+      }
+    }
+
+    // Process Notes in this column (RA, RC, RD, RG, RH)
+    const v1Note = noteEntries.find((e) => e.voiceIndex === 1);
+    const v2Note = noteEntries.find((e) => e.voiceIndex === 2);
+
+    let isUnison = false;
+    let isSameDurationUnison = false;
+    let isSecond = false;
+
+    if (v1Note && v2Note) {
+      const ne1 = v1Note.event as NoteEvent;
+      const ne2 = v2Note.event as NoteEvent;
+      const p1Lowest = [...ne1.pitches].sort(
+        (a, b) => pitchToStaffPosition(a, clef) - pitchToStaffPosition(b, clef)
+      )[0];
+      const p2Highest = [...ne2.pitches].sort(
+        (a, b) => pitchToStaffPosition(b, clef) - pitchToStaffPosition(a, clef)
+      )[0];
+
+      const step1 = pitchToStaffPosition(p1Lowest, clef);
+      const step2 = pitchToStaffPosition(p2Highest, clef);
+
+      if (step1 === step2) {
+        isUnison = true;
+        isSameDurationUnison =
+          ne1.baseType === ne2.baseType && ne1.duration === ne2.duration && ne1.dots === ne2.dots;
+      } else if (step1 - step2 === 1) {
+        isSecond = true;
+      }
+    }
+
+    // Render notes in this column
+    for (const entry of noteEntries) {
+      const vIndex = entry.voiceIndex;
+      const ev = entry.event as NoteEvent;
+      const isBeamed = beamedEventIds.has(ev.id);
+      const stemDir: StemDirection = vIndex === 1 || vIndex === 3 ? 'up' : 'down';
+
+      // Base X positioning according to voice & interval rules
+      let noteX = colCenterX;
+      let voiceStemX = colCenterX;
+
+      if (vIndex === 1) {
+        if (isSecond) {
+          // RC: Second interval: shared stem line, v1 head to LEFT
+          const sharedStemLineX = colCenterX + 0.5 * NOTEHEAD_WIDTH;
+          noteX = sharedStemLineX - NOTEHEAD_WIDTH;
+          voiceStemX = sharedStemLineX;
+        } else {
+          noteX = colCenterX;
+          voiceStemX = colCenterX + NOTEHEAD_WIDTH;
+        }
+      } else if (vIndex === 2) {
+        if (isSecond) {
+          // RC: Second interval: shared stem line, v2 head to RIGHT
+          const sharedStemLineX = colCenterX + 0.5 * NOTEHEAD_WIDTH;
+          noteX = sharedStemLineX;
+          voiceStemX = sharedStemLineX;
+        } else if (isUnison && !isSameDurationUnison) {
+          // RD: Unison with different durations: v2 displaced to RIGHT
+          noteX = colCenterX + NOTEHEAD_WIDTH;
+          voiceStemX = noteX;
+        } else {
+          noteX = colCenterX;
+          voiceStemX = colCenterX;
+        }
+      } else if (vIndex === 3) {
+        // RA: Voice 3 offset +1.25 sp
+        noteX = colCenterX + 1.25;
+        voiceStemX = noteX + NOTEHEAD_WIDTH;
+      } else if (vIndex === 4) {
+        // RA: Voice 4 offset -1.25 sp
+        noteX = colCenterX - 1.25;
+        voiceStemX = noteX;
+      }
+
+      const sortedPitches = [...ev.pitches].sort((a, b) => {
+        return pitchToStaffPosition(a, clef) - pitchToStaffPosition(b, clef);
+      });
+      const stepPositions = sortedPitches.map((p) => pitchToStaffPosition(p, clef));
+
+      let noteheadGlyph = 'noteheadBlack';
+      if (ev.baseType === 'whole') noteheadGlyph = 'noteheadWhole';
+      else if (ev.baseType === 'half') noteheadGlyph = 'noteheadHalf';
+
+      // Accidentals (Rule RH)
+      for (let pIdx = 0; pIdx < sortedPitches.length; pIdx++) {
+        const pitch = sortedPitches[pIdx];
+        const accGlyph = tracker.processPitch(pitch);
+        if (accGlyph) {
+          const accY = staffPositionToY(stepPositions[pIdx]);
+          const accX = Math.min(noteX, colCenterX) - 1.2;
+          measureItems.push({
+            item: {
+              id: `${ev.id}-acc-${pIdx}`,
+              eventId: ev.id,
+              kind: 'glyph',
+              glyph: accGlyph,
+              x: accX,
+              y: accY,
+            },
+          });
+        }
+      }
+
+      // If this is Voice 2 in a same-duration unison, skip drawing duplicate notehead
+      const skipNotehead = vIndex === 2 && isSameDurationUnison;
+
+      if (!skipNotehead) {
+        for (let pIdx = 0; pIdx < sortedPitches.length; pIdx++) {
+          const stepPos = stepPositions[pIdx];
+          const noteY = staffPositionToY(stepPos);
+
+          measureItems.push({
+            item: {
+              id: pIdx === 0 ? ev.id : `${ev.id}-pitch-${pIdx}`,
+              eventId: ev.id,
+              kind: 'glyph',
+              glyph: noteheadGlyph,
+              x: noteX,
+              y: noteY,
+            },
+          });
+
+          // Ledger lines
+          const ledgerYs = getLedgerLineYs(stepPos);
+          for (const lY of ledgerYs) {
+            measureItems.push({
+              item: {
+                id: `${ev.id}-ledger-${pIdx}-${lY}`,
+                eventId: ev.id,
+                kind: 'line',
+                x: noteX - LEDGER_EXTENSION,
+                y: lY,
+                x2: noteX + NOTEHEAD_WIDTH + LEDGER_EXTENSION,
+                y2: lY,
+                thickness: LEDGER_THICKNESS,
+              },
+              ledgerNoteRelativeX: noteX,
+            });
+          }
+
+          // RG: Augmentation dots
+          if (ev.dots > 0) {
+            let dotY = noteY;
+            if (stepPos % 2 === 0) {
+              if (vIndex === 1 || vIndex === 3) {
+                dotY = noteY - 0.5; // space above
+              } else {
+                dotY = noteY + 0.5; // space below (OBSERVED m.1 beat 3 soprano, m.4 beat 1 alto)
+              }
+            }
+            const dotBaseX = noteX + NOTEHEAD_WIDTH + 0.3;
+            for (let d = 0; d < ev.dots; d++) {
+              measureItems.push({
+                item: {
+                  id: `${ev.id}-dot-${pIdx}-${d}`,
+                  eventId: ev.id,
+                  kind: 'glyph',
+                  glyph: 'augmentationDot',
+                  x: dotBaseX + d * 0.4,
+                  y: dotY,
+                },
+              });
+            }
+          }
+        }
+      }
+
+      // Stems & Flags
+      if (ev.baseType !== 'whole') {
+        const lowestStep = stepPositions[0];
+        const highestStep = stepPositions[stepPositions.length - 1];
+
+        let stemStartY = 0;
+        let stemEndY = 0;
+
+        if (stemDir === 'up') {
+          stemStartY = staffPositionToY(lowestStep) - 0.168;
+          stemEndY = staffPositionToY(highestStep) - STEM_LENGTH;
+        } else {
+          stemStartY = staffPositionToY(highestStep) + 0.168;
+          stemEndY = staffPositionToY(lowestStep) + STEM_LENGTH;
+        }
+
+        measureItems.push({
+          item: {
+            id: `${ev.id}-stem`,
+            eventId: ev.id,
+            kind: 'line',
+            x: voiceStemX,
+            y: stemStartY,
+            x2: voiceStemX,
+            y2: stemEndY,
+            thickness: STEM_THICKNESS,
+          },
+        });
+
+        if (
+          !isBeamed &&
+          (ev.baseType === 'eighth' || ev.baseType === '16th' || ev.baseType === '32nd')
+        ) {
+          let flagGlyph = '';
+          if (ev.baseType === 'eighth') flagGlyph = stemDir === 'up' ? 'flag8thUp' : 'flag8thDown';
+          else if (ev.baseType === '16th')
+            flagGlyph = stemDir === 'up' ? 'flag16thUp' : 'flag16thDown';
+          else if (ev.baseType === '32nd')
+            flagGlyph = stemDir === 'up' ? 'flag32ndUp' : 'flag32ndDown';
+
+          if (flagGlyph) {
+            measureItems.push({
+              item: {
+                id: `${ev.id}-flag`,
+                eventId: ev.id,
+                kind: 'glyph',
+                glyph: flagGlyph,
+                x: voiceStemX,
+                y: stemEndY,
+              },
+            });
+          }
+        }
+      }
+    }
+
+    relX += colWidth + firstEventPadding;
+  }
+
+  return relX;
+}
+
+/**
  * Computes natural layout items and natural width for a single measure.
  * Uses a WeakMap cache keyed by the StaffMeasure reference for O(1) retrieval of unchanged measures.
  */
@@ -65,8 +573,11 @@ export function layoutSingleMeasure(
   measureLayoutCacheStats.calls++;
 
   let eventsHash = 0;
-  const voiceEvents = staffMeasure?.voices.find((v) => v.voiceIndex === 1)?.events;
-  if (voiceEvents) {
+  const voices = staffMeasure?.voices ?? [];
+  for (let vIdx = 0; vIdx < voices.length; vIdx++) {
+    const v = voices[vIdx];
+    eventsHash = (eventsHash * 31 + v.voiceIndex) | 0;
+    const voiceEvents = v.events;
     for (let i = 0; i < voiceEvents.length; i++) {
       const ev = voiceEvents[i];
       eventsHash = (eventsHash * 31 + ev.duration + (ev.kind === 'note' && ev.tiedToNext ? 1 : 0)) | 0;
@@ -107,48 +618,52 @@ export function layoutSingleMeasure(
   const measureItems: MeasureItemEntry[] = [];
   let relX = 0;
 
-  // Precompute beam groupings per measure so uniform stem directions and flag omission stay cached per measure
-  const beamGroupsRaw = groupBeams(events, mDef.timeSig);
-  const noteStepsMap = new Map<string, number[]>();
-  const startTickMap = new Map<string, number>();
-  const fullTicks = (mDef.timeSig.num * 4 * PPQ) / mDef.timeSig.den;
-  const pickupOffset =
-    mDef.actualTicks && mDef.actualTicks < fullTicks ? fullTicks - mDef.actualTicks : 0;
-  let runningTick = 0;
-  for (const ev of events) {
-    startTickMap.set(ev.id, runningTick + pickupOffset);
-    runningTick += ev.duration;
-    if (ev.kind === 'note') {
-      const sortedSteps = [...ev.pitches]
-        .map((p) => pitchToStaffPosition(p, clef))
-        .sort((a, b) => a - b);
-      noteStepsMap.set(ev.id, sortedSteps);
-    }
-  }
-
   const eventToBeamDir = new Map<string, StemDirection>();
   const beamGroupsMeta: MeasureBeamGroupMeta[] = [];
-  for (let gIdx = 0; gIdx < beamGroupsRaw.length; gIdx++) {
-    const g = beamGroupsRaw[gIdx];
-    const groupSteps = g.eventIds.map((id) => noteStepsMap.get(id) ?? []);
-    const groupStemDir = getBeamGroupStemDirection(groupSteps);
-    const beamGroupId = `beam-${mDef.id}-${gIdx}`;
-    for (const id of g.eventIds) {
-      eventToBeamDir.set(id, groupStemDir);
+
+  const isPoly = isStaffMeasurePolyphonic(staffMeasure);
+  if (!isPoly) {
+    // Precompute beam groupings per measure so uniform stem directions and flag omission stay cached per measure
+    const beamGroupsRaw = groupBeams(events, mDef.timeSig);
+    const noteStepsMap = new Map<string, number[]>();
+    const startTickMap = new Map<string, number>();
+    const fullTicks = (mDef.timeSig.num * 4 * PPQ) / mDef.timeSig.den;
+    const pickupOffset =
+      mDef.actualTicks && mDef.actualTicks < fullTicks ? fullTicks - mDef.actualTicks : 0;
+    let runningTick = 0;
+    for (const ev of events) {
+      startTickMap.set(ev.id, runningTick + pickupOffset);
+      runningTick += ev.duration;
+      if (ev.kind === 'note') {
+        const sortedSteps = [...ev.pitches]
+          .map((p) => pitchToStaffPosition(p, clef))
+          .sort((a, b) => a - b);
+        noteStepsMap.set(ev.id, sortedSteps);
+      }
     }
-    beamGroupsMeta.push({
-      beamGroupId,
-      stemDir: groupStemDir,
-      events: g.eventIds.map((id) => {
-        const evObj = events.find((e) => e.id === id)!;
-        return {
-          eventId: id,
-          baseType: evObj.baseType,
-          stepPositions: noteStepsMap.get(id) ?? [],
-          startTick: startTickMap.get(id) ?? 0,
-        };
-      }),
-    });
+
+    for (let gIdx = 0; gIdx < beamGroupsRaw.length; gIdx++) {
+      const g = beamGroupsRaw[gIdx];
+      const groupSteps = g.eventIds.map((id) => noteStepsMap.get(id) ?? []);
+      const groupStemDir = getBeamGroupStemDirection(groupSteps);
+      const beamGroupId = `beam-${mDef.id}-${gIdx}`;
+      for (const id of g.eventIds) {
+        eventToBeamDir.set(id, groupStemDir);
+      }
+      beamGroupsMeta.push({
+        beamGroupId,
+        stemDir: groupStemDir,
+        events: g.eventIds.map((id) => {
+          const evObj = events.find((e) => e.id === id)!;
+          return {
+            eventId: id,
+            baseType: evObj.baseType,
+            stepPositions: noteStepsMap.get(id) ?? [],
+            startTick: startTickMap.get(id) ?? 0,
+          };
+        }),
+      });
+    }
   }
 
   // Key signature change mid-score
@@ -209,10 +724,21 @@ export function layoutSingleMeasure(
     relX += 1.8;
   }
 
-  const lyricsToLayout: LyricLayoutEntry[] = [];
-  const notePositions: Array<{ evId: string; noteheadRightX: number; lyricX: number }> = [];
+  if (isStaffMeasurePolyphonic(staffMeasure)) {
+    relX = layoutPolyphonicEvents(
+      staffMeasure!,
+      mDef,
+      clef,
+      relX,
+      tracker,
+      measureItems,
+      beamGroupsMeta
+    );
+  } else {
+    const lyricsToLayout: LyricLayoutEntry[] = [];
+    const notePositions: Array<{ evId: string; noteheadRightX: number; lyricX: number }> = [];
 
-  // Process events
+    // Process events
   for (let eIdx = 0; eIdx < events.length; eIdx++) {
     const ev = events[eIdx];
     const isWholeMeasureRest = ev.kind === 'rest' && Boolean((ev as RestEvent).wholeMeasure);
@@ -479,14 +1005,15 @@ export function layoutSingleMeasure(
       }
     }
 
-    relX += eventWidth + firstEventAccidentalPadding;
+      relX += eventWidth + firstEventAccidentalPadding;
+    }
+
+    // Render lyric text, centered hyphens, and melisma extender lines
+    layoutMeasureLyrics(lyricsToLayout, events, notePositions, relX + 0.6, measureItems);
   }
 
   // Barline at end of measure
   const barlineX = relX + 0.6;
-
-  // Render lyric text, centered hyphens, and melisma extender lines
-  layoutMeasureLyrics(lyricsToLayout, events, notePositions, barlineX, measureItems);
 
   const barlineItemIndex = measureItems.length;
 

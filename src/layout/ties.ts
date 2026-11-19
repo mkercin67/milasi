@@ -9,6 +9,7 @@
 
 import { NoteEvent, Score } from '../core/model';
 import { NOTEHEAD_WIDTH } from './layoutScore';
+import { isStaffMeasurePolyphonic } from './measureLayout';
 import { notationOpCounter } from './notations';
 import { LayoutResult } from './types';
 
@@ -121,7 +122,7 @@ export function layoutTies(
         }
       }
 
-      for (const allNotes of voiceNotesMap.values()) {
+      for (const [vIndex, allNotes] of voiceNotesMap.entries()) {
         for (let nIdx = 0; nIdx < allNotes.length; nIdx++) {
           const sourceNote = allNotes[nIdx];
           const isTied = sourceNote.tiedToNext || sourceNote.pitches.some((p) => p.tiedToNext);
@@ -143,8 +144,20 @@ export function layoutTies(
             const posB = noteheadIndex ? noteheadIndex.get(targetNote.id) ?? null : findNoteheadPos(layout, targetNote.id);
 
             if (posA && posB) {
-              const stemDir = posA.stemDirection;
-              const yOffset = stemDir === 'up' ? 0.35 : -0.35;
+              // Rule RF: In polyphonic measures, Voice 1/3 curves ABOVE, Voice 2/4 curves BELOW
+              const isPoly = Object.values(staff.measures).some((sm) => isStaffMeasurePolyphonic(sm));
+              let curveDir = posA.stemDirection;
+              let yOffset = curveDir === 'up' ? 0.35 : -0.35;
+
+              if (isPoly) {
+                if (vIndex === 1 || vIndex === 3) {
+                  curveDir = 'down'; // curves above notehead in createCrescentPath
+                  yOffset = -0.35;
+                } else {
+                  curveDir = 'up'; // curves below notehead in createCrescentPath
+                  yOffset = 0.35;
+                }
+              }
 
               if (posA.systemIndex === posB.systemIndex) {
                 // Same system
@@ -153,7 +166,7 @@ export function layoutTies(
                 const x2 = posB.x - 0.1;
                 const y2 = posB.y + yOffset;
 
-                const pathD = createCrescentPath(x1, y1, x2, y2, stemDir);
+                const pathD = createCrescentPath(x1, y1, x2, y2, curveDir);
                 ties.push({
                   id: `tie_${sourceNote.id}_${targetNote.id}`,
                   systemIndex: posA.systemIndex,
@@ -169,7 +182,7 @@ export function layoutTies(
                 const y1A = posA.y + yOffset;
                 const x2A = sysAWidth - 0.5;
                 const y2A = y1A;
-                const pathA = createCrescentPath(x1A, y1A, x2A, y2A, stemDir);
+                const pathA = createCrescentPath(x1A, y1A, x2A, y2A, curveDir);
                 ties.push({
                   id: `tie_${sourceNote.id}_break_a`,
                   systemIndex: posA.systemIndex,
@@ -181,7 +194,7 @@ export function layoutTies(
                 const x2B = posB.x - 0.1;
                 const y1B = posB.y + yOffset;
                 const y2B = y1B;
-                const pathB = createCrescentPath(x1B, y1B, x2B, y2B, stemDir);
+                const pathB = createCrescentPath(x1B, y1B, x2B, y2B, curveDir);
                 ties.push({
                   id: `tie_${sourceNote.id}_break_b`,
                   systemIndex: posB.systemIndex,

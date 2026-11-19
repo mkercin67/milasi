@@ -12,6 +12,7 @@
 
 import { Score } from '../core/model';
 import { NOTEHEAD_WIDTH } from './layoutScore';
+import { isStaffMeasurePolyphonic } from './measureLayout';
 import { LayoutItem, LayoutResult, StemDirection } from './types';
 
 export interface SlurLayoutItem {
@@ -372,8 +373,26 @@ export function layoutSlurs(
         const endNh = index.get(slur.endEventId);
         if (!startNh || !endNh) continue;
 
-        const curvature: 'above' | 'below' =
-          slur.placement ?? (startNh.stemDirection === 'up' && endNh.stemDirection === 'up' ? 'below' : 'above');
+        let startVoiceIndex = 1;
+        let isPoly = false;
+        for (const sm of Object.values(staff.measures)) {
+          if (isStaffMeasurePolyphonic(sm)) isPoly = true;
+          for (const v of sm.voices) {
+            if (v.events.some((e) => e.id === slur.startEventId)) {
+              startVoiceIndex = v.voiceIndex;
+            }
+          }
+        }
+
+        let curvature: 'above' | 'below';
+        if (slur.placement) {
+          curvature = slur.placement;
+        } else if (isPoly) {
+          // Rule RF: Voice 1/3 curves ABOVE, Voice 2/4 curves BELOW
+          curvature = (startVoiceIndex === 1 || startVoiceIndex === 3) ? 'above' : 'below';
+        } else {
+          curvature = (startNh.stemDirection === 'up' && endNh.stemDirection === 'up' ? 'below' : 'above');
+        }
 
         if (startNh.systemIndex === endNh.systemIndex) {
           // Single system slur
