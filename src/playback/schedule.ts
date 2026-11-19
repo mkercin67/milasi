@@ -257,7 +257,7 @@ export function buildSchedule(
                     startSeconds: evStartSeconds,
                     durationSeconds: soundingDuration,
                     velocity: noteVelocity,
-                    midiChannel: part.midiChannel ?? 0,
+                    midiChannel: part.midiChannel,
                   };
                   scheduledNotes.push(scheduled);
 

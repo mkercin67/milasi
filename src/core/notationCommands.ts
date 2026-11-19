@@ -30,7 +30,7 @@ export function toggleTie(eventId: string, pitchIndex: number = 0): Command {
               const idx = v.events.findIndex((e) => e.id === eventId);
               if (idx !== -1) {
                 foundStaffId = staff.id;
-                foundVoiceIndex = vIdx;
+                foundVoiceIndex = v.voiceIndex ?? (vIdx + 1);
                 startMIdx = mIdx;
                 startEvIdx = idx;
                 const ev = v.events[idx];
@@ -59,7 +59,7 @@ export function toggleTie(eventId: string, pitchIndex: number = 0): Command {
             const sm = staff.measures[mDef.id];
             if (!sm) continue;
             // Rule R3: voice identity is stable voiceIndex, never compare random voice IDs across measures
-            const v = sm.voices[foundVoiceIndex];
+            const v = sm.voices.find((voice, idx) => (voice.voiceIndex ?? (idx + 1)) === foundVoiceIndex);
             if (!v) continue;
             const startI = mIdx === startMIdx ? startEvIdx + 1 : 0;
             for (let i = startI; i < v.events.length; i++) {

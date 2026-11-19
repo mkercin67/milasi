@@ -6,7 +6,7 @@
  * such as verifying voice durations against measure time signatures.
  */
 
-import { ALLOWED_ARTICULATIONS, ALLOWED_DYNAMICS, Id, MeasureDef, Score } from './model';
+import { ALLOWED_ARTICULATIONS, ALLOWED_DYNAMICS, Id, MeasureDef, NoteEvent, Pitch, Score } from './model';
 import { isPercussionInstrument } from './instruments';
 import { measureTicks } from './time';
 
@@ -350,6 +350,79 @@ export function validateScore(score: Score): ValidationProblem[] {
               measureId,
               voiceId: voice.id,
             });
+          }
+        }
+      }
+
+      // Tie validation (Schema v7 intra-voice)
+      if (score.schemaVersion === 7) {
+        const voiceNotesMap = new Map<number, Array<{ note: NoteEvent; measureId: Id; tickStart: number }>>();
+        const allStaffNotes: Array<{ note: NoteEvent; voiceIndex: number; measureId: Id; tickStart: number }> = [];
+        let runningStaffTick = 0;
+        for (const mDef of score.measures) {
+          const sm = staff.measures[mDef.id];
+          if (sm) {
+            for (let vIdx = 0; vIdx < sm.voices.length; vIdx++) {
+              const v = sm.voices[vIdx];
+              const vIndex = (v.voiceIndex ?? (vIdx + 1)) as number;
+              let list = voiceNotesMap.get(vIndex);
+              if (!list) {
+                list = [];
+                voiceNotesMap.set(vIndex, list);
+              }
+              let vTick = runningStaffTick;
+              for (const ev of v.events) {
+                if (ev.kind === 'note') {
+                  const entry = { note: ev, measureId: mDef.id, tickStart: vTick };
+                  list.push(entry);
+                  allStaffNotes.push({ note: ev, voiceIndex: vIndex, measureId: mDef.id, tickStart: vTick });
+                }
+                vTick += ev.duration;
+              }
+            }
+          }
+          runningStaffTick += (mDef.actualTicks ?? measureTicks(mDef.timeSig));
+        }
+
+        for (const [vIndex, vNotes] of voiceNotesMap.entries()) {
+          for (let i = 0; i < vNotes.length; i++) {
+            const current = vNotes[i];
+            const hasTiedPitch = current.note.tiedToNext || current.note.pitches.some((p: Pitch) => p.tiedToNext);
+            if (!hasTiedPitch) continue;
+
+            for (const sp of current.note.pitches) {
+              if (current.note.tiedToNext || sp.tiedToNext) {
+                const nextInVoice = vNotes[i + 1];
+                const matchesSameVoice = nextInVoice && nextInVoice.note.pitches.some(
+                  (tp: Pitch) => tp.step === sp.step && tp.octave === sp.octave && tp.alter === sp.alter
+                );
+
+                if (!matchesSameVoice) {
+                  const expectedNextTick = current.tickStart + current.note.duration;
+                  const crossVoiceMatch = allStaffNotes.find(
+                    (other) =>
+                      other.voiceIndex !== vIndex &&
+                      other.tickStart === expectedNextTick &&
+                      other.note.pitches.some(
+                        (tp: Pitch) => tp.step === sp.step && tp.octave === sp.octave && tp.alter === sp.alter
+                      )
+                  );
+
+                  if (crossVoiceMatch) {
+                    problems.push({
+                      code: 'tie-cross-voice',
+                      message: `Note ${current.note.id} in voice ${vIndex} attempts to tie to note ${crossVoiceMatch.note.id} in voice ${crossVoiceMatch.voiceIndex}`,
+                      severity: 'error',
+                      partId: part.id,
+                      staffId: staff.id,
+                      measureId: current.measureId,
+                      voiceId: current.note.id,
+                      eventId: current.note.id,
+                    });
+                  }
+                }
+              }
+            }
           }
         }
       }

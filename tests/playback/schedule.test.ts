@@ -225,6 +225,7 @@ describe('Milestone 4 Section A: Pure Playback Core', () => {
         meta: { title: 'Trio', composer: '' },
         measures: [mDef],
         parts: [part1, part2],
+        groups: [],
         overrides: {},
       };
 

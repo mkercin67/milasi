@@ -14,8 +14,9 @@ export type Id = string;
 export interface StaffGroup {
   id: Id;
   name?: string;
-  staffIds: Id[];
-  bracket: 'bracket' | 'brace';
+  partIds: Id[]; // Parts enclosed by this group
+  bracket: 'none' | 'brace' | 'bracket'; // 'brace' = piano curly brace; 'bracket' = orchestral square bracket
+  barlineSpan: 'through' | 'individual' | 'mensurstrich';
 }
 
 /** Root score container. */
@@ -30,7 +31,7 @@ export interface Score {
   };
   parts: Part[];
   measures: MeasureDef[];
-  groups?: StaffGroup[];
+  groups: StaffGroup[];
   overrides: Record<Id, Override>;
 }
 
@@ -78,8 +79,8 @@ export interface Part {
   name: string;
   staves: Staff[];
   instrument: string;
-  midiChannel?: number; // 0..15 (mandatory in Schema v7)
-  shortName?: string; // e.g. "Vln.", "Pno." (mandatory in Schema v7)
+  midiChannel: number; // 0..15 (mandatory in Schema v7)
+  shortName: string; // e.g. "Vln.", "Pno." (mandatory in Schema v7)
 }
 
 /** A musical slur connecting two events in the same staff. */

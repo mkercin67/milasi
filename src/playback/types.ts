@@ -17,7 +17,7 @@ export interface ScheduledNote {
   startSeconds: number;
   durationSeconds: number;
   velocity: number;
-  midiChannel?: number;
+  midiChannel: number;
 }
 
 export interface MeasureStartTime {

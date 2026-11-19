@@ -130,7 +130,7 @@ function ticksToBaseType(ticks: number): BaseDurationType {
  */
 export function pasteEvents(
   score: Score,
-  target: { staffId: string; voiceId: string; startMeasureId: string; startOffsetTicks: number },
+  target: { staffId: string; voiceId: string; voiceIndex?: 1 | 2 | 3 | 4; startMeasureId: string; startOffsetTicks: number },
   pastedEvents: ScoreEvent[],
   placedEventIds?: string[]
 ): Score {
@@ -172,7 +172,7 @@ export function pasteEvents(
               voices: [
                 {
                   id: st.id === staff.id ? target.voiceId : newId(),
-                  voiceIndex: 1,
+                  voiceIndex: (target.voiceIndex ?? 1) as 1 | 2 | 3 | 4,
                   events: [createRest({ baseType: 'whole', duration: newDur, wholeMeasure: true })],
                 },
               ],
@@ -232,7 +232,10 @@ export function pasteEvents(
     const staffMeasure = staff.measures[mDef.id];
     if (!staffMeasure) continue;
 
-    const voice = staffMeasure.voices.find((v) => v.id === target.voiceId) ?? staffMeasure.voices[0];
+    const voice =
+      target.voiceIndex !== undefined
+        ? staffMeasure.voices.find((v) => v.voiceIndex === target.voiceIndex)
+        : staffMeasure.voices.find((v) => v.id === target.voiceId) ?? staffMeasure.voices[0];
     if (!voice) continue;
 
     const existing = voice.events;

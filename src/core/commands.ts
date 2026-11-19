@@ -211,7 +211,7 @@ export function removeVoice(
           const voice = sm.voices[vIdx];
           const hasNotes = voice.events.some((ev) => ev.kind === 'note');
           if (hasNotes && !force) {
-            throw new Error('Ses nota içeriyor, silmek için onay gereklidir.');
+            throw new Error('Ses nota içeriyor. Silmek istediğinizden emin misiniz?');
           }
           sm.voices.splice(vIdx, 1);
         }
@@ -386,39 +386,37 @@ export function transposeEvent(eventId: Id, semitones: number): Command {
       let targetPartId = '';
       let targetStaffId = '';
       let targetMeasureId = '';
-      let targetVoiceIndex = -1;
-      let targetEventIndex = -1;
+      let targetVoiceId = '';
 
       for (const part of score.parts) {
         for (const staff of part.staves) {
           for (const measureId of Object.keys(staff.measures)) {
             const staffMeasure = staff.measures[measureId];
-            for (let vi = 0; vi < staffMeasure.voices.length; vi++) {
-              const ei = staffMeasure.voices[vi].events.findIndex((ev: ScoreEvent) => ev.id === eventId);
+            for (const v of staffMeasure.voices) {
+              const ei = v.events.findIndex((ev: ScoreEvent) => ev.id === eventId);
               if (ei !== -1) {
                 targetPartId = part.id;
                 targetStaffId = staff.id;
                 targetMeasureId = measureId;
-                targetVoiceIndex = vi;
-                targetEventIndex = ei;
+                targetVoiceId = v.id;
                 break;
               }
             }
-            if (targetEventIndex !== -1) break;
+            if (targetVoiceId) break;
           }
-          if (targetEventIndex !== -1) break;
+          if (targetVoiceId) break;
         }
-        if (targetEventIndex !== -1) break;
+        if (targetVoiceId) break;
       }
 
-      if (targetEventIndex === -1) return score;
+      if (!targetVoiceId) return score;
 
       return produce(score, (draft) => {
         const part = draft.parts.find((p) => p.id === targetPartId);
         const staff = part?.staves.find((s) => s.id === targetStaffId);
         const staffMeasure = staff?.measures[targetMeasureId];
-        const voice = staffMeasure?.voices[targetVoiceIndex];
-        const event = voice?.events[targetEventIndex];
+        const voice = staffMeasure?.voices.find((v) => v.id === targetVoiceId);
+        const event = voice?.events.find((e: ScoreEvent) => e.id === eventId);
         if (event && event.kind === 'note') {
           if (Math.abs(semitones) === 12) {
             const octaves = semitones > 0 ? 1 : -1;

@@ -1,0 +1,109 @@
+{
+  "app": "scoreforge",
+  "savedAt": "2026-02-25T13:00:00.000Z",
+  "score": {
+    "id": "score-real-fixture",
+    "meta": {
+      "title": "Historical Fixture",
+      "composer": "Murat Kerçin",
+      "subtitle": "Concert Opus",
+      "arranger": "Arranger Test"
+    },
+    "measures": [
+      {
+        "id": "m1",
+        "timeSig": {
+          "num": 4,
+          "den": 4
+        },
+        "keySig": 0,
+        "tempo": {
+          "bpm": 120,
+          "beatUnit": 1
+        },
+        "endBarline": "single"
+      },
+      {
+        "id": "m2",
+        "timeSig": {
+          "num": 4,
+          "den": 4
+        },
+        "keySig": 0,
+        "endBarline": "final"
+      }
+    ],
+    "parts": [
+      {
+        "id": "part-flute",
+        "name": "Flute",
+        "instrument": "flute",
+        "staves": [
+          {
+            "id": "staff-flute-1",
+            "clef": {
+              "sign": "G",
+              "line": 2
+            },
+            "measures": {
+              "m1": {
+                "voices": [
+                  {
+                    "id": "v1-m1",
+                    "events": [
+                      {
+                        "id": "n1-m1",
+                        "kind": "note",
+                        "baseType": "half",
+                        "duration": 1920,
+                        "pitches": [
+                          {
+                            "step": "C",
+                            "octave": 5,
+                            "alter": 0,
+                            "tiedToNext": true
+                          }
+                        ]
+                      },
+                      {
+                        "id": "n2-m1",
+                        "kind": "note",
+                        "baseType": "half",
+                        "duration": 1920,
+                        "pitches": [
+                          {
+                            "step": "C",
+                            "octave": 5,
+                            "alter": 0
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              "m2": {
+                "voices": [
+                  {
+                    "id": "v1-m2",
+                    "events": [
+                      {
+                        "id": "r1-m2",
+                        "kind": "rest",
+                        "baseType": "whole",
+                        "duration": 3840
+                      }
+                    ]
+                  }
+                ]
+              }
+            },
+            "slurs": []
+          }
+        ]
+      }
+    ],
+    "overrides": {},
+    "schemaVersion": 4
+  }
+}
