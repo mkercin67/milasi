@@ -1,4 +1,4 @@
-# ScoreForge — Known Issues & Technical Limitations
+# MiLaSi — Known Issues & Technical Limitations
 
 This document lists known constraints and architectural trade-offs in the current implementation.
 

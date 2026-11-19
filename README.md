@@ -1,6 +1,6 @@
-# ScoreForge
+# MiLaSi ("Melodic Layout Studio")
 
-ScoreForge is a high-performance, web-based music notation and engraving application built with TypeScript, React, and SMuFL (Standard Music Font Layout, using Bravura). It is designed from the ground up for sub-30ms keystroke-to-paint latency, immutable state architecture (Immer), pure deterministic layout without DOM measurement locks, and rigorous automated regression verification.
+MiLaSi is a high-performance, web-based music notation and engraving application built with TypeScript, React, and SMuFL (Standard Music Font Layout, using Bravura). It is designed from the ground up for sub-30ms keystroke-to-paint latency, immutable state architecture (Immer), pure deterministic layout without DOM measurement locks, and rigorous automated regression verification.
 
 ---
 
@@ -23,8 +23,8 @@ ScoreForge is a high-performance, web-based music notation and engraving applica
 ### Installation
 
 ```bash
-git clone https://github.com/mkercin67/scoreforge.git
-cd scoreforge
+git clone https://github.com/mkercin67/milasi.git
+cd milasi
 npm install
 ```
 
@@ -87,9 +87,9 @@ npm install
 
 ## License
 
-ScoreForge is free software licensed under the **GNU General Public License v3.0 or later (GPL-3.0-or-later)**. See the [LICENSE](LICENSE) file for the complete license text.
+MiLaSi is free software licensed under the **GNU General Public License v3.0 or later (GPL-3.0-or-later)**. See the [LICENSE](LICENSE) file for the complete license text.
 
-Copyright (C) 2026 [TODO: Copyright Holder Full Name]
+Copyright (C) 2026 Murat Kerçin
 
 ### Third-Party Licenses & Musical Scores
 - **Bravura Font & Metadata:** The Bravura musical font and metadata assets (`public/fonts/`) remain licensed under the **SIL Open Font License, Version 1.1 (OFL-1.1)**. See [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md) and [LICENSE-Bravura.txt](public/fonts/LICENSE-Bravura.txt).
@@ -100,7 +100,7 @@ Copyright (C) 2026 [TODO: Copyright Holder Full Name]
 
 ## Türkçe Özet
 
-ScoreForge, modern web tarayıcılarında profesyonel nota yazımı ve gravür imkânı sunan yüksek performanslı bir nota editörüdür. TypeScript, React ve SMuFL standartlarına uygun Bravura yazı tipiyle geliştirilmiştir.
+MiLaSi ("Melodic Layout Studio"), modern web tarayıcılarında profesyonel nota yazımı ve gravür imkânı sunan yüksek performanslı bir nota editörüdür. TypeScript, React ve SMuFL standartlarına uygun Bravura yazı tipiyle geliştirilmiştir.
 
 - **Performans:** Tuş basımından ekrana çizime kadar (Double rAF / Next Paint) 30 ms'nin altında gecikme hedeflenmiştir.
 - **Mimari:** Immutable veri modeli (Immer), DOM ölçümlerine bağımlı olmayan saf matematiksel yerleşim motoru, Web Audio tabanlı çalma motoru ve çift dilli (Türkçe / İngilizce) arayüz.

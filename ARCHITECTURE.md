@@ -1,4 +1,4 @@
-# ScoreForge — Architecture
+# MiLaSi — Architecture
 
 Goal: a web-based music notation editor (later packaged for desktop with Tauri) that matches what
 academics value in Finale: full manual control over every element, contemporary notation support,

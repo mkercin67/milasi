@@ -1,4 +1,4 @@
-# ScoreForge — Agent Rules
+# MiLaSi — Agent Rules
 
 Read this file and ARCHITECTURE.md at the start of every session.
 

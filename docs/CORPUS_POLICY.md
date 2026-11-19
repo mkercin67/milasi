@@ -1,4 +1,4 @@
-# ScoreForge Musical Corpus & Fixture Policy
+# MiLaSi Musical Corpus & Fixture Policy
 
 This document establishes the mandatory intellectual property and copyright standards for all musical fixtures, test scores, transcriptions, audio, lyrics, and image assets committed to the ScoreForge repository.
 
