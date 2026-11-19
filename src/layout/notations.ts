@@ -42,7 +42,70 @@ const DYNAMIC_GLYPHS: Record<string, string> = {
   fp: 'dynamicFortePiano',
 };
 
-function getNoteheadInfo(layout: LayoutResult, eventId: string): NoteheadInfo | null {
+export function buildNoteheadIndex(layout: LayoutResult): Map<string, NoteheadInfo> {
+  const map = new Map<string, NoteheadInfo>();
+  for (let sysIdx = 0; sysIdx < layout.systems.length; sysIdx++) {
+    const sys = layout.systems[sysIdx];
+    const items = sys.items ?? [];
+    const sysNoteheads = new Map<string, LayoutItem[]>();
+    const sysStems = new Map<string, LayoutItem>();
+
+    for (let i = 0; i < items.length; i++) {
+      const it = items[i];
+      if (!it.eventId) continue;
+      if (it.kind === 'glyph' && it.glyph?.startsWith('notehead')) {
+        let arr = sysNoteheads.get(it.eventId);
+        if (!arr) {
+          arr = [];
+          sysNoteheads.set(it.eventId, arr);
+        }
+        arr.push(it);
+      } else if (it.kind === 'line') {
+        if (!sysStems.has(it.eventId)) {
+          sysStems.set(it.eventId, it);
+        }
+      }
+    }
+
+    for (const [eventId, noteheads] of sysNoteheads.entries()) {
+      if (noteheads.length === 0) continue;
+      const firstNh = noteheads[0];
+      let minY = firstNh.y;
+      let maxY = firstNh.y;
+      for (let j = 1; j < noteheads.length; j++) {
+        const y = noteheads[j].y;
+        if (y < minY) minY = y;
+        if (y > maxY) maxY = y;
+      }
+
+      const stem = sysStems.get(eventId);
+      let stemDirection: StemDirection = firstNh.y >= 2.0 ? 'up' : 'down';
+      if (stem && stem.y2 !== undefined) {
+        stemDirection = stem.y2 < stem.y ? 'up' : 'down';
+      }
+
+      map.set(eventId, {
+        eventId,
+        systemIndex: sysIdx,
+        x: firstNh.x,
+        y: firstNh.y,
+        minY,
+        maxY,
+        stemDirection,
+      });
+    }
+  }
+  return map;
+}
+
+export function getNoteheadInfo(
+  layout: LayoutResult,
+  eventId: string,
+  index?: Map<string, NoteheadInfo>
+): NoteheadInfo | null {
+  if (index) {
+    return index.get(eventId) ?? null;
+  }
   for (let sysIdx = 0; sysIdx < layout.systems.length; sysIdx++) {
     const sys = layout.systems[sysIdx];
     const items = sys.items ?? [];
@@ -79,8 +142,13 @@ function getNoteheadInfo(layout: LayoutResult, eventId: string): NoteheadInfo | 
 /**
  * Computes layout items for note dynamics.
  */
-export function layoutDynamics(score: Score, layout: LayoutResult): LayoutItem[] {
+export function layoutDynamics(
+  score: Score,
+  layout: LayoutResult,
+  noteheadIndex?: Map<string, NoteheadInfo>
+): LayoutItem[] {
   const items: LayoutItem[] = [];
+  const index = noteheadIndex ?? buildNoteheadIndex(layout);
 
   for (const part of score.parts) {
     for (const staff of part.staves) {
@@ -93,7 +161,7 @@ export function layoutDynamics(score: Score, layout: LayoutResult): LayoutItem[]
               const glyph = DYNAMIC_GLYPHS[ev.dynamic];
               if (!glyph) continue;
 
-              const nh = getNoteheadInfo(layout, ev.id);
+              const nh = index.get(ev.id);
               if (!nh) continue;
 
               const overrideId = `${ev.id}-dynamic`;
@@ -128,8 +196,13 @@ export function layoutDynamics(score: Score, layout: LayoutResult): LayoutItem[]
 /**
  * Computes layout items for note articulations.
  */
-export function layoutArticulations(score: Score, layout: LayoutResult): LayoutItem[] {
+export function layoutArticulations(
+  score: Score,
+  layout: LayoutResult,
+  noteheadIndex?: Map<string, NoteheadInfo>
+): LayoutItem[] {
   const items: LayoutItem[] = [];
+  const index = noteheadIndex ?? buildNoteheadIndex(layout);
 
   for (const part of score.parts) {
     for (const staff of part.staves) {
@@ -139,7 +212,7 @@ export function layoutArticulations(score: Score, layout: LayoutResult): LayoutI
         for (const v of sm.voices) {
           for (const ev of v.events) {
             if (ev.kind === 'note' && ev.articulations && ev.articulations.length > 0) {
-              const nh = getNoteheadInfo(layout, ev.id);
+              const nh = index.get(ev.id);
               if (!nh) continue;
 
               // Placement direction: opposite to stem direction (notehead side)
@@ -245,16 +318,21 @@ function createSlurCubicPath(
 /**
  * Computes SVG slur paths for all slurs defined on the staff.
  */
-export function layoutSlurs(score: Score, layout: LayoutResult): SlurLayoutItem[] {
+export function layoutSlurs(
+  score: Score,
+  layout: LayoutResult,
+  noteheadIndex?: Map<string, NoteheadInfo>
+): SlurLayoutItem[] {
   const result: SlurLayoutItem[] = [];
+  const index = noteheadIndex ?? buildNoteheadIndex(layout);
 
   for (const part of score.parts) {
     for (const staff of part.staves) {
       if (!staff.slurs || staff.slurs.length === 0) continue;
 
       for (const slur of staff.slurs) {
-        const startNh = getNoteheadInfo(layout, slur.startEventId);
-        const endNh = getNoteheadInfo(layout, slur.endEventId);
+        const startNh = index.get(slur.startEventId);
+        const endNh = index.get(slur.endEventId);
         if (!startNh || !endNh) continue;
 
         const curvature: 'above' | 'below' =

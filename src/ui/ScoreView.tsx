@@ -14,7 +14,7 @@
 import React, { useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import { layoutScore } from '../layout/layoutScore';
 import { layoutTies } from '../layout/ties';
-import { layoutArticulations, layoutDynamics, layoutSlurs } from '../layout/notations';
+import { buildNoteheadIndex, layoutArticulations, layoutDynamics, layoutSlurs } from '../layout/notations';
 import { getGlyphPath, UNITS_PER_EM } from '../render/glyphPaths.generated';
 import { SystemView } from './SystemView';
 import { useI18n } from './i18n';
@@ -160,21 +160,25 @@ export const ScoreView: React.FC<ScoreViewProps> = ({
     setAvailableSpaces((prev) => (prev === spaces ? prev : spaces));
   }, [containerWidthPx, staffSpacePx]);
 
+  const noteheadIndex = useMemo(() => {
+    return buildNoteheadIndex(layout);
+  }, [layout]);
+
   const ties = useMemo(() => {
-    return layoutTies(score, layout);
-  }, [score, layout]);
+    return layoutTies(score, layout, noteheadIndex);
+  }, [score, layout, noteheadIndex]);
 
   const slurs = useMemo(() => {
-    return layoutSlurs(score, layout);
-  }, [score, layout]);
+    return layoutSlurs(score, layout, noteheadIndex);
+  }, [score, layout, noteheadIndex]);
 
   const dynamics = useMemo(() => {
-    return layoutDynamics(score, layout);
-  }, [score, layout]);
+    return layoutDynamics(score, layout, noteheadIndex);
+  }, [score, layout, noteheadIndex]);
 
   const articulations = useMemo(() => {
-    return layoutArticulations(score, layout);
-  }, [score, layout]);
+    return layoutArticulations(score, layout, noteheadIndex);
+  }, [score, layout, noteheadIndex]);
 
   const visibleTies = useMemo(() => {
     return ties.filter((t) => visibleSystemIndices.has(t.systemIndex));

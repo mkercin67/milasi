@@ -1,0 +1,1613 @@
+[
+  {
+    "name": "measure-0-pitch-edit",
+    "count": 99,
+    "targets": [
+      "sys-0"
+    ],
+    "mutations": [
+      {
+        "type": "attributes",
+        "attributeName": "width",
+        "system": "sys-0"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x",
+        "system": "sys-0"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "width",
+        "system": "sys-0"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x",
+        "system": "sys-0"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "width",
+        "system": "sys-0"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x",
+        "system": "sys-0"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "width",
+        "system": "sys-0"
+      },
+      {
+        "type": "childList",
+        "attributeName": null,
+        "system": "sys-0"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "transform",
+        "system": "sys-0"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x1",
+        "system": "sys-0"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x2",
+        "system": "sys-0"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x",
+        "system": "sys-0"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "transform",
+        "system": "sys-0"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x1",
+        "system": "sys-0"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x2",
+        "system": "sys-0"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x",
+        "system": "sys-0"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x",
+        "system": "sys-0"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "transform",
+        "system": "sys-0"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x1",
+        "system": "sys-0"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x2",
+        "system": "sys-0"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x",
+        "system": "sys-0"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "transform",
+        "system": "sys-0"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x1",
+        "system": "sys-0"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x2",
+        "system": "sys-0"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x",
+        "system": "sys-0"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "transform",
+        "system": "sys-0"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x1",
+        "system": "sys-0"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x2",
+        "system": "sys-0"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x",
+        "system": "sys-0"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "transform",
+        "system": "sys-0"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x1",
+        "system": "sys-0"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x2",
+        "system": "sys-0"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x",
+        "system": "sys-0"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x",
+        "system": "sys-0"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "transform",
+        "system": "sys-0"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x1",
+        "system": "sys-0"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x2",
+        "system": "sys-0"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x",
+        "system": "sys-0"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "transform",
+        "system": "sys-0"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x1",
+        "system": "sys-0"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x2",
+        "system": "sys-0"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x",
+        "system": "sys-0"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "transform",
+        "system": "sys-0"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x1",
+        "system": "sys-0"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x2",
+        "system": "sys-0"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x",
+        "system": "sys-0"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "transform",
+        "system": "sys-0"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x1",
+        "system": "sys-0"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x2",
+        "system": "sys-0"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x",
+        "system": "sys-0"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x",
+        "system": "sys-0"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "transform",
+        "system": "sys-0"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x1",
+        "system": "sys-0"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x2",
+        "system": "sys-0"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x",
+        "system": "sys-0"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "transform",
+        "system": "sys-0"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x1",
+        "system": "sys-0"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x2",
+        "system": "sys-0"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x",
+        "system": "sys-0"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "transform",
+        "system": "sys-0"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x1",
+        "system": "sys-0"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x2",
+        "system": "sys-0"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x",
+        "system": "sys-0"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "transform",
+        "system": "sys-0"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x1",
+        "system": "sys-0"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x2",
+        "system": "sys-0"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x",
+        "system": "sys-0"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x",
+        "system": "sys-0"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "transform",
+        "system": "sys-0"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x1",
+        "system": "sys-0"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x2",
+        "system": "sys-0"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x",
+        "system": "sys-0"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "transform",
+        "system": "sys-0"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x1",
+        "system": "sys-0"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x2",
+        "system": "sys-0"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x",
+        "system": "sys-0"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x1",
+        "system": "sys-0"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x2",
+        "system": "sys-0"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x1",
+        "system": "sys-0"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x2",
+        "system": "sys-0"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x1",
+        "system": "sys-0"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x2",
+        "system": "sys-0"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x",
+        "system": null
+      },
+      {
+        "type": "attributes",
+        "attributeName": "width",
+        "system": null
+      },
+      {
+        "type": "attributes",
+        "attributeName": "d",
+        "system": null
+      },
+      {
+        "type": "attributes",
+        "attributeName": "d",
+        "system": null
+      },
+      {
+        "type": "attributes",
+        "attributeName": "d",
+        "system": null
+      },
+      {
+        "type": "attributes",
+        "attributeName": "transform",
+        "system": null
+      },
+      {
+        "type": "attributes",
+        "attributeName": "transform",
+        "system": null
+      },
+      {
+        "type": "attributes",
+        "attributeName": "transform",
+        "system": null
+      },
+      {
+        "type": "attributes",
+        "attributeName": "transform",
+        "system": null
+      },
+      {
+        "type": "attributes",
+        "attributeName": "transform",
+        "system": null
+      },
+      {
+        "type": "attributes",
+        "attributeName": "transform",
+        "system": null
+      },
+      {
+        "type": "attributes",
+        "attributeName": "transform",
+        "system": null
+      },
+      {
+        "type": "attributes",
+        "attributeName": "transform",
+        "system": null
+      },
+      {
+        "type": "attributes",
+        "attributeName": "transform",
+        "system": null
+      },
+      {
+        "type": "attributes",
+        "attributeName": "transform",
+        "system": null
+      },
+      {
+        "type": "attributes",
+        "attributeName": "transform",
+        "system": null
+      },
+      {
+        "type": "attributes",
+        "attributeName": "transform",
+        "system": null
+      },
+      {
+        "type": "childList",
+        "attributeName": null,
+        "system": null
+      },
+      {
+        "type": "childList",
+        "attributeName": null,
+        "system": null
+      }
+    ]
+  },
+  {
+    "name": "middle-system-3-edit",
+    "count": 100,
+    "targets": [
+      "sys-3"
+    ],
+    "mutations": [
+      {
+        "type": "attributes",
+        "attributeName": "width",
+        "system": "sys-3"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x",
+        "system": "sys-3"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "width",
+        "system": "sys-3"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x",
+        "system": "sys-3"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "width",
+        "system": "sys-3"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x",
+        "system": "sys-3"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "width",
+        "system": "sys-3"
+      },
+      {
+        "type": "childList",
+        "attributeName": null,
+        "system": "sys-3"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "transform",
+        "system": "sys-3"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x1",
+        "system": "sys-3"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x2",
+        "system": "sys-3"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x",
+        "system": "sys-3"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "transform",
+        "system": "sys-3"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x1",
+        "system": "sys-3"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x2",
+        "system": "sys-3"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x",
+        "system": "sys-3"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x",
+        "system": "sys-3"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "transform",
+        "system": "sys-3"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x1",
+        "system": "sys-3"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x2",
+        "system": "sys-3"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x",
+        "system": "sys-3"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "transform",
+        "system": "sys-3"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x1",
+        "system": "sys-3"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x2",
+        "system": "sys-3"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x",
+        "system": "sys-3"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "transform",
+        "system": "sys-3"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x1",
+        "system": "sys-3"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x2",
+        "system": "sys-3"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x",
+        "system": "sys-3"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "transform",
+        "system": "sys-3"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x1",
+        "system": "sys-3"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x2",
+        "system": "sys-3"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x",
+        "system": "sys-3"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x",
+        "system": "sys-3"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "transform",
+        "system": "sys-3"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x1",
+        "system": "sys-3"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x2",
+        "system": "sys-3"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x",
+        "system": "sys-3"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "transform",
+        "system": "sys-3"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x1",
+        "system": "sys-3"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x2",
+        "system": "sys-3"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x",
+        "system": "sys-3"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "transform",
+        "system": "sys-3"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x1",
+        "system": "sys-3"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x2",
+        "system": "sys-3"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x",
+        "system": "sys-3"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "transform",
+        "system": "sys-3"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x1",
+        "system": "sys-3"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x2",
+        "system": "sys-3"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x",
+        "system": "sys-3"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x",
+        "system": "sys-3"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "transform",
+        "system": "sys-3"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x1",
+        "system": "sys-3"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x2",
+        "system": "sys-3"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x",
+        "system": "sys-3"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "transform",
+        "system": "sys-3"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x1",
+        "system": "sys-3"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x2",
+        "system": "sys-3"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x",
+        "system": "sys-3"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "transform",
+        "system": "sys-3"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x1",
+        "system": "sys-3"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x2",
+        "system": "sys-3"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x",
+        "system": "sys-3"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "transform",
+        "system": "sys-3"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x1",
+        "system": "sys-3"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x2",
+        "system": "sys-3"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x",
+        "system": "sys-3"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x",
+        "system": "sys-3"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "transform",
+        "system": "sys-3"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x1",
+        "system": "sys-3"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x2",
+        "system": "sys-3"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x",
+        "system": "sys-3"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "transform",
+        "system": "sys-3"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x1",
+        "system": "sys-3"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x2",
+        "system": "sys-3"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x",
+        "system": "sys-3"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x1",
+        "system": "sys-3"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x2",
+        "system": "sys-3"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x1",
+        "system": "sys-3"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x2",
+        "system": "sys-3"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x1",
+        "system": "sys-3"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x2",
+        "system": "sys-3"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x",
+        "system": null
+      },
+      {
+        "type": "attributes",
+        "attributeName": "width",
+        "system": null
+      },
+      {
+        "type": "attributes",
+        "attributeName": "d",
+        "system": null
+      },
+      {
+        "type": "attributes",
+        "attributeName": "d",
+        "system": null
+      },
+      {
+        "type": "attributes",
+        "attributeName": "d",
+        "system": null
+      },
+      {
+        "type": "attributes",
+        "attributeName": "transform",
+        "system": null
+      },
+      {
+        "type": "attributes",
+        "attributeName": "transform",
+        "system": null
+      },
+      {
+        "type": "attributes",
+        "attributeName": "transform",
+        "system": null
+      },
+      {
+        "type": "attributes",
+        "attributeName": "transform",
+        "system": null
+      },
+      {
+        "type": "attributes",
+        "attributeName": "transform",
+        "system": null
+      },
+      {
+        "type": "attributes",
+        "attributeName": "transform",
+        "system": null
+      },
+      {
+        "type": "attributes",
+        "attributeName": "transform",
+        "system": null
+      },
+      {
+        "type": "attributes",
+        "attributeName": "transform",
+        "system": null
+      },
+      {
+        "type": "attributes",
+        "attributeName": "transform",
+        "system": null
+      },
+      {
+        "type": "attributes",
+        "attributeName": "transform",
+        "system": null
+      },
+      {
+        "type": "attributes",
+        "attributeName": "transform",
+        "system": null
+      },
+      {
+        "type": "attributes",
+        "attributeName": "transform",
+        "system": null
+      },
+      {
+        "type": "attributes",
+        "attributeName": "transform",
+        "system": null
+      },
+      {
+        "type": "childList",
+        "attributeName": null,
+        "system": null
+      },
+      {
+        "type": "childList",
+        "attributeName": null,
+        "system": null
+      }
+    ]
+  },
+  {
+    "name": "last-visible-system-7-edit",
+    "count": 100,
+    "targets": [
+      "sys-7"
+    ],
+    "mutations": [
+      {
+        "type": "attributes",
+        "attributeName": "width",
+        "system": "sys-7"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x",
+        "system": "sys-7"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "width",
+        "system": "sys-7"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x",
+        "system": "sys-7"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "width",
+        "system": "sys-7"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x",
+        "system": "sys-7"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "width",
+        "system": "sys-7"
+      },
+      {
+        "type": "childList",
+        "attributeName": null,
+        "system": "sys-7"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "transform",
+        "system": "sys-7"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x1",
+        "system": "sys-7"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x2",
+        "system": "sys-7"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x",
+        "system": "sys-7"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "transform",
+        "system": "sys-7"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x1",
+        "system": "sys-7"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x2",
+        "system": "sys-7"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x",
+        "system": "sys-7"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x",
+        "system": "sys-7"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "transform",
+        "system": "sys-7"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x1",
+        "system": "sys-7"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x2",
+        "system": "sys-7"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x",
+        "system": "sys-7"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "transform",
+        "system": "sys-7"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x1",
+        "system": "sys-7"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x2",
+        "system": "sys-7"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x",
+        "system": "sys-7"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "transform",
+        "system": "sys-7"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x1",
+        "system": "sys-7"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x2",
+        "system": "sys-7"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x",
+        "system": "sys-7"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "transform",
+        "system": "sys-7"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x1",
+        "system": "sys-7"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x2",
+        "system": "sys-7"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x",
+        "system": "sys-7"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x",
+        "system": "sys-7"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "transform",
+        "system": "sys-7"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x1",
+        "system": "sys-7"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x2",
+        "system": "sys-7"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x",
+        "system": "sys-7"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "transform",
+        "system": "sys-7"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x1",
+        "system": "sys-7"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x2",
+        "system": "sys-7"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x",
+        "system": "sys-7"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "transform",
+        "system": "sys-7"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x1",
+        "system": "sys-7"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x2",
+        "system": "sys-7"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x",
+        "system": "sys-7"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "transform",
+        "system": "sys-7"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x1",
+        "system": "sys-7"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x2",
+        "system": "sys-7"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x",
+        "system": "sys-7"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x",
+        "system": "sys-7"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "transform",
+        "system": "sys-7"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x1",
+        "system": "sys-7"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x2",
+        "system": "sys-7"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x",
+        "system": "sys-7"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "transform",
+        "system": "sys-7"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x1",
+        "system": "sys-7"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x2",
+        "system": "sys-7"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x",
+        "system": "sys-7"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "transform",
+        "system": "sys-7"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x1",
+        "system": "sys-7"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x2",
+        "system": "sys-7"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x",
+        "system": "sys-7"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "transform",
+        "system": "sys-7"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x1",
+        "system": "sys-7"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x2",
+        "system": "sys-7"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x",
+        "system": "sys-7"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x",
+        "system": "sys-7"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "transform",
+        "system": "sys-7"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x1",
+        "system": "sys-7"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x2",
+        "system": "sys-7"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x",
+        "system": "sys-7"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "transform",
+        "system": "sys-7"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x1",
+        "system": "sys-7"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x2",
+        "system": "sys-7"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x",
+        "system": "sys-7"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x1",
+        "system": "sys-7"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x2",
+        "system": "sys-7"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x1",
+        "system": "sys-7"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x2",
+        "system": "sys-7"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x1",
+        "system": "sys-7"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x2",
+        "system": "sys-7"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x",
+        "system": null
+      },
+      {
+        "type": "attributes",
+        "attributeName": "width",
+        "system": null
+      },
+      {
+        "type": "attributes",
+        "attributeName": "d",
+        "system": null
+      },
+      {
+        "type": "attributes",
+        "attributeName": "d",
+        "system": null
+      },
+      {
+        "type": "attributes",
+        "attributeName": "d",
+        "system": null
+      },
+      {
+        "type": "attributes",
+        "attributeName": "transform",
+        "system": null
+      },
+      {
+        "type": "attributes",
+        "attributeName": "transform",
+        "system": null
+      },
+      {
+        "type": "attributes",
+        "attributeName": "transform",
+        "system": null
+      },
+      {
+        "type": "attributes",
+        "attributeName": "transform",
+        "system": null
+      },
+      {
+        "type": "attributes",
+        "attributeName": "transform",
+        "system": null
+      },
+      {
+        "type": "attributes",
+        "attributeName": "transform",
+        "system": null
+      },
+      {
+        "type": "attributes",
+        "attributeName": "transform",
+        "system": null
+      },
+      {
+        "type": "attributes",
+        "attributeName": "transform",
+        "system": null
+      },
+      {
+        "type": "attributes",
+        "attributeName": "transform",
+        "system": null
+      },
+      {
+        "type": "attributes",
+        "attributeName": "transform",
+        "system": null
+      },
+      {
+        "type": "attributes",
+        "attributeName": "transform",
+        "system": null
+      },
+      {
+        "type": "attributes",
+        "attributeName": "transform",
+        "system": null
+      },
+      {
+        "type": "attributes",
+        "attributeName": "transform",
+        "system": null
+      },
+      {
+        "type": "childList",
+        "attributeName": null,
+        "system": null
+      },
+      {
+        "type": "childList",
+        "attributeName": null,
+        "system": null
+      }
+    ]
+  },
+  {
+    "name": "beam-grouping-flip-edit",
+    "count": 10,
+    "targets": [
+      "sys-0"
+    ],
+    "mutations": [
+      {
+        "type": "childList",
+        "attributeName": null,
+        "system": null
+      },
+      {
+        "type": "attributes",
+        "attributeName": "transform",
+        "system": "sys-0"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "transform",
+        "system": "sys-0"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x1",
+        "system": "sys-0"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "y1",
+        "system": "sys-0"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "x2",
+        "system": "sys-0"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "y2",
+        "system": "sys-0"
+      },
+      {
+        "type": "childList",
+        "attributeName": null,
+        "system": "sys-0"
+      },
+      {
+        "type": "attributes",
+        "attributeName": "width",
+        "system": null
+      },
+      {
+        "type": "attributes",
+        "attributeName": "d",
+        "system": null
+      }
+    ]
+  }
+]

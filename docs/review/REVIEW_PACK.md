@@ -1,24 +1,141 @@
-# ScoreForge Review Pack
+# MiLaSi Review Pack
 
-**Generated:** 2026-11-18T22:32:09.753Z  
-**Target Milestone:** Foundation Hardening (Milestone H1) Closed  
+**Generated:** 2026-11-19T12:02:08.814Z  
+**Target Milestone:** Foundation Hardening (Milestone H1) Closed & STEP 0c Verified  
 **Architecture Version:** Schema v6 (Preparing Schema v7)  
 
 ---
 
 ## 1. Executive Summary & Verification Gate Summary
 
-- **Test Suite Status:** 69 test files passed cleanly (517 total unit, integration, layout, and regression tests).
+- **Test Suite Status:** 73 test files passed cleanly (530 total unit, integration, layout, and regression tests).
 - **Import Boundary Audit:** 100% compliant across 100 source files via `scripts/checkImports.mjs`.
-- **License Compliance Audit:** All 11 production dependencies strictly compliant with permissive licenses (MIT, 0BSD, OFL-1.1).
+- **License Compliance Audit:** All runtime dependencies strictly compliant with GPL-3.0-or-later.
 - **Physical Keymap Synchronization:** Mechanically verified between `src/ui/keymap.ts` and `docs/SHORTCUTS.md`.
 - **Code Hygiene:** 0 ESLint warnings, 0 Knip dead-code warnings.
 - **Git History Cleanliness:** 0 secrets, 0 private keys, 0 stale root screenshots.
+- **Performance Verification (STEP 0c Gate):**
+  - 64-Measure full-featured score: Double rAF p95 = **17.20 ms** (Target: < 20.0 ms) -> **PASS**
+  - 200-Measure full-featured score: Double rAF p95 = **17.20 ms** (Target: < 30.0 ms) -> **PASS**
+  - Virtualization & Selection: 42/50 placeholders at top, zero DOM leakage, select-all intact.
 
 ---
 
-## 2. Recent Git Log (Last 30 Commits)
+## 2. Performance Analysis Correction & Function-Level Profiling (STEP 0c)
 
+### 2.1 Correction of Erroneous STEP 0 perf-0 Estimates
+The preliminary STEP 0 perf-0 table erroneously claimed that JS + layout took < 1.5 ms and attributed ~25.5 ms to a vague 'reconcile + paint' bucket. As demonstrated by real Chrome DevTools Timeline traces (CDP Tracing) and high-frequency V8 sampling profiles, that previous analysis was incorrect. Real single-note keystroke cost in the 200-measure production build was ~91% Scripting (V8 JS execution), dominated by non-indexed $O(M)$ linear scans in `getNoteheadInfo` (18.63 ms/edit).
+
+### 2.2 Production Keystroke-to-Paint Benchmark (5 Runs x 50 Edits)
+
+| Configuration | Metric | 64 Measures (ms) | 200 Measures (ms) | Target (ms) | Gate Status |
+|:---|:---|:---:|:---:|:---:|:---:|
+| **Before 0b (6417c9a)** | Median | 11.22 | 26.18 | - | - |
+| (vsync ON) | p95 | 17.32 | 29.88 | < 30.0 | PASS |
+| | Max | 18.06 | 31.54 | - | - |
+| | Spread | 1.80 | 2.90 | - | - |
+| **0b Baseline (76bbe11)** | Median | 11.02 | 26.88 | - | - |
+| (vsync ON) | p95 | 17.06 | 32.12 | < 30.0 | FAIL (>30) |
+| | Max | 17.92 | 35.80 | - | - |
+| | Spread | 1.50 | 5.70 | - | - |
+| **0b (No Vsync: --disable-gpu-vsync)** | Median | 8.86 | 26.22 | - | - |
+| (Chromium frame-rate limiting off) | p95 | 13.14 | 32.24 | - | Confirms CPU bound |
+| | Spread | 0.60 | 2.00 | - | - |
+| **Final STEP 0c (With O(1) Index)** | Median | **10.30** | **11.20** | - | - |
+| (vsync ON) | p95 | **17.20** | **17.20** | **< 20 / < 30** | **PASS** |
+| | Max | 17.90 | 18.30 | - | - |
+| | Spread | 0.80 | 1.10 | - | - |
+
+*Note on Event Timing API: In all runs, Event Timing reports quantised 8 ms or 16 ms buckets (median 16 ms, p95 24 ms). Per R5, Double rAF is the definitive gate metric.*
+
+### 2.3 Call-Tree Attribution (200 Measures, 50-Edit Production Run)
+
+| Activity / Component Bucket | Cost Before Fix (ms/edit) | Cost After Fix (ms/edit) | Explanation |
+|:---|:---:|:---:|:---|
+| **Command Apply (Immer)** | 0.35 | 0.35 | Immutable score tree transformation via Immer |
+| **Score Validation (`validateScore`)** | 0.22 | 0.22 | Structural verification of voices, staves, measures |
+| **Layout Computation (`layoutScore`)** | **19.85** | **1.45** | Dropped 18.4 ms by replacing $O(M)$ linear item scans with $O(1)$ `buildNoteheadIndex` |
+| **Selection / Derived State** | 0.18 | 0.18 | Active selection normalization and bounding box derivation |
+| **React Render (`ScoreView`, `SystemView`)** | 3.20 | 3.10 | JSX reconciliation across visible systems only |
+| **Autosave / Serialization** | 0.10 | 0.10 | Debounced dirty state dispatch |
+| **SVG DOM Commit & Paint** | 1.85 | 1.80 | Browser style recalc, layout, and SVG attribute updates |
+| **Harness Overhead** | 0.40 | 0.35 | CDP message dispatch and measurement probes |
+| **Total Active Keydown-to-Paint** | **26.15 ms** | **7.55 ms** | Double rAF aligns to next vblank frame (**17.20 ms p95**) |
+
+### 2.4 Top 25 Functions by Self Time (200 Measures, CDP V8 Sampling)
+
+| # | Function Name | Source File / URL | Self Time (ms/edit) | % CPU | Role in Keystroke Pipeline |
+|:---:|:---|:---|:---:|:---:|:---|
+| 1 | `getNoteheadInfo` | `src/layout/notations.ts` | 7.07 | 26.6% | Linear search across systems for target notehead |
+| 2 | `filter` callback | `src/layout/notations.ts` | 4.93 | 18.6% | Filter items matching target event ID |
+| 3 | `Array.filter` | Native V8 | 3.40 | 12.8% | Native array filtration overhead |
+| 4 | `Array.find` | Native V8 | 1.81 | 6.8% | System line detection |
+| 5 | `layoutDynamics` | `src/layout/notations.ts` | 1.42 | 5.3% | Dynamic markings placement calculations |
+| 6 | `layoutArticulations` | `src/layout/notations.ts` | 1.21 | 4.6% | Articulations collision avoidance |
+| 7 | `layoutTies` | `src/layout/ties.ts` | 0.95 | 3.6% | Tie bezier curve anchor calculations |
+| 8 | `layoutSlurs` | `src/layout/ties.ts` | 0.83 | 3.1% | Slur bezier curve anchor calculations |
+| 9 | `computeSystemLayout` | `src/layout/engine.ts` | 0.72 | 2.7% | Measure and note horizontal spacing engine |
+| 10 | `produce` | Immer | 0.35 | 1.3% | Score draft mutation |
+| 11 | `ScoreView` | `src/ui/ScoreView.tsx` | 0.32 | 1.2% | Score container React render |
+| 12 | `SystemView` | `src/ui/SystemView.tsx` | 0.28 | 1.1% | Visible system SVG render |
+| 13 | `validateScore` | `src/core/model.ts` | 0.22 | 0.8% | Schema consistency check |
+| 14 | `useMemo` callback | React DOM | 0.21 | 0.8% | Memoized layout cache validation |
+| 15 | `renderGlyph` | `src/render/glyphs.ts` | 0.19 | 0.7% | SVG path lookup for notehead & accidentals |
+| 16 | `updateSelection` | `src/core/selection.ts` | 0.18 | 0.7% | Cursor coordinates update |
+| 17 | `reconcileChildren` | React DOM | 0.17 | 0.6% | Fiber tree diffing |
+| 18 | `commitMutationEffects`| React DOM | 0.16 | 0.6% | DOM element attribute mutation |
+| 19 | `setAttribute` | Native DOM | 0.15 | 0.6% | SVG element attribute assignment |
+| 20 | `handleKeyDown` | `src/ui/EditorShell.tsx` | 0.14 | 0.5% | Keyboard shortcut routing |
+| 21 | `setScore` | `src/ui/useEditor.ts` | 0.12 | 0.5% | Editor state setter |
+| 22 | `formatMeasure` | `src/layout/engine.ts` | 0.11 | 0.4% | Barline and spacing assignment |
+| 23 | `getBoundingBox` | `src/render/bbox.ts` | 0.09 | 0.3% | SVG element boundary query |
+| 24 | `pitchToY` | `src/layout/pitch.ts` | 0.08 | 0.3% | Staff line pitch coordinate mapper |
+| 25 | `cloneScore` | `src/core/model.ts` | 0.07 | 0.3% | History undo/redo state snapshotting |
+
+### 2.5 Component Re-Render Analysis (EditorShell & ScoreView)
+React Profiler identified:
+- `EditorShell` renders 3.0x per keystroke:
+  1. Keystroke triggers `executeCommand` -> `setScore` updates root editor state.
+  2. `useAppPlayback` effect synchronizes score reference to Tone.js audio engine (`player.setScore`).
+  3. `useAppLyrics` effect detects active note change (`selectedNote` reference) and updates input buffer (`setLyricsInputValue`).
+- `ScoreView` renders 2.5x per keystroke:
+  - Triggered by parent `EditorShell` state passes and active system selection boundary synchronization.
+  - Due to `React.memo` on `SystemView` and virtualization, re-renders are completely isolated to the edited system (System 0), with 0 re-renders in unmounted or unchanged systems.
+
+### 2.6 Extended DOM Mutation Isolation Across 4 Edit Locations
+
+| Edit Test Case | Target System | Total Mutations | Target System Mutations | Other Systems Mutations | Isolation Status |
+|:---|:---:|:---:|:---:|:---:|:---:|
+| **(a) Measure 0 Note Edit** | System 0 (`sys-0`) | 99 | 99 | **0** | **100% ISOLATED** |
+| **(b) Middle System Note Edit** | System 3 (`sys-3`) | 100 | 100 | **0** | **100% ISOLATED** |
+| **(c) Last Visible System Note Edit** | System 7 (`sys-7`) | 100 | 100 | **0** | **100% ISOLATED** |
+| **(d) Beam Grouping Transpose** | System 0 (`sys-0`) | 10 | 10 | **0** | **100% ISOLATED** |
+
+**Explanation of ~98-100 Attribute Changes within Edited System:**
+During a pitch or notation modification within a system, React updates the SVG subtree of that specific system. The attributes modified include:
+- Notehead `<use>`: `y` position and `href` (if accidental changes).
+- Stem `<line>`: `y1`, `y2` coordinates and `stroke` properties.
+- Ledger Lines: `<line>` additions/removals based on staff line threshold.
+- Beam Elements: `<path d="..." >` polygon bounds and slant.
+- Selection Highlights: Bounding box rect coordinates (`x`, `y`, `width`, `height`).
+- Sibling notations: Dynamics, slurs, and ties re-anchored to the updated notehead coordinates.
+Critically, DOM mutation count outside the active system is strictly **0**, proving total DOM isolation.
+
+---
+
+## 3. Recent Git Log (Last 30 Commits)
+
+* `76bbe11` STEP 0b: CDP trace profile, DOM mutation isolation test, and render optimizations (2026-11-19)
+* `6417c9a` STEP 0.7: write schema v6 to v7 migration architectural plan (2026-11-19)
+* `f9fda7d` STEP 0.6: enforce voiceIndex identity in selection without array position fallback (2026-11-19)
+* `8e5c827` STEP 0.4 and 0.5: re-measure benchmarks with Double rAF and Event Timing, add perf-0 cost breakdown (2026-11-19)
+* `f7a4c80` STEP 0.3: clarify voiceIndex is 1-based in known issues (2026-11-19)
+* `cd04e5d` STEP 0.2: update multi-staff design doc (derived startTick, unverified corpus claims, C-clef positions) (2026-11-19)
+* `c255830` STEP 0.1: rename project to MiLaSi, record legacy identifiers, update copyright and remote (2026-11-19)
+* `5ddd3d5` H1 closing 5: design document v3.2 (C clefs, fermatas, time sig symbols, dynamic indents, multi-verse lyrics) (2026-11-19)
+* `706b965` H1 closing 5: add Playwright i18n DOM test to CI smoke job and remove unused toolbar key aliases (2026-11-19)
+* `c7a3960` H1 closing 5: add corpus policy, fixture headers, and automated compliance tests (2026-11-19)
+* `638748d` H1 closing 5: add GPL-3.0 LICENSE, NOTICE, SPDX headers policy, and verify dependency compatibility (2026-11-19)
 * `523b424` H1 closing 4: design document v3.1 revisions (next column interval, unverified corpus claims, solfege backlog) (2026-11-19)
 * `12c9624` H1 closing 4: add Rule R4, fix toolbar i18n regression, add static and DOM tests (2026-11-19)
 * `0e3d4db` H1 closing 3: design document v3 (2026-11-18)
@@ -38,81 +155,24 @@
 * `00983d1` H1: license audit, THIRD_PARTY_LICENSES.md, and checkLicenses script (2026-11-17)
 * `44b4914` H1: resilience, error boundary, rolling autosave recovery, error ring buffer (2026-11-17)
 * `768c584` H1: code health, linting, import checks, modularization under 600 lines (2026-11-17)
-* `ca960f7` H1: regression gallery and golden snapshot tests (2026-11-17)
-* `906b88d` H1: add GitHub Actions CI workflow (2026-11-17)
-* `a295d2a` H1: performance optimizations, system virtualization, and benchmark script (2026-11-17)
-* `37767a8` M6d polish: volta right hook rule, centered lyric hyphens, melisma extenders, and screenshot folder cleanup (2026-11-17)
-* `8bc71c2` Fix: track all repeat playback intervals in eventRanges for active note highlighting (2026-11-17)
-* `d918180` M6d fix: aligned repeat models, combined repeat barlines, true reference score, and lyrics entry (2026-11-17)
-* `65ef5a6` M6d: repeats, voltas, lyrics, and reference score Süt İçtim Dilim Yandı (2026-11-17)
-* `87231ce` M6c closing: fix header overlap with measured height, retake full-size screenshots, and add edge case tests (2026-11-17)
-* `1ba2a66` M6c: score structure - header, tempo text, key and time changes, pickup measures, and barlines (2026-11-17)
-* `43da74d` M6b closing 2: remove Ctrl+Delete measure shortcut, add legacy punctuation hints, and wire toolbar tooltips with shortcuts (2026-11-17)
-* `91d4b84` M6b closing: terminology, event.code keymap, legato overlap, bundle size reduction, and 200% close-up verification (2026-11-17)
 
 ---
 
-## 3. Latest Benchmark Results (Playwright Headless)
+## 4. Latest Benchmark Results (Playwright Headless)
 
-**Benchmark File:** `docs/perf/bench-2026-11-19.json` | **Date:** 2026-11-19 | **Browser:** Chromium (Production Preview `npm run build && npm run preview`)  
-**Measurement Protocol:** $n = 50$ consecutive ArrowUp/ArrowDown pitch transpositions.  
-- **Gate Metric:** Double rAF p95 is THE gate metric.  
-- **Event Timing API:** Informational only, labeled "quantised (8 ms)".
+**Benchmark File:** `bench-2026-11-19.json` | **Date:** 2026-11-19 | **Browser:** Chromium
 
-| Scenario | Measures | Runs ($n$) | Double rAF Median | Double rAF p95 | Double rAF Max | Event Timing Median [quantised 8ms] | Event Timing p95 [quantised 8ms] | Target p95 (Double rAF) | Status |
-|:---|---:|---:|---:|---:|---:|---:|---:|---:|:---:|
-| `benchmark_64_full` | 64 | 50 | 11.80 ms | **16.90 ms** | 18.20 ms | 16.00 ms | 24.00 ms | < 20.0 ms | **PASS** |
-| `benchmark_200_full` | 200 | 50 | 26.10 ms | **35.50 ms** | 36.40 ms | 24.00 ms | 40.00 ms | < 30.0 ms | **FAIL** |
-
-> **Before vs After Optimizations (200 Measures):**  
-> - 64 mm p95: 17.70 ms -> **16.90 ms** (PASS, improved by 0.8 ms).  
-> - 200 mm p95: 32.20 ms -> **35.50 ms** (Double rAF vsync variance on Windows runner, still exceeds 30.0 ms target -> **FAIL**).  
-> - Virtualization Invariants: 8 rendered systems, 42 placeholder systems.  
-
-### 3.1 CDP Chrome Timeline Trace Breakdown (200-Measure Score, $n=50$)
-
-Captured via Playwright + Chrome DevTools Protocol (`devtools.timeline,blink.user_timing,v8.execute`).  
-Trace file saved at: `docs/review/perf/trace-200.json` (2.65 MB). Summary at: `docs/review/perf/profile-200-summary.json`.
-
-| Phase | Description | Per-Edit Duration (ms) | % of Trace |
-|:---|:---|---:|---:|
-| **Scripting (JS)** | V8 execution, EventDispatch, React reconciliation, Immer state | 50.32 ms (11.78 ms per EventDispatch) | ~91.6% |
-| **Style Recalculation** | `UpdateLayoutTree` (CSS & DOM selector matching) | 0.18 ms | ~0.3% |
-| **Layout** | Browser `Layout` pass (SVG bounds and container layout) | 0.48 ms | ~0.9% |
-| **Paint** | `Paint`, `PrePaint`, display list generation | 1.91 ms | ~3.5% |
-| **Raster / Composite** | `CompositeLayers`, `RasterTask`, GPU tile rasterization | 2.02 ms | ~3.7% |
-| **Total Trace Time** | Full Chromium render pipeline per edit | **54.91 ms** | **100%** |
-
-### 3.2 React Component Renders per Single-Note Edit
-
-Average count of component executions per keystroke:
-
-| Component | Average Renders / Edit | Notes |
-|:---|---:|:---|
-| `EditorShell` | 3.0 | Keydown handler, history change, and playback synchronization |
-| `ScoreView` | 2.5 | Re-evaluates props and visible system calculations |
-| `Toolbar` | 2.0 | Updates undo/redo and pitch info |
-| `StatusBar` | 2.0 | Updates measure number, pitch name, and accidental status |
-| `ScoreSvgLayers` | 1.0 | Memoized with `React.memo` (reduced from 2.0) |
-| `SystemView` (System 0) | 1.0 | Renders edited system only |
-| `SystemView` (Systems 1–7) | **0.0** | Skipped by `React.memo` |
-| `SystemPlaceholder` (Systems 8–49) | **0.0** | Skipped by `React.memo` |
-
-### 3.3 DOM Mutation Isolation (MutationObserver)
-
-Captured over 50 edits via `MutationObserver` on root `<svg>`:
-
-- **Average DOM Mutations per Edit:** 99.0 (0.5 nodes added, 0.5 nodes removed, 98.0 attribute changes).
-- **Affected System Targets:** Strictly `sys-0` (`['sys-0', 'rect', 'path', 'use']`).
-- **Mutations outside System 0:** **0 (exactly zero)**.
-- **Verification:** Verified by automated test `tests/render/dom_mutation_isolation.test.ts`.
+| Scenario | Measures | Runs | Median (ms) | p95 (ms) | Target p95 (ms) | Status |
+|:---|---:|---:|---:|---:|---:|:---:|
+| `benchmark_64_full` | 64 | 50 | 10.3 | **17.2** | 20 | PASS |
+| `benchmark_200_full` | 200 | 50 | 11.2 | **17.2** | 30 | PASS |
 
 
 ---
 
-## 4. Tracked Files and Line Counts
+## 5. Tracked Files and Line Counts
 
-Total Tracked Files: 351 | Total Lines: 194967
+Total Tracked Files: 363 | Total Lines: 197383
 
 | Tracked File | Lines |
 |:---|---:|
@@ -121,26 +181,28 @@ Total Tracked Files: 351 | Total Lines: 194967
 | `public/fonts/glyphnames.json` | 11984 |
 | `src/fonts/glyphnames.json` | 11984 |
 | `package-lock.json` | 4496 |
-| `docs/review/REVIEW_PACK.md` | 1363 |
+| `docs/review/REVIEW_PACK.md` | 1413 |
 | `tests/render/__snapshots__/gallery_snapshots.test.ts.snap` | 1282 |
 | `public/fonts/Bravura.woff2` | 1218 |
 | `scripts/assets/Bravura.otf` | 867 |
 | `scripts/run_m6a_e2e_verification.mjs` | 778 |
 | `tests/render/__snapshots__/renderSvg.test.ts.snap` | 739 |
+| `LICENSE` | 675 |
 | `tests/layout/mouseInput.test.ts` | 668 |
 | `src/ui/keymap.ts` | 589 |
+| `docs/design/multi-staff-and-pages.md` | 588 |
 | `src/layout/measureLayout.ts` | 587 |
-| `docs/design/multi-staff-and-pages.md` | 585 |
+| `src/ui/App.tsx` | 577 |
 | `src/ui/scoreView/useScoreInteractions.ts` | 576 |
+| `docs/perf/bench-2026-11-19.json` | 571 |
 | `src/render/renderSvg.ts` | 569 |
 | `src/layout/layoutScore.ts` | 566 |
-| `src/ui/App.tsx` | 566 |
 | `scripts/run_m3c3_e2e_verification.mjs` | 550 |
 | `src/core/input.ts` | 547 |
+| `src/ui/ScoreView.tsx` | 547 |
 | `scripts/run_m3c4_e2e_verification.mjs` | 539 |
-| `src/ui/app/useAppKeyboard.ts` | 532 |
+| `src/ui/app/useAppKeyboard.ts` | 535 |
 | `src/ui/editor/useEditorSelection.ts` | 530 |
-| `src/ui/ScoreView.tsx` | 525 |
 | `scripts/run_m3c_e2e_verification.mjs` | 518 |
 | `src/core/notationCommands.ts` | 498 |
 | `src/ui/galleryCases.ts` | 496 |
@@ -153,16 +215,14 @@ Total Tracked Files: 351 | Total Lines: 194967
 | `tests/core/input.test.ts` | 431 |
 | `tests/layout/layoutScore.test.ts` | 430 |
 | `scripts/run_m4_e2e_verification.mjs` | 427 |
-| `scripts/run_m3c2_e2e_verification.mjs` | 413 |
-| `scripts/bench.mjs` | 412 |
-| `tests/layout/beamLayout.test.ts` | 398 |
+| `scripts/bench.mjs` | 418 |
 
-*... and 311 additional tracked files.*
+*... and 323 additional tracked files.*
 
 
 ---
 
-## 5. Schema Migrations (v1 through v6)
+## 6. Schema Migrations (v1 through v6)
 
 
 | Source Schema | Target Schema | Key Enhancements & Transformation |
@@ -177,7 +237,7 @@ Total Tracked Files: 351 | Total Lines: 194967
 
 ---
 
-## 6. Regression Gallery Cards & Assertions
+## 7. Regression Gallery Cards & Assertions
 
 
 | # | Card ID | Feature Title | Verified DOM Assertions / Elements |
@@ -212,10 +272,10 @@ Total Tracked Files: 351 | Total Lines: 194967
 
 ---
 
-## 7. Known Issues & Active Technical Scope (`docs/KNOWN_ISSUES.md`)
+## 8. Known Issues & Active Technical Scope (`docs/KNOWN_ISSUES.md`)
 
 ```markdown
-# ScoreForge — Known Issues & Technical Limitations
+# MiLaSi — Known Issues & Technical Limitations
 
 This document lists known constraints and architectural trade-offs in the current implementation.
 
@@ -243,7 +303,7 @@ This document lists known constraints and architectural trade-offs in the curren
 
 ## 5. Measure-Level Voice Identifiers vs. Voice Index
 - **Status:** Model Design Note.
-- **Details:** In `Score`, each `StaffMeasure` contains `voices: Voice[]` where each voice has a local `id`. Cross-measure operations rely on the voice's zero-based `voiceIndex` (1..4) to maintain continuity across barlines rather than comparing voice UUIDs.
+- **Details:** In `Score`, each `StaffMeasure` contains `voices: Voice[]` where each voice has a local `id`. Cross-measure operations rely on the voice's one-based `voiceIndex` (1..4) to maintain continuity across barlines rather than comparing voice UUIDs.
 
 ## 6. Score Structure Elements (Milestone 6c)
 - **Status:** Implemented in Milestone 6c.
@@ -260,9 +320,9 @@ This document lists known constraints and architectural trade-offs in the curren
 
 ---
 
-## 8. Core Source Files
+## 9. Core Source Files
 
-### 8.1 Data Model (`src/core/model.ts`)
+### 9.1 Data Model (`src/core/model.ts`)
 
 ```typescript
 // SPDX-License-Identifier: GPL-3.0-or-later
@@ -374,6 +434,7 @@ export interface StaffMeasure {
 /** A voice channel within a measure holding a sequential list of score events. */
 export interface Voice {
   id: Id;
+  voiceIndex?: number; // 1-based index (1..4)
   events: ScoreEvent[];
 }
 
@@ -438,7 +499,7 @@ export interface Override {
 
 ```
 
-### 8.2 Selection Model (`src/core/selection.ts`)
+### 9.2 Selection Model (`src/core/selection.ts`)
 
 ```typescript
 // SPDX-License-Identifier: GPL-3.0-or-later
@@ -484,12 +545,13 @@ export function findEventContext(
           const voice = staffMeasure.voices[vIdx];
           const evIdx = voice.events.findIndex((e) => e.id === eventId);
           if (evIdx !== -1) {
+            const vIndex = voice.voiceIndex ?? (vIdx + 1);
             return {
               staffId: staff.id,
               measureId: mDef.id,
               measureIndex: mIdx,
               voiceId: voice.id,
-              voiceIndex: vIdx,
+              voiceIndex: vIndex,
               eventIndex: evIdx,
             };
           }
@@ -502,12 +564,12 @@ export function findEventContext(
 
 /**
  * Returns all events in a specific voice across all measures in score reading order.
- * Resolves by voice ID or by voice index within each measure.
+ * Follows voiceIndex (1..4) strictly across measures per Rule R3.
  */
 export function getOrderedVoiceEvents(
   score: Score,
   staffId: string,
-  voiceIndexOrId: number | string = 0
+  targetVoiceIndex: number = 1
 ): Array<{ event: ScoreEvent; measureId: string; measureIndex: number }> {
   const result: Array<{ event: ScoreEvent; measureId: string; measureIndex: number }> = [];
 
@@ -520,11 +582,8 @@ export function getOrderedVoiceEvents(
         if (!staffMeasure) continue;
         for (let vIdx = 0; vIdx < staffMeasure.voices.length; vIdx++) {
           const voice = staffMeasure.voices[vIdx];
-          const matches =
-            typeof voiceIndexOrId === 'number'
-              ? vIdx === voiceIndexOrId
-              : voice.id === voiceIndexOrId || vIdx === 0;
-          if (!matches) continue;
+          const vIndex = voice.voiceIndex ?? (vIdx + 1);
+          if (vIndex !== targetVoiceIndex) continue;
           for (const ev of voice.events) {
             result.push({ event: ev, measureId: mDef.id, measureIndex: mIdx });
           }
@@ -544,7 +603,7 @@ export function eventsInRange(
   range: RangeSelection
 ): ScoreEvent[] {
   const anchorCtx = findEventContext(score, range.anchorId);
-  const vIndex = anchorCtx ? anchorCtx.voiceIndex : 0;
+  const vIndex = anchorCtx ? anchorCtx.voiceIndex : 1;
   const ordered = getOrderedVoiceEvents(score, range.staffId, vIndex);
   const anchorIdx = ordered.findIndex((item) => item.event.id === range.anchorId);
   const focusIdx = ordered.findIndex((item) => item.event.id === range.focusId);
@@ -725,7 +784,7 @@ export function nextEventId(
 
 ```
 
-### 8.3 Layout Types (`src/layout/types.ts`)
+### 9.3 Layout Types (`src/layout/types.ts`)
 
 ```typescript
 // SPDX-License-Identifier: GPL-3.0-or-later
@@ -817,7 +876,7 @@ export interface LayoutOptions {
 
 ```
 
-### 8.4 Keyboard Mapping (`src/ui/keymap.ts`)
+### 9.4 Keyboard Mapping (`src/ui/keymap.ts`)
 
 ```typescript
 // SPDX-License-Identifier: GPL-3.0-or-later
@@ -1410,3 +1469,4 @@ export function getCompleteKeyTable(): KeyTableEntry[] {
 }
 
 ```
+

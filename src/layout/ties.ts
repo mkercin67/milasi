@@ -17,14 +17,14 @@ export interface TieLayoutItem {
   d: string;
 }
 
-interface NoteheadPos {
+export interface NoteheadPos {
   systemIndex: number;
   x: number;
   y: number;
   stemDirection: 'up' | 'down';
 }
 
-function findNoteheadPos(layout: LayoutResult, eventId: string): NoteheadPos | null {
+export function findNoteheadPos(layout: LayoutResult, eventId: string): NoteheadPos | null {
   for (let sysIdx = 0; sysIdx < layout.systems.length; sysIdx++) {
     const sys = layout.systems[sysIdx];
     const items = sys.items ?? [];
@@ -89,7 +89,11 @@ function createCrescentPath(
 /**
  * Computes SVG tie path items for all tied notes in the score.
  */
-export function layoutTies(score: Score, layout: LayoutResult): TieLayoutItem[] {
+export function layoutTies(
+  score: Score,
+  layout: LayoutResult,
+  noteheadIndex?: Map<string, NoteheadPos>
+): TieLayoutItem[] {
   const ties: TieLayoutItem[] = [];
 
   for (const part of score.parts) {
@@ -124,8 +128,8 @@ export function layoutTies(score: Score, layout: LayoutResult): TieLayoutItem[] 
           );
 
           if (hasMatchingPitch) {
-            const posA = findNoteheadPos(layout, sourceNote.id);
-            const posB = findNoteheadPos(layout, targetNote.id);
+            const posA = noteheadIndex ? noteheadIndex.get(sourceNote.id) ?? null : findNoteheadPos(layout, sourceNote.id);
+            const posB = noteheadIndex ? noteheadIndex.get(targetNote.id) ?? null : findNoteheadPos(layout, targetNote.id);
 
             if (posA && posB) {
               const stemDir = posA.stemDirection;
