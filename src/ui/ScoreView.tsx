@@ -398,7 +398,14 @@ export const ScoreView: React.FC<ScoreViewProps> = ({
                 fill: #2563eb !important;
                 stroke: #2563eb !important;
               }
-              svg g[data-event-id="${selectedEventId}"] text {
+              svg use[data-event-id="${selectedEventId}"] {
+                fill: #2563eb !important;
+              }
+              svg g[data-event-id="${selectedEventId}"] text,
+              svg text[data-event-id="${selectedEventId}"] {
+                fill: #2563eb !important;
+              }
+              svg g[data-event-id="${selectedEventId}"] use {
                 fill: #2563eb !important;
               }
               svg line[data-event-id="${selectedEventId}"] {
@@ -415,7 +422,14 @@ export const ScoreView: React.FC<ScoreViewProps> = ({
                 fill: #2563eb !important;
                 stroke: #2563eb !important;
               }
-              svg g[data-event-id="${id}"] text {
+              svg use[data-event-id="${id}"] {
+                fill: #2563eb !important;
+              }
+              svg g[data-event-id="${id}"] text,
+              svg text[data-event-id="${id}"] {
+                fill: #2563eb !important;
+              }
+              svg g[data-event-id="${id}"] use {
                 fill: #2563eb !important;
               }
               svg line[data-event-id="${id}"] {
