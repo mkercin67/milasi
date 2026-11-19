@@ -49,6 +49,11 @@ export const StatusBar: React.FC<StatusBarProps> = ({
   hoverInfo = null,
   dragStatus = null,
 }) => {
+  if (typeof window !== 'undefined') {
+    const w = window as unknown as { __componentRenders?: Record<string, number> };
+    if (!w.__componentRenders) w.__componentRenders = {};
+    w.__componentRenders.StatusBar = (w.__componentRenders.StatusBar || 0) + 1;
+  }
   const { t, language, noteNameStyle } = useI18n();
 
   const renderStatusContent = () => {

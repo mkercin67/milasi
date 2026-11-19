@@ -24,6 +24,11 @@ export interface SystemViewProps {
 
 export const SystemView: React.FC<SystemViewProps> = React.memo(
   ({ system, staffSpacePx, useTextFallback = false, onOpenScoreInfo }) => {
+    if (typeof window !== 'undefined') {
+      const w = window as unknown as { __componentRenders?: Record<string, number> };
+      if (!w.__componentRenders) w.__componentRenders = {};
+      w.__componentRenders.SystemView = (w.__componentRenders.SystemView || 0) + 1;
+    }
     const fontSize = staffSpacePx * 4;
     const scale = staffSpacePx / (UNITS_PER_EM / 4);
 
@@ -202,7 +207,7 @@ export const SystemView: React.FC<SystemViewProps> = React.memo(
     };
 
     return (
-      <g data-system-index={system.index} className="notranslate">
+      <g data-system-index={system.index} className="notranslate" style={{ contain: 'layout paint' }}>
         {/* Merged staff lines: 1 path replaces 5 lines */}
         {staffLinesPath && (
           <path

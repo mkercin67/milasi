@@ -1,0 +1,80 @@
+{
+  "timestamp": "2026-11-19T11:23:32.903Z",
+  "scoreMeasures": 200,
+  "editCount": 50,
+  "cdpTrace": {
+    "totalEvents": 14690,
+    "perEditSplitMs": {
+      "scriptingJs": 50.32,
+      "styleRecalc": 0.18,
+      "layout": 0.48,
+      "paint": 1.91,
+      "rasterComposite": 2.02,
+      "totalTraceMs": 54.91
+    }
+  },
+  "componentRendersPerEdit": {
+    "avgRendersPerEdit": {
+      "EditorShell": 3,
+      "Toolbar": 2,
+      "ScoreView": 2.5,
+      "SystemView": 1,
+      "ScoreSvgLayers": 1,
+      "StatusBar": 2
+    },
+    "sampleEdit0": {
+      "EditorShell": 3,
+      "Toolbar": 2,
+      "ScoreView": 3,
+      "SystemView": 1,
+      "ScoreSvgLayers": 1,
+      "StatusBar": 2
+    },
+    "sampleEdit1": {
+      "EditorShell": 3,
+      "Toolbar": 2,
+      "ScoreView": 2,
+      "SystemView": 1,
+      "ScoreSvgLayers": 1,
+      "StatusBar": 2
+    }
+  },
+  "domMutationsPerEdit": {
+    "avgAdded": 0.5,
+    "avgRemoved": 0.5,
+    "avgAttributes": 98,
+    "avgTotalMutations": 99,
+    "affectedSystemTargets": [
+      "sys-0",
+      "rect",
+      "path",
+      "use"
+    ],
+    "sampleEdit0": {
+      "added": 1,
+      "removed": 0,
+      "attributes": 98,
+      "characterData": 0,
+      "total": 99,
+      "targets": [
+        "sys-0",
+        "rect",
+        "path",
+        "use"
+      ]
+    },
+    "sampleEdit1": {
+      "added": 0,
+      "removed": 1,
+      "attributes": 98,
+      "characterData": 0,
+      "total": 99,
+      "targets": [
+        "sys-0",
+        "rect",
+        "path",
+        "use"
+      ]
+    }
+  }
+}

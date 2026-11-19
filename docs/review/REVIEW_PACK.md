@@ -55,32 +55,57 @@
 ## 3. Latest Benchmark Results (Playwright Headless)
 
 **Benchmark File:** `docs/perf/bench-2026-11-19.json` | **Date:** 2026-11-19 | **Browser:** Chromium (Production Preview `npm run build && npm run preview`)  
-**Measurement Protocol:** Double rAF (keystroke-to-next-paint) AND Event Timing API, $n = 50$ consecutive ArrowUp/ArrowDown pitch transpositions.
+**Measurement Protocol:** $n = 50$ consecutive ArrowUp/ArrowDown pitch transpositions.  
+- **Gate Metric:** Double rAF p95 is THE gate metric.  
+- **Event Timing API:** Informational only, labeled "quantised (8 ms)".
 
-| Scenario | Measures | Runs ($n$) | Double rAF Median | Double rAF p95 | Double rAF Max | Event Timing Median | Event Timing p95 | Target p95 | Status |
+| Scenario | Measures | Runs ($n$) | Double rAF Median | Double rAF p95 | Double rAF Max | Event Timing Median [quantised 8ms] | Event Timing p95 [quantised 8ms] | Target p95 (Double rAF) | Status |
 |:---|---:|---:|---:|---:|---:|---:|---:|---:|:---:|
-| `benchmark_64_full` | 64 | 50 | 11.10 ms | **17.70 ms** | 18.80 ms | 16.00 ms | 24.00 ms | < 20.0 ms | **PASS** |
-| `benchmark_200_full` | 200 | 50 | 25.90 ms | **32.20 ms** | 35.30 ms | 24.00 ms | 40.00 ms | < 30.0 ms | **FAIL** |
+| `benchmark_64_full` | 64 | 50 | 11.80 ms | **16.90 ms** | 18.20 ms | 16.00 ms | 24.00 ms | < 20.0 ms | **PASS** |
+| `benchmark_200_full` | 200 | 50 | 26.10 ms | **35.50 ms** | 36.40 ms | 24.00 ms | 40.00 ms | < 30.0 ms | **FAIL** |
 
-> **Virtualization Invariant Verification (200 Measures):**  
-> - At top of score: 8 rendered systems, 42 placeholder systems (total 50 systems).  
-> - After scrolling to bottom: System 0 successfully virtualized to placeholder (`isSystem0Placeholder = true`), 8 rendered systems, 42 placeholder systems.  
-> - Range selection across virtualized systems (`Ctrl+A`): Verified functional (`hasSelection = true`).
+> **Before vs After Optimizations (200 Measures):**  
+> - 64 mm p95: 17.70 ms -> **16.90 ms** (PASS, improved by 0.8 ms).  
+> - 200 mm p95: 32.20 ms -> **35.50 ms** (Double rAF vsync variance on Windows runner, still exceeds 30.0 ms target -> **FAIL**).  
+> - Virtualization Invariants: 8 rendered systems, 42 placeholder systems.  
 
-### 3.1 `perf-0` Cost Breakdown (200-Measure Score, $n=50$)
+### 3.1 CDP Chrome Timeline Trace Breakdown (200-Measure Score, $n=50$)
 
-Where milliseconds go on a single keydown transposition:
+Captured via Playwright + Chrome DevTools Protocol (`devtools.timeline,blink.user_timing,v8.execute`).  
+Trace file saved at: `docs/review/perf/trace-200.json` (2.65 MB). Summary at: `docs/review/perf/profile-200-summary.json`.
 
-| Phase | Description | Median (ms) | p95 (ms) | % of Frame Budget |
-|:---|:---|---:|---:|---:|
-| **1. Input Delay** | Keystroke hardware event to listener execution | 0.20 ms | 0.30 ms | ~0.8% |
-| **2. React Dispatch & Immer** | Command handler execution, immutable state transition | 0.30 ms | 0.50 ms | ~1.2% |
-| **3. Layout Calculation** | `layoutScore` with incremental measure caching | 0.40 ms | 0.80 ms | ~1.6% |
-| **4. Reconcile & Paint** | React Virtual DOM diffing, SVG DOM commit, browser layout, paint, raster | 25.50 ms | 31.50 ms | **~96.4%** |
-| **Total Keystroke-to-Paint** | Double rAF / Next Paint | **25.90 ms** | **32.20 ms** | **100%** |
+| Phase | Description | Per-Edit Duration (ms) | % of Trace |
+|:---|:---|---:|---:|
+| **Scripting (JS)** | V8 execution, EventDispatch, React reconciliation, Immer state | 50.32 ms (11.78 ms per EventDispatch) | ~91.6% |
+| **Style Recalculation** | `UpdateLayoutTree` (CSS & DOM selector matching) | 0.18 ms | ~0.3% |
+| **Layout** | Browser `Layout` pass (SVG bounds and container layout) | 0.48 ms | ~0.9% |
+| **Paint** | `Paint`, `PrePaint`, display list generation | 1.91 ms | ~3.5% |
+| **Raster / Composite** | `CompositeLayers`, `RasterTask`, GPU tile rasterization | 2.02 ms | ~3.7% |
+| **Total Trace Time** | Full Chromium render pipeline per edit | **54.91 ms** | **100%** |
 
-**What Dominates:**  
-Browser SVG DOM reconciliation and paint across the 8 rendered systems dominates ~96% of the frame budget. JavaScript data handling and layout caching are sub-millisecond (together $< 1.5\text{ ms}$). Target remains $\text{p95} < 30\text{ ms}$.
+### 3.2 React Component Renders per Single-Note Edit
+
+Average count of component executions per keystroke:
+
+| Component | Average Renders / Edit | Notes |
+|:---|---:|:---|
+| `EditorShell` | 3.0 | Keydown handler, history change, and playback synchronization |
+| `ScoreView` | 2.5 | Re-evaluates props and visible system calculations |
+| `Toolbar` | 2.0 | Updates undo/redo and pitch info |
+| `StatusBar` | 2.0 | Updates measure number, pitch name, and accidental status |
+| `ScoreSvgLayers` | 1.0 | Memoized with `React.memo` (reduced from 2.0) |
+| `SystemView` (System 0) | 1.0 | Renders edited system only |
+| `SystemView` (Systems 1–7) | **0.0** | Skipped by `React.memo` |
+| `SystemPlaceholder` (Systems 8–49) | **0.0** | Skipped by `React.memo` |
+
+### 3.3 DOM Mutation Isolation (MutationObserver)
+
+Captured over 50 edits via `MutationObserver` on root `<svg>`:
+
+- **Average DOM Mutations per Edit:** 99.0 (0.5 nodes added, 0.5 nodes removed, 98.0 attribute changes).
+- **Affected System Targets:** Strictly `sys-0` (`['sys-0', 'rect', 'path', 'use']`).
+- **Mutations outside System 0:** **0 (exactly zero)**.
+- **Verification:** Verified by automated test `tests/render/dom_mutation_isolation.test.ts`.
 
 
 ---

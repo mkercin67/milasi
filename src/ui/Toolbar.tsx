@@ -127,6 +127,11 @@ export const Toolbar: React.FC<ToolbarProps> = ({
   onToggleRepeatEnd,
   onAutoSolfege,
 }) => {
+  if (typeof window !== 'undefined') {
+    const w = window as unknown as { __componentRenders?: Record<string, number> };
+    if (!w.__componentRenders) w.__componentRenders = {};
+    w.__componentRenders.Toolbar = (w.__componentRenders.Toolbar || 0) + 1;
+  }
   const handleButtonClick = (cb: () => void) => (e: React.MouseEvent<HTMLButtonElement>) => {
     e.currentTarget.blur();
     cb();

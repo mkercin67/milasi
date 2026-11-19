@@ -30,7 +30,7 @@ export interface ScoreSvgLayersProps {
   dragOverlayRef: React.RefObject<SVGGElement>;
 }
 
-export const ScoreSvgLayers: React.FC<ScoreSvgLayersProps> = ({
+export const ScoreSvgLayers: React.FC<ScoreSvgLayersProps> = React.memo(({
   layout,
   selectedEventIds,
   visibleSystemIndices,
@@ -53,6 +53,11 @@ export const ScoreSvgLayers: React.FC<ScoreSvgLayersProps> = ({
   isDraggingState,
   dragOverlayRef,
 }) => {
+  if (typeof window !== 'undefined') {
+    const w = window as unknown as { __componentRenders?: Record<string, number> };
+    if (!w.__componentRenders) w.__componentRenders = {};
+    w.__componentRenders.ScoreSvgLayers = (w.__componentRenders.ScoreSvgLayers || 0) + 1;
+  }
   return (
     <>
       {/* Tinted background band for range selection */}
@@ -272,4 +277,4 @@ export const ScoreSvgLayers: React.FC<ScoreSvgLayersProps> = ({
       <g ref={dragOverlayRef} className="score-drag-overlay notranslate" pointerEvents="none" />
     </>
   );
-};
+});

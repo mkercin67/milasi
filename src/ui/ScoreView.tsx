@@ -52,6 +52,11 @@ export const ScoreView: React.FC<ScoreViewProps> = ({
   onPreviewPitches,
   onOpenScoreInfo,
 }) => {
+  if (typeof window !== 'undefined') {
+    const w = window as unknown as { __componentRenders?: Record<string, number> };
+    if (!w.__componentRenders) w.__componentRenders = {};
+    w.__componentRenders.ScoreView = (w.__componentRenders.ScoreView || 0) + 1;
+  }
   const { t, zoom, noteNameStyle, language } = useI18n();
   const isInputMode = mode === 'input';
 
@@ -95,7 +100,9 @@ export const ScoreView: React.FC<ScoreViewProps> = ({
   }, [layout, onLayoutChange]);
 
   // Map eventId to layout coordinates for fast, zero-DOM-read playhead and highlighting
+  // Optimization: only construct eventLayoutMap during active or paused playback (idle editing skips this entirely)
   const eventLayoutMap = useMemo(() => {
+    if (!isPlaying && !isPaused) return null;
     const map = new Map<string, { x: number; sysIndex: number; sysY: number }>();
     for (const sys of layout.systems) {
       for (const item of sys.items) {
@@ -105,12 +112,12 @@ export const ScoreView: React.FC<ScoreViewProps> = ({
       }
     }
     return map;
-  }, [layout]);
+  }, [layout, isPlaying, isPaused]);
 
   const lastPlayheadRef = useRef<{ x: number; y1: number; y2: number; sysIndex: number } | null>(null);
 
   const playhead = useMemo(() => {
-    if (!isPlaying && !isPaused) {
+    if (!isPlaying && !isPaused || !eventLayoutMap) {
       lastPlayheadRef.current = null;
       return null;
     }
@@ -150,7 +157,7 @@ export const ScoreView: React.FC<ScoreViewProps> = ({
 
   useEffect(() => {
     const spaces = Math.max(25, Math.floor(containerWidthPx / staffSpacePx));
-    setAvailableSpaces(spaces);
+    setAvailableSpaces((prev) => (prev === spaces ? prev : spaces));
   }, [containerWidthPx, staffSpacePx]);
 
   const ties = useMemo(() => {
@@ -214,7 +221,10 @@ export const ScoreView: React.FC<ScoreViewProps> = ({
     set.add('articAccentBelow');
     set.add('articMarcatoAbove');
     set.add('articMarcatoBelow');
-    for (const sys of layout.systems) {
+    // Optimization: scan only visible systems instead of all 50 systems across 200 measures
+    for (const sIdx of visibleSystemIndices) {
+      const sys = layout.systems[sIdx];
+      if (!sys) continue;
       for (const item of sys.items) {
         if (item.kind === 'glyph' && item.glyph) {
           set.add(item.glyph);
@@ -222,7 +232,7 @@ export const ScoreView: React.FC<ScoreViewProps> = ({
       }
     }
     return Array.from(set);
-  }, [layout.systems]);
+  }, [layout.systems, visibleSystemIndices]);
 
   const cursorPos = useMemo(() => {
     if (!isInputMode || !cursor) return null;

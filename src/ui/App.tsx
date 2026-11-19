@@ -49,6 +49,11 @@ declare global {
 }
 
 const EditorShell: React.FC = () => {
+  if (typeof window !== 'undefined') {
+    const w = window as unknown as { __componentRenders?: Record<string, number> };
+    if (!w.__componentRenders) w.__componentRenders = {};
+    w.__componentRenders.EditorShell = (w.__componentRenders.EditorShell || 0) + 1;
+  }
   const { t } = useI18n();
   const {
     score,
@@ -283,6 +288,14 @@ const EditorShell: React.FC = () => {
     editorStateRef,
   });
 
+  const handlePreviewPitches = React.useCallback((pitches: Pitch[]) => {
+    previewPlayer.previewPitches(pitches);
+  }, [previewPlayer]);
+
+  const handleLayoutChange = React.useCallback((layout: LayoutResult) => {
+    latestLayoutRef.current = layout;
+  }, []);
+
   const handleEnterPitchDirect = (pitch: Pitch, customCursor?: ScoreCursor) => {
     previewPlayer.previewPitches([pitch]);
     enterPitchDirect(pitch, customCursor);
@@ -437,10 +450,8 @@ const EditorShell: React.FC = () => {
           isPaused={isPaused}
           activePlaybackEventIds={activePlaybackEventIds}
           playbackSeconds={playbackSeconds}
-          onPreviewPitches={(pitches) => previewPlayer.previewPitches(pitches)}
-          onLayoutChange={(layout) => {
-            latestLayoutRef.current = layout;
-          }}
+          onPreviewPitches={handlePreviewPitches}
+          onLayoutChange={handleLayoutChange}
           onHoverPitch={setHoverPitch}
           onHoverInfo={setHoverInfo}
           onDragStatus={setDragStatus}

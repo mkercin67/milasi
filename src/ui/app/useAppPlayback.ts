@@ -47,8 +47,10 @@ export function useAppPlayback({
 
   useEffect(() => {
     player.setScore(score);
-    setIsPlaying(player.state === 'playing');
-    setIsPaused(player.state === 'paused');
+    const nextPlaying = player.state === 'playing';
+    const nextPaused = player.state === 'paused';
+    setIsPlaying((prev) => (prev === nextPlaying ? prev : nextPlaying));
+    setIsPaused((prev) => (prev === nextPaused ? prev : nextPaused));
   }, [score, player]);
 
   useEffect(() => {
