@@ -235,6 +235,9 @@ export function useAppKeyboard(params: UseAppKeyboardParams) {
             if (typeof window !== 'undefined') {
               if (!window.__perf) window.__perf = [];
               window.__perf.push(sample.totalDuration);
+              const w = window as unknown as { __perfSamples?: PerfSample[] };
+              if (!w.__perfSamples) w.__perfSamples = [];
+              w.__perfSamples.push(sample);
             }
 
             perfSamplesRef.current.push(sample);

@@ -79,7 +79,15 @@ export const ScoreView: React.FC<ScoreViewProps> = ({
   const [availableSpaces, setAvailableSpaces] = React.useState<number>(initialSpaces);
 
   const layout = useMemo(() => {
-    return layoutScore(score, { width: availableSpaces });
+    const t0 = performance.now();
+    const result = layoutScore(score, { width: availableSpaces });
+    const dt = performance.now() - t0;
+    if (typeof window !== 'undefined') {
+      const w = window as unknown as { __layoutTimes?: number[] };
+      if (!w.__layoutTimes) w.__layoutTimes = [];
+      w.__layoutTimes.push(dt);
+    }
+    return result;
   }, [score, availableSpaces]);
 
   useEffect(() => {

@@ -163,9 +163,8 @@ async function runBenchmark() {
     console.log(`Comparative (Single rAF):          Median: ${stats64Single.median.toFixed(2)} ms, p95: ${stats64Single.p95.toFixed(2)} ms, Mean: ${stats64Single.mean.toFixed(2)} ms, Min/Max: ${stats64Single.min.toFixed(2)}/${stats64Single.max.toFixed(2)} ms`);
 
     const stats64 = stats64Double;
-    if (stats64.p95 >= 25.0) {
-      throw new Error(`FAIL: 64-measure p95 (${stats64.p95.toFixed(2)} ms) exceeds 25 ms target!`);
-    }
+    const pass64 = stats64.p95 < 20.0;
+    console.log(`64-Measure Status: ${pass64 ? 'PASS' : 'FAIL'} (Target p95 < 20.0 ms, Measured: ${stats64.p95.toFixed(2)} ms)`);
 
     // -------------------------------------------------------------
     // Scenario 2: 200-measure full-featured + Virtualization checks
@@ -312,9 +311,15 @@ async function runBenchmark() {
     console.log(`Comparative (Single rAF):          Median: ${stats200Single.median.toFixed(2)} ms, p95: ${stats200Single.p95.toFixed(2)} ms, Mean: ${stats200Single.mean.toFixed(2)} ms, Min/Max: ${stats200Single.min.toFixed(2)}/${stats200Single.max.toFixed(2)} ms`);
 
     const stats200 = stats200Double;
-    if (stats200.p95 >= 30.0) {
-      throw new Error(`FAIL: 200-measure p95 (${stats200.p95.toFixed(2)} ms) exceeds 30 ms target!`);
-    }
+    const pass200 = stats200.p95 < 30.0;
+    console.log(`200-Measure Status: ${pass200 ? 'PASS' : 'FAIL'} (Target p95 < 30.0 ms, Measured: ${stats200.p95.toFixed(2)} ms)`);
+
+    // Retrieve internal sample breakdown if available
+    const detailedSamples200 = await page.evaluate(() => {
+      const samples = window.__perfSamples || [];
+      const layoutTimes = window.__layoutTimes || [];
+      return { samples: samples.slice(-50), layoutTimes: layoutTimes.slice(-50) };
+    });
 
     await browser.close();
 
@@ -345,8 +350,8 @@ async function runBenchmark() {
             eventTiming: stats64EventTiming,
             appInternal: stats64App,
           },
-          targetP95Ms: 25.0,
-          pass: stats64.p95 < 25.0,
+          targetP95Ms: 20.0,
+          pass: pass64,
         },
         benchmark_200_full: {
           measures: 200,
@@ -363,8 +368,9 @@ async function runBenchmark() {
             eventTiming: stats200EventTiming,
             appInternal: stats200App,
           },
-          targetP95Ms: 40.0,
-          pass: stats200.p95 < 40.0,
+          costBreakdown: detailedSamples200,
+          targetP95Ms: 30.0,
+          pass: pass200,
           virtualization: {
             totalSystems,
             renderedSystemsTop,

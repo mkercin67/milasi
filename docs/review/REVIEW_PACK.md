@@ -54,12 +54,33 @@
 
 ## 3. Latest Benchmark Results (Playwright Headless)
 
-**Benchmark File:** `bench-2026-11-17.json` | **Date:** 2026-11-17 | **Browser:** Chromium
+**Benchmark File:** `docs/perf/bench-2026-11-19.json` | **Date:** 2026-11-19 | **Browser:** Chromium (Production Preview `npm run build && npm run preview`)  
+**Measurement Protocol:** Double rAF (keystroke-to-next-paint) AND Event Timing API, $n = 50$ consecutive ArrowUp/ArrowDown pitch transpositions.
 
-| Scenario | Measures | Runs | Median (ms) | p95 (ms) | Target p95 (ms) | Status |
-|:---|---:|---:|---:|---:|---:|:---:|
-| `benchmark_64_full` | 64 | 30 | 8.6 | **14.9** | 25 | PASS |
-| `benchmark_200_full` | 200 | 30 | 28.1 | **37.7** | 40 | PASS |
+| Scenario | Measures | Runs ($n$) | Double rAF Median | Double rAF p95 | Double rAF Max | Event Timing Median | Event Timing p95 | Target p95 | Status |
+|:---|---:|---:|---:|---:|---:|---:|---:|---:|:---:|
+| `benchmark_64_full` | 64 | 50 | 11.10 ms | **17.70 ms** | 18.80 ms | 16.00 ms | 24.00 ms | < 20.0 ms | **PASS** |
+| `benchmark_200_full` | 200 | 50 | 25.90 ms | **32.20 ms** | 35.30 ms | 24.00 ms | 40.00 ms | < 30.0 ms | **FAIL** |
+
+> **Virtualization Invariant Verification (200 Measures):**  
+> - At top of score: 8 rendered systems, 42 placeholder systems (total 50 systems).  
+> - After scrolling to bottom: System 0 successfully virtualized to placeholder (`isSystem0Placeholder = true`), 8 rendered systems, 42 placeholder systems.  
+> - Range selection across virtualized systems (`Ctrl+A`): Verified functional (`hasSelection = true`).
+
+### 3.1 `perf-0` Cost Breakdown (200-Measure Score, $n=50$)
+
+Where milliseconds go on a single keydown transposition:
+
+| Phase | Description | Median (ms) | p95 (ms) | % of Frame Budget |
+|:---|:---|---:|---:|---:|
+| **1. Input Delay** | Keystroke hardware event to listener execution | 0.20 ms | 0.30 ms | ~0.8% |
+| **2. React Dispatch & Immer** | Command handler execution, immutable state transition | 0.30 ms | 0.50 ms | ~1.2% |
+| **3. Layout Calculation** | `layoutScore` with incremental measure caching | 0.40 ms | 0.80 ms | ~1.6% |
+| **4. Reconcile & Paint** | React Virtual DOM diffing, SVG DOM commit, browser layout, paint, raster | 25.50 ms | 31.50 ms | **~96.4%** |
+| **Total Keystroke-to-Paint** | Double rAF / Next Paint | **25.90 ms** | **32.20 ms** | **100%** |
+
+**What Dominates:**  
+Browser SVG DOM reconciliation and paint across the 8 rendered systems dominates ~96% of the frame budget. JavaScript data handling and layout caching are sub-millisecond (together $< 1.5\text{ ms}$). Target remains $\text{p95} < 30\text{ ms}$.
 
 
 ---

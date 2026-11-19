@@ -1,0 +1,571 @@
+{
+  "date": "2026-11-19",
+  "timestamp": "2026-11-19T10:53:38.529Z",
+  "nodeVersion": "v22.16.0",
+  "browser": "Chromium",
+  "scenarios": {
+    "benchmark_64_full": {
+      "measures": 64,
+      "features": [
+        "ties",
+        "slurs",
+        "dynamics",
+        "articulations",
+        "repeats",
+        "lyrics"
+      ],
+      "runs": 50,
+      "meanMs": 11.86,
+      "medianMs": 11.1,
+      "p95Ms": 17.7,
+      "minMs": 3.8,
+      "maxMs": 18.8,
+      "probes": {
+        "doubleRaf": {
+          "mean": 11.863999999761582,
+          "median": 11.099999994039536,
+          "p95": 17.700000017881393,
+          "min": 3.7999999821186066,
+          "max": 18.80000001192093
+        },
+        "singleRaf": {
+          "mean": 6.41200000166893,
+          "median": 6,
+          "p95": 12.100000023841858,
+          "min": 0.19999998807907104,
+          "max": 12.599999994039536
+        },
+        "eventTiming": {
+          "mean": 16.88888888888889,
+          "median": 16,
+          "p95": 24,
+          "min": 16,
+          "max": 24
+        },
+        "appInternal": {
+          "mean": 12.389999999999995,
+          "median": 12.5,
+          "p95": 18,
+          "min": 8,
+          "max": 18.9
+        }
+      },
+      "targetP95Ms": 20,
+      "pass": true
+    },
+    "benchmark_200_full": {
+      "measures": 200,
+      "features": [
+        "ties",
+        "slurs",
+        "dynamics",
+        "articulations",
+        "repeats",
+        "lyrics"
+      ],
+      "runs": 50,
+      "meanMs": 26.5,
+      "medianMs": 25.9,
+      "p95Ms": 32.2,
+      "minMs": 3.2,
+      "maxMs": 35.3,
+      "probes": {
+        "doubleRaf": {
+          "mean": 26.495999999046326,
+          "median": 25.900000005960464,
+          "p95": 32.20000001788139,
+          "min": 3.2000000178813934,
+          "max": 35.30000001192093
+        },
+        "singleRaf": {
+          "mean": 23.64999999701977,
+          "median": 23.19999998807907,
+          "p95": 28.900000005960464,
+          "min": 0,
+          "max": 31.099999994039536
+        },
+        "eventTiming": {
+          "mean": 28.32,
+          "median": 24,
+          "p95": 40,
+          "min": 24,
+          "max": 40
+        },
+        "appInternal": {
+          "mean": 27.368,
+          "median": 26.2,
+          "p95": 34.4,
+          "min": 24.8,
+          "max": 35.5
+        }
+      },
+      "costBreakdown": {
+        "samples": [
+          {
+            "timestamp": 1795085611832,
+            "key": "ArrowUp",
+            "inputDelay": 0.3,
+            "handlerDuration": 5,
+            "paintDuration": 29.8,
+            "totalDuration": 35.1
+          },
+          {
+            "timestamp": 1795085611968,
+            "key": "ArrowDown",
+            "inputDelay": 0.3,
+            "handlerDuration": 0.3,
+            "paintDuration": 31.5,
+            "totalDuration": 32.1
+          },
+          {
+            "timestamp": 1795085612092,
+            "key": "ArrowUp",
+            "inputDelay": 0.2,
+            "handlerDuration": 0.4,
+            "paintDuration": 31.5,
+            "totalDuration": 32.1
+          },
+          {
+            "timestamp": 1795085612217,
+            "key": "ArrowDown",
+            "inputDelay": 0.2,
+            "handlerDuration": 0.3,
+            "paintDuration": 31.9,
+            "totalDuration": 32.4
+          },
+          {
+            "timestamp": 1795085612338,
+            "key": "ArrowUp",
+            "inputDelay": 0.3,
+            "handlerDuration": 0.2,
+            "paintDuration": 29,
+            "totalDuration": 29.5
+          },
+          {
+            "timestamp": 1795085612463,
+            "key": "ArrowDown",
+            "inputDelay": 0.2,
+            "handlerDuration": 0.2,
+            "paintDuration": 29.2,
+            "totalDuration": 29.6
+          },
+          {
+            "timestamp": 1795085612584,
+            "key": "ArrowUp",
+            "inputDelay": 0.2,
+            "handlerDuration": 0.3,
+            "paintDuration": 26.7,
+            "totalDuration": 27.2
+          },
+          {
+            "timestamp": 1795085612708,
+            "key": "ArrowDown",
+            "inputDelay": 0.3,
+            "handlerDuration": 0.2,
+            "paintDuration": 25.8,
+            "totalDuration": 26.3
+          },
+          {
+            "timestamp": 1795085612832,
+            "key": "ArrowUp",
+            "inputDelay": 0.2,
+            "handlerDuration": 0.2,
+            "paintDuration": 25.9,
+            "totalDuration": 26.3
+          },
+          {
+            "timestamp": 1795085612955,
+            "key": "ArrowDown",
+            "inputDelay": 0.3,
+            "handlerDuration": 0.2,
+            "paintDuration": 25.4,
+            "totalDuration": 25.9
+          },
+          {
+            "timestamp": 1795085613080,
+            "key": "ArrowUp",
+            "inputDelay": 0.3,
+            "handlerDuration": 0.2,
+            "paintDuration": 25.5,
+            "totalDuration": 26
+          },
+          {
+            "timestamp": 1795085613205,
+            "key": "ArrowDown",
+            "inputDelay": 0.2,
+            "handlerDuration": 0.3,
+            "paintDuration": 24.8,
+            "totalDuration": 25.3
+          },
+          {
+            "timestamp": 1795085613332,
+            "key": "ArrowUp",
+            "inputDelay": 0.3,
+            "handlerDuration": 0.2,
+            "paintDuration": 25.7,
+            "totalDuration": 26.2
+          },
+          {
+            "timestamp": 1795085613460,
+            "key": "ArrowDown",
+            "inputDelay": 0.4,
+            "handlerDuration": 0.2,
+            "paintDuration": 31.1,
+            "totalDuration": 31.7
+          },
+          {
+            "timestamp": 1795085613578,
+            "key": "ArrowUp",
+            "inputDelay": 0.2,
+            "handlerDuration": 0.3,
+            "paintDuration": 26,
+            "totalDuration": 26.5
+          },
+          {
+            "timestamp": 1795085613702,
+            "key": "ArrowDown",
+            "inputDelay": 0.4,
+            "handlerDuration": 0.2,
+            "paintDuration": 25.4,
+            "totalDuration": 26
+          },
+          {
+            "timestamp": 1795085613829,
+            "key": "ArrowUp",
+            "inputDelay": 0.3,
+            "handlerDuration": 0.2,
+            "paintDuration": 26.4,
+            "totalDuration": 26.9
+          },
+          {
+            "timestamp": 1795085613953,
+            "key": "ArrowDown",
+            "inputDelay": 0.3,
+            "handlerDuration": 0.2,
+            "paintDuration": 25.1,
+            "totalDuration": 25.6
+          },
+          {
+            "timestamp": 1795085614080,
+            "key": "ArrowUp",
+            "inputDelay": 0.3,
+            "handlerDuration": 0.1,
+            "paintDuration": 25.3,
+            "totalDuration": 25.7
+          },
+          {
+            "timestamp": 1795085614209,
+            "key": "ArrowDown",
+            "inputDelay": 0.3,
+            "handlerDuration": 0.4,
+            "paintDuration": 29.3,
+            "totalDuration": 30
+          },
+          {
+            "timestamp": 1795085614330,
+            "key": "ArrowUp",
+            "inputDelay": 0.1,
+            "handlerDuration": 0.2,
+            "paintDuration": 25.3,
+            "totalDuration": 25.6
+          },
+          {
+            "timestamp": 1795085614459,
+            "key": "ArrowDown",
+            "inputDelay": 0.3,
+            "handlerDuration": 0.2,
+            "paintDuration": 28.3,
+            "totalDuration": 28.8
+          },
+          {
+            "timestamp": 1795085614581,
+            "key": "ArrowUp",
+            "inputDelay": 0.3,
+            "handlerDuration": 0.2,
+            "paintDuration": 26.4,
+            "totalDuration": 26.9
+          },
+          {
+            "timestamp": 1795085614707,
+            "key": "ArrowDown",
+            "inputDelay": 0.3,
+            "handlerDuration": 0.2,
+            "paintDuration": 26.9,
+            "totalDuration": 27.4
+          },
+          {
+            "timestamp": 1795085614829,
+            "key": "ArrowUp",
+            "inputDelay": 0.3,
+            "handlerDuration": 0.2,
+            "paintDuration": 25.5,
+            "totalDuration": 26
+          },
+          {
+            "timestamp": 1795085614951,
+            "key": "ArrowDown",
+            "inputDelay": 0.2,
+            "handlerDuration": 0.2,
+            "paintDuration": 24.8,
+            "totalDuration": 25.2
+          },
+          {
+            "timestamp": 1795085615076,
+            "key": "ArrowUp",
+            "inputDelay": 0.3,
+            "handlerDuration": 0.2,
+            "paintDuration": 24.7,
+            "totalDuration": 25.2
+          },
+          {
+            "timestamp": 1795085615202,
+            "key": "ArrowDown",
+            "inputDelay": 0.2,
+            "handlerDuration": 0.3,
+            "paintDuration": 25.2,
+            "totalDuration": 25.7
+          },
+          {
+            "timestamp": 1795085615327,
+            "key": "ArrowUp",
+            "inputDelay": 0.2,
+            "handlerDuration": 0.2,
+            "paintDuration": 25,
+            "totalDuration": 25.4
+          },
+          {
+            "timestamp": 1795085615461,
+            "key": "ArrowDown",
+            "inputDelay": 0.3,
+            "handlerDuration": 0.1,
+            "paintDuration": 34,
+            "totalDuration": 34.4
+          },
+          {
+            "timestamp": 1795085615589,
+            "key": "ArrowUp",
+            "inputDelay": 0.2,
+            "handlerDuration": 0.4,
+            "paintDuration": 34.9,
+            "totalDuration": 35.5
+          },
+          {
+            "timestamp": 1795085615719,
+            "key": "ArrowDown",
+            "inputDelay": 0.2,
+            "handlerDuration": 0.1,
+            "paintDuration": 25.5,
+            "totalDuration": 25.8
+          },
+          {
+            "timestamp": 1795085615845,
+            "key": "ArrowUp",
+            "inputDelay": 0.2,
+            "handlerDuration": 0.2,
+            "paintDuration": 24.8,
+            "totalDuration": 25.2
+          },
+          {
+            "timestamp": 1795085615970,
+            "key": "ArrowDown",
+            "inputDelay": 0.2,
+            "handlerDuration": 0.3,
+            "paintDuration": 24.8,
+            "totalDuration": 25.3
+          },
+          {
+            "timestamp": 1795085616098,
+            "key": "ArrowUp",
+            "inputDelay": 0.1,
+            "handlerDuration": 0.2,
+            "paintDuration": 26.7,
+            "totalDuration": 27
+          },
+          {
+            "timestamp": 1795085616222,
+            "key": "ArrowDown",
+            "inputDelay": 0.3,
+            "handlerDuration": 0.2,
+            "paintDuration": 25.6,
+            "totalDuration": 26.1
+          },
+          {
+            "timestamp": 1795085616348,
+            "key": "ArrowUp",
+            "inputDelay": 0.3,
+            "handlerDuration": 0.1,
+            "paintDuration": 26.2,
+            "totalDuration": 26.6
+          },
+          {
+            "timestamp": 1795085616476,
+            "key": "ArrowDown",
+            "inputDelay": 0.3,
+            "handlerDuration": 0.3,
+            "paintDuration": 28.7,
+            "totalDuration": 29.3
+          },
+          {
+            "timestamp": 1795085616599,
+            "key": "ArrowUp",
+            "inputDelay": 0.3,
+            "handlerDuration": 0.3,
+            "paintDuration": 25.9,
+            "totalDuration": 26.5
+          },
+          {
+            "timestamp": 1795085616722,
+            "key": "ArrowDown",
+            "inputDelay": 0.3,
+            "handlerDuration": 0.2,
+            "paintDuration": 25.3,
+            "totalDuration": 25.8
+          },
+          {
+            "timestamp": 1795085616847,
+            "key": "ArrowUp",
+            "inputDelay": 0.3,
+            "handlerDuration": 0.2,
+            "paintDuration": 25.3,
+            "totalDuration": 25.8
+          },
+          {
+            "timestamp": 1795085616972,
+            "key": "ArrowDown",
+            "inputDelay": 0.2,
+            "handlerDuration": 0.2,
+            "paintDuration": 24.4,
+            "totalDuration": 24.8
+          },
+          {
+            "timestamp": 1795085617102,
+            "key": "ArrowUp",
+            "inputDelay": 0.2,
+            "handlerDuration": 0.2,
+            "paintDuration": 26.7,
+            "totalDuration": 27.1
+          },
+          {
+            "timestamp": 1795085617226,
+            "key": "ArrowDown",
+            "inputDelay": 0.2,
+            "handlerDuration": 0.3,
+            "paintDuration": 25.7,
+            "totalDuration": 26.2
+          },
+          {
+            "timestamp": 1795085617354,
+            "key": "ArrowUp",
+            "inputDelay": 0.3,
+            "handlerDuration": 0.1,
+            "paintDuration": 26,
+            "totalDuration": 26.4
+          },
+          {
+            "timestamp": 1795085617479,
+            "key": "ArrowDown",
+            "inputDelay": 0.3,
+            "handlerDuration": 0.2,
+            "paintDuration": 25.7,
+            "totalDuration": 26.2
+          },
+          {
+            "timestamp": 1795085617604,
+            "key": "ArrowUp",
+            "inputDelay": 0.3,
+            "handlerDuration": 0.3,
+            "paintDuration": 25.5,
+            "totalDuration": 26.1
+          },
+          {
+            "timestamp": 1795085617728,
+            "key": "ArrowDown",
+            "inputDelay": 0.2,
+            "handlerDuration": 0.2,
+            "paintDuration": 24.8,
+            "totalDuration": 25.2
+          },
+          {
+            "timestamp": 1795085617853,
+            "key": "ArrowUp",
+            "inputDelay": 0.3,
+            "handlerDuration": 0.1,
+            "paintDuration": 25.3,
+            "totalDuration": 25.7
+          },
+          {
+            "timestamp": 1795085617978,
+            "key": "ArrowDown",
+            "inputDelay": 0.2,
+            "handlerDuration": 0.2,
+            "paintDuration": 24.4,
+            "totalDuration": 24.8
+          }
+        ],
+        "layoutTimes": [
+          1,
+          0.7000000178813934,
+          0.699999988079071,
+          0.5999999940395355,
+          0.6000000238418579,
+          0.9000000059604645,
+          0.800000011920929,
+          0.800000011920929,
+          0.5999999940395355,
+          0.4000000059604645,
+          0.5,
+          0.4000000059604645,
+          0.4000000059604645,
+          0.3999999761581421,
+          0.4000000059604645,
+          0.4000000059604645,
+          0.5,
+          0.30000001192092896,
+          0.29999998211860657,
+          0.5999999940395355,
+          0.3999999761581421,
+          0.5,
+          0.4000000059604645,
+          0.4000000059604645,
+          0.4000000059604645,
+          0.4000000059604645,
+          0.30000001192092896,
+          0.4000000059604645,
+          0.4000000059604645,
+          0.5,
+          0.5,
+          0.3999999761581421,
+          0.29999998211860657,
+          0.30000001192092896,
+          0.5,
+          0.5,
+          0.6000000238418579,
+          0.5999999940395355,
+          0.30000001192092896,
+          0.4000000059604645,
+          0.29999998211860657,
+          0.30000001192092896,
+          0.3999999761581421,
+          0.3999999761581421,
+          0.3999999761581421,
+          0.5,
+          0.4000000059604645,
+          0.4000000059604645,
+          0.29999998211860657,
+          0.4000000059604645
+        ]
+      },
+      "targetP95Ms": 30,
+      "pass": false,
+      "virtualization": {
+        "totalSystems": 50,
+        "renderedSystemsTop": 8,
+        "placeholderSystemsTop": 42,
+        "renderedSystemsBottom": 8,
+        "placeholderSystemsBottom": 42,
+        "isSystem0PlaceholderAfterScroll": true,
+        "selectAllWorks": true
+      }
+    }
+  }
+}
