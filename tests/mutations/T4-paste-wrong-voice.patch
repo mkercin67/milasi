@@ -1,0 +1,10 @@
+diff --git a/src/core/clipboard.ts b/src/core/clipboard.ts
+--- a/src/core/clipboard.ts
++++ b/src/core/clipboard.ts
+@@ -244,5 +244,5 @@ export function pasteEvents(
+     if (!staffMeasure) continue;
+ 
+-    const targetVoiceIndex = target.voiceIndex;
++    const targetVoiceIndex = 1;
+     let voice = staffMeasure.voices.find((v) => v.voiceIndex === targetVoiceIndex);
+     if (!voice) {

@@ -186,9 +186,9 @@ export function extendSelection(
 export function getRangeMeasureSpan(
   score: Score,
   events: ScoreEvent[]
-): { startMeasureNumber: number; endMeasureNumber: number; count: number } {
+): { startMeasureNumber: number; endMeasureNumber: number; count: number; measureCount: number } {
   if (events.length === 0) {
-    return { startMeasureNumber: 1, endMeasureNumber: 1, count: 0 };
+    return { startMeasureNumber: 1, endMeasureNumber: 1, count: 0, measureCount: 0 };
   }
 
   const eventIds = new Set(events.map((e) => e.id));
@@ -214,10 +214,14 @@ export function getRangeMeasureSpan(
     }
   }
 
+  const startMeasureNumber = minMeasureNumber === Infinity ? 1 : minMeasureNumber;
+  const endMeasureNumber = maxMeasureNumber === -Infinity ? 1 : maxMeasureNumber;
+
   return {
-    startMeasureNumber: minMeasureNumber === Infinity ? 1 : minMeasureNumber,
-    endMeasureNumber: maxMeasureNumber === -Infinity ? 1 : maxMeasureNumber,
+    startMeasureNumber,
+    endMeasureNumber,
     count: events.length,
+    measureCount: endMeasureNumber - startMeasureNumber + 1,
   };
 }
 

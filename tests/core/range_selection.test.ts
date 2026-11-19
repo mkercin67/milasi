@@ -111,6 +111,7 @@ describe('Milestone 6a: Range Selection (src/core/selection.ts)', () => {
       startMeasureNumber: 1,
       endMeasureNumber: 2,
       count: 4,
+      measureCount: 2,
     });
   });
 

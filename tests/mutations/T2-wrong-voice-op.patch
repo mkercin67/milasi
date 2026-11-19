@@ -1,0 +1,10 @@
+diff --git a/src/core/selection.ts b/src/core/selection.ts
+--- a/src/core/selection.ts
++++ b/src/core/selection.ts
+@@ -101,5 +101,5 @@ export function eventsInRange(
+   range: RangeSelection
+ ): ScoreEvent[] {
+   const anchorCtx = findEventContext(score, range.anchorId);
+-  const vIndex = range.voiceIndex ?? (anchorCtx ? anchorCtx.voiceIndex : 1);
++  const vIndex = 1;
+   const ordered = getOrderedVoiceEvents(score, range.staffId, vIndex);

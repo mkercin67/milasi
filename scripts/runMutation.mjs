@@ -28,6 +28,8 @@ const TARGET_TESTS = {
   'T4-undo-voice-creation': 'tests/core/voice_creation_entry.test.ts',
   'T4-sort-voices': 'tests/core/voice_property.test.ts',
   'MARQUEE-v1-fallback': 'tests/ui/marquee_voice_selection.test.ts',
+  'T2-wrong-voice-op': 'tests/core/m7a_voice_selection_ops.test.ts',
+  'T4-paste-wrong-voice': 'tests/core/voice_property_m7a3.test.ts',
 };
 
 const targetTest = process.argv[3] || TARGET_TESTS[id];
@@ -65,6 +67,22 @@ try {
     fs.mkdirSync(path.dirname(dstTestFile), { recursive: true });
     fs.copyFileSync(srcTestFile, dstTestFile);
   }
+
+  // Copy current working tree version of any modified src files into temporary worktree
+  try {
+    const statusOutput = execSync('git status --porcelain src', { encoding: 'utf8' });
+    for (const line of statusOutput.split('\n')) {
+      const trimmed = line.trim();
+      if (!trimmed) continue;
+      const filePath = trimmed.replace(/^[AMD?RC\s]+/, '').trim();
+      const srcPath = path.join(repoRoot, filePath);
+      const dstPath = path.join(tempWorktreePath, filePath);
+      if (fs.existsSync(srcPath) && fs.statSync(srcPath).isFile()) {
+        fs.mkdirSync(path.dirname(dstPath), { recursive: true });
+        fs.copyFileSync(srcPath, dstPath);
+      }
+    }
+  } catch {}
 
   // Apply patch to temporary worktree
   console.log(`Applying patch ${id}.patch to isolated worktree...`);
