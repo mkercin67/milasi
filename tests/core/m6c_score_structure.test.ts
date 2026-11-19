@@ -83,6 +83,7 @@ describe('Milestone 6c: Score Structure Core Models & Commands', () => {
                   voices: [
                     {
                       id: 'v-pickup',
+                      voiceIndex: 1 as const,
                       events: [
                         {
                           id: 'pickup-rest',

@@ -62,7 +62,7 @@ export function createFullFeaturedScore(measureCount: number): Score {
     notes[3].lyrics = [{ verse: 1, text: 'yar' }];
 
     staff.measures[mDef.id] = {
-      voices: [{ id: `v-${m}`, events: notes }],
+      voices: [{ id: `v-${m}`, voiceIndex: 1, events: notes }],
     };
 
     // Slurs

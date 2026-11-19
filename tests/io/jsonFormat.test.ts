@@ -52,6 +52,7 @@ describe('Milestone 5 File Format (src/io/json)', () => {
       voices: [
         {
           id: 'v1',
+          voiceIndex: 1,
           events: [
             createNote({ pitches: [createPitch('C', 4, 0)], baseType: 'whole' }),
             createNote({ pitches: [createPitch('D', 4, 0)], baseType: 'whole' }),
@@ -104,7 +105,7 @@ describe('Milestone 5 File Format (src/io/json)', () => {
       pitches: [createPitch('F', 4, 0.5)],
       baseType: 'whole',
     });
-    part.staves[0].measures[m.id] = { voices: [{ id: 'v1', events: [note] }] };
+    part.staves[0].measures[m.id] = { voices: [{ id: 'v1', voiceIndex: 1, events: [note] }] };
     score.overrides[note.id] = { dx: 2.25, dy: -1.5, scale: 1.2 };
 
     const json = serializeScore(score, undefined, true);

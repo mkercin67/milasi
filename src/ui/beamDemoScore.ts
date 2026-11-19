@@ -160,14 +160,14 @@ export function buildBeamDemoScore(clefSign: 'G' | 'F' = 'G'): Score {
   ];
 
   const st = part.staves[0];
-  st.measures[m1.id] = { voices: [{ id: 'v1', events: m1Events }] };
-  st.measures[m2.id] = { voices: [{ id: 'v1', events: m2Events }] };
-  st.measures[m3.id] = { voices: [{ id: 'v1', events: m3Events }] };
-  st.measures[m4.id] = { voices: [{ id: 'v1', events: m4Events }] };
-  st.measures[m5.id] = { voices: [{ id: 'v1', events: m5Events }] };
-  st.measures[m6.id] = { voices: [{ id: 'v1', events: m6Events }] };
-  st.measures[m7.id] = { voices: [{ id: 'v1', events: m7Events }] };
-  st.measures[m8.id] = { voices: [{ id: 'v1', events: m8Events }] };
+  st.measures[m1.id] = { voices: [{ id: 'v1', voiceIndex: 1, events: m1Events }] };
+  st.measures[m2.id] = { voices: [{ id: 'v1', voiceIndex: 1, events: m2Events }] };
+  st.measures[m3.id] = { voices: [{ id: 'v1', voiceIndex: 1, events: m3Events }] };
+  st.measures[m4.id] = { voices: [{ id: 'v1', voiceIndex: 1, events: m4Events }] };
+  st.measures[m5.id] = { voices: [{ id: 'v1', voiceIndex: 1, events: m5Events }] };
+  st.measures[m6.id] = { voices: [{ id: 'v1', voiceIndex: 1, events: m6Events }] };
+  st.measures[m7.id] = { voices: [{ id: 'v1', voiceIndex: 1, events: m7Events }] };
+  st.measures[m8.id] = { voices: [{ id: 'v1', voiceIndex: 1, events: m8Events }] };
 
   return score;
 }

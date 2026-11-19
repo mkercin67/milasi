@@ -277,7 +277,7 @@ describe('commands and History', () => {
       dots: 1,
     });
     score.overrides[note.id] = { dx: 1 };
-    part.staves[0].measures[measure.id] = { voices: [{ id: 'v1', events: [note] }] };
+    part.staves[0].measures[measure.id] = { voices: [{ id: 'v1', voiceIndex: 1, events: [note] }] };
 
     const history = new History(score);
     history.do(convertToRest(note.id));
@@ -311,7 +311,7 @@ describe('commands and History', () => {
       pitches: [createPitch('G', 4, 0)],
       baseType: 'quarter',
     });
-    part.staves[0].measures[measure.id] = { voices: [{ id: 'v1', events: [note] }] };
+    part.staves[0].measures[measure.id] = { voices: [{ id: 'v1', voiceIndex: 1, events: [note] }] };
 
     const history = new History(score);
 
@@ -355,7 +355,7 @@ describe('commands and History', () => {
       pitches: [createPitch('G', 4, 0)],
       baseType: 'quarter',
     });
-    part.staves[0].measures[measure.id] = { voices: [{ id: 'v1', events: [note] }] };
+    part.staves[0].measures[measure.id] = { voices: [{ id: 'v1', voiceIndex: 1, events: [note] }] };
 
     const history = new History(score);
     let selectedId: string | null = note.id;
@@ -419,12 +419,13 @@ describe('commands and History', () => {
     score.parts = [part];
 
     const note1 = createNote({ pitches: [createPitch('C', 4, 0)], baseType: 'quarter' });
-    part.staves[0].measures[measure.id] = { voices: [{ id: 'v1', events: [note1] }] };
+    part.staves[0].measures[measure.id] = { voices: [{ id: 'v1', voiceIndex: 1, events: [note1] }] };
 
     const history = new History(score);
     // Delete event completely
     history.do(deleteEvent(note1.id));
-    expect(history.score.parts[0].staves[0].measures[measure.id].voices[0].events.length).toBe(0);
+    // Voice 1 empties of notes and leaves rest of measure length per Schema v7 rule
+    expect(history.score.parts[0].staves[0].measures[measure.id].voices[0].events[0].kind).toBe('rest');
 
     // If an external tracker checks existence
     const exists = history.score.parts[0].staves[0].measures[measure.id].voices[0].events.some(
@@ -443,7 +444,7 @@ describe('commands and History', () => {
     const n1 = createNote({ pitches: [createPitch('C', 4, 0)], baseType: 'quarter' });
     const n2 = createNote({ pitches: [createPitch('E', 4, 0)], baseType: 'quarter' });
     const r1 = createRest({ baseType: 'half' });
-    part.staves[0].measures[measure.id] = { voices: [{ id: 'v1', events: [n1, n2, r1] }] };
+    part.staves[0].measures[measure.id] = { voices: [{ id: 'v1', voiceIndex: 1, events: [n1, n2, r1] }] };
 
     const history = new History(score);
     history.do(setOverride(n1.id, { dx: 1.5, dy: 0 }));

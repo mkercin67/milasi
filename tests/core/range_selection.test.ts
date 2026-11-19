@@ -26,8 +26,8 @@ describe('Milestone 6a: Range Selection (src/core/selection.ts)', () => {
 
     const voiceId = staff.measures[m0Id].voices[0].id;
     staff.measures[m0Id].voices[0].events = [n0, n1, n2, n3];
-    staff.measures[m1Id].voices[0] = { id: voiceId, events: [n4, n5, n6, n7] };
-    staff.measures[m2Id].voices[0] = { id: voiceId, events: [r8] };
+    staff.measures[m1Id].voices[0] = { id: voiceId, voiceIndex: 1, events: [n4, n5, n6, n7] };
+    staff.measures[m2Id].voices[0] = { id: voiceId, voiceIndex: 1, events: [r8] };
 
     return { score, staffId: staff.id, voiceId, notes: [n0, n1, n2, n3, n4, n5, n6, n7, r8] };
   }
@@ -77,6 +77,7 @@ describe('Milestone 6a: Range Selection (src/core/selection.ts)', () => {
     expect(sel1).toEqual({
       kind: 'range',
       staffId,
+      voiceIndex: 1,
       voiceId,
       anchorId: notes[2].id,
       focusId: notes[2].id,
@@ -88,6 +89,7 @@ describe('Milestone 6a: Range Selection (src/core/selection.ts)', () => {
     expect(sel2).toEqual({
       kind: 'range',
       staffId,
+      voiceIndex: 1,
       voiceId,
       anchorId: notes[1].id,
       focusId: notes[4].id,
@@ -98,6 +100,7 @@ describe('Milestone 6a: Range Selection (src/core/selection.ts)', () => {
     expect(sel3).toEqual({
       kind: 'range',
       staffId,
+      voiceIndex: 1,
       voiceId,
       anchorId: notes[1].id,
       focusId: notes[6].id,
@@ -124,11 +127,11 @@ describe('Milestone 6a: Range Selection (src/core/selection.ts)', () => {
     const n1 = createNote({ pitches: [createPitch('D', 4)], baseType: 'quarter' });
     const n2 = createNote({ pitches: [createPitch('E', 4)], baseType: 'quarter' });
     const n3 = createNote({ pitches: [createPitch('F', 4)], baseType: 'quarter' });
-    staff.measures[m0Id].voices[0] = { id: 'voice-m0', events: [n0, n1, n2, n3] };
+    staff.measures[m0Id].voices[0] = { id: 'voice-m0', voiceIndex: 1, events: [n0, n1, n2, n3] };
 
     const n4 = createNote({ pitches: [createPitch('G', 4)], baseType: 'quarter' });
     const n5 = createNote({ pitches: [createPitch('A', 4)], baseType: 'quarter' });
-    staff.measures[m1Id].voices[0] = { id: 'voice-m1', events: [n4, n5] };
+    staff.measures[m1Id].voices[0] = { id: 'voice-m1', voiceIndex: 1, events: [n4, n5] };
 
     // Select n0 in measure 0
     let sel: Selection = { kind: 'event', id: n0.id };

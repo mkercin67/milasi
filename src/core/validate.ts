@@ -7,6 +7,7 @@
  */
 
 import { ALLOWED_ARTICULATIONS, ALLOWED_DYNAMICS, Id, MeasureDef, Score } from './model';
+import { isPercussionInstrument } from './instruments';
 import { measureTicks } from './time';
 
 /** Severity level of a validation problem. */
@@ -33,20 +34,35 @@ export interface ValidationProblem {
 export function validateScore(score: Score): ValidationProblem[] {
   const problems: ValidationProblem[] = [];
 
-  // Schema version check (1, 2, 3, 4, 5, or 6)
+  // Schema version check (1, 2, 3, 4, 5, 6, or 7)
   if (
     score.schemaVersion !== 1 &&
     score.schemaVersion !== 2 &&
     score.schemaVersion !== 3 &&
     score.schemaVersion !== 4 &&
     score.schemaVersion !== 5 &&
-    score.schemaVersion !== 6
+    score.schemaVersion !== 6 &&
+    score.schemaVersion !== 7
   ) {
     problems.push({
       code: 'invalid-schema-version',
-      message: `Unsupported schema version: ${score.schemaVersion} (expected 1, 2, 3, 4, 5, or 6)`,
+      message: `Unsupported schema version: ${score.schemaVersion} (expected 1, 2, 3, 4, 5, 6, or 7)`,
       severity: 'error',
     });
+  }
+
+  // Schema v7: Check MIDI channel reuse when more than 15 non-percussion parts exist
+  if (score.schemaVersion === 7 && Array.isArray(score.parts)) {
+    const nonPercParts = score.parts.filter(
+      (p) => !isPercussionInstrument(p.instrument) && !isPercussionInstrument(p.name)
+    );
+    if (nonPercParts.length > 15) {
+      problems.push({
+        code: 'midi-channel-reuse',
+        message: `More than 15 non-percussion parts (${nonPercParts.length}) share MIDI channels`,
+        severity: 'warning',
+      });
+    }
   }
 
   // Measure map for quick lookup
@@ -114,6 +130,22 @@ export function validateScore(score: Score): ValidationProblem[] {
   // Validate parts, staves, measures, and voices
   for (const part of score.parts) {
     for (const staff of part.staves) {
+      // Schema v7: Every MeasureDef must exist on every staff
+      if (score.schemaVersion === 7) {
+        for (const mDef of score.measures) {
+          if (!staff.measures[mDef.id]) {
+            problems.push({
+              code: 'missing-staff-measure',
+              message: `Staff ${staff.id} is missing measure definition: ${mDef.id}`,
+              severity: 'error',
+              partId: part.id,
+              staffId: staff.id,
+              measureId: mDef.id,
+            });
+          }
+        }
+      }
+
       for (const [measureId, staffMeasure] of Object.entries(staff.measures)) {
         const mDef = measureMap.get(measureId);
         if (!mDef) {
@@ -126,6 +158,71 @@ export function validateScore(score: Score): ValidationProblem[] {
             measureId,
           });
           continue;
+        }
+
+        // Schema v7 voiceIndex checks
+        if (score.schemaVersion === 7) {
+          if (!staffMeasure.voices || staffMeasure.voices.length === 0) {
+            problems.push({
+              code: 'empty-staff-measure',
+              message: `StaffMeasure ${measureId} on staff ${staff.id} has no voices`,
+              severity: 'error',
+              partId: part.id,
+              staffId: staff.id,
+              measureId,
+            });
+          } else if (staffMeasure.voices.length > 4) {
+            problems.push({
+              code: 'too-many-voices',
+              message: `StaffMeasure ${measureId} on staff ${staff.id} has ${staffMeasure.voices.length} voices (maximum 4)`,
+              severity: 'error',
+              partId: part.id,
+              staffId: staff.id,
+              measureId,
+            });
+          }
+
+          const seenVoiceIndices = new Set<number>();
+          let hasVoice1 = false;
+          for (const voice of staffMeasure.voices) {
+            if (typeof voice.voiceIndex !== 'number' || voice.voiceIndex < 1 || voice.voiceIndex > 4) {
+              problems.push({
+                code: 'invalid-voice-index',
+                message: `Voice ${voice.id} in measure ${measureId} has invalid voiceIndex: ${voice.voiceIndex}`,
+                severity: 'error',
+                partId: part.id,
+                staffId: staff.id,
+                measureId,
+                voiceId: voice.id,
+              });
+            } else if (seenVoiceIndices.has(voice.voiceIndex)) {
+              problems.push({
+                code: 'duplicate-voice-index',
+                message: `Measure ${measureId} on staff ${staff.id} has duplicate voiceIndex: ${voice.voiceIndex}`,
+                severity: 'error',
+                partId: part.id,
+                staffId: staff.id,
+                measureId,
+                voiceId: voice.id,
+              });
+            } else {
+              seenVoiceIndices.add(voice.voiceIndex);
+            }
+            if (voice.voiceIndex === 1) {
+              hasVoice1 = true;
+            }
+          }
+
+          if (!hasVoice1) {
+            problems.push({
+              code: 'missing-voice-1',
+              message: `Measure ${measureId} on staff ${staff.id} is missing mandatory voice 1`,
+              severity: 'error',
+              partId: part.id,
+              staffId: staff.id,
+              measureId,
+            });
+          }
         }
 
         const expectedTicks = mDef.actualTicks ?? measureTicks(mDef.timeSig);
@@ -257,17 +354,21 @@ export function validateScore(score: Score): ValidationProblem[] {
         }
       }
 
-      // Slur validation (Milestone 6b)
+      // Slur validation (Milestone 6b + 7 intra-voice)
       if (staff.slurs && staff.slurs.length > 0) {
-        // Build chronological order map of event IDs on this staff
+        // Build chronological order map and voice index map of event IDs on this staff
         const eventIndexMap = new Map<Id, number>();
+        const eventVoiceMap = new Map<Id, number>();
         let order = 0;
         for (const mDef of score.measures) {
           const sm = staff.measures[mDef.id];
           if (sm) {
-            for (const v of sm.voices) {
+            for (let vIdx = 0; vIdx < sm.voices.length; vIdx++) {
+              const v = sm.voices[vIdx];
+              const vIndex = v.voiceIndex ?? (vIdx + 1);
               for (const ev of v.events) {
                 eventIndexMap.set(ev.id, order++);
+                eventVoiceMap.set(ev.id, vIndex);
               }
             }
           }
@@ -298,6 +399,17 @@ export function validateScore(score: Score): ValidationProblem[] {
               problems.push({
                 code: 'slur-invalid-order',
                 message: `Slur ${slur.id} start event must strictly precede end event chronologically`,
+                severity: 'error',
+                staffId: staff.id,
+              });
+            }
+
+            const startVoice = eventVoiceMap.get(slur.startEventId);
+            const endVoice = eventVoiceMap.get(slur.endEventId);
+            if (startVoice !== undefined && endVoice !== undefined && startVoice !== endVoice) {
+              problems.push({
+                code: 'slur-cross-voice',
+                message: `Slur ${slur.id} connects events across different voices (voice ${startVoice} to voice ${endVoice})`,
                 severity: 'error',
                 staffId: staff.id,
               });

@@ -334,6 +334,7 @@ describe('Milestone 3c: Mouse Input & Manual Positioning', () => {
         voices: [
           {
             id: 'v1',
+            voiceIndex: 1,
             events: [
               createNote({ pitches: [createPitch('C', 4)], baseType: 'quarter' }),
               createRest({ baseType: 'quarter' }),
@@ -428,7 +429,7 @@ describe('Milestone 3c: Mouse Input & Manual Positioning', () => {
       const score = createEmptyScore({ measures: 4 });
       const m0 = score.measures[0].id;
       const ev = createNote({ pitches: [{ step: 'C', alter: 0, octave: 4 }], baseType: 'quarter' });
-      score.parts[0].staves[0].measures[m0] = { voices: [{ id: 'v1', events: [ev] }] };
+      score.parts[0].staves[0].measures[m0] = { voices: [{ id: 'v1', voiceIndex: 1, events: [ev] }] };
 
       const history = new History(score);
       expect((history.score.parts[0].staves[0].measures[m0].voices[0].events[0] as NoteEvent).pitches[0].step).toBe('C');
@@ -458,6 +459,7 @@ describe('Milestone 3c: Mouse Input & Manual Positioning', () => {
         voices: [
           {
             id: 'v1',
+            voiceIndex: 1,
             events: [n1, createRest({ baseType: 'eighth' }), createRest({ baseType: 'quarter' }), createRest({ baseType: 'half' })],
           },
         ],
@@ -467,6 +469,7 @@ describe('Milestone 3c: Mouse Input & Manual Positioning', () => {
           voices: [
             {
               id: 'v1',
+              voiceIndex: 1,
               events: Array.from({ length: 8 }, (_, j) =>
                 createNote({ pitches: [createPitch(j % 2 === 0 ? 'C' : 'D', 4)], baseType: 'eighth' })
               ),
@@ -518,12 +521,13 @@ describe('Milestone 3c: Mouse Input & Manual Positioning', () => {
             : baseType === 'quarter'
             ? [createRest({ baseType: 'quarter' }), createRest({ baseType: 'half' })]
             : [createRest({ baseType: 'eighth' }), createRest({ baseType: 'quarter' }), createRest({ baseType: 'half' })];
-        score.parts[0].staves[0].measures[m0] = { voices: [{ id: 'v1', events: [r1, ...filler] }] };
+        score.parts[0].staves[0].measures[m0] = { voices: [{ id: 'v1', voiceIndex: 1, events: [r1, ...filler] }] };
         for (let i = 1; i < score.measures.length; i++) {
           score.parts[0].staves[0].measures[score.measures[i].id] = {
             voices: [
               {
                 id: 'v1',
+                voiceIndex: 1,
                 events: Array.from({ length: 8 }, (_, j) =>
                   createNote({ pitches: [createPitch(j % 2 === 0 ? 'C' : 'D', 4)], baseType: 'eighth' })
                 ),
@@ -580,8 +584,8 @@ describe('Milestone 3c: Mouse Input & Manual Positioning', () => {
       // 3) Quarter rest in measure 1
       const rQuarter = createRest({ baseType: 'quarter' });
 
-      score.parts[0].staves[0].measures[m0] = { voices: [{ id: 'v1', events: [nHigh, rSpacer, nLow] }] };
-      score.parts[0].staves[0].measures[m1] = { voices: [{ id: 'v1', events: [rQuarter] }] };
+      score.parts[0].staves[0].measures[m0] = { voices: [{ id: 'v1', voiceIndex: 1, events: [nHigh, rSpacer, nLow] }] };
+      score.parts[0].staves[0].measures[m1] = { voices: [{ id: 'v1', voiceIndex: 1, events: [rQuarter] }] };
 
       const layout = layoutScore(score, { width: 100 });
       const sys = layout.systems[0];
@@ -648,7 +652,7 @@ describe('Milestone 3c: Mouse Input & Manual Positioning', () => {
       const m0 = score.measures[0].id;
       const n1 = createNote({ pitches: [createPitch('C', 4, 0)], baseType: 'quarter' });
       const n2 = createNote({ pitches: [createPitch('D', 4, 0)], baseType: 'quarter' });
-      score.parts[0].staves[0].measures[m0] = { voices: [{ id: 'v1', events: [n1, n2] }] };
+      score.parts[0].staves[0].measures[m0] = { voices: [{ id: 'v1', voiceIndex: 1, events: [n1, n2] }] };
 
       // Force n2 close to n1 so their padded hit boxes overlap
       score.overrides[n2.id] = { dx: -3.5, dy: 0 };

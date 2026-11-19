@@ -16,8 +16,8 @@ describe('core selection navigation', () => {
     const n2 = createNote({ pitches: [createPitch('D', 4, 0)], baseType: 'quarter' });
     const r3 = createRest({ baseType: 'half' });
 
-    part.staves[0].measures[m1.id] = { voices: [{ id: 'v1', events: [n1, n2] }] };
-    part.staves[0].measures[m2.id] = { voices: [{ id: 'v2', events: [r3] }] };
+    part.staves[0].measures[m1.id] = { voices: [{ id: 'v1', voiceIndex: 1, events: [n1, n2] }] };
+    part.staves[0].measures[m2.id] = { voices: [{ id: 'v2', voiceIndex: 1, events: [r3] }] };
 
     const staffId = part.staves[0].id;
 
@@ -57,7 +57,7 @@ describe('core selection navigation', () => {
     score.parts = [part];
 
     const note = createNote({ pitches: [createPitch('C', 4, 0)], baseType: 'quarter' });
-    part.staves[0].measures[m.id] = { voices: [{ id: 'v1', events: [note] }] };
+    part.staves[0].measures[m.id] = { voices: [{ id: 'v1', voiceIndex: 1, events: [note] }] };
 
     expect(eventExists(score, note.id)).toBe(true);
     expect(eventExists(score, 'non-existent-id')).toBe(false);

@@ -9,6 +9,7 @@
 import React, { useRef, useState } from 'react';
 import { Pitch, Score } from '../core/model';
 import { ScoreCursor } from '../core/input';
+import { validateScore } from '../core/validate';
 import { clearAutosave, loadAutosave } from '../io/storage';
 import { LayoutResult } from '../layout/types';
 import { PerfSample } from './Diagnostics';
@@ -469,19 +470,28 @@ const EditorShell: React.FC = () => {
         />
       )}
 
-      <StatusBar
-        selection={selectedEventInfo}
-        rangeInfo={rangeInfo}
-        mode={mode}
-        activeDuration={activeDuration}
-        currentMeasureNumber={currentMeasureNumber}
-        rejectedMessage={rejectedError}
-        hasOverride={hasSelectedOverride}
-        override={selectedOverride}
-        hoverPitch={hoverPitch}
-        hoverInfo={hoverInfo}
-        dragStatus={dragStatus}
-      />
+      {(() => {
+        const problems = validateScore(score);
+        const errorCount = problems.filter((p) => p.severity === 'error').length;
+        const warningCount = problems.filter((p) => p.severity === 'warning').length;
+        return (
+          <StatusBar
+            selection={selectedEventInfo}
+            rangeInfo={rangeInfo}
+            mode={mode}
+            activeDuration={activeDuration}
+            currentMeasureNumber={currentMeasureNumber}
+            rejectedMessage={rejectedError}
+            hasOverride={hasSelectedOverride}
+            override={selectedOverride}
+            hoverPitch={hoverPitch}
+            hoverInfo={hoverInfo}
+            dragStatus={dragStatus}
+            errorCount={errorCount}
+            warningCount={warningCount}
+          />
+        );
+      })()}
 
       <AppModals
         score={score}

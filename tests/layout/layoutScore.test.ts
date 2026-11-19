@@ -26,7 +26,7 @@ describe('layoutScore', () => {
     const rest = createRest({ baseType: 'half' });
 
     part.staves[0].measures[measure.id] = {
-      voices: [{ id: 'v1', events: [note1, note2, rest] }],
+      voices: [{ id: 'v1', voiceIndex: 1, events: [note1, note2, rest] }],
     };
 
     const layout1 = layoutScore(score, { width: 60 });
@@ -45,7 +45,7 @@ describe('layoutScore', () => {
     // First note has sharp accidental in C major
     const note = createNote({ pitches: [createPitch('F', 4, 1)], baseType: 'whole' });
     part.staves[0].measures[measure.id] = {
-      voices: [{ id: 'v1', events: [note] }],
+      voices: [{ id: 'v1', voiceIndex: 1, events: [note] }],
     };
 
     const layout = layoutScore(score, { width: 80 });
@@ -80,7 +80,7 @@ describe('layoutScore', () => {
     ];
 
     part.staves[0].measures[measure.id] = {
-      voices: [{ id: 'v1', events: notes }],
+      voices: [{ id: 'v1', voiceIndex: 1, events: notes }],
     };
 
     const layout = layoutScore(score);
@@ -107,7 +107,7 @@ describe('layoutScore', () => {
 
     const note = createNote({ pitches: [createPitch('C', 4, 0)], baseType: 'whole' });
     part.staves[0].measures[measure.id] = {
-      voices: [{ id: 'v1', events: [note] }],
+      voices: [{ id: 'v1', voiceIndex: 1, events: [note] }],
     };
 
     const layoutBefore = layoutScore(score);
@@ -130,7 +130,7 @@ describe('layoutScore', () => {
     scoreRest.measures.push(mRest);
     scoreRest.parts.push(pRest);
     pRest.staves[0].measures[mRest.id] = {
-      voices: [{ id: 'v1', events: [rest] }],
+      voices: [{ id: 'v1', voiceIndex: 1, events: [rest] }],
     };
 
     const layoutRestBefore = layoutScore(scoreRest);
@@ -157,6 +157,7 @@ describe('layoutScore', () => {
         voices: [
           {
             id: 'v1',
+            voiceIndex: 1,
             events: [
               createNote({ pitches: [createPitch('C', 4, 0)], baseType: 'quarter' }),
               createNote({ pitches: [createPitch('D', 4, 0)], baseType: 'quarter' }),
@@ -357,9 +358,9 @@ describe('layoutScore', () => {
           baseType: 'whole',
         });
 
-        part.staves[0].measures[m0.id] = { voices: [{ id: 'v1', events: [nStart, rStart] }] };
-        part.staves[0].measures[m1.id] = { voices: [{ id: 'v1', events: [nRight] }] };
-        part.staves[0].measures[m2.id] = { voices: [{ id: 'v1', events: [nLast] }] };
+        part.staves[0].measures[m0.id] = { voices: [{ id: 'v1', voiceIndex: 1, events: [nStart, rStart] }] };
+        part.staves[0].measures[m1.id] = { voices: [{ id: 'v1', voiceIndex: 1, events: [nRight] }] };
+        part.staves[0].measures[m2.id] = { voices: [{ id: 'v1', voiceIndex: 1, events: [nLast] }] };
 
         // Inject extreme legacy overrides (must NOT be rewritten by layoutScore)
         score.overrides[nStart.id] = { dx: -100, dy: -50 };

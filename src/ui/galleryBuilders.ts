@@ -14,13 +14,15 @@ export function setMeasureEventsViaCommands(
   score: Score,
   measureIndex: number,
   events: (NoteEvent | RestEvent)[],
-  voiceIndex: number = 0
+  voiceIndex: 1 | 2 | 3 | 4 = 1
 ): Score {
   const partId = score.parts[0].id;
   const staff = score.parts[0].staves[0];
   const staffId = staff.id;
   const measureId = score.measures[measureIndex].id;
-  const existingEvents = staff.measures[measureId]?.voices[voiceIndex]?.events ?? [];
+  const sm = staff.measures[measureId];
+  const targetVoice = sm?.voices.find((v) => v.voiceIndex === voiceIndex) ?? sm?.voices[0];
+  const existingEvents = targetVoice?.events ?? [];
   const existingIds = existingEvents.map((e) => e.id);
 
   let currentScore = score;

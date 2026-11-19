@@ -16,7 +16,7 @@ describe('renderSvg', () => {
 
     const note = createNote({ pitches: [createPitch('C', 4, 0)], baseType: 'quarter' });
     part.staves[0].measures[measure.id] = {
-      voices: [{ id: 'v1', events: [note] }],
+      voices: [{ id: 'v1', voiceIndex: 1, events: [note] }],
     };
 
     const layout = layoutScore(score);
@@ -47,8 +47,8 @@ describe('renderSvg', () => {
       pitches: [createPitch('F', 4, 1), createPitch('G', 4, 0)],
       baseType: 'quarter',
     });
-    part.staves[0].measures[m1.id] = { voices: [{ id: 'v1', events: [chord] }] };
-    part.staves[0].measures[m2.id] = { voices: [{ id: 'v1', events: [chord] }] };
+    part.staves[0].measures[m1.id] = { voices: [{ id: 'v1', voiceIndex: 1, events: [chord] }] };
+    part.staves[0].measures[m2.id] = { voices: [{ id: 'v1', voiceIndex: 1, events: [chord] }] };
 
     const layout = layoutScore(score, { width: 30 });
     const svgStr = renderSvgToString(layout);
@@ -71,7 +71,7 @@ describe('renderSvg', () => {
       createNote({ pitches: [createPitch('A', 5, 0)], baseType: 'quarter' }),
       createNote({ pitches: [createPitch('C', 6, 0)], baseType: 'quarter' }),
     ];
-    part.staves[0].measures[m5.id] = { voices: [{ id: 'v1', events: m5Notes }] };
+    part.staves[0].measures[m5.id] = { voices: [{ id: 'v1', voiceIndex: 1, events: m5Notes }] };
 
     const layout = layoutScore(score);
     const svg = renderSvgToString(layout);
@@ -89,7 +89,7 @@ describe('renderSvg', () => {
     score.parts = [part];
 
     const note = createNote({ pitches: [createPitch('C', 4, 0)], baseType: 'quarter' });
-    part.staves[0].measures[m.id] = { voices: [{ id: 'v1', events: [note] }] };
+    part.staves[0].measures[m.id] = { voices: [{ id: 'v1', voiceIndex: 1, events: [note] }] };
 
     const layout = layoutScore(score);
     const svgStr = renderSvgToString(layout);

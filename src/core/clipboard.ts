@@ -3,7 +3,7 @@
  * Pure clipboard operations, serialization, duration splitting and pasting.
  */
 
-import { createMeasure, createNote, createRest } from './factory';
+import { createMeasure, createNote, createRest, newId } from './factory';
 import { BaseDurationType, NoteEvent, Pitch, Score, ScoreEvent } from './model';
 import { measureTicks } from './time';
 
@@ -166,9 +166,19 @@ export function pasteEvents(
         const newM = createMeasure(lastM.timeSig, lastM.keySig);
         nextScore.measures.push(newM);
         const newDur = measureTicks(newM.timeSig);
-        staff.measures[newM.id] = {
-          voices: [{ id: target.voiceId, events: [createRest({ baseType: 'whole', duration: newDur, wholeMeasure: true })] }],
-        };
+        for (const p of nextScore.parts) {
+          for (const st of p.staves) {
+            st.measures[newM.id] = {
+              voices: [
+                {
+                  id: st.id === staff.id ? target.voiceId : newId(),
+                  voiceIndex: 1,
+                  events: [createRest({ baseType: 'whole', duration: newDur, wholeMeasure: true })],
+                },
+              ],
+            };
+          }
+        }
       }
 
       let newEv: ScoreEvent;

@@ -27,6 +27,8 @@ export interface StatusBarProps {
   hoverPitch?: Pitch | null;
   hoverInfo?: HoverInfo | null;
   dragStatus?: string | null;
+  errorCount?: number;
+  warningCount?: number;
 }
 
 const MODE_COLORS: Record<EditorMode, { bg: string; fg: string; border: string }> = {
@@ -48,6 +50,8 @@ export const StatusBar: React.FC<StatusBarProps> = ({
   hoverPitch = null,
   hoverInfo = null,
   dragStatus = null,
+  errorCount,
+  warningCount,
 }) => {
   if (typeof window !== 'undefined') {
     const w = window as unknown as { __componentRenders?: Record<string, number> };
@@ -238,6 +242,38 @@ export const StatusBar: React.FC<StatusBarProps> = ({
         >
           {t(`mode.${mode}`)}
         </span>
+        {errorCount !== undefined && errorCount > 0 && (
+          <span
+            data-testid="status-error-count"
+            style={{
+              padding: '0.12rem 0.5rem',
+              fontSize: '0.75rem',
+              fontWeight: 700,
+              backgroundColor: '#fee2e2',
+              color: '#b91c1c',
+              border: '1px solid #fca5a5',
+              borderRadius: '4px',
+            }}
+          >
+            {t('status.errors', { count: errorCount })}
+          </span>
+        )}
+        {warningCount !== undefined && warningCount > 0 && (
+          <span
+            data-testid="status-warning-count"
+            style={{
+              padding: '0.12rem 0.5rem',
+              fontSize: '0.75rem',
+              fontWeight: 700,
+              backgroundColor: '#fef3c7',
+              color: '#b45309',
+              border: '1px solid #fcd34d',
+              borderRadius: '4px',
+            }}
+          >
+            {t('status.warnings', { count: warningCount })}
+          </span>
+        )}
         {renderStatusContent()}
       </div>
 

@@ -8,11 +8,19 @@ import { Score, ScoreEvent } from './model';
 export type Selection =
   | { kind: 'none' }
   | { kind: 'event'; id: string }
-  | { kind: 'range'; staffId: string; voiceId: string; anchorId: string; focusId: string };
+  | {
+      kind: 'range';
+      staffId: string;
+      voiceIndex?: 1 | 2 | 3 | 4;
+      voiceId?: string;
+      anchorId: string;
+      focusId: string;
+    };
 
 export interface RangeSelection {
   staffId: string;
-  voiceId: string;
+  voiceIndex?: 1 | 2 | 3 | 4;
+  voiceId?: string;
   anchorId: string;
   focusId: string;
 }
@@ -28,7 +36,7 @@ export function findEventContext(
   measureId: string;
   measureIndex: number;
   voiceId: string;
-  voiceIndex: number;
+  voiceIndex: 1 | 2 | 3 | 4;
   eventIndex: number;
 } | null {
   for (const part of score.parts) {
@@ -41,7 +49,7 @@ export function findEventContext(
           const voice = staffMeasure.voices[vIdx];
           const evIdx = voice.events.findIndex((e) => e.id === eventId);
           if (evIdx !== -1) {
-            const vIndex = voice.voiceIndex ?? (vIdx + 1);
+            const vIndex = (voice.voiceIndex ?? (vIdx + 1)) as 1 | 2 | 3 | 4;
             return {
               staffId: staff.id,
               measureId: mDef.id,
@@ -99,7 +107,7 @@ export function eventsInRange(
   range: RangeSelection
 ): ScoreEvent[] {
   const anchorCtx = findEventContext(score, range.anchorId);
-  const vIndex = anchorCtx ? anchorCtx.voiceIndex : 1;
+  const vIndex = range.voiceIndex ?? (anchorCtx ? anchorCtx.voiceIndex : 1);
   const ordered = getOrderedVoiceEvents(score, range.staffId, vIndex);
   const anchorIdx = ordered.findIndex((item) => item.event.id === range.anchorId);
   const focusIdx = ordered.findIndex((item) => item.event.id === range.focusId);
@@ -129,6 +137,7 @@ export function extendSelection(
     return {
       kind: 'range',
       staffId: targetCtx.staffId,
+      voiceIndex: targetCtx.voiceIndex,
       voiceId: targetCtx.voiceId,
       anchorId: targetEventId,
       focusId: targetEventId,
@@ -141,6 +150,7 @@ export function extendSelection(
       return {
         kind: 'range',
         staffId: targetCtx.staffId,
+        voiceIndex: targetCtx.voiceIndex,
         voiceId: targetCtx.voiceId,
         anchorId: targetEventId,
         focusId: targetEventId,
@@ -149,6 +159,7 @@ export function extendSelection(
     return {
       kind: 'range',
       staffId: targetCtx.staffId,
+      voiceIndex: anchorCtx.voiceIndex,
       voiceId: anchorCtx.voiceId,
       anchorId: current.id,
       focusId: targetEventId,
@@ -161,6 +172,7 @@ export function extendSelection(
       return {
         kind: 'range',
         staffId: targetCtx.staffId,
+        voiceIndex: targetCtx.voiceIndex,
         voiceId: targetCtx.voiceId,
         anchorId: targetEventId,
         focusId: targetEventId,
@@ -169,6 +181,7 @@ export function extendSelection(
     return {
       kind: 'range',
       staffId: current.staffId,
+      voiceIndex: anchorCtx.voiceIndex,
       voiceId: current.voiceId,
       anchorId: current.anchorId,
       focusId: targetEventId,

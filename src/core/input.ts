@@ -336,6 +336,7 @@ export function appendMeasure(): Command {
               voices: [
                 {
                   id: newId(),
+                  voiceIndex: 1,
                   events: [
                     createRest({
                       baseType: 'whole',

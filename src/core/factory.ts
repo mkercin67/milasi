@@ -17,6 +17,7 @@ import {
   Score,
   Staff,
 } from './model';
+import { resolvePartShortName } from './instruments';
 import { durationTicks, measureTicks } from './time';
 
 /**
@@ -63,7 +64,7 @@ export interface CreateScoreOptions {
  */
 export function createScore(options?: CreateScoreOptions): Score {
   return {
-    schemaVersion: 6,
+    schemaVersion: 7,
     id: newId(),
     meta: {
       title: options?.title ?? 'Untitled Score',
@@ -73,6 +74,7 @@ export function createScore(options?: CreateScoreOptions): Score {
     },
     parts: [],
     measures: [],
+    groups: [],
     overrides: {},
   };
 }
@@ -83,6 +85,8 @@ export interface CreatePartOptions {
   instrument?: string;
   clef?: Clef;
   staves?: Staff[];
+  midiChannel?: number;
+  shortName?: string;
 }
 
 /**
@@ -106,11 +110,16 @@ export function createPart(nameOrOptions?: string | CreatePartOptions): Part {
       },
     ];
 
+  const partName = options.name ?? 'Part 1';
+  const instrument = options.instrument ?? 'default';
+
   return {
     id: newId(),
-    name: options.name ?? 'Part 1',
+    name: partName,
     staves,
-    instrument: options.instrument ?? 'default',
+    instrument,
+    midiChannel: options.midiChannel ?? 0,
+    shortName: options.shortName ?? resolvePartShortName(instrument, partName),
   };
 }
 
@@ -261,7 +270,7 @@ export function createEmptyScore(options: CreateEmptyScoreOptions = {}): Score {
     });
 
     part.staves[0].measures[mDef.id] = {
-      voices: [{ id: newId(), events: [wholeRest] }],
+      voices: [{ id: newId(), voiceIndex: 1, events: [wholeRest] }],
     };
   }
 

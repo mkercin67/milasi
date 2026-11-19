@@ -37,6 +37,7 @@ describe('JSON serialization and deserialization', () => {
       voices: [
         {
           id: 'voice-1',
+          voiceIndex: 1,
           events: [note1, note2, rest],
         },
       ],
@@ -89,7 +90,7 @@ describe('JSON serialization and deserialization', () => {
     });
 
     part.staves[0].measures[measure.id] = {
-      voices: [{ id: 'v1', events: [note] }],
+      voices: [{ id: 'v1', voiceIndex: 1, events: [note] }],
     };
 
     const json = serializeScore(score);
@@ -131,7 +132,7 @@ describe('JSON serialization and deserialization', () => {
     });
 
     part.staves[0].measures[measure.id] = {
-      voices: [{ id: 'v1', events: [dottedNote, tupletNote, rest1, rest2] }],
+      voices: [{ id: 'v1', voiceIndex: 1, events: [dottedNote, tupletNote, rest1, rest2] }],
     };
 
     const json = serializeScore(score);

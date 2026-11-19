@@ -171,5 +171,8 @@
   "dialog.scoreInfo.subtitle": "Alt Başlık",
   "dialog.scoreInfo.arranger": "Düzenleyen",
   "dialog.newScore.pickup": "Eksik ölçü (Anakruz)",
-  "dialog.newScore.pickupLength": "Eksik ölçü süresi"
+  "dialog.newScore.pickupLength": "Eksik ölçü süresi",
+  "status.errors": "{count} hata",
+  "status.warnings": "{count} uyarı",
+  "dialog.removeVoiceConfirm": "Ses nota içeriyor. Silmek istediğinizden emin misiniz?"
 }

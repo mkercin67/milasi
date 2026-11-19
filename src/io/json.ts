@@ -6,8 +6,14 @@
  * and comprehensive validation checks on load to guarantee score consistency.
  */
 
+import { newId } from '../core/factory';
+import { isPercussionInstrument, resolvePartShortName } from '../core/instruments';
 import { Score } from '../core/model';
+import { fillMeasureWithRests, measureTicks } from '../core/time';
 import { validateScore } from '../core/validate';
+import { migrations } from './migrations';
+
+export { migrations };
 
 /** Envelope format for native .sfscore files. */
 export interface ScoreForgeEnvelope {
@@ -16,173 +22,11 @@ export interface ScoreForgeEnvelope {
   score: Score;
 }
 
-export const CURRENT_SCHEMA_VERSION = 6;
-
-/** Migration function signature for schema version upgrades. */
-export type ScoreMigration = (data: unknown) => Score;
-
-interface RawPitch {
-  tiedToNext?: boolean;
-}
-interface RawEvent {
-  kind?: string;
-  pitches?: RawPitch[];
-  tiedToNext?: boolean;
-  lyrics?: unknown;
-}
-interface RawVoice {
-  events?: RawEvent[];
-}
-interface RawMeasureData {
-  voices?: RawVoice[];
-}
-interface RawStaff {
-  measures?: Record<string, RawMeasureData>;
-  slurs?: unknown[];
-}
-interface RawPart {
-  staves?: RawStaff[];
-}
-interface RawMeasureDef {
-  repeat?: string;
-  repeatStart?: boolean;
-  repeatEnd?: boolean;
-  endBarline?: string;
-}
-interface RawScore {
-  schemaVersion?: number;
-  meta?: { subtitle?: string; arranger?: string };
-  parts?: RawPart[];
-  measures?: RawMeasureDef[];
-}
-
-/** Migration from v1 to v2: upgrades schemaVersion to 2 and migrates tiedToNext to pitch level. */
-export function migrateV1ToV2(data: unknown): Score {
-  const score = JSON.parse(JSON.stringify(data)) as RawScore;
-  score.schemaVersion = 2;
-  if (Array.isArray(score.parts)) {
-    for (const part of score.parts) {
-      if (Array.isArray(part.staves)) {
-        for (const staff of part.staves) {
-          if (staff.measures) {
-            for (const m of Object.values(staff.measures)) {
-              if (Array.isArray(m?.voices)) {
-                for (const v of m.voices) {
-                  if (Array.isArray(v?.events)) {
-                    for (const ev of v.events) {
-                      if (ev.kind === 'note' && Array.isArray(ev.pitches)) {
-                        if (ev.tiedToNext) {
-                          for (const p of ev.pitches) {
-                            p.tiedToNext = true;
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-  return score as unknown as Score;
-}
-
-/** Migration from v2 to v3: upgrades schemaVersion to 3 and initializes slurs array on staves. */
-export function migrateV2ToV3(data: unknown): Score {
-  const score = JSON.parse(JSON.stringify(data)) as RawScore;
-  score.schemaVersion = 3;
-  if (Array.isArray(score.parts)) {
-    for (const part of score.parts) {
-      if (Array.isArray(part.staves)) {
-        for (const staff of part.staves) {
-          if (!Array.isArray(staff.slurs)) {
-            staff.slurs = [];
-          }
-        }
-      }
-    }
-  }
-  return score as unknown as Score;
-}
-
-/** Migration from v3 to v4: upgrades schemaVersion to 4 and initializes metadata & barlines. */
-export function migrateV3ToV4(data: unknown): Score {
-  const score = JSON.parse(JSON.stringify(data)) as RawScore;
-  score.schemaVersion = 4;
-  if (score.meta) {
-    score.meta.subtitle = score.meta.subtitle ?? '';
-    score.meta.arranger = score.meta.arranger ?? '';
-  }
-  if (Array.isArray(score.measures)) {
-    for (let i = 0; i < score.measures.length; i++) {
-      const m = score.measures[i];
-      if (m && !m.endBarline) {
-        m.endBarline = i === score.measures.length - 1 ? 'final' : 'single';
-      }
-    }
-  }
-  return score as unknown as Score;
-}
-
-/** Migration from v4 to v5: upgrades schemaVersion to 5 for repeats, voltas, and lyrics. */
-export function migrateV4ToV5(data: unknown): Score {
-  const score = JSON.parse(JSON.stringify(data)) as RawScore;
-  score.schemaVersion = 5;
-  return score as unknown as Score;
-}
-
-/** Migration from v5 to v6: converts repeat string to repeatStart/repeatEnd and lyrics string to LyricSyllable[]. */
-export function migrateV5ToV6(data: unknown): Score {
-  const score = JSON.parse(JSON.stringify(data)) as RawScore;
-  score.schemaVersion = 6;
-  if (Array.isArray(score.measures)) {
-    for (const m of score.measures) {
-      if (m.repeat === 'start') {
-        m.repeatStart = true;
-        delete m.repeat;
-      } else if (m.repeat === 'end') {
-        m.repeatEnd = true;
-        delete m.repeat;
-      } else if (m.repeat === 'both') {
-        m.repeatStart = true;
-        m.repeatEnd = true;
-        delete m.repeat;
-      }
-    }
-  }
-  if (Array.isArray(score.parts)) {
-    for (const part of score.parts) {
-      for (const staff of part.staves ?? []) {
-        for (const mId of Object.keys(staff.measures ?? {})) {
-          const sm = staff.measures?.[mId];
-          for (const v of sm?.voices ?? []) {
-            for (const ev of v?.events ?? []) {
-              if (ev.kind === 'note' && typeof ev.lyrics === 'string') {
-                ev.lyrics = [{ verse: 1, text: ev.lyrics }];
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-  return score as unknown as Score;
-}
-
-/** Registry of schema migrations keyed by source schemaVersion. */
-export const migrations: Record<number, ScoreMigration> = {
-  1: migrateV1ToV2,
-  2: migrateV2ToV3,
-  3: migrateV3ToV4,
-  4: migrateV4ToV5,
-  5: migrateV5ToV6,
-};
+export const CURRENT_SCHEMA_VERSION = 7;
 
 /**
  * Serializes a Score instance to a JSON string.
+ * Normalizes Schema v7 invariants on serialization to guarantee consistency.
  *
  * @param score - Score data to serialize.
  * @param space - Optional indentation spaces for formatting.
@@ -190,19 +34,59 @@ export const migrations: Record<number, ScoreMigration> = {
  * @returns Serialized JSON string.
  */
 export function serializeScore(score: Score, space?: number, envelope: boolean = true): string {
-  const scorePayload: Score = {
-    ...score,
-    schemaVersion: score.schemaVersion ?? 2,
-  };
+  const cloned = JSON.parse(JSON.stringify(score)) as Score;
+  cloned.schemaVersion = cloned.schemaVersion ?? CURRENT_SCHEMA_VERSION;
+  if (!cloned.groups) cloned.groups = [];
+
+  const NON_PERCUSSION_CHANNELS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15];
+  let nonPercCounter = 0;
+
+  for (const part of cloned.parts ?? []) {
+    const isPerc = isPercussionInstrument(part.instrument) || isPercussionInstrument(part.name);
+    if (part.midiChannel === undefined) {
+      part.midiChannel = isPerc ? 9 : NON_PERCUSSION_CHANNELS[nonPercCounter % NON_PERCUSSION_CHANNELS.length];
+      if (!isPerc) nonPercCounter++;
+    }
+    if (!part.shortName) {
+      part.shortName = resolvePartShortName(part.instrument, part.name);
+    }
+
+    for (const staff of part.staves ?? []) {
+      if (!staff.measures) staff.measures = {};
+      for (const mDef of cloned.measures ?? []) {
+        let sm = staff.measures[mDef.id];
+        if (!sm) {
+          sm = { voices: [] };
+          staff.measures[mDef.id] = sm;
+        }
+        for (let i = 0; i < sm.voices.length; i++) {
+          const v = sm.voices[i];
+          if (v.voiceIndex === undefined) {
+            v.voiceIndex = (i + 1) as 1 | 2 | 3 | 4;
+          }
+        }
+        sm.voices.sort((a, b) => a.voiceIndex - b.voiceIndex);
+        if (sm.voices.length === 0) {
+          const targetLength = mDef.actualTicks ?? measureTicks(mDef.timeSig);
+          sm.voices.push({
+            id: newId(),
+            voiceIndex: 1,
+            events: fillMeasureWithRests(targetLength),
+          });
+        }
+      }
+    }
+  }
+
   if (envelope) {
     const env: ScoreForgeEnvelope = {
       app: 'scoreforge',
       savedAt: new Date().toISOString(),
-      score: scorePayload,
+      score: cloned,
     };
     return JSON.stringify(env, null, space);
   }
-  return JSON.stringify(scorePayload, null, space);
+  return JSON.stringify(cloned, null, space);
 }
 
 /**
@@ -215,7 +99,7 @@ export function serializeScore(score: Score, space?: number, envelope: boolean =
  *
  * @param json - Serialized score JSON string.
  * @returns Validated Score object.
- * @throws Error if the JSON is malformed, schemaVersion is unsupported, or validation fails.
+ * @throws Error if the JSON is malformed, schemaVersion is unsupported, or validation fails with errors.
  */
 export function deserializeScore(json: string): Score {
   if (!json || typeof json !== 'string' || json.trim().length === 0) {
@@ -252,6 +136,12 @@ export function deserializeScore(json: string): Score {
     throw new Error('Unsupported or missing schemaVersion: missing schemaVersion property');
   }
 
+  if (version > CURRENT_SCHEMA_VERSION) {
+    throw new Error(
+      `Desteklenmeyen şema sürümü: ${version}. Bu sürüm daha yeni bir MiLaSi uygulaması gerektirir. (schemaVersion: ${version})`
+    );
+  }
+
   let loadedScore = scoreObj as unknown as Score;
 
   // Run migrations forward until current schema version
@@ -267,14 +157,15 @@ export function deserializeScore(json: string): Score {
 
   if (loadedScore.schemaVersion !== CURRENT_SCHEMA_VERSION) {
     throw new Error(
-      `Unsupported schemaVersion: ${loadedScore.schemaVersion}. Expected version up to ${CURRENT_SCHEMA_VERSION}.`
+      `Desteklenmeyen şema sürümü: ${loadedScore.schemaVersion}. Beklenen sürüm: ${CURRENT_SCHEMA_VERSION}. (schemaVersion: ${loadedScore.schemaVersion})`
     );
   }
 
-  // Validate loaded score structure and durations
+  // Validate loaded score structure and durations (D6: reject only on 'error', allow 'warning')
   const problems = validateScore(loadedScore);
-  if (problems.length > 0) {
-    const details = problems.map((p) => `[${p.code}] ${p.message}`).join('; ');
+  const errors = problems.filter((p) => p.severity === 'error');
+  if (errors.length > 0) {
+    const details = errors.map((p) => `[${p.code}] ${p.message}`).join('; ');
     throw new Error(`Validation failed on score load: ${details}`);
   }
 

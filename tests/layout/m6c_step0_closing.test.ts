@@ -16,7 +16,7 @@ import {
   setTimeSignature,
 } from '../../src/core/commands';
 import { layoutScore } from '../../src/layout/layoutScore';
-import { deserializeScore, serializeScore } from '../../src/io/json';
+import { CURRENT_SCHEMA_VERSION, deserializeScore, serializeScore } from '../../src/io/json';
 
 describe('Milestone 6c Closing: Header Layout, Edge Cases & Robustness', () => {
   describe('STEP 0a: Header text layout and overlap prevention', () => {
@@ -36,6 +36,7 @@ describe('Milestone 6c Closing: Header Layout, Edge Cases & Robustness', () => {
         voices: [
           {
             id: 'v1',
+            voiceIndex: 1,
             events: [
               createNote({ pitches: [createPitch('G', 5, 0)], baseType: 'quarter' }),
               createNote({ pitches: [createPitch('A', 5, 0)], baseType: 'quarter' }),
@@ -275,7 +276,7 @@ describe('Milestone 6c Closing: Header Layout, Edge Cases & Robustness', () => {
       });
 
       const loaded = deserializeScore(realM6bV3Json);
-      expect(loaded.schemaVersion).toBe(6);
+      expect(loaded.schemaVersion).toBe(CURRENT_SCHEMA_VERSION);
       expect(loaded.meta.title).toBe('Süt İçtim Dilim Yandı');
       expect(loaded.meta.composer).toBe('Müzik Notlarım');
       expect(loaded.meta.subtitle).toBe('');

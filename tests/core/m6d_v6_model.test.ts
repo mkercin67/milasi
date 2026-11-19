@@ -5,10 +5,10 @@ import { createEmptyScore, createNote, createPitch } from '../../src/core/factor
 import { pasteLyrics, setLyrics, setRepeatEnd, setRepeatStart } from '../../src/core/commands';
 
 describe('Milestone 6d Alignment: Model, Schema v6, and Repeat Commands', () => {
-  it('FAILING-FIRST: CURRENT_SCHEMA_VERSION is 6 and supports repeatStart, repeatEnd, and LyricSyllable[]', () => {
-    expect(CURRENT_SCHEMA_VERSION).toBe(6);
+  it('FAILING-FIRST: CURRENT_SCHEMA_VERSION is 6+ and supports repeatStart, repeatEnd, and LyricSyllable[]', () => {
+    expect(CURRENT_SCHEMA_VERSION).toBeGreaterThanOrEqual(6);
     const score = createEmptyScore({ numMeasures: 4 });
-    expect(score.schemaVersion).toBe(6);
+    expect(score.schemaVersion).toBeGreaterThanOrEqual(6);
   });
 
   it('FAILING-FIRST: setRepeatStart and setRepeatEnd toggle repeat flags on measures cleanly', () => {
@@ -111,7 +111,7 @@ describe('Milestone 6d Alignment: Model, Schema v6, and Repeat Commands', () => 
     };
 
     const loaded = deserializeScore(JSON.stringify(v5Envelope));
-    expect(loaded.schemaVersion).toBe(6);
+    expect(loaded.schemaVersion).toBe(CURRENT_SCHEMA_VERSION);
     expect(loaded.measures[0].repeatStart).toBe(true);
     expect(loaded.measures[0].repeatEnd).toBeUndefined();
     expect(loaded.measures[1].repeatStart).toBeUndefined();

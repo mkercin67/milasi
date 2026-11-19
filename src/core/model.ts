@@ -10,9 +10,17 @@
 /** Unique identifier type (UUID string). */
 export type Id = string;
 
+/** A bracketed grouping of staves in multi-staff / orchestral layouts (Milestone 7). */
+export interface StaffGroup {
+  id: Id;
+  name?: string;
+  staffIds: Id[];
+  bracket: 'bracket' | 'brace';
+}
+
 /** Root score container. */
 export interface Score {
-  schemaVersion: 1 | 2 | 3 | 4 | 5 | 6;
+  schemaVersion: 1 | 2 | 3 | 4 | 5 | 6 | 7;
   id: Id;
   meta: {
     title: string;
@@ -22,6 +30,7 @@ export interface Score {
   };
   parts: Part[];
   measures: MeasureDef[];
+  groups?: StaffGroup[];
   overrides: Record<Id, Override>;
 }
 
@@ -69,6 +78,8 @@ export interface Part {
   name: string;
   staves: Staff[];
   instrument: string;
+  midiChannel?: number; // 0..15 (mandatory in Schema v7)
+  shortName?: string; // e.g. "Vln.", "Pno." (mandatory in Schema v7)
 }
 
 /** A musical slur connecting two events in the same staff. */
@@ -107,7 +118,7 @@ export interface StaffMeasure {
 /** A voice channel within a measure holding a sequential list of score events. */
 export interface Voice {
   id: Id;
-  voiceIndex?: number; // 1-based index (1..4)
+  voiceIndex: 1 | 2 | 3 | 4; // 1-based index (1..4)
   events: ScoreEvent[];
 }
 

@@ -6,7 +6,7 @@
  * floating-point drift and rounding errors.
  */
 
-import { BaseDurationType } from './model';
+import { BaseDurationType, RestEvent } from './model';
 
 /** Pulses (ticks) per quarter note. Standard resolution: 960 ticks. */
 export const PPQ = 960;
@@ -20,6 +20,82 @@ const BASE_TICKS_MAP: Record<BaseDurationType, number> = {
   '16th': PPQ / 4, // 240 ticks
   '32nd': PPQ / 8, // 120 ticks
 };
+
+/** Candidate rest values with at most one dot, ordered from largest to smallest duration. */
+const REST_CANDIDATES: Array<{ baseType: BaseDurationType; dots: 0 | 1; ticks: number }> = [
+  { baseType: 'whole', dots: 1, ticks: 5760 },
+  { baseType: 'whole', dots: 0, ticks: 3840 },
+  { baseType: 'half', dots: 1, ticks: 2880 },
+  { baseType: 'half', dots: 0, ticks: 1920 },
+  { baseType: 'quarter', dots: 1, ticks: 1440 },
+  { baseType: 'quarter', dots: 0, ticks: 960 },
+  { baseType: 'eighth', dots: 1, ticks: 720 },
+  { baseType: 'eighth', dots: 0, ticks: 480 },
+  { baseType: '16th', dots: 1, ticks: 360 },
+  { baseType: '16th', dots: 0, ticks: 240 },
+  { baseType: '32nd', dots: 1, ticks: 180 },
+  { baseType: '32nd', dots: 0, ticks: 120 },
+];
+
+/** Rhythmic descriptor for a single rest event. */
+export interface RestDescriptor {
+  baseType: BaseDurationType;
+  dots: 0 | 1;
+  duration: number;
+}
+
+/**
+ * Decomposes an integer tick duration into the fewest valid rest values.
+ * Every returned rest has a valid SMuFL baseType and at most one dot (dots <= 1).
+ */
+export function decomposeTicksToRests(targetTicks: number): RestDescriptor[] {
+  if (targetTicks <= 0) return [];
+
+  // Breadth-first search guarantees the fewest possible events.
+  const queue: Array<{ rem: number; path: RestDescriptor[] }> = [{ rem: targetTicks, path: [] }];
+  const visited = new Set<number>([targetTicks]);
+
+  while (queue.length > 0) {
+    const { rem, path } = queue.shift()!;
+    for (const cand of REST_CANDIDATES) {
+      if (cand.ticks === rem) {
+        return [...path, { baseType: cand.baseType, dots: cand.dots, duration: cand.ticks }];
+      }
+      if (cand.ticks < rem) {
+        const nextRem = rem - cand.ticks;
+        if (!visited.has(nextRem)) {
+          visited.add(nextRem);
+          queue.push({
+            rem: nextRem,
+            path: [...path, { baseType: cand.baseType, dots: cand.dots, duration: cand.ticks }],
+          });
+        }
+      }
+    }
+  }
+
+  // Fallback for sub-32nd tick remainders (should not occur with standard notation PPQ=960)
+  return [{ baseType: '32nd', dots: 0, duration: targetTicks }];
+}
+
+/**
+ * Fills a measure duration with valid RestEvent objects.
+ * Output duration sums to exactly targetTicks with the fewest events possible.
+ */
+export function fillMeasureWithRests(
+  targetTicks: number,
+  idGenerator?: (index: number) => string
+): RestEvent[] {
+  const descriptors = decomposeTicksToRests(targetTicks);
+  return descriptors.map((d, idx) => ({
+    id: idGenerator ? idGenerator(idx) : `rest-${idx}`,
+    kind: 'rest',
+    baseType: d.baseType,
+    dots: d.dots,
+    duration: d.duration,
+    wholeMeasure: descriptors.length === 1 && d.baseType === 'whole' && d.dots === 0,
+  }));
+}
 
 /**
  * Calculates the duration of an event in integer ticks.

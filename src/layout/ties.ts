@@ -98,25 +98,33 @@ export function layoutTies(
 
   for (const part of score.parts) {
     for (const staff of part.staves) {
-      // Collect all notes in staff in score order
-      const allNotes: NoteEvent[] = [];
+      // Collect notes per voice in score order (ties are strictly intra-voice per Schema v7)
+      const voiceNotesMap = new Map<number, NoteEvent[]>();
       for (let mIdx = 0; mIdx < score.measures.length; mIdx++) {
         const mDef = score.measures[mIdx];
         const sm = staff.measures[mDef.id];
         if (!sm) continue;
-        for (const v of sm.voices) {
+        for (let vIdx = 0; vIdx < sm.voices.length; vIdx++) {
+          const v = sm.voices[vIdx];
+          const vIndex = v.voiceIndex ?? (vIdx + 1);
+          let list = voiceNotesMap.get(vIndex);
+          if (!list) {
+            list = [];
+            voiceNotesMap.set(vIndex, list);
+          }
           for (const ev of v.events) {
             if (ev.kind === 'note') {
-              allNotes.push(ev);
+              list.push(ev);
             }
           }
         }
       }
 
-      for (let nIdx = 0; nIdx < allNotes.length; nIdx++) {
-        const sourceNote = allNotes[nIdx];
-        const isTied = sourceNote.tiedToNext || sourceNote.pitches.some((p) => p.tiedToNext);
-        if (!isTied) continue;
+      for (const allNotes of voiceNotesMap.values()) {
+        for (let nIdx = 0; nIdx < allNotes.length; nIdx++) {
+          const sourceNote = allNotes[nIdx];
+          const isTied = sourceNote.tiedToNext || sourceNote.pitches.some((p) => p.tiedToNext);
+          if (!isTied) continue;
 
         // Find next note with matching pitch (a tie connects to immediate next notes)
         const maxScan = Math.min(allNotes.length, nIdx + 32);
@@ -185,6 +193,7 @@ export function layoutTies(
       }
     }
   }
+}
 
   return ties;
 }

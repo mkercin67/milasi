@@ -123,16 +123,20 @@ export function buildSchedule(
         }
       }
 
-      // Find maximum number of voices across measures
-      let maxVoices = 1;
+      // Find unique voice indices across measures on this staff
+      const voiceIndicesSet = new Set<number>();
       for (const mDef of score.measures) {
         const sm = staff.measures[mDef.id];
-        if (sm && sm.voices.length > maxVoices) {
-          maxVoices = sm.voices.length;
+        if (sm) {
+          for (let vIdx = 0; vIdx < sm.voices.length; vIdx++) {
+            const v = sm.voices[vIdx];
+            voiceIndicesSet.add(v.voiceIndex ?? (vIdx + 1));
+          }
         }
       }
+      const voiceIndices = voiceIndicesSet.size > 0 ? Array.from(voiceIndicesSet).sort((a, b) => a - b) : [1];
 
-      for (let vIdx = 0; vIdx < maxVoices; vIdx++) {
+      for (const targetVoiceIndex of voiceIndices) {
         let currentVelocity = DEFAULT_VELOCITY;
         // Map to track active tied notes by pitch string key
         let activeTies: Array<{
@@ -144,7 +148,7 @@ export function buildSchedule(
           const mDef = sequence[sIdx].measureDef;
           const sm = staff.measures[mDef.id];
           if (!sm) continue;
-          const voice = sm.voices[vIdx];
+          const voice = sm.voices.find((v, vIdx) => (v.voiceIndex ?? (vIdx + 1)) === targetVoiceIndex);
           if (!voice) continue;
 
           const tempo = measureTempos[sIdx];
@@ -253,6 +257,7 @@ export function buildSchedule(
                     startSeconds: evStartSeconds,
                     durationSeconds: soundingDuration,
                     velocity: noteVelocity,
+                    midiChannel: part.midiChannel ?? 0,
                   };
                   scheduledNotes.push(scheduled);
 

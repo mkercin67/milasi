@@ -4,11 +4,11 @@ import { CURRENT_SCHEMA_VERSION, deserializeScore, serializeScore } from '../../
 import { createEmptyScore } from '../../src/core/factory';
 
 describe('Milestone 6d: Schema v6 and Migrations', () => {
-  it('CURRENT_SCHEMA_VERSION is 6 and supports repeatStart, repeatEnd, volta, lyrics', () => {
-    expect(CURRENT_SCHEMA_VERSION).toBe(6);
+  it('CURRENT_SCHEMA_VERSION is 6+ and supports repeatStart, repeatEnd, volta, lyrics', () => {
+    expect(CURRENT_SCHEMA_VERSION).toBeGreaterThanOrEqual(6);
   });
 
-  it('migrates a v4 score to v6 cleanly preserving all existing data', () => {
+  it('migrates a v4 score to v6+ cleanly preserving all existing data', () => {
     const v4Score = createEmptyScore({ numMeasures: 4 });
     (v4Score as any).schemaVersion = 4;
     const serialized = JSON.stringify({
@@ -18,7 +18,7 @@ describe('Milestone 6d: Schema v6 and Migrations', () => {
     });
 
     const loaded = deserializeScore(serialized);
-    expect(loaded.schemaVersion).toBe(6);
+    expect(loaded.schemaVersion).toBe(CURRENT_SCHEMA_VERSION);
     expect(loaded.measures.length).toBe(4);
   });
 
@@ -38,7 +38,7 @@ describe('Milestone 6d: Schema v6 and Migrations', () => {
     const envelope = serializeScore(score);
     const roundTripped = deserializeScore(envelope);
 
-    expect(roundTripped.schemaVersion).toBe(6);
+    expect(roundTripped.schemaVersion).toBe(CURRENT_SCHEMA_VERSION);
     expect(roundTripped.measures[0].repeatStart).toBe(true);
     expect(roundTripped.measures[1].repeatEnd).toBe(true);
     expect(roundTripped.measures[1].volta).toEqual({ number: 1 });

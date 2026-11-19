@@ -24,6 +24,7 @@ describe('validateScore', () => {
       voices: [
         {
           id: 'v1',
+          voiceIndex: 1 as const,
           events: [
             createNote({ pitches: [createPitch('C', 4, 0)], baseType: 'quarter' }),
             createNote({ pitches: [createPitch('D', 4, 0)], baseType: 'quarter' }),
@@ -52,6 +53,7 @@ describe('validateScore', () => {
       voices: [
         {
           id: 'v1',
+          voiceIndex: 1,
           events: [
             createNote({ pitches: [createPitch('C', 5, 0)], baseType: 'quarter' }),
             createNote({ pitches: [createPitch('D', 5, 0)], baseType: 'quarter' }),
@@ -80,6 +82,7 @@ describe('validateScore', () => {
       voices: [
         {
           id: 'v1',
+          voiceIndex: 1,
           events: [
             createNote({ pitches: [createPitch('C', 4, 0)], baseType: 'quarter' }),
             createNote({ pitches: [createPitch('D', 4, 0)], baseType: 'quarter' }),
@@ -108,6 +111,7 @@ describe('validateScore', () => {
       voices: [
         {
           id: 'v1',
+          voiceIndex: 1,
           events: [
             createNote({ pitches: [], baseType: 'quarter' }),
           ],

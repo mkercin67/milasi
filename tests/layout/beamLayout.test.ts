@@ -30,7 +30,7 @@ function makeBeamScore(
   const part = createPart({ name: 'Test', clef });
   score.measures = [m1];
   score.parts = [part];
-  part.staves[0].measures[m1.id] = { voices: [{ id: 'v1', events }] };
+  part.staves[0].measures[m1.id] = { voices: [{ id: 'v1', voiceIndex: 1, events }] };
   return { score, measureId: m1.id };
 }
 
@@ -310,6 +310,7 @@ describe('beamLayout geometry and layoutScore integration (Section B)', () => {
         voices: [
           {
             id: 'v1',
+            voiceIndex: 1,
             events: [
               createNote({ pitches: [createPitch('G', 4, 0)], baseType: 'eighth' }),
               createNote({ pitches: [createPitch('A', 4, 0)], baseType: 'eighth' }),
@@ -332,6 +333,7 @@ describe('beamLayout geometry and layoutScore integration (Section B)', () => {
       voices: [
         {
           id: 'v1',
+          voiceIndex: 1,
           events: [
             createNote({ pitches: [createPitch('E', 4, 0)], baseType: 'eighth' }),
             createNote({ pitches: [createPitch('F', 4, 0)], baseType: 'eighth' }),

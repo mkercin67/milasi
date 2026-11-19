@@ -20,6 +20,7 @@ import { createRest, newId } from './factory';
 import { getPitchMidi, transposeOctave, transposeSemitone } from './pitch';
 import { eventsInRange, RangeSelection } from './selection';
 import { Command, InsertNoteParams } from './commandTypes';
+import { fillMeasureWithRests, measureTicks } from './time';
 
 export * from './commandTypes';
 export * from './structureCommands';
@@ -50,7 +51,7 @@ export function insertNote(params: InsertNoteParams): Command {
 
         if (!staff.measures[params.measureId]) {
           staff.measures[params.measureId] = {
-            voices: [{ id: newId(), events: [] }],
+            voices: [{ id: newId(), voiceIndex: 1, events: [] }],
           };
         }
 
@@ -60,12 +61,18 @@ export function insertNote(params: InsertNoteParams): Command {
           : undefined;
 
         if (!voice && params.voiceIndex !== undefined) {
-          voice = staffMeasure.voices[params.voiceIndex];
+          voice = staffMeasure.voices.find(
+            (v, idx) => (v.voiceIndex ?? (idx + 1)) === params.voiceIndex
+          );
         }
 
         if (!voice) {
-          if (staffMeasure.voices.length === 0) {
-            voice = { id: newId(), events: [] };
+          if (params.voiceIndex !== undefined && params.voiceIndex >= 1 && params.voiceIndex <= 4) {
+            voice = { id: newId(), voiceIndex: params.voiceIndex as 1 | 2 | 3 | 4, events: [] };
+            staffMeasure.voices.push(voice);
+            staffMeasure.voices.sort((a, b) => a.voiceIndex - b.voiceIndex);
+          } else if (staffMeasure.voices.length === 0) {
+            voice = { id: newId(), voiceIndex: 1, events: [] };
             staffMeasure.voices.push(voice);
           } else {
             voice = staffMeasure.voices[0];
@@ -85,6 +92,9 @@ export function insertNote(params: InsertNoteParams): Command {
 
 /**
  * Creates a command that deletes a score event by its unique ID.
+ * If deletion empties the measure of events in that voice:
+ * - Leaves a rest of the measure length in voice 1
+ * - Removes the voice if voiceIndex > 1
  *
  * @param eventId - Identifier of the event to delete.
  * @returns An executable Command.
@@ -104,6 +114,17 @@ export function deleteEvent(eventId: Id): Command {
                 if (idx !== -1) {
                   voice.events.splice(idx, 1);
                   deleted = true;
+
+                  if (voice.events.length === 0) {
+                    if (voice.voiceIndex === 1) {
+                      const mDef = draft.measures.find((m) => m.id === measureId);
+                      const targetTicks = mDef?.actualTicks ?? (mDef ? measureTicks(mDef.timeSig) : 3840);
+                      voice.events = fillMeasureWithRests(targetTicks);
+                    } else if (voice.voiceIndex !== undefined && voice.voiceIndex > 1) {
+                      staffMeasure.voices = staffMeasure.voices.filter((v) => v !== voice);
+                    }
+                  }
+
                   if (staff.slurs) {
                     staff.slurs = staff.slurs.filter(
                       (s) => s.startEventId !== eventId && s.endEventId !== eventId
@@ -121,6 +142,78 @@ export function deleteEvent(eventId: Id): Command {
 
         if (draft.overrides[eventId]) {
           delete draft.overrides[eventId];
+        }
+      });
+    },
+  };
+}
+
+/**
+ * Creates an empty voice with voiceIndex (2..4) filled with rests.
+ */
+export function addVoice(
+  staffId: Id,
+  measureId: Id,
+  voiceIndex: 2 | 3 | 4
+): Command {
+  return {
+    name: 'addVoice',
+    apply(score: Score): Score {
+      return produce(score, (draft) => {
+        for (const part of draft.parts) {
+          const staff = part.staves.find((s) => s.id === staffId);
+          if (!staff) continue;
+          let sm = staff.measures[measureId];
+          if (!sm) {
+            sm = { voices: [] };
+            staff.measures[measureId] = sm;
+          }
+          if (sm.voices.some((v) => v.voiceIndex === voiceIndex)) {
+            return; // Voice already exists
+          }
+          const mDef = draft.measures.find((m) => m.id === measureId);
+          const targetLength = mDef?.actualTicks ?? (mDef ? measureTicks(mDef.timeSig) : 3840);
+          const rests = fillMeasureWithRests(targetLength);
+          sm.voices.push({
+            id: newId(),
+            voiceIndex,
+            events: rests,
+          });
+          sm.voices.sort((a, b) => a.voiceIndex - b.voiceIndex);
+        }
+      });
+    },
+  };
+}
+
+/**
+ * Removes a voice with voiceIndex (2..4).
+ * Voice 1 cannot be removed.
+ * If the voice contains notes, requires force: true (confirmation).
+ */
+export function removeVoice(
+  staffId: Id,
+  measureId: Id,
+  voiceIndex: 2 | 3 | 4,
+  force: boolean = false
+): Command {
+  return {
+    name: 'removeVoice',
+    apply(score: Score): Score {
+      return produce(score, (draft) => {
+        for (const part of draft.parts) {
+          const staff = part.staves.find((s) => s.id === staffId);
+          if (!staff) continue;
+          const sm = staff.measures[measureId];
+          if (!sm) continue;
+          const vIdx = sm.voices.findIndex((v) => v.voiceIndex === voiceIndex);
+          if (vIdx === -1) continue;
+          const voice = sm.voices[vIdx];
+          const hasNotes = voice.events.some((ev) => ev.kind === 'note');
+          if (hasNotes && !force) {
+            throw new Error('Ses nota içeriyor, silmek için onay gereklidir.');
+          }
+          sm.voices.splice(vIdx, 1);
         }
       });
     },

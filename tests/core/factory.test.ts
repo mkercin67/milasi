@@ -29,7 +29,7 @@ describe('factory helpers', () => {
 
   it('creates an empty Score with current schemaVersion', () => {
     const score = createScore({ title: 'Sonata', composer: 'Beethoven' });
-    expect(score.schemaVersion).toBe(6);
+    expect(score.schemaVersion).toBe(7);
     expect(score.meta.title).toBe('Sonata');
     expect(score.meta.composer).toBe('Beethoven');
     expect(score.parts).toEqual([]);

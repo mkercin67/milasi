@@ -110,11 +110,11 @@ export function buildSampleScore(clefSign: 'G' | 'F'): Score {
       ];
 
   const staffObj = part.staves[0];
-  staffObj.measures[m1.id] = { voices: [{ id: 'v1', events: m1Events }] };
-  staffObj.measures[m2.id] = { voices: [{ id: 'v1', events: m2Events }] };
-  staffObj.measures[m3.id] = { voices: [{ id: 'v1', events: m3Events }] };
-  staffObj.measures[m4.id] = { voices: [{ id: 'v1', events: m4Events }] };
-  staffObj.measures[m5.id] = { voices: [{ id: 'v1', events: m5Events }] };
+  staffObj.measures[m1.id] = { voices: [{ id: 'v1', voiceIndex: 1, events: m1Events }] };
+  staffObj.measures[m2.id] = { voices: [{ id: 'v1', voiceIndex: 1, events: m2Events }] };
+  staffObj.measures[m3.id] = { voices: [{ id: 'v1', voiceIndex: 1, events: m3Events }] };
+  staffObj.measures[m4.id] = { voices: [{ id: 'v1', voiceIndex: 1, events: m4Events }] };
+  staffObj.measures[m5.id] = { voices: [{ id: 'v1', voiceIndex: 1, events: m5Events }] };
 
   return score;
 }
@@ -192,7 +192,7 @@ export function createBenchmark64Score(): Score {
     const mEvents = [...sixteenths, chord1, chord2, chord3, chord4, chord5, chord6, chord7];
 
     part.staves[0].measures[mDef.id] = {
-      voices: [{ id: `v1_bm_${m}`, events: mEvents }],
+      voices: [{ id: `v1_bm_${m}`, voiceIndex: 1, events: mEvents }],
     };
   }
 

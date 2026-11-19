@@ -204,7 +204,7 @@ export function insertMeasure(index?: number): Command {
               wholeMeasure: true,
             });
             staff.measures[newMDef.id] = {
-              voices: [{ id: newId(), events: [wholeRest] }],
+              voices: [{ id: newId(), voiceIndex: 1, events: [wholeRest] }],
             };
           }
         }

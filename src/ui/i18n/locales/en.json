@@ -171,5 +171,8 @@
   "dialog.scoreInfo.subtitle": "Subtitle",
   "dialog.scoreInfo.arranger": "Arranger",
   "dialog.newScore.pickup": "Pickup measure (Anacrusis)",
-  "dialog.newScore.pickupLength": "Pickup duration"
+  "dialog.newScore.pickupLength": "Pickup duration",
+  "status.errors": "{count} errors",
+  "status.warnings": "{count} warnings",
+  "dialog.removeVoiceConfirm": "Voice contains notes. Are you sure you want to remove it?"
 }

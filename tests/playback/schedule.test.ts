@@ -196,6 +196,7 @@ describe('Milestone 4 Section A: Pure Playback Core', () => {
       // Part 1: quarter note at 0, quarter note at 0.5
       const v1 = {
         id: 'v1',
+        voiceIndex: 1 as const,
         events: [
           createNote({ pitches: [createPitch('C', 5)], baseType: 'quarter' }),
           createNote({ pitches: [createPitch('D', 5)], baseType: 'quarter' }),
@@ -206,6 +207,7 @@ describe('Milestone 4 Section A: Pure Playback Core', () => {
       // Part 2: eighth note at 0, eighth note at 0.25, quarter note at 0.5
       const v2 = {
         id: 'v2',
+        voiceIndex: 1 as const,
         events: [
           createNote({ pitches: [createPitch('E', 4)], baseType: 'eighth' }),
           createNote({ pitches: [createPitch('G', 4)], baseType: 'eighth' }),
