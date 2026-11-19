@@ -235,7 +235,8 @@ export function pasteEvents(
     const voice =
       target.voiceIndex !== undefined
         ? staffMeasure.voices.find((v) => v.voiceIndex === target.voiceIndex)
-        : staffMeasure.voices.find((v) => v.id === target.voiceId) ?? staffMeasure.voices[0];
+        : (target.voiceId ? staffMeasure.voices.find((v) => v.id === target.voiceId) : null) ??
+          staffMeasure.voices.find((v) => v.voiceIndex === 1);
     if (!voice) continue;
 
     const existing = voice.events;

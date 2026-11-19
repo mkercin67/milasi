@@ -10,6 +10,7 @@
     "preview": "vite preview",
     "test": "vitest run",
     "bench": "npm run build && node scripts/bench.mjs",
+    "bench:layout": "node scripts/benchLayoutCost.mjs",
     "smoke": "npm run build && node scripts/smoke.mjs",
     "test:i18n": "node scripts/test_i18n_dom.mjs",
     "typecheck": "tsc --noEmit",

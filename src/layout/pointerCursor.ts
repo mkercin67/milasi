@@ -140,7 +140,7 @@ export function xToCursor(
   // 2. Identify events and ticks in the target measure
   const staff = effectiveScore.parts[0]?.staves[0];
   const sm = staff?.measures[targetMeasure.measureId];
-  const voice = sm?.voices[0];
+  const voice = sm?.voices.find((v) => v.voiceIndex === 1);
   const mDef = effectiveScore.measures.find((m) => m.id === targetMeasure.measureId);
   const measureTicks = mDef
     ? (mDef.timeSig.num * 480 * 4) / mDef.timeSig.den

@@ -17,8 +17,7 @@ describe('cursor layout and visibility', () => {
 
     const staffId = score.parts[0].staves[0].id;
     const m1Id = score.measures[0].id;
-    const v1Id = score.parts[0].staves[0].measures[m1Id].voices[0].id;
-    const cursor: ScoreCursor = { staffId, voiceId: v1Id, measureId: m1Id, tick: 0 };
+    const cursor: ScoreCursor = { staffId, voiceIndex: 1, measureId: m1Id, tick: 0 };
 
     const pos = computeCursorPosition(layout, score, cursor);
     expect(pos).not.toBeNull();
@@ -49,8 +48,7 @@ describe('cursor layout and visibility', () => {
 
     const staffId = score.parts[0].staves[0].id;
     const m2Id = score.measures[1].id;
-    const v2Id = score.parts[0].staves[0].measures[m2Id].voices[0].id;
-    const cursor: ScoreCursor = { staffId, voiceId: v2Id, measureId: m2Id, tick: 0 };
+    const cursor: ScoreCursor = { staffId, voiceIndex: 1, measureId: m2Id, tick: 0 };
 
     const pos = computeCursorPosition(layout, score, cursor);
     expect(pos).not.toBeNull();
@@ -74,14 +72,12 @@ describe('cursor layout and visibility', () => {
     const staffId = score.parts[0].staves[0].id;
     const m1Id = score.measures[0].id;
     const m2Id = score.measures[1].id;
-    const v1Id = score.parts[0].staves[0].measures[m1Id].voices[0].id;
-    const v2Id = score.parts[0].staves[0].measures[m2Id].voices[0].id;
 
     // Enter 4 quarter notes in measure 1
     let t = 0;
     for (const step of ['C', 'D', 'E', 'F'] as const) {
       score = enterNote(
-        { staffId, voiceId: v1Id, measureId: m1Id, tick: t },
+        { staffId, voiceIndex: 1, measureId: m1Id, tick: t },
         { baseType: 'quarter', dots: 0, pitch: { step, octave: 5, alter: 0 } }
       ).apply(score);
       t += 960;
@@ -90,7 +86,7 @@ describe('cursor layout and visibility', () => {
     const layout = layoutScore(score, { width: 100 });
 
     // Cursor is now at measure 2, tick 0
-    const cursor: ScoreCursor = { staffId, voiceId: v2Id, measureId: m2Id, tick: 0 };
+    const cursor: ScoreCursor = { staffId, voiceIndex: 1, measureId: m2Id, tick: 0 };
     const pos = computeCursorPosition(layout, score, cursor);
     expect(pos).not.toBeNull();
 
@@ -111,15 +107,14 @@ describe('cursor layout and visibility', () => {
     });
     const staffId = score.parts[0].staves[0].id;
     const m1Id = score.measures[0].id;
-    const v1Id = score.parts[0].staves[0].measures[m1Id].voices[0].id;
 
     score = enterNote(
-      { staffId, voiceId: v1Id, measureId: m1Id, tick: 0 },
+      { staffId, voiceIndex: 1, measureId: m1Id, tick: 0 },
       { baseType: 'half', dots: 0, pitch: { step: 'C', octave: 5, alter: 0 } }
     ).apply(score);
 
     const layout = layoutScore(score, { width: 100 });
-    const cursor: ScoreCursor = { staffId, voiceId: v1Id, measureId: m1Id, tick: 1920 };
+    const cursor: ScoreCursor = { staffId, voiceIndex: 1, measureId: m1Id, tick: 1920 };
     const pos = computeCursorPosition(layout, score, cursor);
 
     expect(pos).not.toBeNull();
@@ -151,11 +146,10 @@ describe('cursor layout and visibility', () => {
         const mId = barline.id.replace('barline-', '').replace('-thin', '');
         const sm = score.parts[0].staves[0].measures[mId];
         if (!sm) continue;
-        const vId = sm.voices[0].id;
 
         // Test at tick 0 and tick 960
         for (const tick of [0, 960]) {
-          const cursor: ScoreCursor = { staffId, voiceId: vId, measureId: mId, tick };
+          const cursor: ScoreCursor = { staffId, voiceIndex: 1, measureId: mId, tick };
           const pos = computeCursorPosition(layout, score, cursor);
           expect(pos).not.toBeNull();
 

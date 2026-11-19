@@ -84,7 +84,7 @@ export function computeCursorPosition(
   // 2. Identify voice events in the active measure
   const staff = score.parts[0]?.staves.find((s) => s.id === cursor.staffId);
   const sm = staff?.measures[cursor.measureId];
-  const voice = sm?.voices.find((v) => v.id === cursor.voiceId) ?? sm?.voices[0];
+  const voice = sm?.voices.find((v) => v.voiceIndex === cursor.voiceIndex);
 
   if (!voice || voice.events.length === 0) {
     return { systemIndex, x: measureStartX + 0.8, y1, y2 };

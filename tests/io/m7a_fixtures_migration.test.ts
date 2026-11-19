@@ -16,8 +16,8 @@ describe('Real Saved .sfscore Fixtures Migration (Item 7 & Rule R1)', () => {
   const versions = [1, 2, 3, 4, 5, 6];
 
   versions.forEach((version) => {
-    it(`loads real saved v${version}_real.sfscore and migrates to a valid v7 score`, () => {
-      const filePath = path.join(fixturesDir, `v${version}_real.sfscore`);
+    it(`loads generated v${version}_generated.sfscore and migrates to a valid v7 score`, () => {
+      const filePath = path.join(fixturesDir, `v${version}_generated.sfscore`);
       expect(fs.existsSync(filePath)).toBe(true);
 
       const content = fs.readFileSync(filePath, 'utf-8');

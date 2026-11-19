@@ -230,7 +230,7 @@ export function useAppModalState({
     if (config.isPickup && config.pickupDurationTicks) {
       fresh.measures[0].actualTicks = config.pickupDurationTicks;
       const m0Id = fresh.measures[0].id;
-      fresh.parts[0].staves[0].measures[m0Id].voices[0].events = [
+      fresh.parts[0].staves[0].measures[m0Id].voices.find((v) => v.voiceIndex === 1)!.events = [
         createRest({
           baseType:
             config.pickupDurationTicks === 480

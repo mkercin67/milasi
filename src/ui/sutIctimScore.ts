@@ -64,7 +64,7 @@ export function buildSutIctimScore(): Score {
     const staff = draft.parts[0].staves[0];
     for (let mIdx = 0; mIdx < 8; mIdx++) {
       const mId = draft.measures[mIdx].id;
-      staff.measures[mId].voices[0].events = measuresNotes[mIdx];
+      staff.measures[mId].voices.find((v) => v.voiceIndex === 1)!.events = measuresNotes[mIdx];
     }
   });
 

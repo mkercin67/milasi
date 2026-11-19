@@ -184,12 +184,12 @@ function serializeV6() {
 }
 
 const fixtures = [
-  { name: 'v1_real.sfscore', data: serializeV1() },
-  { name: 'v2_real.sfscore', data: serializeV2() },
-  { name: 'v3_real.sfscore', data: serializeV3() },
-  { name: 'v4_real.sfscore', data: serializeV4() },
-  { name: 'v5_real.sfscore', data: serializeV5() },
-  { name: 'v6_real.sfscore', data: serializeV6() },
+  { name: 'v1_generated.sfscore', data: serializeV1() },
+  { name: 'v2_generated.sfscore', data: serializeV2() },
+  { name: 'v3_generated.sfscore', data: serializeV3() },
+  { name: 'v4_generated.sfscore', data: serializeV4() },
+  { name: 'v5_generated.sfscore', data: serializeV5() },
+  { name: 'v6_generated.sfscore', data: serializeV6() },
 ];
 
 for (const fix of fixtures) {

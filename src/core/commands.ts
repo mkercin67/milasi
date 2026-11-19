@@ -75,7 +75,12 @@ export function insertNote(params: InsertNoteParams): Command {
             voice = { id: newId(), voiceIndex: 1, events: [] };
             staffMeasure.voices.push(voice);
           } else {
-            voice = staffMeasure.voices[0];
+            voice = staffMeasure.voices.find((v) => v.voiceIndex === 1);
+            if (!voice) {
+              voice = { id: newId(), voiceIndex: 1, events: [] };
+              staffMeasure.voices.push(voice);
+              staffMeasure.voices.sort((a, b) => a.voiceIndex - b.voiceIndex);
+            }
           }
         }
 

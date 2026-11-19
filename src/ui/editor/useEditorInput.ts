@@ -54,9 +54,9 @@ export function useEditorInput({
           if (curr) return curr;
           const sId = score.parts[0]?.staves[0]?.id;
           const mId = score.measures[0]?.id;
-          const vId = score.parts[0]?.staves[0]?.measures[mId]?.voices[0]?.id;
-          if (sId && mId && vId) {
-            return { staffId: sId, voiceId: vId, measureId: mId, tick: 0 };
+          const voice1 = score.parts[0]?.staves[0]?.measures[mId]?.voices.find((v) => v.voiceIndex === 1);
+          if (sId && mId && voice1) {
+            return { staffId: sId, voiceIndex: 1, measureId: mId, tick: 0 };
           }
           return null;
         });
@@ -80,9 +80,9 @@ export function useEditorInput({
           if (curr) return curr;
           const sId = score.parts[0]?.staves[0]?.id;
           const mId = score.measures[0]?.id;
-          const vId = score.parts[0]?.staves[0]?.measures[mId]?.voices[0]?.id;
-          if (sId && mId && vId) {
-            return { staffId: sId, voiceId: vId, measureId: mId, tick: 0 };
+          const voice1 = score.parts[0]?.staves[0]?.measures[mId]?.voices.find((v) => v.voiceIndex === 1);
+          if (sId && mId && voice1) {
+            return { staffId: sId, voiceIndex: 1, measureId: mId, tick: 0 };
           }
           return null;
         });
@@ -294,7 +294,7 @@ export function useEditorInput({
 
       const staff = score.parts[0]?.staves.find((s) => s.id === nextCursor.staffId);
       const sm = staff?.measures[nextCursor.measureId];
-      const voice = sm?.voices.find((v) => v.id === nextCursor.voiceId) ?? sm?.voices[0];
+      const voice = sm?.voices.find((v) => v.voiceIndex === nextCursor.voiceIndex);
       if (voice) {
         let t = 0;
         for (const ev of voice.events) {
@@ -314,9 +314,9 @@ export function useEditorInput({
       const sId = score.parts[0]?.staves[0]?.id;
       const staff = score.parts[0]?.staves[0];
       const sm = staff?.measures[measureId];
-      const vId = sm?.voices[0]?.id;
-      if (sId && vId) {
-        const nextC = { staffId: sId, voiceId: vId, measureId, tick };
+      const voice1 = sm?.voices.find((v) => v.voiceIndex === 1);
+      if (sId && voice1) {
+        const nextC: ScoreCursor = { staffId: sId, voiceIndex: 1, measureId, tick };
         setCursor(nextC);
         lastEnteredPitchRef.current = getLastNotePitchBeforeCursor(score, nextC);
       }

@@ -166,7 +166,7 @@ export function useEditorSelection({
       const firstEv = allEvents[0];
       const lastEv = allEvents[allEvents.length - 1];
       const firstCtx = findEventContext(curScore, firstEv.id);
-      const voiceId = firstCtx?.voiceId ?? staff.measures[curScore.measures[0]?.id]?.voices[0]?.id;
+      const voiceId = firstCtx?.voiceId ?? staff.measures[curScore.measures[0]?.id]?.voices.find((v) => v.voiceIndex === 1)?.id;
       if (voiceId) {
         const nextSel: Selection = {
           kind: 'range',
@@ -338,7 +338,7 @@ export function useEditorSelection({
         }
       } else if (mode === 'input' && cursor) {
         const sm = score.parts[0]?.staves[0]?.measures[cursor.measureId];
-        const v = sm?.voices.find((vo) => vo.id === cursor.voiceId);
+        const v = sm?.voices.find((vo) => vo.voiceIndex === cursor.voiceIndex);
         if (v) {
           const lastNote = [...v.events].reverse().find((e) => e.kind === 'note');
           if (lastNote) {
@@ -409,7 +409,7 @@ export function useEditorSelection({
 
     let startMId = curScore.measures[0]?.id;
     let startOffset = 0;
-    let voiceId = staff.measures[startMId]?.voices[0]?.id;
+    let voiceId = staff.measures[startMId]?.voices.find((v) => v.voiceIndex === 1)?.id;
 
     if (curSel.kind === 'range') {
       const firstEv = curRangeEvents[0];
@@ -452,7 +452,8 @@ export function useEditorSelection({
       }
     } else if (curCursor) {
       startMId = curCursor.measureId;
-      voiceId = curCursor.voiceId;
+      const targetVoice = scoreRef.current.parts[0]?.staves[0]?.measures[curCursor.measureId]?.voices.find((vo) => vo.voiceIndex === curCursor.voiceIndex);
+      voiceId = targetVoice?.id ?? '';
       startOffset = curCursor.tick;
     }
 

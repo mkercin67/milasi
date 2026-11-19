@@ -49,9 +49,11 @@ export function findEventLocation(
   for (const p of score.parts) {
     for (const st of p.staves) {
       for (const mId of Object.keys(st.measures)) {
-        const ev = st.measures[mId].voices[0]?.events.find((it) => it.id === eventId);
-        if (ev) {
-          return { event: ev, measureId: mId };
+        for (const v of st.measures[mId].voices) {
+          const ev = v.events.find((it) => it.id === eventId);
+          if (ev) {
+            return { event: ev, measureId: mId };
+          }
         }
       }
     }

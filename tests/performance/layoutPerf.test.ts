@@ -56,15 +56,13 @@ describe('Performance verification', () => {
     // Toggling input mode or moving cursor only calls computeCursorPosition on the cached layout
     const staffId = score.parts[0].staves[0].id;
     const m1Id = score.measures[0].id;
-    const v1Id = score.parts[0].staves[0].measures[m1Id].voices[0].id;
 
-    const pos1 = computeCursorPosition(layout, score, { staffId, voiceId: v1Id, measureId: m1Id, tick: 0 });
+    const pos1 = computeCursorPosition(layout, score, { staffId, voiceIndex: 1, measureId: m1Id, tick: 0 });
     expect(pos1).not.toBeNull();
 
     // Moving cursor to measure 2
     const m2Id = score.measures[1].id;
-    const v2Id = score.parts[0].staves[0].measures[m2Id].voices[0].id;
-    const pos2 = computeCursorPosition(layout, score, { staffId, voiceId: v2Id, measureId: m2Id, tick: 0 });
+    const pos2 = computeCursorPosition(layout, score, { staffId, voiceIndex: 1, measureId: m2Id, tick: 0 });
     expect(pos2).not.toBeNull();
 
     // layoutScore was NOT called again!
@@ -89,11 +87,10 @@ describe('Performance verification', () => {
     // 3. Enter one note into measure 1 (Immer preserves reference of measures 2..64)
     const staffId = score1.parts[0].staves[0].id;
     const m1Id = score1.measures[0].id;
-    const v1Id = score1.parts[0].staves[0].measures[m1Id].voices[0].id;
 
     // Use enterNote to modify measure 1
     const score2 = enterNote(
-      { staffId, voiceId: v1Id, measureId: m1Id, tick: 0 },
+      { staffId, voiceIndex: 1, measureId: m1Id, tick: 0 },
       { baseType: 'quarter', dots: 0, pitch: { step: 'C', octave: 5, alter: 0 } }
     ).apply(score1);
 

@@ -52,7 +52,6 @@ describe('STEP 0 CLOSING CHECKS', () => {
 
     const staffId = score.parts[0].staves[0].id;
     const mId = score.measures[0].id;
-    const vId = score.parts[0].staves[0].measures[mId].voices[0].id;
 
     // Sequence from human observation:
     // 3 sixteenths, a 16th rest, an eighth rest, a quarter rest...
@@ -68,7 +67,7 @@ describe('STEP 0 CLOSING CHECKS', () => {
     let curTick = 0;
     for (let stepIdx = 0; stepIdx < entries.length; stepIdx++) {
       const entry = entries[stepIdx];
-      const cursor = { staffId, measureId: mId, voiceId: vId, tick: curTick };
+      const cursor = { staffId, measureId: mId, voiceIndex: 1 as const, tick: curTick };
       const cmd = entry.kind === 'note'
         ? enterNote(cursor, { pitch: createPitch(entry.step as any, 4, 0), baseType: entry.baseType })
         : enterRest(cursor, { baseType: entry.baseType });
@@ -112,7 +111,6 @@ describe('STEP 0 CLOSING CHECKS', () => {
     for (let run = 0; run < 500; run++) {
       const mIdx = Math.floor(rand() * score.measures.length);
       const mDef = score.measures[mIdx];
-      const vId = score.parts[0].staves[0].measures[mDef.id].voices[0].id;
       const mEvents = score.parts[0].staves[0].measures[mDef.id].voices[0].events;
 
       // Pick a random event's start tick or random snap
@@ -123,7 +121,7 @@ describe('STEP 0 CLOSING CHECKS', () => {
         ticks.push(curT);
       }
       const tick = ticks[Math.floor(rand() * (ticks.length - 1))];
-      const cursor = { staffId, measureId: mDef.id, voiceId: vId, tick };
+      const cursor = { staffId, measureId: mDef.id, voiceIndex: 1 as const, tick };
 
       const bt = baseTypes[Math.floor(rand() * baseTypes.length)];
       const isRest = rand() < 0.35;

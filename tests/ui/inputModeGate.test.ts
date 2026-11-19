@@ -23,11 +23,10 @@ function createTestEditor(): EditorState {
   });
   const staffId = score.parts[0].staves[0].id;
   const m1Id = score.measures[0].id;
-  const v1Id = score.parts[0].staves[0].measures[m1Id].voices[0].id;
   return {
     score,
     history: new History(score),
-    cursor: { staffId, voiceId: v1Id, measureId: m1Id, tick: 0 },
+    cursor: { staffId, voiceIndex: 1, measureId: m1Id, tick: 0 },
     inputMode: false,
     statusHint: null,
   };

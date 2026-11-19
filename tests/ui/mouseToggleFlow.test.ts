@@ -22,7 +22,7 @@ function createInitialState(score: Score): EditorState {
   return {
     score,
     history: new History(score),
-    cursor: sId && mId && vId ? { staffId: sId, voiceId: vId, measureId: mId, tick: 0 } : null,
+    cursor: sId && mId && vId ? { staffId: sId, voiceIndex: 1, measureId: mId, tick: 0 } : null,
     isInputMode: false,
     selectedEventId: null,
     lastEnteredPitch: null,
@@ -38,7 +38,7 @@ function handleToggleInputMode(state: EditorState): EditorState {
     const mId = state.score.measures[0]?.id;
     const vId = state.score.parts[0]?.staves[0]?.measures[mId]?.voices[0]?.id;
     if (sId && mId && vId) {
-      nextCursor = { staffId: sId, voiceId: vId, measureId: mId, tick: 0 };
+      nextCursor = { staffId: sId, voiceIndex: 1, measureId: mId, tick: 0 };
     }
   }
   return {

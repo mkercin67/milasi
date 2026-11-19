@@ -194,6 +194,9 @@ export function migrateV6ToV7(data: unknown): Score {
   const raw = data as RawScore;
 
   // Precondition P1: schemaVersion check
+  if (raw.schemaVersion === 7) {
+    return JSON.parse(JSON.stringify(raw)) as Score;
+  }
   if (raw.schemaVersion !== 6) {
     if (typeof raw.schemaVersion === 'number' && raw.schemaVersion > 7) {
       throw new Error(`Desteklenmeyen şema sürümü: ${raw.schemaVersion}. Bu sürüm daha yeni bir MiLaSi uygulaması gerektirir.`);

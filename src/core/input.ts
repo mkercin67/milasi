@@ -17,7 +17,7 @@ import {
   ScoreEvent,
 } from './model';
 import { createMeasure, createNote, createRest, newId } from './factory';
-import { durationTicks, measureTicks, PPQ } from './time';
+import { durationTicks, fillMeasureWithRests, measureTicks, PPQ } from './time';
 import { getKeySignatureAlter } from './pitch';
 import { Command } from './commands';
 
@@ -80,7 +80,7 @@ export function restsForSpan(
 
 export interface ScoreCursor {
   staffId: Id;
-  voiceId: Id;
+  voiceIndex: 1 | 2 | 3 | 4;
   measureId: Id;
   tick: number;
 }
@@ -135,15 +135,14 @@ export function planEnter(
   );
   const staff = part?.staves.find((s) => s.id === cursor.staffId);
   const sm = staff?.measures[cursor.measureId];
-  const voice = sm?.voices.find((v) => v.id === cursor.voiceId) ?? sm?.voices[0];
+  const voice = sm?.voices.find((v) => v.voiceIndex === cursor.voiceIndex);
 
-  if (!voice) {
-    return { ok: false, reason: 'doesNotFit' };
-  }
+  // If voice does not exist yet in this measure, simulate initial rests via addVoice semantics
+  const events = voice ? voice.events : fillMeasureWithRests(mLength);
 
   // Check for tuplet collision
   let t = 0;
-  for (const ev of voice.events) {
+  for (const ev of events) {
     const evStart = t;
     const evEnd = t + ev.duration;
     t = evEnd;
@@ -164,7 +163,7 @@ export function planEnter(
   let lastRemovedEnd = spanEnd;
 
   t = 0;
-  for (const ev of voice.events) {
+  for (const ev of events) {
     const evStart = t;
     const evEnd = t + ev.duration;
     t = evEnd;
@@ -224,10 +223,25 @@ export function enterEventCommand(cursor: ScoreCursor, spec: InputNoteSpec): Com
         for (const part of draft.parts) {
           const staff = part.staves.find((s) => s.id === cursor.staffId);
           if (!staff) continue;
-          const sm = staff.measures[cursor.measureId];
-          if (!sm) continue;
-          const voice = sm.voices.find((v) => v.id === cursor.voiceId) ?? sm.voices[0];
-          if (!voice) continue;
+          let sm = staff.measures[cursor.measureId];
+          if (!sm) {
+            sm = { voices: [] };
+            staff.measures[cursor.measureId] = sm;
+          }
+          let voice = sm.voices.find((v) => v.voiceIndex === cursor.voiceIndex);
+          if (!voice) {
+            // Create voice via addVoice semantics
+            const mDef = draft.measures.find((m) => m.id === cursor.measureId);
+            const targetLength = mDef?.actualTicks ?? (mDef ? measureTicks(mDef.timeSig) : 3840);
+            const initialRests = fillMeasureWithRests(targetLength);
+            voice = {
+              id: newId(),
+              voiceIndex: cursor.voiceIndex,
+              events: initialRests,
+            };
+            sm.voices.push(voice);
+            sm.voices.sort((a, b) => a.voiceIndex - b.voiceIndex);
+          }
 
           // Find where spanStart begins in voice.events
           let currentTick = 0;
@@ -289,7 +303,7 @@ export function getLastNotePitchBeforeCursor(score: Score, cursor: ScoreCursor |
   for (let i = mIdx; i >= 0; i--) {
     const mDef = score.measures[i];
     const sm = staff.measures[mDef.id];
-    const voice = sm?.voices.find((v) => v.id === cursor.voiceId) ?? sm?.voices[0];
+    const voice = sm?.voices.find((v) => v.voiceIndex === cursor.voiceIndex);
     if (!voice) continue;
 
     let t = 0;
@@ -356,6 +370,7 @@ export function appendMeasure(): Command {
 
 /**
  * Advances the score cursor forward by ticks, wrapping across measure boundaries.
+ * Preserves cursor.voiceIndex across barlines without falling back to voice 1.
  */
 export function advanceCursor(
   score: Score,
@@ -365,7 +380,8 @@ export function advanceCursor(
   const mIdx = score.measures.findIndex((m) => m.id === cursor.measureId);
   if (mIdx === -1) return { ...cursor };
 
-  const mLength = measureTicks(score.measures[mIdx].timeSig);
+  const mDef = score.measures[mIdx];
+  const mLength = mDef.actualTicks ?? measureTicks(mDef.timeSig);
   const nextTick = cursor.tick + ticks;
 
   if (nextTick < mLength) {
@@ -375,14 +391,10 @@ export function advanceCursor(
   // Measure finished, advance to next measure if available
   if (mIdx + 1 < score.measures.length) {
     const nextMDef = score.measures[mIdx + 1];
-    const part = score.parts.find((p) => p.staves.some((s) => s.id === cursor.staffId));
-    const staff = part?.staves.find((s) => s.id === cursor.staffId);
-    const nextVoiceId =
-      staff?.measures[nextMDef.id]?.voices[0]?.id ?? cursor.voiceId;
 
     return {
       staffId: cursor.staffId,
-      voiceId: nextVoiceId,
+      voiceIndex: cursor.voiceIndex,
       measureId: nextMDef.id,
       tick: 0,
     };
@@ -394,6 +406,7 @@ export function advanceCursor(
 
 /**
  * Moves cursor to the previous or next event start position across measures.
+ * Operates strictly within cursor.voiceIndex without falling back to voice 1.
  */
 export function moveCursor(
   score: Score,
@@ -404,29 +417,34 @@ export function moveCursor(
   const staff = part?.staves.find((s) => s.id === cursor.staffId);
   if (!staff) return { ...cursor };
 
-  // Flat list of event coordinates across all measures
+  // Flat list of event coordinates across all measures for cursor.voiceIndex
   interface EventLocation {
     measureId: Id;
-    voiceId: Id;
     tick: number;
-    id: Id;
+    id?: Id;
   }
   const locations: EventLocation[] = [];
 
   for (const mDef of score.measures) {
     const sm = staff.measures[mDef.id];
     if (!sm) continue;
-    for (const voice of sm.voices) {
+    const voice = sm.voices.find((v) => v.voiceIndex === cursor.voiceIndex);
+    if (voice && voice.events.length > 0) {
       let t = 0;
       for (const ev of voice.events) {
         locations.push({
           measureId: mDef.id,
-          voiceId: voice.id,
           tick: t,
           id: ev.id,
         });
         t += ev.duration;
       }
+    } else {
+      // Measure lacks this voice: place cursor at tick 0 ("no events" position)
+      locations.push({
+        measureId: mDef.id,
+        tick: 0,
+      });
     }
   }
 
@@ -447,7 +465,7 @@ export function moveCursor(
     return {
       staffId: cursor.staffId,
       measureId: loc.measureId,
-      voiceId: loc.voiceId,
+      voiceIndex: cursor.voiceIndex,
       tick: loc.tick,
     };
   } else {
@@ -456,7 +474,7 @@ export function moveCursor(
     return {
       staffId: cursor.staffId,
       measureId: loc.measureId,
-      voiceId: loc.voiceId,
+      voiceIndex: cursor.voiceIndex,
       tick: loc.tick,
     };
   }
@@ -469,7 +487,7 @@ export function snapCursor(score: Score, cursor: ScoreCursor): ScoreCursor {
   const part = score.parts.find((p) => p.staves.some((s) => s.id === cursor.staffId));
   const staff = part?.staves.find((s) => s.id === cursor.staffId);
   const sm = staff?.measures[cursor.measureId];
-  const voice = sm?.voices.find((v) => v.id === cursor.voiceId) ?? sm?.voices[0];
+  const voice = sm?.voices.find((v) => v.voiceIndex === cursor.voiceIndex);
 
   if (!voice || voice.events.length === 0) {
     return { ...cursor, tick: 0 };

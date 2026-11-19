@@ -21,13 +21,12 @@ describe('Beam Integration (Section C)', () => {
     const staff = score.parts[0].staves[0];
     const staffId = staff.id;
     const m0Id = score.measures[0].id;
-    const v0Id = staff.measures[m0Id].voices[0].id;
     const history = new History(score);
 
     // 1. Enter first eighth at tick 0 -> 1 single eighth with flag, 0 beams
     score = history.do(
       enterNote(
-        { staffId, measureId: m0Id, voiceId: v0Id, tick: 0 },
+        { staffId, measureId: m0Id, voiceIndex: 1, tick: 0 },
         { pitch: createPitch('G', 4, 0), baseType: 'eighth', dots: 0 }
       )
     );
@@ -38,7 +37,7 @@ describe('Beam Integration (Section C)', () => {
     // 2. Enter second eighth at tick 480 -> beamed pair, 0 flags, 1 beam
     score = history.do(
       enterNote(
-        { staffId, measureId: m0Id, voiceId: v0Id, tick: 480 },
+        { staffId, measureId: m0Id, voiceIndex: 1, tick: 480 },
         { pitch: createPitch('A', 4, 0), baseType: 'eighth', dots: 0 }
       )
     );

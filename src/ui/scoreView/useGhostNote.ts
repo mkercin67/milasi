@@ -113,11 +113,11 @@ export function useGhostNote(
       const sId = score.parts[0]?.staves[0]?.id;
       const staff = score.parts[0]?.staves[0];
       const sm = staff?.measures[targetCursor.measureId];
-      const vId = sm?.voices[0]?.id;
-      if (sId && vId) {
+      const voice1 = sm?.voices.find((v) => v.voiceIndex === 1);
+      if (sId && voice1) {
         const computed = computeCursorPosition(layout, score, {
           staffId: sId,
-          voiceId: vId,
+          voiceIndex: 1,
           measureId: targetCursor.measureId,
           tick: targetCursor.tick,
         });
@@ -154,11 +154,11 @@ export function useGhostNote(
       const sId = score.parts[0]?.staves[0]?.id;
       const staff = score.parts[0]?.staves[0];
       const sm = staff?.measures[clickedCursor.measureId];
-      const vId = sm?.voices[0]?.id;
-      if (sId && vId) {
+      const voice1 = sm?.voices.find((v) => v.voiceIndex === 1);
+      if (sId && voice1) {
         onEnterPitchDirect(clickedPitch, {
           staffId: sId,
-          voiceId: vId,
+          voiceIndex: 1,
           measureId: clickedCursor.measureId,
           tick: clickedCursor.tick,
         });

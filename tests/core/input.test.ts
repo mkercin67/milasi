@@ -72,11 +72,10 @@ describe('src/core/input', () => {
       });
       const staffId = score.parts[0].staves[0].id;
       const mId = score.measures[0].id;
-      const vId = score.parts[0].staves[0].measures[mId].voices[0].id;
 
       const plan = planEnter(
         score,
-        { staffId, voiceId: vId, measureId: mId, tick: 0 },
+        { staffId, voiceIndex: 1, measureId: mId, tick: 0 },
         { kind: 'note', baseType: 'quarter', dots: 0, pitch: { step: 'C', octave: 4, alter: 0 } }
       );
 
@@ -91,7 +90,7 @@ describe('src/core/input', () => {
 
       // Apply via enterNote
       const updated = enterNote(
-        { staffId, voiceId: vId, measureId: mId, tick: 0 },
+        { staffId, voiceIndex: 1, measureId: mId, tick: 0 },
         { baseType: 'quarter', pitch: { step: 'C', octave: 4, alter: 0 } }
       ).apply(score);
 
@@ -115,12 +114,11 @@ describe('src/core/input', () => {
       });
       const staffId = score.parts[0].staves[0].id;
       const mId = score.measures[0].id;
-      const vId = score.parts[0].staves[0].measures[mId].voices[0].id;
 
       // Half note at tick 2880 (only 960 ticks remain)
       const plan = planEnter(
         score,
-        { staffId, voiceId: vId, measureId: mId, tick: 2880 },
+        { staffId, voiceIndex: 1, measureId: mId, tick: 2880 },
         { kind: 'note', baseType: 'half', dots: 0, pitch: { step: 'E', octave: 4, alter: 0 } }
       );
 
@@ -130,7 +128,7 @@ describe('src/core/input', () => {
       }
 
       const unchanged = enterNote(
-        { staffId, voiceId: vId, measureId: mId, tick: 2880 },
+        { staffId, voiceIndex: 1, measureId: mId, tick: 2880 },
         { baseType: 'half', pitch: { step: 'E', octave: 4, alter: 0 } }
       ).apply(score);
 
@@ -147,7 +145,6 @@ describe('src/core/input', () => {
       });
       const staffId = score.parts[0].staves[0].id;
       const mId = score.measures[0].id;
-      const vId = score.parts[0].staves[0].measures[mId].voices[0].id;
 
       // Replace with [dotted quarter, eighth, half]
       score.parts[0].staves[0].measures[mId].voices[0].events = [
@@ -158,7 +155,7 @@ describe('src/core/input', () => {
 
       // Enter a quarter note (960) at tick 0
       const updated = enterNote(
-        { staffId, voiceId: vId, measureId: mId, tick: 0 },
+        { staffId, voiceIndex: 1, measureId: mId, tick: 0 },
         { baseType: 'quarter', pitch: { step: 'E', octave: 4, alter: 0 } }
       ).apply(score);
 
@@ -185,7 +182,6 @@ describe('src/core/input', () => {
       });
       const staffId = score.parts[0].staves[0].id;
       const mId = score.measures[0].id;
-      const vId = score.parts[0].staves[0].measures[mId].voices[0].id;
 
       // Four quarter notes
       score.parts[0].staves[0].measures[mId].voices[0].events = [
@@ -197,7 +193,7 @@ describe('src/core/input', () => {
 
       // Enter a whole note covering the whole measure
       const updated = enterNote(
-        { staffId, voiceId: vId, measureId: mId, tick: 0 },
+        { staffId, voiceIndex: 1, measureId: mId, tick: 0 },
         { baseType: 'whole', pitch: { step: 'G', octave: 4, alter: 0 } }
       ).apply(score);
 
@@ -252,11 +248,11 @@ describe('src/core/input', () => {
 
           const cmd = isNote
             ? enterNote(
-                { staffId, voiceId: voice.id, measureId: mDef.id, tick: cursorTick },
+                { staffId, voiceIndex: 1, measureId: mDef.id, tick: cursorTick },
                 { baseType: durChoice.baseType, dots: durChoice.dots, pitch }
               )
             : enterRest(
-                { staffId, voiceId: voice.id, measureId: mDef.id, tick: cursorTick },
+                { staffId, voiceIndex: 1, measureId: mDef.id, tick: cursorTick },
                 { baseType: durChoice.baseType, dots: durChoice.dots }
               );
 
@@ -279,21 +275,20 @@ describe('src/core/input', () => {
       const staffId = score.parts[0].staves[0].id;
       const m1 = score.measures[0].id;
       const m2 = score.measures[1].id;
-      const v1 = score.parts[0].staves[0].measures[m1].voices[0].id;
 
-      const c0 = { staffId, voiceId: v1, measureId: m1, tick: 0 };
+      const c0 = { staffId, voiceIndex: 1 as const, measureId: m1, tick: 0 };
       const c1 = advanceCursor(score, c0, PPQ);
       expect(c1.tick).toBe(PPQ);
       expect(c1.measureId).toBe(m1);
 
       // Advance past measure end (3840 ticks) -> moves to tick 0 of measure 2
-      const cEnd = { staffId, voiceId: v1, measureId: m1, tick: 2880 };
+      const cEnd = { staffId, voiceIndex: 1 as const, measureId: m1, tick: 2880 };
       const cNext = advanceCursor(score, cEnd, PPQ);
       expect(cNext.measureId).toBe(m2);
       expect(cNext.tick).toBe(0);
 
       // Advance at last measure end stays at mLength
-      const cLast = { staffId, voiceId: v1, measureId: m2, tick: 2880 };
+      const cLast = { staffId, voiceIndex: 1 as const, measureId: m2, tick: 2880 };
       const cOver = advanceCursor(score, cLast, PPQ);
       expect(cOver.measureId).toBe(m2);
       expect(cOver.tick).toBe(3840);
@@ -337,7 +332,6 @@ describe('src/core/input', () => {
       const staffId = score.parts[0].staves[0].id;
       const m1 = score.measures[0].id;
       const m2 = score.measures[1].id;
-      const v1 = score.parts[0].staves[0].measures[m1].voices[0].id;
 
       // Put 2 half rests in measure 1, 1 whole rest in measure 2
       score.parts[0].staves[0].measures[m1].voices[0].events = [
@@ -345,7 +339,7 @@ describe('src/core/input', () => {
         createRest({ baseType: 'half' }),
       ];
 
-      const c0 = { staffId, voiceId: v1, measureId: m1, tick: 0 };
+      const c0 = { staffId, voiceIndex: 1 as const, measureId: m1, tick: 0 };
       const cNext1 = moveCursor(score, c0, 'next');
       expect(cNext1.measureId).toBe(m1);
       expect(cNext1.tick).toBe(1920);
@@ -368,7 +362,6 @@ describe('src/core/input', () => {
       });
       const staffId = score.parts[0].staves[0].id;
       const m1 = score.measures[0].id;
-      const v1 = score.parts[0].staves[0].measures[m1].voices[0].id;
 
       score.parts[0].staves[0].measures[m1].voices[0].events = [
         createRest({ baseType: 'quarter' }), // 0..960
@@ -377,11 +370,11 @@ describe('src/core/input', () => {
       ];
 
       // Tick 500 should snap to 0
-      const snapped0 = snapCursor(score, { staffId, voiceId: v1, measureId: m1, tick: 500 });
+      const snapped0 = snapCursor(score, { staffId, voiceIndex: 1, measureId: m1, tick: 500 });
       expect(snapped0.tick).toBe(0);
 
       // Tick 1200 should snap to 960
-      const snapped1 = snapCursor(score, { staffId, voiceId: v1, measureId: m1, tick: 1200 });
+      const snapped1 = snapCursor(score, { staffId, voiceIndex: 1, measureId: m1, tick: 1200 });
       expect(snapped1.tick).toBe(960);
     });
   });

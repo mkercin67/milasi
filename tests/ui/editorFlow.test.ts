@@ -16,7 +16,7 @@ function getLastNotePitchBeforeCursor(score: Score, cursor: ScoreCursor): Pitch 
   for (let i = mIdx; i >= 0; i--) {
     const mDef = score.measures[i];
     const sm = staff.measures[mDef.id];
-    const voice = sm?.voices.find((v) => v.id === cursor.voiceId) ?? sm?.voices[0];
+    const voice = sm?.voices.find((v) => v.voiceIndex === cursor.voiceIndex);
     if (!voice) continue;
 
     let t = 0;
@@ -49,8 +49,7 @@ describe('editorFlow note input sequence', () => {
 
     const staffId = score.parts[0].staves[0].id;
     const mId = score.measures[0].id;
-    const voiceId = score.parts[0].staves[0].measures[mId].voices[0].id;
-    let cursor: ScoreCursor = { staffId, voiceId, measureId: mId, tick: 0 };
+    let cursor: ScoreCursor = { staffId, voiceIndex: 1, measureId: mId, tick: 0 };
 
     const letters = ['C', 'D', 'E', 'F'];
     let lastEnteredPitch: Pitch | null = null;
@@ -85,8 +84,7 @@ describe('editorFlow note input sequence', () => {
     const history = new History(score);
     const staffId = score.parts[0].staves[0].id;
     const mId = score.measures[0].id;
-    const voiceId = score.parts[0].staves[0].measures[mId].voices[0].id;
-    let cursor: ScoreCursor = { staffId, voiceId, measureId: mId, tick: 0 };
+    let cursor: ScoreCursor = { staffId, voiceIndex: 1, measureId: mId, tick: 0 };
 
     // Enter C5 and D5
     const pC = pitchFromLetter('C', null, { sign: 'G', line: 2 }, 0);

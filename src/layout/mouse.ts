@@ -410,12 +410,15 @@ export function clampEventOverrideInLayout(
   for (const p of score.parts) {
     for (const st of p.staves) {
       for (const mId of Object.keys(st.measures)) {
-        const found = st.measures[mId].voices[0]?.events.find((ev) => ev.id === eventId);
-        if (found) {
-          evMeasureId = mId;
-          isRest = found.kind === 'rest';
-          break;
+        for (const v of st.measures[mId].voices) {
+          const found = v.events.find((ev) => ev.id === eventId);
+          if (found) {
+            evMeasureId = mId;
+            isRest = found.kind === 'rest';
+            break;
+          }
         }
+        if (evMeasureId) break;
       }
       if (evMeasureId) break;
     }

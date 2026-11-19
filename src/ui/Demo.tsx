@@ -249,7 +249,7 @@ export function createBenchmarkFullFeaturedScore(measureCount: number = 64): Sco
     notes[2].lyrics = [{ verse: 1, text: 'tim' }];
     notes[3].lyrics = [{ verse: 1, text: 'yar' }];
 
-    staff.measures[mDef.id].voices[0].events = notes;
+    staff.measures[mDef.id].voices.find((v) => v.voiceIndex === 1)!.events = notes;
 
     // Slurs
     if (m % 4 === 0 && m + 1 < measureCount) {

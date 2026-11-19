@@ -21,7 +21,7 @@ export function setMeasureEventsViaCommands(
   const staffId = staff.id;
   const measureId = score.measures[measureIndex].id;
   const sm = staff.measures[measureId];
-  const targetVoice = sm?.voices.find((v) => v.voiceIndex === voiceIndex) ?? sm?.voices[0];
+  const targetVoice = sm?.voices.find((v) => v.voiceIndex === voiceIndex) ?? sm?.voices.find((v) => v.voiceIndex === 1);
   const existingEvents = targetVoice?.events ?? [];
   const existingIds = existingEvents.map((e) => e.id);
 

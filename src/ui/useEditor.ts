@@ -80,9 +80,9 @@ export function useEditor(initialScore?: Score) {
   const initialCursor = (() => {
     const sId = historyRef.current.score.parts[0]?.staves[0]?.id;
     const mId = historyRef.current.score.measures[0]?.id;
-    const vId = historyRef.current.score.parts[0]?.staves[0]?.measures[mId]?.voices[0]?.id;
-    if (sId && mId && vId) {
-      return { staffId: sId, voiceId: vId, measureId: mId, tick: 0 };
+    const voice1 = historyRef.current.score.parts[0]?.staves[0]?.measures[mId]?.voices.find((v) => v.voiceIndex === 1);
+    if (sId && mId && voice1) {
+      return { staffId: sId, voiceIndex: 1 as const, measureId: mId, tick: 0 };
     }
     return null;
   })();
@@ -127,9 +127,9 @@ export function useEditor(initialScore?: Score) {
 
     const sId = newScore.parts[0]?.staves[0]?.id;
     const mId = newScore.measures[0]?.id;
-    const vId = newScore.parts[0]?.staves[0]?.measures[mId]?.voices[0]?.id;
-    if (sId && mId && vId) {
-      inputHook.setCursor({ staffId: sId, voiceId: vId, measureId: mId, tick: 0 });
+    const voice1 = newScore.parts[0]?.staves[0]?.measures[mId]?.voices.find((v) => v.voiceIndex === 1);
+    if (sId && mId && voice1) {
+      inputHook.setCursor({ staffId: sId, voiceIndex: 1 as const, measureId: mId, tick: 0 });
     } else {
       inputHook.setCursor(null);
     }

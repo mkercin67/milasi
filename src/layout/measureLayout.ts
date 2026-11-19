@@ -65,7 +65,7 @@ export function layoutSingleMeasure(
   measureLayoutCacheStats.calls++;
 
   let eventsHash = 0;
-  const voiceEvents = staffMeasure?.voices[0]?.events;
+  const voiceEvents = staffMeasure?.voices.find((v) => v.voiceIndex === 1)?.events;
   if (voiceEvents) {
     for (let i = 0; i < voiceEvents.length; i++) {
       const ev = voiceEvents[i];
@@ -102,7 +102,7 @@ export function layoutSingleMeasure(
 
   measureLayoutCacheStats.misses++;
 
-  const events: ScoreEvent[] = staffMeasure?.voices[0]?.events ?? [];
+  const events: ScoreEvent[] = staffMeasure?.voices.find((v) => v.voiceIndex === 1)?.events ?? [];
   const tracker = new MeasureAccidentalTracker(mDef.keySig);
   const measureItems: MeasureItemEntry[] = [];
   let relX = 0;
