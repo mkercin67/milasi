@@ -226,7 +226,12 @@ export function deleteMeasure(index: number): Command {
       return produce(score, (draft) => {
         const deletedDef = draft.measures[index];
         if (!deletedDef) return;
+        const isLast = index === draft.measures.length - 1;
+        const hadFinal = deletedDef.endBarline === 'final';
         draft.measures.splice(index, 1);
+        if (isLast && hadFinal && draft.measures.length > 0) {
+          draft.measures[draft.measures.length - 1].endBarline = 'final';
+        }
 
         for (const part of draft.parts) {
           for (const staff of part.staves) {

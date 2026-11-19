@@ -6,6 +6,7 @@
 
 import { produce } from 'immer';
 import {
+  BarlineType,
   BaseDurationType,
   Clef,
   Id,
@@ -346,8 +347,13 @@ export function appendMeasure(): Command {
         const lastMDef = draft.measures[draft.measures.length - 1];
         const timeSig = lastMDef ? { ...lastMDef.timeSig } : { num: 4, den: 4 };
         const keySig = lastMDef ? lastMDef.keySig : 0;
+        const hadFinal = lastMDef?.endBarline === 'final';
+        if (hadFinal && lastMDef) {
+          lastMDef.endBarline = 'single';
+        }
 
-        const newMDef = createMeasure(timeSig, keySig);
+        const newEndBarline: BarlineType = hadFinal ? 'final' : 'single';
+        const newMDef = createMeasure(timeSig, keySig, undefined, undefined, newEndBarline);
         draft.measures.push(newMDef);
 
         const mDuration = measureTicks(timeSig);
