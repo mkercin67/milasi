@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import { describe, expect, it } from 'vitest';
 import { createEmptyScore, createNote, createPitch, createRest } from '../../src/core/factory';
-import { eventsInRange, extendSelection, getRangeMeasureSpan, Selection } from '../../src/core/selection';
+import { eventsInRange, extendSelection, getRangeMeasureSpan, RangeSelection, Selection } from '../../src/core/selection';
 
 describe('Milestone 6a: Range Selection (src/core/selection.ts)', () => {
   function makeTestScore() {
@@ -184,5 +184,35 @@ describe('Milestone 6a: Range Selection (src/core/selection.ts)', () => {
 
     const evsV1 = eventsInRange(score, rangeV1);
     expect(evsV1.map((e) => e.id)).toEqual([m0_v1_n0.id, m0_v1_n1.id, m1_v1_n0.id]);
+  });
+
+  it('range selection across measures works strictly with voiceIndex when each measure has distinct voice ids without any voiceId property', () => {
+    const score = createEmptyScore({ measures: 3 });
+    const part = score.parts[0];
+    const staff = part.staves[0];
+    const m0Id = score.measures[0].id;
+    const m1Id = score.measures[1].id;
+
+    const n0 = createNote({ pitches: [createPitch('C', 4)], baseType: 'quarter' });
+    const n1 = createNote({ pitches: [createPitch('D', 4)], baseType: 'quarter' });
+    const n2 = createNote({ pitches: [createPitch('E', 4)], baseType: 'quarter' });
+    const n3 = createNote({ pitches: [createPitch('F', 4)], baseType: 'quarter' });
+    const n4 = createNote({ pitches: [createPitch('G', 4)], baseType: 'quarter' });
+    const n5 = createNote({ pitches: [createPitch('A', 4)], baseType: 'quarter' });
+
+    // Distinct voice IDs per measure, same voiceIndex 1
+    staff.measures[m0Id].voices[0] = { id: 'voice-m0-uuid-1111', voiceIndex: 1, events: [n0, n1, n2, n3] };
+    staff.measures[m1Id].voices[0] = { id: 'voice-m1-diff-uuid-2222', voiceIndex: 1, events: [n4, n5] };
+
+    // Range selection without voiceId, purely using voiceIndex: 1
+    const range: RangeSelection = {
+      staffId: staff.id,
+      voiceIndex: 1,
+      anchorId: n2.id,
+      focusId: n5.id,
+    };
+
+    const events = eventsInRange(score, range);
+    expect(events.map((e) => e.id)).toEqual([n2.id, n3.id, n4.id, n5.id]);
   });
 });

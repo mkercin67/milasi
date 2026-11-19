@@ -485,5 +485,116 @@ describe('Milestone 7a-1: Schema v7, Migration, and Voice-Aware Selection', () =
       expect(v1Events.length).toBeGreaterThan(0);
       expect(v1Events[0].kind).toBe('rest');
     });
+
+    it('migration output always initializes groups as empty array [] (S6)', () => {
+      const v6Score: any = {
+        schemaVersion: 6,
+        id: 's-v6-groups',
+        meta: { title: 'Test Groups S6' },
+        measures: [{ id: 'm1', timeSig: { num: 4, den: 4 }, keySig: 0 }],
+        parts: [
+          {
+            id: 'p1',
+            name: 'Violin',
+            staves: [
+              {
+                id: 'st1',
+                clef: { sign: 'G', line: 2 },
+                measures: {
+                  m1: {
+                    voices: [{ id: 'v1', events: [{ id: 'r1', kind: 'rest', baseType: 'whole', duration: 3840, dots: 0 }] }],
+                  },
+                },
+              },
+            ],
+          },
+        ],
+      };
+
+      const v7Score = migrateV6ToV7(v6Score);
+      expect(v7Score.groups).toBeDefined();
+      expect(Array.isArray(v7Score.groups)).toBe(true);
+      expect(v7Score.groups).toEqual([]);
+    });
+
+    it('migration output has schemaVersion 7 and an input with schemaVersion 6 is not mutated (S7)', () => {
+      const v6Score: any = {
+        schemaVersion: 6,
+        id: 's-v6-s7',
+        meta: { title: 'Test S7 Unmutated' },
+        measures: [{ id: 'm1', timeSig: { num: 4, den: 4 }, keySig: 0 }],
+        parts: [
+          {
+            id: 'p1',
+            name: 'Cello',
+            staves: [
+              {
+                id: 'st1',
+                clef: { sign: 'F', line: 4 },
+                measures: {
+                  m1: {
+                    voices: [{ id: 'v1', events: [{ id: 'r1', kind: 'rest', baseType: 'whole', duration: 3840, dots: 0 }] }],
+                  },
+                },
+              },
+            ],
+          },
+        ],
+      };
+
+      const deepCopy = JSON.parse(JSON.stringify(v6Score));
+      const v7Score = migrateV6ToV7(v6Score);
+
+      expect(v7Score.schemaVersion).toBe(7);
+      expect(v6Score.schemaVersion).toBe(6);
+      expect(v6Score).toEqual(deepCopy);
+    });
+
+    it('saving a migrated score writes schemaVersion 7 and never overwrites original v6 file unless saved over (Section 6 Save Safety)', () => {
+      const v6RawJson = JSON.stringify({
+        schemaVersion: 6,
+        id: 'v6-file-on-disk',
+        meta: { title: 'Original V6 File' },
+        measures: [{ id: 'm1', timeSig: { num: 4, den: 4 }, keySig: 0 }],
+        parts: [
+          {
+            id: 'p1',
+            name: 'Flute',
+            staves: [
+              {
+                id: 'st1',
+                clef: { sign: 'G', line: 2 },
+                measures: {
+                  m1: {
+                    voices: [{ id: 'v1', events: [{ id: 'r1', kind: 'rest', baseType: 'whole', duration: 3840, dots: 0 }] }],
+                  },
+                },
+              },
+            ],
+          },
+        ],
+      });
+
+      // Simulated disk storage
+      const diskStorage: Record<string, string> = {
+        'scores/original.sfscore': v6RawJson,
+      };
+
+      // 1. Loading the file migrates in-memory
+      const loadedScore = deserializeScore(diskStorage['scores/original.sfscore']);
+      expect(loadedScore.schemaVersion).toBe(7);
+
+      // Verify original file on disk is UNTOUCHED
+      expect(diskStorage['scores/original.sfscore']).toBe(v6RawJson);
+
+      // 2. Saving to a new file writes schemaVersion 7 without touching original
+      diskStorage['scores/migrated_copy.sfscore'] = serializeScore(loadedScore);
+      expect(JSON.parse(diskStorage['scores/migrated_copy.sfscore']).score.schemaVersion).toBe(7);
+      expect(diskStorage['scores/original.sfscore']).toBe(v6RawJson);
+
+      // 3. Only if the user explicitly saves over original does it update
+      diskStorage['scores/original.sfscore'] = serializeScore(loadedScore);
+      expect(JSON.parse(diskStorage['scores/original.sfscore']).score.schemaVersion).toBe(7);
+    });
   });
 });

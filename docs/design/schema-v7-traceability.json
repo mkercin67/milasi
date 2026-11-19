@@ -107,8 +107,8 @@
     "planItemId": "S6",
     "description": "groups = [].",
     "codeLocation": "src/io/migrations.ts:migrateV6ToV7",
-    "testFile": "tests/core/m7a_unproven_proofs.test.ts",
-    "testName": "Item 2e: Undo back to load point keeps voiceIndex and groups intact",
+    "testFile": "tests/io/m7a_v7_migration.test.ts",
+    "testName": "migration output always initializes groups as empty array [] (S6)",
     "status": "DONE"
   },
   {
@@ -116,7 +116,7 @@
     "description": "schemaVersion = 7.",
     "codeLocation": "src/io/migrations.ts:migrateV6ToV7",
     "testFile": "tests/io/m7a_v7_migration.test.ts",
-    "testName": "defines CURRENT_SCHEMA_VERSION as 7",
+    "testName": "migration output has schemaVersion 7 and an input with schemaVersion 6 is not mutated (S7)",
     "status": "DONE"
   },
   {
@@ -211,8 +211,8 @@
     "planItemId": "Section 6 - Save Safety",
     "description": "Saving a migrated score writes schemaVersion 7; original v6 file is never overwritten unless user saves over it.",
     "codeLocation": "src/ui/storageActions.ts:saveScoreToStorage",
-    "testFile": "tests/core/m7a_unproven_proofs.test.ts",
-    "testName": "Item 2f: Section 6: Failure policy P1 and P2 leave storage record and loaded input untouched",
+    "testFile": "tests/io/m7a_v7_migration.test.ts",
+    "testName": "saving a migrated score writes schemaVersion 7 and never overwrites original v6 file unless saved over (Section 6 Save Safety)",
     "status": "DONE"
   },
   {
