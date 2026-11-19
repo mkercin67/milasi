@@ -19,7 +19,7 @@ function extractKeyTable() {
 }
 
 export function generateMarkdown(entries) {
-  let md = `# ScoreForge — Keyboard Shortcuts Reference
+  let md = `# MiLaSi — Keyboard Shortcuts Reference
 
 > **Generated dynamically from \`src/ui/keymap.ts\`**  
 > **Physical Layout Rule:** All shortcuts operate exclusively on physical key positions (\`event.code\`). They function identically on US QWERTY, Turkish Q, AZERTY, Dvorak, or any other keyboard layout.

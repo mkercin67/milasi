@@ -49,8 +49,8 @@ staves with distinct rhythmic tick distributions become severely mis-spaced.
 
 #### Definition 1: Global Tick Columns of a Measure
 For any measure $m \in \text{Score.measures}$, the global column set $\mathcal{T}_m$ is the strict union of start ticks across all voices of all staves:
-$$\mathcal{T}_m = \bigcup_{s \in \text{Staves}} \bigcup_{v \in s.\text{voices}} \{ \text{ev.startTick} \mid \text{ev} \in v.\text{events} \} = \{ t_0, t_1, t_2, \dots, t_{K-1} \}$$
-where $0 = t_0 < t_1 < \dots < t_{K-1} < \text{measureTicks}(m)$.
+$$\mathcal{T}_m = \bigcup_{s \in \text{Staves}} \bigcup_{v \in s.\text{voices}} \{ \text{startTickOf}(v, i) \mid i \in [0, |v.\text{events}|-1] \} = \{ t_0, t_1, t_2, \dots, t_{K-1} \}$$
+where $0 = t_0 < t_1 < \dots < t_{K-1} < \text{measureTicks}(m)$, and $\text{startTickOf}(v, i) = \sum_{j=0}^{i-1} v.\text{events}[j].\text{durationTicks}$ is a derived metric calculated dynamically by summing prior event durations (never stored as an event property).
 
 #### Definition 2: Next Global Column Interval & Optical Gap
 The duration $\Delta t_k$ following column $k$ is governed strictly by the interval to the **NEXT GLOBAL COLUMN**:
@@ -102,11 +102,14 @@ function computeMeasureColumnLayout(
   staves: StaffMeasureInput[]
 ): MeasureColumnLayout {
   // Step 1: Collect unique tick set across all staves
+  // NOTE: NoteEvent does NOT store startTick; startTickOf(v, i) is derived on the fly.
   const tickSet = new Set<number>();
   for (const s of staves) {
     for (const v of s.voices) {
+      let tAccum = 0;
       for (const ev of v.events) {
-        tickSet.add(ev.startTick);
+        tickSet.add(tAccum);
+        tAccum += ev.durationTicks;
       }
     }
   }
@@ -418,7 +421,7 @@ Every sub-milestone is autonomous and carries its own strict four-part verificat
 - **Exit Gates:**
   - *Property Tests:* Polyphonic stem directions strictly respect Voice 1 UP / Voice 2 DOWN; notehead sharing holds for identical ticks and pitches.
   - *Gallery Cards:* Card 26 (Polyphony) active and passing snapshot tests.
-  - *IMSLP Audit:* Brahms Op. 118 No. 2 mm. 1–8 multi-voice excerpt matches Henle edition.
+  - *IMSLP Audit:* Brahms Op. 118 No. 2 mm. 1–8 multi-voice excerpt (UNVERIFIED claim, to be verified against IMSLP public domain score).
   - *Performance:* Keystroke-to-paint p95 $\le 20\text{ ms}$ on 64-measure score.
 
 ### Milestone 7b: Two-Staff Grand Staff (Piano Systems)
@@ -477,7 +480,7 @@ All reference tests utilize **short excerpts** (measures 1–8 or 1–12) to ver
 
 | # | Work & Excerpt | Target Milestone | Target Engraving Test Role | IMSLP Edition Audit Status |
 |:---:|:---|:---:|:---|:---|
-| 1 | **J.S. Bach — Chorale "Wachet auf", BWV 140 (mm. 1–8)** | M7a | 4-part SATB homophony, fermatas, German lyrics, individual barlines | **UNVERIFIED claim, to be checked by the human against the IMSLP score:** SATB closing chorale. **Corpus License Note:** The modern PDF provided during research is licensed under CC BY-NC-SA 4.0 and is **strictly prohibited from being committed to the repository**; musical data must be entered by hand from the public-domain Bach-Gesellschaft edition (1851–1899). The PDF serves solely as a local visual reference in `tests/private/`. Individual barlines broken between staves for lyrics corridor (PROPOSED). |
+| 1 | **J.S. Bach — Chorale "Gloria sei dir gesungen", BWV 140/7 (mm. 1–8)** | M7a | 4-part SATB homophony, phrase fermatas, German lyrics, individual barlines | **UNVERIFIED claim, to be checked by the human against the IMSLP score:** Closing chorale SATB entered by hand. **Corpus License Note:** The human's NBA scan stays local only in `tests/private/` (gitignored) and is never committed to the repository. Individual barlines broken between staves for lyrics corridor (PROPOSED). |
 | 2 | **J. Brahms — Intermezzo Op. 118 No. 2 (mm. 1–8)** | M7a | Polyphonic voice leading, opposing stems, shared noteheads | **UNVERIFIED claim, to be checked by the human against the IMSLP score:** Polyphonic voice leading and shared noteheads. Pedal markings excluded from M7 acceptance; scoped to M12. |
 | 3 | **J.S. Bach — Invention No. 1 in C major, BWV 772 (mm. 1–8)** | M7b | Two-staff grand staff contrapuntal imitation, 16th-note beam alignment | **UNVERIFIED claim, to be checked by the human against the IMSLP score:** Two-part counterpoint without pedals or text. |
 | 4 | **W.A. Mozart — Piano Sonata in C major, K. 545, I (mm. 1–8)** | M7b | Melody over Alberti bass, legato slurs, dynamics | **UNVERIFIED claim, to be checked by the human against the IMSLP score:** Alberti bass synchronization. Note: 1st/2nd voltas occur in exposition repeat (m. 28), not mm. 1–8. |
@@ -485,7 +488,7 @@ All reference tests utilize **short excerpts** (measures 1–8 or 1–12) to ver
 | 6 | **F. Schubert — "An die Musik", D. 547 (mm. 1–12)** | M7c | Mixed ensemble: Solo Voice (individual barline) + Piano (brace, through-barlines) | **UNVERIFIED claim, to be checked by the human against the IMSLP score:** Distinct barline spans between vocal and piano staves. |
 | 7 | **L. van Beethoven — String Quartet Op. 18 No. 1, I (mm. 1–8)** | M7c | Chamber bracket, through-barlines connecting 4 staves, **Viola Alto Clef** | **UNVERIFIED claim, to be checked by the human against the IMSLP score:** Alto C-clef placement on line 3. |
 | 8 | **Claude Debussy — "Golliwogg's Cakewalk" (mm. 1–8)** | M7d | Syncopation, sudden dynamics (ff, sfz), page-turn layout | **UNVERIFIED claim, to be checked by the human against the IMSLP score:** Page distribution and syncopations. Note: mid-score key change to G-flat occurs at m. 25, not mm. 1–8. |
-| 9 | **Turkish Folk Song (e.g. "Süt İçtim Dilim Yandı", mm. 1–9)** | M7a/M7b | Solfege syllables, regional aksak meter, lyric hyphens/extenders | **UNVERIFIED claim, to be checked by the human against the IMSLP score:** Single and grand staff Turkish vocal notation. |
+| 9 | **Turkish Folk Song — "Üsküdara Gider İken" (mm. 1–8)** | M7a/M7b | Vocal melody only (no aranağme, no segno), lyric hyphens/extenders, solfege | **UNVERIFIED claim, to be checked by the human:** Traditional Istanbul türkü vocal melody entered by hand; instrumental aranağme and segno navigation excluded from M7. |
 
 ### 8.1 Local Private Test Fixtures (Never Committed)
 The repository is public, and all committed fixtures must be strictly public-domain or traditional. A dedicated local directory `tests/private/` is added to `.gitignore` for private transcriptions and tests that are never committed to version control.
