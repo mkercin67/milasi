@@ -1,9 +1,24 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-import { spawn } from 'child_process';
+import { spawn, execSync } from 'child_process';
 import http from 'http';
 import fs from 'fs';
 import path from 'path';
 import { chromium } from 'playwright';
+
+function killProcessTree(proc) {
+  if (!proc || !proc.pid) return;
+  try {
+    if (process.platform === 'win32') {
+      execSync(`taskkill /pid ${proc.pid} /f /t`, { stdio: 'ignore' });
+    } else {
+      try {
+        process.kill(-proc.pid, 'SIGKILL');
+      } catch {
+        proc.kill('SIGKILL');
+      }
+    }
+  } catch {}
+}
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -115,22 +130,15 @@ async function runSmokeTest() {
     throw err;
   } finally {
     if (browser) await browser.close();
-    try {
-      if (preview.pid) {
-        if (process.platform === 'win32') {
-          spawn('taskkill', ['/pid', String(preview.pid), '/f', '/t']);
-        } else {
-          preview.kill('SIGTERM');
-        }
-      }
-    } catch {
-      // Ignore cleanup error
+    if (preview) {
+      killProcessTree(preview);
     }
-    process.exit(0);
   }
 }
 
-runSmokeTest().catch((err) => {
+runSmokeTest().then(() => {
+  process.exit(0);
+}).catch((err) => {
   console.error(err);
   process.exit(1);
 });

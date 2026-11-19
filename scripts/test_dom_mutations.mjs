@@ -1,9 +1,24 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-import { spawn } from 'child_process';
+import { spawn, execSync } from 'child_process';
 import http from 'http';
 import fs from 'fs';
 import path from 'path';
 import { chromium } from 'playwright';
+
+function killProcessTree(proc) {
+  if (!proc || !proc.pid) return;
+  try {
+    if (process.platform === 'win32') {
+      execSync(`taskkill /pid ${proc.pid} /f /t`, { stdio: 'ignore' });
+    } else {
+      try {
+        process.kill(-proc.pid, 'SIGKILL');
+      } catch {
+        proc.kill('SIGKILL');
+      }
+    }
+  } catch {}
+}
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -182,7 +197,9 @@ async function runDomMutationTests() {
     fs.writeFileSync(outPath, JSON.stringify(batches, null, 2));
     console.log(`Saved extended mutation results to ${outPath}`);
   } finally {
-    preview.kill('SIGTERM');
+    if (preview) {
+      killProcessTree(preview);
+    }
   }
 }
 

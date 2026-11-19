@@ -9,12 +9,27 @@
  * Captures toolbar screenshots for both locales.
  */
 
-import { spawn } from 'node:child_process';
+import { spawn, execSync } from 'node:child_process';
 import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
+
+function killProcessTree(proc) {
+  if (!proc || !proc.pid) return;
+  try {
+    if (process.platform === 'win32') {
+      execSync(`taskkill /pid ${proc.pid} /f /t`, { stdio: 'ignore' });
+    } else {
+      try {
+        process.kill(-proc.pid, 'SIGKILL');
+      } catch {
+        proc.kill('SIGKILL');
+      }
+    }
+  } catch {}
+}
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -354,7 +369,7 @@ async function runI18nPlaywrightCheck() {
       await browser.close();
     }
     if (previewProcess) {
-      previewProcess.kill();
+      killProcessTree(previewProcess);
     }
   }
 

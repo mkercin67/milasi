@@ -19,8 +19,23 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import http from 'node:http';
-import { spawn } from 'node:child_process';
+import { spawn, execSync } from 'node:child_process';
 import { chromium } from 'playwright';
+
+function killProcessTree(proc) {
+  if (!proc || !proc.pid) return;
+  try {
+    if (process.platform === 'win32') {
+      execSync(`taskkill /pid ${proc.pid} /f /t`, { stdio: 'ignore' });
+    } else {
+      try {
+        process.kill(-proc.pid, 'SIGKILL');
+      } catch {
+        proc.kill('SIGKILL');
+      }
+    }
+  } catch {}
+}
 
 // Expected BWV 140/7 reduction mm. 1-2 voices 1 & 2
 const EXPECTED_BWV140_MM1_2 = [
@@ -143,24 +158,40 @@ function normalizeVoices(staffMeasures, measureIds) {
   });
 }
 
-export async function runVoiceEntryE2E(options = {}) {
+let globalPreviewProcess = null;
+
+async function ensureServer() {
+  const devUrl = 'http://localhost:5173';
+  if (await checkServer(devUrl)) {
+    return devUrl;
+  }
+  const previewUrl = 'http://localhost:4173';
+  if (await checkServer(previewUrl)) {
+    return previewUrl;
+  }
+  console.log('Dev/preview server not detected on 5173 or 4173, starting Vite preview server on 4173...');
+  const isWin = process.platform === 'win32';
+  globalPreviewProcess = spawn('npx', ['vite', 'preview', '--port', '4173', '--strictPort'], {
+    shell: isWin,
+    detached: !isWin,
+    stdio: 'ignore',
+  });
+  // Wait up to 10s for preview server to respond
+  for (let i = 0; i < 50; i++) {
+    await sleep(200);
+    if (await checkServer(previewUrl)) {
+      console.log('Vite preview server ready at ' + previewUrl);
+      return previewUrl;
+    }
+  }
+  throw new Error('Vite preview server failed to start on 4173 within 10 seconds');
+}
+
+export async function runVoiceEntryE2E(options = {}, serverUrlOverride) {
   const { mutationBreakTab = false, mutationBreakUndo = false } = options;
   console.log(`\n=== Running Playwright Voice Entry E2E (mutationBreakTab: ${mutationBreakTab}, mutationBreakUndo: ${mutationBreakUndo}) ===`);
 
-  const devUrl = 'http://localhost:5173';
-  const isDevRunning = await checkServer(devUrl);
-  let serverUrl = devUrl;
-  let previewProcess = null;
-
-  if (!isDevRunning) {
-    console.log('Dev server not detected on 5173, starting Vite preview server...');
-    previewProcess = spawn('npx', ['vite', 'preview', '--port', '4173', '--strictPort'], {
-      shell: true,
-      stdio: 'pipe',
-    });
-    serverUrl = 'http://localhost:4173';
-    await sleep(2000);
-  }
+  const serverUrl = serverUrlOverride || (await ensureServer());
 
   const execPath = findChromePath();
   const browser = await chromium.launch({
@@ -363,13 +394,13 @@ export async function runVoiceEntryE2E(options = {}) {
     if (savedScore.measures[0].endBarline !== 'single') {
       throw new Error(`Expected Measure 1 endBarline to be 'single', got ${savedScore.measures[0].endBarline}`);
     }
-    if (savedScore.measures[1].endBarline !== 'final') {
-      throw new Error(`Expected Measure 2 endBarline to be 'final', got ${savedScore.measures[1].endBarline}`);
+    if (savedScore.measures[1].endBarline !== 'single') {
+      throw new Error(`Expected Measure 2 endBarline to be 'single', got ${savedScore.measures[1].endBarline}`);
     }
-    if (savedScore.measures[2].endBarline !== undefined) {
-      throw new Error(`Expected Measure 3 endBarline to be undefined, got ${savedScore.measures[2].endBarline}`);
+    if (savedScore.measures[2].endBarline !== 'final') {
+      throw new Error(`Expected Measure 3 endBarline to be 'final', got ${savedScore.measures[2].endBarline}`);
     }
-    console.log('✓ C3 PASS: Exact measure count (3) and endBarline values (m1: single, m2: final, m3: undefined) verified.');
+    console.log('✓ D2 PASS: Exact measure count (3) and endBarline values (m1: single, m2: single, m3: final) verified.');
 
     // Compare savedScore mm. 1-2 against EXPECTED_BWV140_MM1_2
     const savedMIds = savedScore.measures.slice(0, 2).map((m) => m.id);
@@ -437,9 +468,6 @@ export async function runVoiceEntryE2E(options = {}) {
     return true;
   } finally {
     await browser.close();
-    if (previewProcess) {
-      previewProcess.kill();
-    }
   }
 }
 
@@ -458,10 +486,13 @@ test('E2E undo and redo of voice 2 entry restores previous state', async () => {
 
 if (process.argv[1] && process.argv[1].endsWith('test_voice_entry_e2e.mjs')) {
   (async () => {
+    let exitCode = 0;
     try {
+      const serverUrl = await ensureServer();
+
       if (process.argv.includes('--break-undo')) {
         console.log('--- RUNNING T8 FAILING-FIRST CHECK (--break-undo) ---');
-        await runVoiceEntryE2E({ mutationBreakUndo: true });
+        await runVoiceEntryE2E({ mutationBreakUndo: true }, serverUrl);
         return;
       }
 
@@ -469,23 +500,31 @@ if (process.argv[1] && process.argv[1].endsWith('test_voice_entry_e2e.mjs')) {
       console.log('--- RUNNING MUTATION CHECK M (Tab broken) ---');
       let mutationCaught = false;
       try {
-        await runVoiceEntryE2E({ mutationBreakTab: true });
+        await runVoiceEntryE2E({ mutationBreakTab: true }, serverUrl);
       } catch (err) {
         console.log(`✓ Mutation check M caught failure as expected: "${err.message}"`);
         mutationCaught = true;
       }
       if (!mutationCaught) {
         console.error('FATAL: Mutation check M did not fail!');
-        process.exit(1);
+        exitCode = 1;
+        return;
       }
 
       // 2. Run real E2E test
       console.log('\n--- RUNNING NORMAL E2E (T7 & T8) ---');
-      await runVoiceEntryE2E({ mutationBreakTab: false });
+      await runVoiceEntryE2E({ mutationBreakTab: false }, serverUrl);
       console.log('\n=== ALL PLAYWRIGHT VOICE ENTRY E2E TESTS (T7 & T8) PASSED ===');
     } catch (e) {
       console.error('Voice Entry E2E failed:', e);
-      process.exit(1);
+      exitCode = 1;
+    } finally {
+      if (globalPreviewProcess) {
+        console.log(`Terminating Vite preview server tree (PID ${globalPreviewProcess.pid})...`);
+        killProcessTree(globalPreviewProcess);
+        globalPreviewProcess = null;
+      }
+      process.exit(exitCode);
     }
   })();
 }
