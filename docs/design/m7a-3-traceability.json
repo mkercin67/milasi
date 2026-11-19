@@ -51,16 +51,16 @@
     "planItemId": "S7",
     "description": "Every editing operation on voice N leaves all other voices deep-equal; undo() restores exact previous score with deep-equality.",
     "codeLocation": "src/core/commands.ts:transposeRange",
-    "testFile": "tests/core/m7a_voice_selection_ops.test.ts",
-    "testName": "transpose semitone up (+1)",
+    "testFile": "tests/core/voice_property_m7a3.test.ts",
+    "testName": "verifies 20 seeds x 100 steps of random voice operations, isolation, and undo/redo reversibility",
     "status": "DONE"
   },
   {
     "planItemId": "S8",
     "description": "validateScore(score) produces zero errors after every editing, clipboard, deletion, and undo/redo operation.",
     "codeLocation": "src/core/validate.ts:validateScore",
-    "testFile": "tests/core/m7a_voice_selection_ops.test.ts",
-    "testName": "c) copy 2 notes from voice 2, paste into voice 2 that already has content -> replaces content, validateScore 0 errors",
+    "testFile": "tests/core/voice_property_m7a3.test.ts",
+    "testName": "verifies 20 seeds x 100 steps of random voice operations, isolation, and undo/redo reversibility",
     "status": "DONE"
   },
   {
