@@ -1,128 +1,108 @@
-# MiLaSi Schema v6 -> v7 Architectural Migration Plan
+# MiLaSi — Schema v6 to v7 Migration Plan
 
-> **Document Status:** PROPOSED (Architectural Blueprint — Milestone 7 Preparation)  
-> **Target Version:** Schema v7  
-> **Scope:** Data model invariants, migration algorithm, and validation criteria. No runtime implementation code is introduced in STEP 0.
+Status: SPECIFIED BY LEAD (implementation in M7a-1)
 
----
+## 1. Facts about schema v6 (verify against code in Stage A)
+- Voice has no voiceIndex field. Voice identity was the 0-based position of the
+  voice in StaffMeasure.voices; Voice.id is a per-measure random id and must not
+  be compared across measures.
+- Part has no midiChannel and no shortName. Score has no groups.
+- Ties are stored per pitch (Pitch.tiedToNext). Slurs are stored on Staff and
+  refer to event ids. Overrides are keyed by element id.
+- Measures may have actualTicks (pickup) and any time signature.
 
-## 1. Executive Summary & Rationale
+## 2. Schema v7 invariants
+1. Voice.voiceIndex is mandatory, an integer 1..4, and is the SOLE voice
+   identity. Array order has no meaning. voices are sorted by voiceIndex
+   ascending on every write.
+2. Voice 1 exists in every StaffMeasure. A StaffMeasure never has zero voices.
+3. Score.groups: StaffGroup[] exists (empty for migrated scores).
+4. Part.midiChannel (0..15) and Part.shortName exist.
+   - Percussion parts use channel 9.
+   - Non-percussion parts never use channel 9. They are assigned from
+     [0,1,2,3,4,5,6,7,8,10,11,12,13,14,15] in part order. Channels are unique up
+     to 15 non-percussion parts. Beyond 15, channels are reused and
+     validateScore emits a WARNING (not an error).
+   - shortName comes from the instrument catalogue (for example "Vln.",
+     "Pno."). If the instrument is unknown, use the part name unchanged when it
+     is at most 6 characters, else its first 4 characters followed by "."; this
+     fallback is documented and tested. Never use plain string slicing when the
+     catalogue knows the instrument.
+5. schemaVersion = 7. Storage keys, the .sfscore extension and the envelope
+   stay as listed in docs/LEGACY_IDENTIFIERS.md.
+6. Existing ids (voice ids, event ids, measure ids, override keys) are never
+   regenerated.
 
-Schema v6 served single-staff, single-voice workflows (Milestones 1 through 6). In Schema v6:
-- `StaffMeasure.voices` was an array where voice identity often defaulted to array position `vIdx === 0`.
-- Measure-local voice UUIDs (`voice.id`) could not guarantee cross-measure polyphonic voice continuity across barlines.
-- `Score.groups` did not exist (all staves were flat under `parts[0].staves`).
-- MIDI channel allocation was implicit (all parts shared default channel 0).
+## 3. Migration algorithm (v6 to v7; the chain v1..v6 runs first)
+Preconditions are checked BEFORE anything is changed. Any failure aborts the
+load; the input is never modified.
+P1. schemaVersion is 6 after the earlier migrations. A schemaVersion greater
+    than 7 is rejected with a Turkish message (i18n).
+P2. Every StaffMeasure has at most 4 voices. If a measure has more than 4, the
+    load is rejected with a Turkish message naming the measure. No note is ever
+    dropped or merged silently.
+Steps:
+S1. Work on a deep copy. The original object is never mutated.
+S2. For each StaffMeasure: voiceIndex = array position + 1 (1..4). Existing
+    voice ids are kept. Voices are sorted by voiceIndex.
+S3. If a StaffMeasure is missing for a MeasureDef, or it has no voice 1, create
+    voice 1 filled with rests using the existing "fill measure with rests"
+    helper, which splits any length into valid rest values (dotted values and
+    ties of rests where needed). The target length is MeasureDef.actualTicks
+    when present, else the length from the time signature. Never create a rest
+    with an arbitrary duration.
+S4. Newly created ids are DETERMINISTIC: derived from stable inputs (measure id,
+    staff id, voiceIndex, running counter) with a pure hash function in core. No
+    crypto.randomUUID and no Math.random in migration. The same input gives a
+    byte-identical output.
+S5. Part.midiChannel and Part.shortName per invariant 4.
+S6. groups = [].
+S7. schemaVersion = 7.
+S8. Postcondition: validateScore(v7 score) returns no errors. Warnings (for
+    example more than 15 parts) are allowed. If the postcondition fails, abort;
+    the input stays untouched and the autosave is not overwritten.
 
-Schema v7 introduces multi-voice polyphony (Milestone 7a), grand staff staves (Milestone 7b), and ensemble score groups (Milestone 7c). This document establishes the migration invariants from Schema v6 to Schema v7.
+## 4. Ties and slurs
+- A tie across a barline connects the pitch in measure N to the matching pitch
+  in the NEXT measure of the SAME voiceIndex (not the same array position).
+- Slurs keep their event ids and must stay inside one voice (validateScore).
+- Migrating a v6 score must not change which events a tie or slur connects.
 
----
+## 5. validateScore v7 rules
+- Unique voiceIndex per StaffMeasure; at most 4 voices; voice 1 exists.
+- Per-voice tick sum equals the measure length (actualTicks when present).
+- Ties and slurs are intra-voice.
+- A StaffMeasure exists for every MeasureDef in every staff.
+- WARNING (not error): more than 15 non-percussion parts share channels.
 
-## 2. Target Schema Invariants (Schema v7)
+## 6. Failure and data-safety policy
+- A failed migration changes nothing: not the loaded file, not the autosave.
+- Unknown future versions (> 7) are rejected with a clear message.
+- Saving a migrated score writes schemaVersion 7; the original v6 file on disk
+  is never overwritten unless the user saves over it.
 
-Every valid Schema v7 score must satisfy the following five structural invariants:
+## 7. Test matrix (all must exist and pass)
+- Real saved .sfscore fixtures for v1, v2, v3, v4, v5, v6, created through the
+  real app path (rule R1), each migrates to a valid v7 score.
+- Idempotent: migrating a v7 score again changes nothing; migrate(v6) twice
+  gives byte-identical output (determinism).
+- Property/fuzz test over random valid v6 scores: the migrated score validates,
+  serialises and deserialises to an equal score, and single-voice scores render
+  identically to before (all 25 golden snapshots unchanged).
+- Voice order: voices stored in different array order across measures still
+  keep the same voiceIndex identity after migration and in selection.
+- Missing voice 1 in 3/4, 5/8, 7/8, and in a pickup measure with actualTicks:
+  rests are valid.
+- More than 4 voices in one measure: load rejected, input untouched, Turkish
+  message.
+- schemaVersion 8: rejected.
+- MIDI: 15 non-percussion parts get 15 distinct channels, none equals 9; a
+  16-part score reuses channels and validateScore returns a warning; a
+  percussion part gets 9.
+- Ties across a barline in voice 1 and in voice 2 survive migration unchanged.
+- Undo back to the load point keeps voiceIndex and groups.
 
-### Invariant 1: Explicit One-Based Voice Indexing (`voiceIndex: 1..4`)
-- Every `Voice` object must have a mandatory `voiceIndex: 1 | 2 | 3 | 4`.
-- Within every `StaffMeasure`, the `voices` array must be sorted in strictly ascending order:
-  $$\text{voices}[0].\text{voiceIndex} < \text{voices}[1].\text{voiceIndex} < \dots$$
-- Array position must never be used to infer voice identity; cross-measure continuity, stem direction, and range selection operate exclusively on `voiceIndex`.
-
-### Invariant 2: Mandatory Voice 1 (`voiceIndex: 1`)
-- Voice 1 is the primary musical voice and **must always be present** in every `StaffMeasure`.
-- If a measure has notes only in Voice 2, Voice 1 must exist and contain explicit rest events filling the measure metrical duration.
-- A `StaffMeasure` may never have `voices.length === 0`.
-
-### Invariant 3: Score-Level Groups Initialization (`groups = []`)
-- The `Score` object must include the field `groups: StaffGroup[]`.
-- Migrated legacy scores without group definitions will default to `groups: []`.
-- Brackets, braces, and system barlines will reference `StaffGroup` objects defined in this array.
-
-### Invariant 4: Unique Part MIDI Channels (Channel 9 Exclusion)
-- Each `Part` in `Score.parts` must be assigned a unique `midiChannel: number` ($0 \le \text{channel} \le 15$).
-- **MIDI Channel 9 Exclusion Rule (0-based):** Channel 9 (MIDI Channel 10 in 1-based numbering) is globally reserved for General MIDI standard percussion. Melodic and choral parts in MiLaSi must never be assigned channel 9.
-- Available melodic channel pool:
-  $$\mathcal{C} = [0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15]$$
-
-### Invariant 5: Storage and Serialization Envelope
-- `schemaVersion` is bumped to `7`.
-- Local storage and IndexedDB persistence keys remain unchanged (`scoreforge_db`, `.sfscore`, envelope headers) per `docs/LEGACY_IDENTIFIERS.md`.
-
----
-
-## 3. Step-by-Step Migration Algorithm
-
-```typescript
-function migrateScoreV6toV7(v6Score: ScoreV6): ScoreV7 {
-  // 1. Clone score deeply
-  const v7Score = structuredClone(v6Score);
-
-  // 2. Bump schema version
-  v7Score.schemaVersion = 7;
-
-  // 3. Initialize groups if missing
-  if (!Array.isArray(v7Score.groups)) {
-    v7Score.groups = [];
-  }
-
-  // 4. Allocate unique MIDI channels (excluding channel 9)
-  const availableChannels = [0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15];
-  let channelIndex = 0;
-  for (const part of v7Score.parts) {
-    if (typeof part.midiChannel !== 'number' || part.midiChannel === 9) {
-      part.midiChannel = availableChannels[channelIndex % availableChannels.length];
-      channelIndex++;
-    }
-  }
-
-  // 5. Normalize StaffMeasures and Voices
-  for (const part of v7Score.parts) {
-    for (const staff of part.staves) {
-      for (const mDef of v7Score.measures) {
-        let staffMeasure = staff.measures[mDef.id];
-        if (!staffMeasure) {
-          staffMeasure = { id: crypto.randomUUID(), voices: [] };
-          staff.measures[mDef.id] = staffMeasure;
-        }
-
-        // Assign voiceIndex if missing
-        for (let i = 0; i < staffMeasure.voices.length; i++) {
-          const voice = staffMeasure.voices[i];
-          if (typeof voice.voiceIndex !== 'number') {
-            voice.voiceIndex = i + 1;
-          }
-        }
-
-        // Sort voices strictly by voiceIndex ascending
-        staffMeasure.voices.sort((a, b) => a.voiceIndex - b.voiceIndex);
-
-        // Ensure Voice 1 is present
-        const hasVoice1 = staffMeasure.voices.some((v) => v.voiceIndex === 1);
-        if (!hasVoice1) {
-          const targetDuration = mDef.actualTicks ?? measureTicks(mDef.timeSig);
-          const defaultRest = createRest({ duration: targetDuration });
-          staffMeasure.voices.unshift({
-            id: crypto.randomUUID(),
-            voiceIndex: 1,
-            events: [defaultRest],
-          });
-        }
-      }
-    }
-  }
-
-  return v7Score;
-}
-```
-
----
-
-## 4. Verification and Regression Testing Matrix
-
-| Test Category | Target Check | Acceptance Criteria |
-|:---|:---|:---|
-| **Legacy Fixture Migration** | Load v1, v2, v3, v4, v5, v6 test fixture files | Successfully migrates to v7 without runtime exceptions. |
-| **Voice Order Invariant** | Inspect all `staffMeasure.voices` post-migration | Voices are strictly sorted by `voiceIndex` ascending; Voice 1 is always present. |
-| **MIDI Channel Integrity** | Verify allocated `part.midiChannel` across 16 parts | All allocated channels are distinct; Channel 9 is never allocated. |
-| **Golden Snapshot Rendering** | Run 25 gallery snapshot tests on migrated v6 scores | 100% byte-for-byte visual equivalence in SVG DOM output. |
-| **Undo / Redo Safety** | Perform edits on migrated scores, undo to load point | State round-trips cleanly without losing `voiceIndex` or `groups`. |
+## 8. Not in this step
+Stem directions, voice offsets, rest shifts and gallery cards (M7a-2), keymap
+and Tab voice switching (M7a-2), grand staff alignment (M7b), groups beyond the
+empty array (M7c).
