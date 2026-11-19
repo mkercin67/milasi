@@ -1,6 +1,6 @@
 # MiLaSi Review Pack
 
-**Generated:** 2026-11-19T12:02:08.814Z  
+**Generated:** 2026-11-19T12:03:42.178Z  
 **Target Milestone:** Foundation Hardening (Milestone H1) Closed & STEP 0c Verified  
 **Architecture Version:** Schema v6 (Preparing Schema v7)  
 
@@ -125,6 +125,7 @@ Critically, DOM mutation count outside the active system is strictly **0**, prov
 
 ## 3. Recent Git Log (Last 30 Commits)
 
+* `283ac0e` STEP 0c: O(1) indexed notehead lookups, extended DOM mutation isolation, and real V8 CPU profiling (2026-11-19)
 * `76bbe11` STEP 0b: CDP trace profile, DOM mutation isolation test, and render optimizations (2026-11-19)
 * `6417c9a` STEP 0.7: write schema v6 to v7 migration architectural plan (2026-11-19)
 * `f9fda7d` STEP 0.6: enforce voiceIndex identity in selection without array position fallback (2026-11-19)
@@ -154,7 +155,6 @@ Critically, DOM mutation count outside the active system is strictly **0**, prov
 * `5cd2903` H1: design document for multi-staff and pages (2026-11-17)
 * `00983d1` H1: license audit, THIRD_PARTY_LICENSES.md, and checkLicenses script (2026-11-17)
 * `44b4914` H1: resilience, error boundary, rolling autosave recovery, error ring buffer (2026-11-17)
-* `768c584` H1: code health, linting, import checks, modularization under 600 lines (2026-11-17)
 
 ---
 
@@ -172,7 +172,7 @@ Critically, DOM mutation count outside the active system is strictly **0**, prov
 
 ## 5. Tracked Files and Line Counts
 
-Total Tracked Files: 363 | Total Lines: 197383
+Total Tracked Files: 373 | Total Lines: 200602
 
 | Tracked File | Lines |
 |:---|---:|
@@ -181,7 +181,8 @@ Total Tracked Files: 363 | Total Lines: 197383
 | `public/fonts/glyphnames.json` | 11984 |
 | `src/fonts/glyphnames.json` | 11984 |
 | `package-lock.json` | 4496 |
-| `docs/review/REVIEW_PACK.md` | 1413 |
+| `docs/review/perf/dom-mutation-extended.json` | 1613 |
+| `docs/review/REVIEW_PACK.md` | 1473 |
 | `tests/render/__snapshots__/gallery_snapshots.test.ts.snap` | 1282 |
 | `public/fonts/Bravura.woff2` | 1218 |
 | `scripts/assets/Bravura.otf` | 867 |
@@ -215,9 +216,8 @@ Total Tracked Files: 363 | Total Lines: 197383
 | `tests/core/input.test.ts` | 431 |
 | `tests/layout/layoutScore.test.ts` | 430 |
 | `scripts/run_m4_e2e_verification.mjs` | 427 |
-| `scripts/bench.mjs` | 418 |
 
-*... and 323 additional tracked files.*
+*... and 333 additional tracked files.*
 
 
 ---
