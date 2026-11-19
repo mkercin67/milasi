@@ -9,6 +9,7 @@ export default tseslint.config(
       'docs/**',
       'src/render/glyphPaths.generated.ts',
       'scripts/**',
+      '.wt-mutation-*/**',
     ],
   },
   ...tseslint.configs.recommended,

@@ -9,3 +9,6 @@ dist
 # Local private test fixtures (never committed)
 tests/private/
 
+# Isolated mutation worktrees
+.wt-mutation-*
+

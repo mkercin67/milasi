@@ -13,5 +13,6 @@ export default defineConfig({
     globals: true,
     environment: 'node',
     reporters: ['verbose'],
+    exclude: ['**/node_modules/**', '**/dist/**', '**/.wt-mutation-*/**'],
   },
 });

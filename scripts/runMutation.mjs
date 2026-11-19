@@ -29,7 +29,7 @@ const TARGET_TESTS = {
   'T4-sort-voices': 'tests/core/voice_property.test.ts',
 };
 
-const targetTest = TARGET_TESTS[id];
+const targetTest = process.argv[3] || TARGET_TESTS[id];
 if (!targetTest) {
   console.error(`Unknown mutation ID: ${id}. Supported IDs: ${Object.keys(TARGET_TESTS).join(', ')}`);
   process.exit(1);
@@ -44,6 +44,7 @@ console.log(`Patch: ${patchPath}`);
 console.log(`Target test: ${targetTest}`);
 console.log(`Creating isolated worktree at ${tempWorktreePath}...`);
 
+let exitCode = 0;
 try {
   execSync(`git worktree add --detach "${tempWorktreePath}" HEAD`, { stdio: 'pipe' });
 
@@ -54,6 +55,14 @@ try {
     execSync(`cmd /c mklink /J "${wtNodeModules}" "${mainNodeModules}"`, { stdio: 'pipe' });
   } else {
     fs.symlinkSync(mainNodeModules, wtNodeModules, 'junction');
+  }
+
+  // Copy current target test file from working copy into temporary worktree
+  const srcTestFile = path.join(repoRoot, targetTest);
+  const dstTestFile = path.join(tempWorktreePath, targetTest);
+  if (fs.existsSync(srcTestFile)) {
+    fs.mkdirSync(path.dirname(dstTestFile), { recursive: true });
+    fs.copyFileSync(srcTestFile, dstTestFile);
   }
 
   // Apply patch to temporary worktree
@@ -78,29 +87,29 @@ try {
   if (!testFailed) {
     console.error(`ERROR: Mutation ${id} DID NOT fail any tests!`);
     console.log(testOutput);
-    process.exit(1);
-  }
+    exitCode = 1;
+  } else {
+    console.log(`\nMutation ${id} successfully caused test failure as expected.`);
+    console.log('--- FAILING TESTS ---');
 
-  console.log(`\nMutation ${id} successfully caused test failure as expected.`);
-  console.log('--- FAILING TESTS ---');
-
-  // Parse failing test lines
-  const lines = testOutput.split('\n');
-  const failingTests = [];
-  for (const line of lines) {
-    const trimmed = line.trim();
-    if (trimmed.startsWith('× ') || trimmed.startsWith('FAIL ') || trimmed.includes('AssertionError:')) {
-      failingTests.push(trimmed);
-      console.log(trimmed);
+    // Parse failing test lines
+    const lines = testOutput.split('\n');
+    const failingTests = [];
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (trimmed.startsWith('× ') || trimmed.startsWith('FAIL ') || trimmed.includes('AssertionError:')) {
+        failingTests.push(trimmed);
+        console.log(trimmed);
+      }
     }
-  }
 
-  if (failingTests.length === 0) {
-    // If specific markers weren't matched, print summary failure block
-    console.log(testOutput.split('\n').filter((l) => l.includes('FAIL') || l.includes('failed')).join('\n'));
-  }
+    if (failingTests.length === 0) {
+      // If specific markers weren't matched, print summary failure block
+      console.log(testOutput.split('\n').filter((l) => l.includes('FAIL') || l.includes('failed')).join('\n'));
+    }
 
-  console.log(`\n=== MUTATION CHECK ${id}: PASS (Failure caught cleanly) ===\n`);
+    console.log(`\n=== MUTATION CHECK ${id}: PASS (Failure caught cleanly) ===\n`);
+  }
 } finally {
   console.log('Cleaning up isolated worktree...');
   try {
@@ -122,3 +131,5 @@ try {
     // ignore
   }
 }
+
+process.exit(exitCode);

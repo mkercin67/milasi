@@ -7,5 +7,6 @@
     "scripts/*.mjs"
   ],
   "project": ["src/**/*.{ts,tsx}"],
+  "ignore": [".wt-mutation-*/**"],
   "ignoreExportsUsedInFile": true
 }

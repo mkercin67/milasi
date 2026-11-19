@@ -53,6 +53,7 @@ describe('T4: Seeded Property Test across Multi-Voice Operations (Rule R6: No Wa
         title: `Seed Score ${seed}`,
       });
       const initialScore = score;
+      const initialScoreSnapshot = JSON.parse(JSON.stringify(score));
 
       const staffId = score.parts[0].staves[0].id;
       let cursor: ScoreCursor = {
@@ -216,6 +217,16 @@ describe('T4: Seeded Property Test across Multi-Voice Operations (Rule R6: No Wa
         undoCount++;
       }
       expect(score).toBe(initialScore);
+      expect(score).toEqual(initialScoreSnapshot);
+      for (const part of score.parts) {
+        for (const staff of part.staves) {
+          for (const mDef of score.measures) {
+            const sm = staff.measures[mDef.id];
+            expect(sm.voices).toHaveLength(1);
+            expect(sm.voices[0].voiceIndex).toBe(1);
+          }
+        }
+      }
 
       // Redo the exact number of undone steps
       for (let i = 0; i < undoCount; i++) {
