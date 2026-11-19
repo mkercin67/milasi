@@ -26,7 +26,7 @@ This document lists known constraints and architectural trade-offs in the curren
 
 ## 5. Measure-Level Voice Identifiers vs. Voice Index
 - **Status:** Model Design Note.
-- **Details:** In `Score`, each `StaffMeasure` contains `voices: Voice[]` where each voice has a local `id`. Cross-measure operations rely on the voice's zero-based `voiceIndex` (1..4) to maintain continuity across barlines rather than comparing voice UUIDs.
+- **Details:** In `Score`, each `StaffMeasure` contains `voices: Voice[]` where each voice has a local `id`. Cross-measure operations rely on the voice's one-based `voiceIndex` (1..4) to maintain continuity across barlines rather than comparing voice UUIDs.
 
 ## 6. Score Structure Elements (Milestone 6c)
 - **Status:** Implemented in Milestone 6c.
