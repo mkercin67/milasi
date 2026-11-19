@@ -73,6 +73,8 @@ export function useEditorSelection({
   const selectedEventIdRef = useRef<string | null>(null);
   const rangeEventsRef = useRef<ScoreEvent[]>([]);
   const selectedEventInfoRef = useRef<SelectedEventInfo | null>(null);
+  const modeRef = useRef<EditorMode>(mode);
+  modeRef.current = mode;
 
   const selectEvent = useCallback((id: string | null) => {
     selectedEventIdRef.current = id;
@@ -409,7 +411,11 @@ export function useEditorSelection({
     let startOffset = 0;
     let targetVoiceIndex: 1 | 2 | 3 | 4 = 1;
 
-    if (curSel.kind === 'range') {
+    if (modeRef.current === 'input' && curCursor) {
+      startMId = curCursor.measureId;
+      targetVoiceIndex = curCursor.voiceIndex;
+      startOffset = curCursor.tick;
+    } else if (curSel.kind === 'range') {
       const firstEv = curRangeEvents[0];
       if (firstEv) {
         const loc = findEventContext(curScore, firstEv.id);

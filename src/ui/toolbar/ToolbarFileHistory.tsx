@@ -320,6 +320,7 @@ export const ToolbarFileHistory: React.FC<ToolbarFileHistoryProps> = ({
       {onInsertMeasure && (
         <button
           type="button"
+          data-testid="btn-insert-measure"
           onClick={handleButtonClick(onInsertMeasure)}
           onMouseDown={(e) => e.preventDefault()}
           title={`${t('toolbar.insertMeasure')} (Ctrl+B)`}

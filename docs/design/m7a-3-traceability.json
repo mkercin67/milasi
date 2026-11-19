@@ -1,0 +1,154 @@
+[
+  {
+    "planItemId": "S1",
+    "description": "Single voice per selection: A selection (event or range) belongs to EXACTLY ONE voice (voiceIndex: 1 | 2 | 3 | 4). Range selection across voices is rejected.",
+    "codeLocation": "src/core/selection.ts:makeRangeSelection",
+    "testFile": "tests/core/m7a_voice_selection_ops.test.ts",
+    "testName": "range-selects across m.1 and m.2 strictly in voice 2, excluding voice 1 notes",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "S2",
+    "description": "Range measure span: Range selection across measures in the same voice is supported; returns start/end measure numbers, count of events, and measureCount.",
+    "codeLocation": "src/core/selection.ts:getRangeMeasureSpan",
+    "testFile": "tests/core/m7a_voice_selection_ops.test.ts",
+    "testName": "range-selects across m.1 and m.2 strictly in voice 2, excluding voice 1 notes",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "S3",
+    "description": "Cross-voice paste auto-creation: Pasting into a voice that does not exist in the target measure auto-creates the voice with D3 semantics in the same undo step (rests fill [0, totalMTicks) via fillMeasureWithRests, sorted by voiceIndex).",
+    "codeLocation": "src/core/clipboard.ts:pasteEvents",
+    "testFile": "tests/core/m7a_voice_selection_ops.test.ts",
+    "testName": "b) copy 2 notes from voice 2, paste into voice 2 of a measure with ONLY voice 1 -> voice 2 created in 1 undo step, surrounded by rests",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "S4",
+    "description": "Voice isolation of operations: Operations on a voice selection (transpose, delete/convert-to-rest, tie, slur, articulation, dynamic) touch only the selected voice and leave other voices untouched.",
+    "codeLocation": "src/core/commands.ts:transposeRange",
+    "testFile": "tests/core/m7a_voice_selection_ops.test.ts",
+    "testName": "transpose semitone up (+1)",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "S5",
+    "description": "Status bar range info: Shows count and measure span in active locale ({count} öge seçildi ({measures}) / {count} items selected ({measures})).",
+    "codeLocation": "src/ui/StatusBar.tsx:StatusBar",
+    "testFile": "tests/ui/m7a_statusbar_badges.test.tsx",
+    "testName": "renders Turkish range selection info with count and measure span: 8 öge seçildi (Ölçü 1–2)",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "S6",
+    "description": "Marquee single voice resolution: Marquee drag encloses notes of both voices but selects ONLY the voice of the first-hit event without voiceId.",
+    "codeLocation": "src/ui/scoreView/useScoreMarquee.ts:useScoreMarquee",
+    "testFile": "tests/ui/marquee_voice_selection.test.ts",
+    "testName": "T6: marquee enclosing notes of BOTH voices selects ONLY voice of the first-hit event without voiceId",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "S7",
+    "description": "Memory and system clipboard: Copy and paste preserve notes and rests with voiceIndex; system clipboard serialization and deserialization without voiceId.",
+    "codeLocation": "src/core/clipboard.ts:copyEvents",
+    "testFile": "tests/core/m7a_voice_selection_ops.test.ts",
+    "testName": "a) copy 2 notes from voice 2, paste into voice 1 of measure 1 -> pasted notes in voice 1, voice 2 unchanged",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "S8",
+    "description": "Undo/redo deep-equality: Every operation, paste, and delete on voice selections is fully reversible, restoring score deep-equal to initial with 0 validation errors.",
+    "codeLocation": "src/core/commands.ts:deleteRange",
+    "testFile": "tests/core/m7a_voice_selection_ops.test.ts",
+    "testName": "delete (notes become rests)",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "S9",
+    "description": "Property-based fuzz verification: 20 seeds x 100 steps of random voice range selection, transposition, clipboard, and deletion with invariant checking and reversibility.",
+    "codeLocation": "src/core/selection.ts:extendSelection",
+    "testFile": "tests/core/voice_property_m7a3.test.ts",
+    "testName": "verifies 20 seeds x 100 steps of random voice operations, isolation, and undo/redo reversibility",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "T1",
+    "description": "Range selection across m.1-2 in voice 2 on BWV 140/7 constructed via real app path; asserts isolation, measure span, and extendSelection.",
+    "codeLocation": "src/core/selection.ts:makeRangeSelection",
+    "testFile": "tests/core/m7a_voice_selection_ops.test.ts",
+    "testName": "range-selects across m.1 and m.2 strictly in voice 2, excluding voice 1 notes",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "T2-transpose-down",
+    "description": "Transpose voice 2 selection semitone down (-1); voice 1 untouched, voice 2 changed, undo restores score deep-equal to initial.",
+    "codeLocation": "src/core/commands.ts:transposeRange",
+    "testFile": "tests/core/m7a_voice_selection_ops.test.ts",
+    "testName": "transpose semitone down (-1)",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "T2-octave-up",
+    "description": "Transpose voice 2 selection octave up (+12); voice 1 untouched, undo restores score deep-equal to initial.",
+    "codeLocation": "src/core/commands.ts:transposeRange",
+    "testFile": "tests/core/m7a_voice_selection_ops.test.ts",
+    "testName": "transpose octave up (+12)",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "T2-octave-down",
+    "description": "Transpose voice 2 selection octave down (-12); voice 1 untouched, undo restores score deep-equal to initial.",
+    "codeLocation": "src/core/commands.ts:transposeRange",
+    "testFile": "tests/core/m7a_voice_selection_ops.test.ts",
+    "testName": "transpose octave down (-12)",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "T2-tie",
+    "description": "Toggle tie on two adjacent same-pitch notes in voice 2; voice 1 untouched, undo restores score deep-equal to initial.",
+    "codeLocation": "src/core/commands.ts:toggleTie",
+    "testFile": "tests/core/m7a_voice_selection_ops.test.ts",
+    "testName": "tie (toggleTie on two adjacent same-pitch notes in voice 2)",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "T2-slur",
+    "description": "Toggle slur across voice 2 notes; voice 1 untouched, undo restores score deep-equal to initial.",
+    "codeLocation": "src/core/commands.ts:toggleSlur",
+    "testFile": "tests/core/m7a_voice_selection_ops.test.ts",
+    "testName": "slur (toggleSlur across voice 2 notes)",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "T2-articulation",
+    "description": "Toggle articulation staccato on voice 2 range; voice 1 untouched, undo restores score deep-equal to initial.",
+    "codeLocation": "src/core/commands.ts:toggleArticulation",
+    "testFile": "tests/core/m7a_voice_selection_ops.test.ts",
+    "testName": "articulation (toggleArticulation staccato on voice 2)",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "T2-dynamic",
+    "description": "Set dynamic mf on voice 2 range; voice 1 untouched, undo restores score deep-equal to initial.",
+    "codeLocation": "src/core/commands.ts:setDynamic",
+    "testFile": "tests/core/m7a_voice_selection_ops.test.ts",
+    "testName": "dynamic (setDynamic mf on voice 2)",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "T3-existing",
+    "description": "Cross-voice paste into voice 2 that already has content; replaces content, leaves other voices untouched, validateScore zero errors.",
+    "codeLocation": "src/core/clipboard.ts:pasteEvents",
+    "testFile": "tests/core/m7a_voice_selection_ops.test.ts",
+    "testName": "c) copy 2 notes from voice 2, paste into voice 2 that already has content -> replaces content, validateScore 0 errors",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "T6",
+    "description": "Marquee enclosing notes of both voices selects ONLY the voice of the first-hit event without voiceId.",
+    "codeLocation": "src/ui/scoreView/useScoreMarquee.ts:useScoreMarquee",
+    "testFile": "tests/ui/marquee_voice_selection.test.ts",
+    "testName": "T6: marquee enclosing notes of BOTH voices selects ONLY voice of the first-hit event without voiceId",
+    "status": "DONE"
+  }
+]

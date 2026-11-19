@@ -129,4 +129,94 @@ describe('D3d & 0.3: Marquee selection on voice 2', () => {
     expect(dispatchedRange!.voiceIndex).toBe(2);
     expect(dispatchedRange!.anchorId).toBe(v2Note.id);
   });
+
+  it('T6: marquee enclosing notes of BOTH voices selects ONLY voice of the first-hit event without voiceId', () => {
+    const score = createEmptyScore({ measures: 1 });
+    const staff = score.parts[0].staves[0];
+    const m1Id = score.measures[0].id;
+
+    const v1Note = createNote({ baseType: 'quarter', pitches: [{ step: 'C', octave: 5, alter: 0 }] });
+    const v2Note = createNote({ baseType: 'quarter', pitches: [{ step: 'C', octave: 4, alter: 0 }] });
+
+    staff.measures[m1Id].voices = [
+      { id: newId(), voiceIndex: 1, events: [v1Note] },
+      { id: newId(), voiceIndex: 2, events: [v2Note] },
+    ];
+
+    // Layout where both notes are inside the marquee box [0,0] to [100,100]
+    // v2Note is hit first (x: 5), v1Note is hit second (x: 15)
+    const mockLayout: LayoutResult = {
+      width: 800,
+      height: 120,
+      items: [],
+      systems: [
+        {
+          index: 0,
+          staves: [],
+          x: 0,
+          y: 0,
+          width: 800,
+          height: 120,
+          items: [
+            {
+              id: 'item-v2',
+              eventId: v2Note.id,
+              measureIndex: 0,
+              x: 5,
+              y: 5,
+              width: 2,
+              height: 2,
+            } as any,
+            {
+              id: 'item-v1',
+              eventId: v1Note.id,
+              measureIndex: 0,
+              x: 15,
+              y: 5,
+              width: 2,
+              height: 2,
+            } as any,
+          ],
+        },
+      ],
+    };
+
+    let dispatchedRange: RangeSelection | null = null;
+    let hookApi: ReturnType<typeof useScoreMarquee> | null = null;
+
+    function TestHost() {
+      hookApi = useScoreMarquee(score, mockLayout, 10, (r) => {
+        dispatchedRange = r;
+      });
+      return React.createElement('div', null, 'Marquee Both Voices Host');
+    }
+
+    renderToStaticMarkup(React.createElement(TestHost));
+    expect(hookApi).not.toBeNull();
+
+    hookApi!.marqueeRef.current = {
+      startX: 0,
+      startY: 0,
+      currentX: 100,
+      currentY: 100,
+      isMarquee: true,
+    };
+
+    hookApi!.handleMarqueeUp(0, 0);
+
+    expect(dispatchedRange).not.toBeNull();
+    // Must select ONLY voice of first-hit event (Voice 2)
+    expect(dispatchedRange!.voiceIndex).toBe(2);
+    expect(dispatchedRange!.anchorId).toBe(v2Note.id);
+    expect(dispatchedRange!.focusId).toBe(v2Note.id);
+
+    // Assert NO voiceId property in dispatchedRange
+    expect((dispatchedRange as any).voiceId).toBeUndefined();
+
+    // Verify eventsInRange contains ONLY voice 2 note
+    const selectedEvs = eventsInRange(score, dispatchedRange!);
+    expect(selectedEvs).toHaveLength(1);
+    expect(selectedEvs[0].id).toBe(v2Note.id);
+    expect(selectedEvs.some((e) => e.id === v1Note.id)).toBe(false);
+  });
 });
