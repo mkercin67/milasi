@@ -282,7 +282,15 @@ async function runCpuProfile() {
     fs.writeFileSync(outPath, JSON.stringify(profileSummary, null, 2));
     console.log(`Saved CPU profile summary to ${outPath}`);
   } finally {
-    preview.kill('SIGTERM');
+    try {
+      if (preview.pid) {
+        if (process.platform === 'win32') {
+          spawn('taskkill', ['/pid', String(preview.pid), '/f', '/t'], { stdio: 'ignore' });
+        } else {
+          preview.kill('SIGTERM');
+        }
+      }
+    } catch {}
   }
 }
 

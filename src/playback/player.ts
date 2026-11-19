@@ -55,7 +55,9 @@ export class Player {
 
   setScore(score: Score): void {
     this._score = score;
-    this.stop();
+    if (this._state !== 'idle') {
+      this.stop();
+    }
     this._scheduleDirty = true;
     this._schedule = null;
   }

@@ -44,55 +44,49 @@ const DYNAMIC_GLYPHS: Record<string, string> = {
 
 export function buildNoteheadIndex(layout: LayoutResult): Map<string, NoteheadInfo> {
   const map = new Map<string, NoteheadInfo>();
-  for (let sysIdx = 0; sysIdx < layout.systems.length; sysIdx++) {
-    const sys = layout.systems[sysIdx];
-    const items = sys.items ?? [];
-    const sysNoteheads = new Map<string, LayoutItem[]>();
-    const sysStems = new Map<string, LayoutItem>();
+  const firstLineDir = new Map<string, StemDirection>();
 
-    for (let i = 0; i < items.length; i++) {
+  const systems = layout.systems;
+  const sysCount = systems.length;
+
+  for (let sysIdx = 0; sysIdx < sysCount; sysIdx++) {
+    const sys = systems[sysIdx];
+    const items = sys.items;
+    if (!items) continue;
+    const len = items.length;
+
+    for (let i = 0; i < len; i++) {
       const it = items[i];
-      if (!it.eventId) continue;
+      const evId = it.eventId;
+      if (!evId) continue;
+
       if (it.kind === 'glyph' && it.glyph?.startsWith('notehead')) {
-        let arr = sysNoteheads.get(it.eventId);
-        if (!arr) {
-          arr = [];
-          sysNoteheads.set(it.eventId, arr);
+        const entry = map.get(evId);
+        if (!entry) {
+          const dir = firstLineDir.get(evId);
+          map.set(evId, {
+            eventId: evId,
+            systemIndex: sysIdx,
+            x: it.x,
+            y: it.y,
+            minY: it.y,
+            maxY: it.y,
+            stemDirection: dir ?? (it.y >= 2.0 ? 'up' : 'down'),
+          });
+        } else {
+          if (it.y < entry.minY) entry.minY = it.y;
+          if (it.y > entry.maxY) entry.maxY = it.y;
         }
-        arr.push(it);
       } else if (it.kind === 'line') {
-        if (!sysStems.has(it.eventId)) {
-          sysStems.set(it.eventId, it);
+        if (!firstLineDir.has(evId)) {
+          const dir: StemDirection = it.y2 !== undefined && it.y2 < it.y ? 'up' : 'down';
+          firstLineDir.set(evId, dir);
+          const entry = map.get(evId);
+          if (entry) {
+            entry.stemDirection = dir;
+          }
         }
       }
-    }
-
-    for (const [eventId, noteheads] of sysNoteheads.entries()) {
-      if (noteheads.length === 0) continue;
-      const firstNh = noteheads[0];
-      let minY = firstNh.y;
-      let maxY = firstNh.y;
-      for (let j = 1; j < noteheads.length; j++) {
-        const y = noteheads[j].y;
-        if (y < minY) minY = y;
-        if (y > maxY) maxY = y;
-      }
-
-      const stem = sysStems.get(eventId);
-      let stemDirection: StemDirection = firstNh.y >= 2.0 ? 'up' : 'down';
-      if (stem && stem.y2 !== undefined) {
-        stemDirection = stem.y2 < stem.y ? 'up' : 'down';
-      }
-
-      map.set(eventId, {
-        eventId,
-        systemIndex: sysIdx,
-        x: firstNh.x,
-        y: firstNh.y,
-        minY,
-        maxY,
-        stemDirection,
-      });
     }
   }
   return map;
@@ -149,6 +143,7 @@ export function layoutDynamics(
 ): LayoutItem[] {
   const items: LayoutItem[] = [];
   const index = noteheadIndex ?? buildNoteheadIndex(layout);
+  const hasOverrides = score.overrides && Object.keys(score.overrides).length > 0;
 
   for (const part of score.parts) {
     for (const staff of part.staves) {
@@ -164,17 +159,21 @@ export function layoutDynamics(
               const nh = index.get(ev.id);
               if (!nh) continue;
 
-              const overrideId = `${ev.id}-dynamic`;
-              const override = score.overrides[overrideId] ?? score.overrides[ev.id];
-              const dx = override?.dx ?? 0;
-              const dy = override?.dy ?? 0;
+              let dx = 0;
+              let dy = 0;
+              if (hasOverrides) {
+                const overrideId = `${ev.id}-dynamic`;
+                const override = score.overrides[overrideId] ?? score.overrides[ev.id];
+                dx = override?.dx ?? 0;
+                dy = override?.dy ?? 0;
+              }
 
               // Default placement below staff (staff lines 0..4, so bottom + 2.5 = 6.5)
               const posX = nh.x + NOTEHEAD_WIDTH / 2 - 0.75 + dx;
               const posY = 6.5 + dy;
 
               items.push({
-                id: overrideId,
+                id: `${ev.id}-dynamic`,
                 eventId: ev.id,
                 systemIndex: nh.systemIndex,
                 kind: 'glyph',
@@ -203,6 +202,7 @@ export function layoutArticulations(
 ): LayoutItem[] {
   const items: LayoutItem[] = [];
   const index = noteheadIndex ?? buildNoteheadIndex(layout);
+  const hasOverrides = score.overrides && Object.keys(score.overrides).length > 0;
 
   for (const part of score.parts) {
     for (const staff of part.staves) {
@@ -220,11 +220,15 @@ export function layoutArticulations(
               const placeAbove = nh.stemDirection === 'down';
 
               // Order from notehead outwards: staccato/tenuto closest, accent/marcato further
-              const sortedArts = [...ev.articulations].sort((a, b) => {
-                const rankA = a === 'staccato' || a === 'tenuto' ? 1 : 2;
-                const rankB = b === 'staccato' || b === 'tenuto' ? 1 : 2;
-                return rankA - rankB;
-              });
+              const arts = ev.articulations;
+              const sortedArts =
+                arts.length <= 1
+                  ? arts
+                  : [...arts].sort((a, b) => {
+                      const rankA = a === 'staccato' || a === 'tenuto' ? 1 : 2;
+                      const rankB = b === 'staccato' || b === 'tenuto' ? 1 : 2;
+                      return rankA - rankB;
+                    });
 
               let currentOffset = 1.0;
 
@@ -251,16 +255,20 @@ export function layoutArticulations(
                   }
                 }
 
-                const overrideId = `${ev.id}-artic-${art}`;
-                const override = score.overrides[overrideId] ?? score.overrides[ev.id];
-                const dx = override?.dx ?? 0;
-                const dy = override?.dy ?? 0;
+                let dx = 0;
+                let dy = 0;
+                if (hasOverrides) {
+                  const overrideId = `${ev.id}-artic-${art}`;
+                  const override = score.overrides[overrideId] ?? score.overrides[ev.id];
+                  dx = override?.dx ?? 0;
+                  dy = override?.dy ?? 0;
+                }
 
                 const posX = nh.x + NOTEHEAD_WIDTH / 2 - 0.25 + dx;
                 const posY = targetY + dy;
 
                 items.push({
-                  id: overrideId,
+                  id: `${ev.id}-artic-${art}`,
                   eventId: ev.id,
                   systemIndex: nh.systemIndex,
                   kind: 'glyph',

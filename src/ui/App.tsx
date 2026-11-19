@@ -49,11 +49,6 @@ declare global {
 }
 
 const EditorShell: React.FC = () => {
-  if (typeof window !== 'undefined') {
-    const w = window as unknown as { __componentRenders?: Record<string, number> };
-    if (!w.__componentRenders) w.__componentRenders = {};
-    w.__componentRenders.EditorShell = (w.__componentRenders.EditorShell || 0) + 1;
-  }
   const { t } = useI18n();
   const {
     score,
@@ -223,6 +218,12 @@ const EditorShell: React.FC = () => {
     setMode,
     executeCommand,
   });
+
+  if (typeof window !== 'undefined') {
+    const w = window as unknown as { __componentRenders?: Record<string, number> };
+    if (!w.__componentRenders) w.__componentRenders = {};
+    w.__componentRenders.EditorShell = (w.__componentRenders.EditorShell || 0) + 1;
+  }
 
   // Keyboard integration
   useAppKeyboard({

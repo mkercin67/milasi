@@ -99,7 +99,7 @@ export function layoutTies(
   for (const part of score.parts) {
     for (const staff of part.staves) {
       // Collect all notes in staff in score order
-      const allNotes: Array<{ event: NoteEvent; measureIndex: number }> = [];
+      const allNotes: NoteEvent[] = [];
       for (let mIdx = 0; mIdx < score.measures.length; mIdx++) {
         const mDef = score.measures[mIdx];
         const sm = staff.measures[mDef.id];
@@ -107,20 +107,21 @@ export function layoutTies(
         for (const v of sm.voices) {
           for (const ev of v.events) {
             if (ev.kind === 'note') {
-              allNotes.push({ event: ev, measureIndex: mIdx });
+              allNotes.push(ev);
             }
           }
         }
       }
 
       for (let nIdx = 0; nIdx < allNotes.length; nIdx++) {
-        const { event: sourceNote } = allNotes[nIdx];
+        const sourceNote = allNotes[nIdx];
         const isTied = sourceNote.tiedToNext || sourceNote.pitches.some((p) => p.tiedToNext);
         if (!isTied) continue;
 
-        // Find next note with matching pitch
-        for (let nextIdx = nIdx + 1; nextIdx < allNotes.length; nextIdx++) {
-          const { event: targetNote } = allNotes[nextIdx];
+        // Find next note with matching pitch (a tie connects to immediate next notes)
+        const maxScan = Math.min(allNotes.length, nIdx + 32);
+        for (let nextIdx = nIdx + 1; nextIdx < maxScan; nextIdx++) {
+          const targetNote = allNotes[nextIdx];
           const hasMatchingPitch = sourceNote.pitches.some((sp) =>
             targetNote.pitches.some(
               (tp) => tp.step === sp.step && tp.octave === sp.octave && tp.alter === sp.alter

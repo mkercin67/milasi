@@ -1,6 +1,6 @@
 # MiLaSi Review Pack
 
-**Generated:** 2026-11-19T12:03:42.178Z  
+**Generated:** 2026-11-19T12:55:14.578Z  
 **Target Milestone:** Foundation Hardening (Milestone H1) Closed & STEP 0c Verified  
 **Architecture Version:** Schema v6 (Preparing Schema v7)  
 
@@ -125,6 +125,7 @@ Critically, DOM mutation count outside the active system is strictly **0**, prov
 
 ## 3. Recent Git Log (Last 30 Commits)
 
+* `0977c78` docs: regenerate REVIEW_PACK.md with latest git log and metrics (2026-11-19)
 * `283ac0e` STEP 0c: O(1) indexed notehead lookups, extended DOM mutation isolation, and real V8 CPU profiling (2026-11-19)
 * `76bbe11` STEP 0b: CDP trace profile, DOM mutation isolation test, and render optimizations (2026-11-19)
 * `6417c9a` STEP 0.7: write schema v6 to v7 migration architectural plan (2026-11-19)
@@ -154,7 +155,6 @@ Critically, DOM mutation count outside the active system is strictly **0**, prov
 * `f937e81` H1: documentation refresh, architecture ADRs, and SHORTCUTS generator (2026-11-17)
 * `5cd2903` H1: design document for multi-staff and pages (2026-11-17)
 * `00983d1` H1: license audit, THIRD_PARTY_LICENSES.md, and checkLicenses script (2026-11-17)
-* `44b4914` H1: resilience, error boundary, rolling autosave recovery, error ring buffer (2026-11-17)
 
 ---
 
@@ -172,7 +172,7 @@ Critically, DOM mutation count outside the active system is strictly **0**, prov
 
 ## 5. Tracked Files and Line Counts
 
-Total Tracked Files: 373 | Total Lines: 200602
+Total Tracked Files: 373 | Total Lines: 200722
 
 | Tracked File | Lines |
 |:---|---:|
@@ -193,7 +193,7 @@ Total Tracked Files: 373 | Total Lines: 200602
 | `src/ui/keymap.ts` | 589 |
 | `docs/design/multi-staff-and-pages.md` | 588 |
 | `src/layout/measureLayout.ts` | 587 |
-| `src/ui/App.tsx` | 577 |
+| `src/ui/App.tsx` | 578 |
 | `src/ui/scoreView/useScoreInteractions.ts` | 576 |
 | `docs/perf/bench-2026-11-19.json` | 571 |
 | `src/render/renderSvg.ts` | 569 |

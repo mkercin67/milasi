@@ -1,240 +1,240 @@
 {
-  "timestamp": "2026-11-19T11:53:25.096Z",
+  "timestamp": "2026-11-19T12:32:27.295Z",
   "scoreMeasures": 200,
   "edits": 50,
   "samplingIntervalUs": 100,
-  "totalSampledMs": 5769.44,
+  "totalSampledMs": 5734.21,
   "top25Functions": [
     {
       "rank": 1,
       "functionName": "(idle)",
       "file": "(native/v8)",
       "line": -1,
-      "selfTimeTotalMs": 4963.83,
-      "selfTimePerEditMs": 99.277,
-      "percentOfTotal": 86
+      "selfTimeTotalMs": 5061.59,
+      "selfTimePerEditMs": 101.232,
+      "percentOfTotal": 88.3
     },
     {
       "rank": 2,
       "functionName": "(program)",
       "file": "(native/v8)",
       "line": -1,
-      "selfTimeTotalMs": 289.36,
-      "selfTimePerEditMs": 5.787,
+      "selfTimeTotalMs": 287.77,
+      "selfTimePerEditMs": 5.755,
       "percentOfTotal": 5
     },
     {
       "rank": 3,
-      "functionName": "(garbage collector)",
-      "file": "(native/v8)",
-      "line": -1,
-      "selfTimeTotalMs": 34.12,
-      "selfTimePerEditMs": 0.682,
-      "percentOfTotal": 0.6
+      "functionName": "gc",
+      "file": "index-Cux1_H_R.js",
+      "line": 39,
+      "selfTimeTotalMs": 25.11,
+      "selfTimePerEditMs": 0.502,
+      "percentOfTotal": 0.4
     },
     {
       "rank": 4,
-      "functionName": "hd",
-      "file": "index-C_YzDG7c.js",
-      "line": 103,
-      "selfTimeTotalMs": 30.92,
-      "selfTimePerEditMs": 0.618,
-      "percentOfTotal": 0.5
+      "functionName": "(garbage collector)",
+      "file": "(native/v8)",
+      "line": -1,
+      "selfTimeTotalMs": 18.77,
+      "selfTimePerEditMs": 0.375,
+      "percentOfTotal": 0.3
     },
     {
       "rank": 5,
       "functionName": "(anonymous)",
-      "file": "index-C_YzDG7c.js",
+      "file": "index-Cux1_H_R.js",
       "line": 39,
-      "selfTimeTotalMs": 29.02,
-      "selfTimePerEditMs": 0.58,
-      "percentOfTotal": 0.5
+      "selfTimeTotalMs": 16.58,
+      "selfTimePerEditMs": 0.332,
+      "percentOfTotal": 0.3
     },
     {
       "rank": 6,
-      "functionName": "gc",
-      "file": "index-C_YzDG7c.js",
+      "functionName": "Mf",
+      "file": "index-Cux1_H_R.js",
       "line": 39,
-      "selfTimeTotalMs": 20.02,
-      "selfTimePerEditMs": 0.4,
+      "selfTimeTotalMs": 14.58,
+      "selfTimePerEditMs": 0.292,
       "percentOfTotal": 0.3
     },
     {
       "rank": 7,
-      "functionName": "Mf",
-      "file": "index-C_YzDG7c.js",
+      "functionName": "Yc",
+      "file": "index-Cux1_H_R.js",
       "line": 39,
-      "selfTimeTotalMs": 15.59,
-      "selfTimePerEditMs": 0.312,
-      "percentOfTotal": 0.3
+      "selfTimeTotalMs": 11.73,
+      "selfTimePerEditMs": 0.235,
+      "percentOfTotal": 0.2
     },
     {
       "rank": 8,
-      "functionName": "di",
-      "file": "index-C_YzDG7c.js",
-      "line": 120,
-      "selfTimeTotalMs": 13.68,
-      "selfTimePerEditMs": 0.274,
+      "functionName": "$i",
+      "file": "index-Cux1_H_R.js",
+      "line": 39,
+      "selfTimeTotalMs": 10.53,
+      "selfTimePerEditMs": 0.211,
       "percentOfTotal": 0.2
     },
     {
       "rank": 9,
-      "functionName": "p0e",
-      "file": "index-C_YzDG7c.js",
+      "functionName": "p2",
+      "file": "index-Cux1_H_R.js",
       "line": 39,
-      "selfTimeTotalMs": 12.83,
-      "selfTimePerEditMs": 0.257,
+      "selfTimeTotalMs": 9.54,
+      "selfTimePerEditMs": 0.191,
       "percentOfTotal": 0.2
     },
     {
       "rank": 10,
-      "functionName": "randomUUID",
-      "file": "(native/v8)",
-      "line": -1,
-      "selfTimeTotalMs": 11.68,
-      "selfTimePerEditMs": 0.234,
+      "functionName": "h2",
+      "file": "index-Cux1_H_R.js",
+      "line": 39,
+      "selfTimeTotalMs": 9.4,
+      "selfTimePerEditMs": 0.188,
       "percentOfTotal": 0.2
     },
     {
       "rank": 11,
-      "functionName": "fc",
-      "file": "index-C_YzDG7c.js",
-      "line": 39,
-      "selfTimeTotalMs": 11.62,
-      "selfTimePerEditMs": 0.232,
+      "functionName": "createGain",
+      "file": "(native/v8)",
+      "line": -1,
+      "selfTimeTotalMs": 8.66,
+      "selfTimePerEditMs": 0.173,
       "percentOfTotal": 0.2
     },
     {
       "rank": 12,
-      "functionName": "connect",
-      "file": "(native/v8)",
-      "line": -1,
-      "selfTimeTotalMs": 10.6,
-      "selfTimePerEditMs": 0.212,
+      "functionName": "Z1",
+      "file": "index-Cux1_H_R.js",
+      "line": 16,
+      "selfTimeTotalMs": 8.63,
+      "selfTimePerEditMs": 0.173,
       "percentOfTotal": 0.2
     },
     {
       "rank": 13,
-      "functionName": "p2",
-      "file": "index-C_YzDG7c.js",
-      "line": 39,
-      "selfTimeTotalMs": 10.19,
-      "selfTimePerEditMs": 0.204,
+      "functionName": "setAttribute",
+      "file": "(native/v8)",
+      "line": -1,
+      "selfTimeTotalMs": 8.62,
+      "selfTimePerEditMs": 0.172,
       "percentOfTotal": 0.2
     },
     {
       "rank": 14,
-      "functionName": "(anonymous)",
-      "file": "index-C_YzDG7c.js",
-      "line": 315,
-      "selfTimeTotalMs": 10.02,
-      "selfTimePerEditMs": 0.2,
-      "percentOfTotal": 0.2
+      "functionName": "fc",
+      "file": "index-Cux1_H_R.js",
+      "line": 39,
+      "selfTimeTotalMs": 8.48,
+      "selfTimePerEditMs": 0.17,
+      "percentOfTotal": 0.1
     },
     {
       "rank": 15,
-      "functionName": "Yc",
-      "file": "index-C_YzDG7c.js",
-      "line": 39,
-      "selfTimeTotalMs": 9.09,
-      "selfTimePerEditMs": 0.182,
-      "percentOfTotal": 0.2
+      "functionName": "di",
+      "file": "index-Cux1_H_R.js",
+      "line": 120,
+      "selfTimeTotalMs": 8.26,
+      "selfTimePerEditMs": 0.165,
+      "percentOfTotal": 0.1
     },
     {
       "rank": 16,
-      "functionName": "ad",
-      "file": "index-C_YzDG7c.js",
-      "line": 39,
-      "selfTimeTotalMs": 8.86,
-      "selfTimePerEditMs": 0.177,
-      "percentOfTotal": 0.2
+      "functionName": "randomUUID",
+      "file": "(native/v8)",
+      "line": -1,
+      "selfTimeTotalMs": 8.1,
+      "selfTimePerEditMs": 0.162,
+      "percentOfTotal": 0.1
     },
     {
       "rank": 17,
-      "functionName": "Z1",
-      "file": "index-C_YzDG7c.js",
-      "line": 16,
-      "selfTimeTotalMs": 8.79,
-      "selfTimePerEditMs": 0.176,
-      "percentOfTotal": 0.2
+      "functionName": "p0e",
+      "file": "index-Cux1_H_R.js",
+      "line": 39,
+      "selfTimeTotalMs": 8.06,
+      "selfTimePerEditMs": 0.161,
+      "percentOfTotal": 0.1
     },
     {
       "rank": 18,
-      "functionName": "h2",
-      "file": "index-C_YzDG7c.js",
-      "line": 39,
-      "selfTimeTotalMs": 8.16,
-      "selfTimePerEditMs": 0.163,
+      "functionName": "(anonymous)",
+      "file": "index-Cux1_H_R.js",
+      "line": 101,
+      "selfTimeTotalMs": 7.07,
+      "selfTimePerEditMs": 0.141,
       "percentOfTotal": 0.1
     },
     {
       "rank": 19,
-      "functionName": "createGain",
-      "file": "(native/v8)",
-      "line": -1,
-      "selfTimeTotalMs": 8.13,
-      "selfTimePerEditMs": 0.163,
+      "functionName": "(anonymous)",
+      "file": "index-Cux1_H_R.js",
+      "line": 105,
+      "selfTimeTotalMs": 6.87,
+      "selfTimePerEditMs": 0.137,
       "percentOfTotal": 0.1
     },
     {
       "rank": 20,
-      "functionName": "B4",
-      "file": "index-C_YzDG7c.js",
+      "functionName": "ad",
+      "file": "index-Cux1_H_R.js",
       "line": 39,
-      "selfTimeTotalMs": 7.7,
-      "selfTimePerEditMs": 0.154,
+      "selfTimeTotalMs": 6.72,
+      "selfTimePerEditMs": 0.134,
       "percentOfTotal": 0.1
     },
     {
       "rank": 21,
       "functionName": "(anonymous)",
-      "file": "index-C_YzDG7c.js",
-      "line": 105,
-      "selfTimeTotalMs": 7.66,
-      "selfTimePerEditMs": 0.153,
+      "file": "index-Cux1_H_R.js",
+      "line": 315,
+      "selfTimeTotalMs": 6.6,
+      "selfTimePerEditMs": 0.132,
       "percentOfTotal": 0.1
     },
     {
       "rank": 22,
-      "functionName": "setAttribute",
-      "file": "(native/v8)",
-      "line": -1,
-      "selfTimeTotalMs": 7.57,
-      "selfTimePerEditMs": 0.151,
+      "functionName": "B4",
+      "file": "index-Cux1_H_R.js",
+      "line": 39,
+      "selfTimeTotalMs": 5.19,
+      "selfTimePerEditMs": 0.104,
       "percentOfTotal": 0.1
     },
     {
       "rank": 23,
-      "functionName": "(anonymous)",
-      "file": "index-C_YzDG7c.js",
-      "line": 101,
-      "selfTimeTotalMs": 6.96,
-      "selfTimePerEditMs": 0.139,
+      "functionName": "rd",
+      "file": "index-Cux1_H_R.js",
+      "line": 39,
+      "selfTimeTotalMs": 4.83,
+      "selfTimePerEditMs": 0.097,
       "percentOfTotal": 0.1
     },
     {
       "rank": 24,
-      "functionName": "rd",
-      "file": "index-C_YzDG7c.js",
-      "line": 39,
-      "selfTimeTotalMs": 6.86,
-      "selfTimePerEditMs": 0.137,
+      "functionName": "F1e",
+      "file": "index-Cux1_H_R.js",
+      "line": 101,
+      "selfTimeTotalMs": 4.58,
+      "selfTimePerEditMs": 0.092,
       "percentOfTotal": 0.1
     },
     {
       "rank": 25,
-      "functionName": "dp",
-      "file": "index-C_YzDG7c.js",
-      "line": 37,
-      "selfTimeTotalMs": 6.4,
-      "selfTimePerEditMs": 0.128,
+      "functionName": "_0e",
+      "file": "index-Cux1_H_R.js",
+      "line": 39,
+      "selfTimeTotalMs": 4.58,
+      "selfTimePerEditMs": 0.092,
       "percentOfTotal": 0.1
     }
   ],
   "buckets": {
     "command apply (immer)": {
-      "totalMs": 17.47,
-      "msPerEdit": 0.35,
+      "totalMs": 17.88,
+      "msPerEdit": 0.36,
       "percent": 0.3
     },
     "validateScore": {
@@ -263,9 +263,9 @@
       "percent": 0
     },
     "SVG DOM commit": {
-      "totalMs": 8.15,
-      "msPerEdit": 0.16,
-      "percent": 0.1
+      "totalMs": 9.75,
+      "msPerEdit": 0.2,
+      "percent": 0.2
     },
     "harness overhead": {
       "totalMs": 0,
@@ -273,9 +273,9 @@
       "percent": 0
     },
     "other/idle": {
-      "totalMs": 5743.82,
-      "msPerEdit": 114.88,
-      "percent": 99.6
+      "totalMs": 5706.58,
+      "msPerEdit": 114.13,
+      "percent": 99.5
     }
   }
 }

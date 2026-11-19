@@ -92,6 +92,12 @@ export function useAppVerificationStates({
         setMode('select');
         return;
       }
+      if (stateParam === 'benchmark_400_full') {
+        const bScore = createBenchmarkFullFeaturedScore(400);
+        resetScore(bScore);
+        setMode('select');
+        return;
+      }
       if (stateParam === 'demo_3_4') {
         const s34 = createEmptyScore({
           clef: { sign: 'G', line: 2 },

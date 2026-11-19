@@ -168,6 +168,16 @@ async function main() {
       console.log(`Double rAF Med: ${res.doubleRaf.median.toFixed(2)} ms, p95: ${res.doubleRaf.p95.toFixed(2)} ms, Max: ${res.doubleRaf.max.toFixed(2)} ms`);
     }
 
+    // Scenario 400 measures
+    console.log(`\n--- Running 400-measure (${runsCount} runs x ${editsPerRun} edits) ---`);
+    const results400 = [];
+    for (let r = 0; r < runsCount; r++) {
+      process.stdout.write(`  Run ${r + 1}/${runsCount}... `);
+      const res = await runScenario(page, 'benchmark_400_full', editsPerRun);
+      results400.push(res);
+      console.log(`Double rAF Med: ${res.doubleRaf.median.toFixed(2)} ms, p95: ${res.doubleRaf.p95.toFixed(2)} ms, Max: ${res.doubleRaf.max.toFixed(2)} ms`);
+    }
+
     await browser.close();
 
     function summarizeRuns(runs) {
@@ -204,6 +214,7 @@ async function main() {
       vsyncDisabled: disableVsync,
       scenario64: summarizeRuns(results64),
       scenario200: summarizeRuns(results200),
+      scenario400: summarizeRuns(results400),
     };
 
     console.log('\n=== SUMMARY ===');
@@ -213,12 +224,23 @@ async function main() {
     console.log('200-measure:');
     console.log(`  Medians: ${summary.scenario200.runs.map((r) => r.median).join(', ')} (Spread: ${summary.scenario200.summary.medianSpread} ms)`);
     console.log(`  p95s:    ${summary.scenario200.runs.map((r) => r.p95).join(', ')} (Spread: ${summary.scenario200.summary.p95Spread} ms, Avg: ${summary.scenario200.summary.p95Avg} ms)`);
+    console.log('400-measure:');
+    console.log(`  Medians: ${summary.scenario400.runs.map((r) => r.median).join(', ')} (Spread: ${summary.scenario400.summary.medianSpread} ms)`);
+    console.log(`  p95s:    ${summary.scenario400.runs.map((r) => r.p95).join(', ')} (Spread: ${summary.scenario400.summary.p95Spread} ms, Avg: ${summary.scenario400.summary.p95Avg} ms)`);
 
     const outPath = `docs/review/perf/multi-bench-${disableVsync ? 'no-vsync' : 'vsync'}.json`;
     fs.writeFileSync(outPath, JSON.stringify(summary, null, 2));
     console.log(`Saved summary to ${outPath}`);
   } finally {
-    preview.kill('SIGTERM');
+    try {
+      if (preview.pid) {
+        if (process.platform === 'win32') {
+          spawn('taskkill', ['/pid', String(preview.pid), '/f', '/t'], { stdio: 'ignore' });
+        } else {
+          preview.kill('SIGTERM');
+        }
+      }
+    } catch {}
   }
 }
 

@@ -45,13 +45,12 @@ export function useAppLyrics({
   const [lyricsInputValue, setLyricsInputValue] = useState('');
 
   useEffect(() => {
-    if (selectedNote) {
-      const v1 = selectedNote.lyrics?.find((l) => l.verse === 1);
-      setLyricsInputValue(v1?.text ?? '');
-    } else {
-      setLyricsInputValue('');
+    if (mode !== 'lyrics') return;
+    const nextText = selectedNote ? (selectedNote.lyrics?.find((l) => l.verse === 1)?.text ?? '') : '';
+    if (lyricsInputValue !== nextText) {
+      setLyricsInputValue(nextText);
     }
-  }, [selectedNote]);
+  }, [mode, selectedNote, lyricsInputValue]);
 
   const eligibleLyricsNoteIds = useMemo(() => {
     const ids: string[] = [];

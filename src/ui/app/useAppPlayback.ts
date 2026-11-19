@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Pitch, Score } from '../../core/model';
 import { AudioEngine, FakeEngine, Player, PreviewPlayer, ToneEngine } from '../../playback';
 import { setTempo, Command } from '../../core/commands';
@@ -45,20 +45,40 @@ export function useAppPlayback({
   const [isMuted, setIsMuted] = useState<boolean>(false);
   const [previewSound, setPreviewSound] = useState<boolean>(() => previewPlayer.enabled);
 
+  const isPlayingRef = useRef(isPlaying);
+  isPlayingRef.current = isPlaying;
+  const isPausedRef = useRef(isPaused);
+  isPausedRef.current = isPaused;
+
   useEffect(() => {
     player.setScore(score);
     const nextPlaying = player.state === 'playing';
     const nextPaused = player.state === 'paused';
-    setIsPlaying((prev) => (prev === nextPlaying ? prev : nextPlaying));
-    setIsPaused((prev) => (prev === nextPaused ? prev : nextPaused));
+    if (nextPlaying !== isPlayingRef.current) {
+      setIsPlaying(nextPlaying);
+    }
+    if (nextPaused !== isPausedRef.current) {
+      setIsPaused(nextPaused);
+    }
   }, [score, player]);
 
   useEffect(() => {
     const unsub = player.onPosition((pos) => {
-      setIsPlaying(player.state === 'playing');
-      setIsPaused(player.state === 'paused');
-      setActivePlaybackEventIds(pos.activeEventIds);
-      setPlaybackSeconds(pos.seconds);
+      const nextPlaying = player.state === 'playing';
+      const nextPaused = player.state === 'paused';
+      setIsPlaying((prev) => (prev === nextPlaying ? prev : nextPlaying));
+      setIsPaused((prev) => (prev === nextPaused ? prev : nextPaused));
+      setActivePlaybackEventIds((prev) => {
+        if (prev.length === 0 && pos.activeEventIds.length === 0) return prev;
+        if (
+          prev.length === pos.activeEventIds.length &&
+          prev.every((id, idx) => id === pos.activeEventIds[idx])
+        ) {
+          return prev;
+        }
+        return pos.activeEventIds;
+      });
+      setPlaybackSeconds((prev) => (prev === pos.seconds ? prev : pos.seconds));
     });
     return () => {
       unsub();
