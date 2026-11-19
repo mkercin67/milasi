@@ -40,5 +40,5 @@ Voice colours, moving notes between voices, voice crossing, deleting voices, sel
 | T4 | Seeded property test across multi-voice operations | `tests/core/voice_property.test.ts` | `verifies 20 seeds x 200 steps of random voice navigation, entry, and undo/redo` | DONE |
 | T5 | UI voice switching and preventDefault | `tests/ui/tab_voice_ui.test.tsx` | `Tab in input mode changes the status bar voice text immediately` | DONE |
 | T6 | Status bar i18n voice indicator "Ses N" / "Voice N" | `scripts/test_i18n_dom.mjs` | `CLI test script verifying DOM translation` | DONE |
-| T7 | Playwright E2E 2-voice keyboard entry | `tests/e2e/m7a_voice_entry.spec.ts` | `E2E keyboard entry of BWV 140/7 mm. 1-2 voices 1 and 2` | COMMIT_4 |
-| T8 | Playwright E2E undo/redo voice entry | `tests/e2e/m7a_voice_entry.spec.ts` | `E2E undo and redo of voice 2 entry restores previous state` | COMMIT_4 |
+| T7 | Playwright E2E 2-voice keyboard entry | `scripts/test_voice_entry_e2e.mjs` | `E2E keyboard entry of BWV 140/7 mm. 1-2 voices 1 and 2` | DONE |
+| T8 | Playwright E2E undo/redo voice entry | `scripts/test_voice_entry_e2e.mjs` | `E2E undo and redo of voice 2 entry restores previous state` | DONE |

@@ -83,6 +83,7 @@ const EditorShell: React.FC = () => {
     setCursorToMeasure,
     moveCursorDirection,
     cycleVoiceDirection,
+    lastEnteredPitchRef,
     enterPitchAtCursor,
     enterPitchDirect,
     changeEventPitch,
@@ -280,6 +281,7 @@ const EditorShell: React.FC = () => {
     player,
     handleSave,
     handleOpenClick,
+    lastEnteredPitchRef,
     t,
   });
 

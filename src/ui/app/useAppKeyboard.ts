@@ -87,6 +87,7 @@ export interface UseAppKeyboardParams {
   player: Player;
   handleSave: (saveAs?: boolean) => void;
   handleOpenClick: () => void;
+  lastEnteredPitchRef?: React.MutableRefObject<Pitch | null>;
   t: (key: string) => string;
 }
 
@@ -142,6 +143,7 @@ export function useAppKeyboard(params: UseAppKeyboardParams) {
     player,
     handleSave,
     handleOpenClick,
+    lastEnteredPitchRef,
     t,
   } = params;
 
@@ -358,10 +360,13 @@ export function useAppKeyboard(params: UseAppKeyboardParams) {
               transposeSelection(1);
               recordSample('ArrowUp');
             } else if (selectedEventId) {
-              if (mode === 'select') {
+              if (mode === 'select' || mode === 'input') {
                 const nextScore = executeCommand(transposeEvent(selectedEventId, 1));
                 const p = findEventPitches(nextScore, selectedEventId);
-                if (p) previewPlayer.previewPitches(p);
+                if (p && p.length > 0) {
+                  if (lastEnteredPitchRef) lastEnteredPitchRef.current = p[0];
+                  previewPlayer.previewPitches(p);
+                }
               }
               recordSample('ArrowUp');
             }
@@ -371,10 +376,13 @@ export function useAppKeyboard(params: UseAppKeyboardParams) {
               transposeSelection(-1);
               recordSample('ArrowDown');
             } else if (selectedEventId) {
-              if (mode === 'select') {
+              if (mode === 'select' || mode === 'input') {
                 const nextScore = executeCommand(transposeEvent(selectedEventId, -1));
                 const p = findEventPitches(nextScore, selectedEventId);
-                if (p) previewPlayer.previewPitches(p);
+                if (p && p.length > 0) {
+                  if (lastEnteredPitchRef) lastEnteredPitchRef.current = p[0];
+                  previewPlayer.previewPitches(p);
+                }
               }
               recordSample('ArrowDown');
             }
@@ -384,10 +392,13 @@ export function useAppKeyboard(params: UseAppKeyboardParams) {
               transposeSelection(12);
               recordSample('Ctrl+ArrowUp');
             } else if (selectedEventId) {
-              if (mode === 'select') {
+              if (mode === 'select' || mode === 'input') {
                 const nextScore = executeCommand(transposeEvent(selectedEventId, 12));
                 const p = findEventPitches(nextScore, selectedEventId);
-                if (p) previewPlayer.previewPitches(p);
+                if (p && p.length > 0) {
+                  if (lastEnteredPitchRef) lastEnteredPitchRef.current = p[0];
+                  previewPlayer.previewPitches(p);
+                }
               }
               recordSample('Ctrl+ArrowUp');
             }
@@ -397,10 +408,13 @@ export function useAppKeyboard(params: UseAppKeyboardParams) {
               transposeSelection(-12);
               recordSample('Ctrl+ArrowDown');
             } else if (selectedEventId) {
-              if (mode === 'select') {
+              if (mode === 'select' || mode === 'input') {
                 const nextScore = executeCommand(transposeEvent(selectedEventId, -12));
                 const p = findEventPitches(nextScore, selectedEventId);
-                if (p) previewPlayer.previewPitches(p);
+                if (p && p.length > 0) {
+                  if (lastEnteredPitchRef) lastEnteredPitchRef.current = p[0];
+                  previewPlayer.previewPitches(p);
+                }
               }
               recordSample('Ctrl+ArrowDown');
             }
@@ -538,6 +552,7 @@ export function useAppKeyboard(params: UseAppKeyboardParams) {
     player,
     handleSave,
     handleOpenClick,
+    lastEnteredPitchRef,
     t,
   ]);
 }

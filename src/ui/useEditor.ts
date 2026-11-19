@@ -238,6 +238,8 @@ export function useEditor(initialScore?: Score) {
     currentMeasureNumber: selectionHook.currentMeasureNumber,
     rejectedError,
     triggerRejectedError,
+    cursorRef: inputHook.cursorRef,
+    lastEnteredPitchRef: inputHook.lastEnteredPitchRef,
     enterPitchAtCursor: inputHook.enterPitchAtCursor,
     enterPitchDirect: inputHook.enterPitchDirect,
     applyEventOverride: notationsHook.applyEventOverride,

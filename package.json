@@ -13,6 +13,7 @@
     "bench:layout": "node scripts/benchLayoutCost.mjs",
     "smoke": "npm run build && node scripts/smoke.mjs",
     "test:i18n": "node scripts/test_i18n_dom.mjs",
+    "test:voice:e2e": "node scripts/test_voice_entry_e2e.mjs",
     "typecheck": "tsc --noEmit",
     "licenses": "node scripts/checkLicenses.mjs",
     "spdx": "node scripts/checkSpdx.mjs --fix",

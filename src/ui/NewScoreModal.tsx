@@ -372,6 +372,7 @@ export const NewScoreModal: React.FC<NewScoreModalProps> = ({
           </button>
           <button
             type="button"
+            data-testid="btn-create-score"
             onClick={handleConfirmSubmit}
             style={{
               padding: '0.5rem 1.25rem',

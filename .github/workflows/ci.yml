@@ -35,6 +35,9 @@ jobs:
       - name: Run Playwright i18n DOM verification (Turkish & English, all dialogs)
         run: node scripts/test_i18n_dom.mjs
 
+      - name: Run Playwright voice entry E2E verification (T7, T8)
+        run: node scripts/test_voice_entry_e2e.mjs
+
       - name: Upload artifacts on failure
         if: failure()
         uses: actions/upload-artifact@v4

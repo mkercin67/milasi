@@ -118,5 +118,21 @@
     "testFile": "tests/ui/tab_voice_ui.test.tsx",
     "testName": "Tab in input mode changes the status bar voice text immediately",
     "status": "DONE"
+  },
+  {
+    "planItemId": "T7",
+    "description": "Playwright E2E keyboard entry of BWV 140/7 mm. 1-2 voices 1 and 2 in the real app, high-DPI screenshots, download interception, deep-equality against reduction.",
+    "codeLocation": "src/core/input.ts:enterEventCommand",
+    "testFile": "scripts/test_voice_entry_e2e.mjs",
+    "testName": "E2E keyboard entry of BWV 140/7 mm. 1-2 voices 1 and 2",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "T8",
+    "description": "E2E undo and redo of voice 2 entry restores previous state and updates status bar voice indicator.",
+    "codeLocation": "src/ui/useEditor.ts:useEditor",
+    "testFile": "scripts/test_voice_entry_e2e.mjs",
+    "testName": "E2E undo and redo of voice 2 entry restores previous state",
+    "status": "DONE"
   }
 ]
