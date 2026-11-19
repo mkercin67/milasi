@@ -23,9 +23,14 @@ function killProcessTree(proc) {
       execSync(`taskkill /pid ${proc.pid} /f /t`, { stdio: 'ignore' });
     } else {
       try {
+        execSync(`pkill -P ${proc.pid}`, { stdio: 'ignore' });
+      } catch {}
+      try {
         process.kill(-proc.pid, 'SIGKILL');
       } catch {
-        proc.kill('SIGKILL');
+        try {
+          proc.kill('SIGKILL');
+        } catch {}
       }
     }
   } catch {}
@@ -196,9 +201,11 @@ async function runI18nPlaywrightCheck() {
       serverUrl = 'http://localhost:4198';
     } else {
       console.log('No existing dev/preview server found; starting Vite preview on port 4198...');
+      const isWin = process.platform === 'win32';
       previewProcess = spawn('npx', ['vite', 'preview', '--port', '4198', '--strictPort'], {
-        shell: true,
-        stdio: 'pipe',
+        shell: isWin,
+        detached: !isWin,
+        stdio: 'ignore',
       });
       serverUrl = 'http://localhost:4198';
       await waitForServer(serverUrl);

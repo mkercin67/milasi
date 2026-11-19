@@ -245,6 +245,7 @@ describe('H1 Resilience: Injected Fault Recovery & Autosave History', () => {
 
   it('2. Injected fault in command pipeline: Command caught, history untouched, score retained', () => {
     const initialScore = createEmptyScore({ title: 'Original Piece', measures: 3 });
+    const initialScoreSnapshot = JSON.parse(JSON.stringify(initialScore));
     const history = new History(initialScore);
 
     const failingCommand: Command = {
@@ -256,6 +257,7 @@ describe('H1 Resilience: Injected Fault Recovery & Autosave History', () => {
 
     expect(() => history.do(failingCommand)).toThrow('Injected command failure');
     expect(history.score).toBe(initialScore);
+    expect(history.score).toEqual(initialScoreSnapshot);
     expect(history.canUndo()).toBe(false);
     expect(history.canRedo()).toBe(false);
   });

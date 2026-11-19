@@ -29,9 +29,14 @@ function killProcessTree(proc) {
       execSync(`taskkill /pid ${proc.pid} /f /t`, { stdio: 'ignore' });
     } else {
       try {
+        execSync(`pkill -P ${proc.pid}`, { stdio: 'ignore' });
+      } catch {}
+      try {
         process.kill(-proc.pid, 'SIGKILL');
       } catch {
-        proc.kill('SIGKILL');
+        try {
+          proc.kill('SIGKILL');
+        } catch {}
       }
     }
   } catch {}

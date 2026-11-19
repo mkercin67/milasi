@@ -2,7 +2,7 @@
 import { describe, expect, it } from 'vitest';
 import { createEmptyScore } from '../../src/core/factory';
 import { appendMeasure } from '../../src/core/input';
-import { deleteMeasure } from '../../src/core/structureCommands';
+import { deleteMeasure, insertMeasure } from '../../src/core/structureCommands';
 import { History } from '../../src/core/commands';
 
 describe('D2: Barline commands specification', () => {
@@ -89,6 +89,50 @@ describe('D2: Barline commands specification', () => {
     expect(afterAppend.measures[2].endBarline).toBe('final');
 
     // One undo restores both
+    const restored = history.undo();
+    expect(restored).not.toBeNull();
+    expect(restored!.measures).toHaveLength(2);
+    expect(restored!.measures[0].endBarline).toBe('single');
+    expect(restored!.measures[1].endBarline).toBe('final');
+  });
+
+  it('0.1 insertMeasure at end: changes previous last from final to single, new measure gets final', () => {
+    const score = createEmptyScore({ measures: 2 }); // m1 single, m2 final
+    expect(score.measures[0].endBarline).toBe('single');
+    expect(score.measures[1].endBarline).toBe('final');
+
+    // insertMeasure after index 1 (at end)
+    const cmd = insertMeasure(1);
+    const nextScore = cmd.apply(score);
+
+    expect(nextScore.measures).toHaveLength(3);
+    expect(nextScore.measures[0].endBarline).toBe('single');
+    expect(nextScore.measures[1].endBarline).toBe('single');
+    expect(nextScore.measures[2].endBarline).toBe('final');
+  });
+
+  it('0.1 insertMeasure in middle: changes no barline on existing measures', () => {
+    const score = createEmptyScore({ measures: 2 }); // m1 single, m2 final
+    // insertMeasure after index 0 (in middle)
+    const cmd = insertMeasure(0);
+    const nextScore = cmd.apply(score);
+
+    expect(nextScore.measures).toHaveLength(3);
+    expect(nextScore.measures[0].endBarline).toBe('single');
+    expect(nextScore.measures[1].endBarline).toBe('single');
+    expect(nextScore.measures[2].endBarline).toBe('final');
+  });
+
+  it('0.1 insertMeasure undo restores both barlines atomically in one step', () => {
+    const score = createEmptyScore({ measures: 2 }); // m1 single, m2 final
+    const history = new History(score);
+
+    history.do(insertMeasure(1));
+    const afterInsert = history.score;
+    expect(afterInsert.measures).toHaveLength(3);
+    expect(afterInsert.measures[1].endBarline).toBe('single');
+    expect(afterInsert.measures[2].endBarline).toBe('final');
+
     const restored = history.undo();
     expect(restored).not.toBeNull();
     expect(restored!.measures).toHaveLength(2);

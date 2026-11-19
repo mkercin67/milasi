@@ -141,4 +141,15 @@ describe('M6b UI Notations & useEditor integration', () => {
       expect(updatedEv1.articulations?.length ?? 0).toBe(0);
     }
   });
+
+  it('0.1 toolbar handler insertNewMeasure applies final barline rule at end of score', () => {
+    const { ed } = setupEditor(); // 2-measure score: m1 single, m2 final
+    // Call insertNewMeasure after last measure (index 1)
+    ed.insertNewMeasure(1);
+    const score = ed.getScore();
+    expect(score.measures).toHaveLength(3);
+    expect(score.measures[0].endBarline).toBe('single');
+    expect(score.measures[1].endBarline).toBe('single');
+    expect(score.measures[2].endBarline).toBe('final');
+  });
 });

@@ -27,6 +27,7 @@ const TARGET_TESTS = {
   'T2-leading-rests': 'tests/core/voice_creation_entry.test.ts',
   'T4-undo-voice-creation': 'tests/core/voice_creation_entry.test.ts',
   'T4-sort-voices': 'tests/core/voice_property.test.ts',
+  'MARQUEE-v1-fallback': 'tests/ui/marquee_voice_selection.test.ts',
 };
 
 const targetTest = process.argv[3] || TARGET_TESTS[id];

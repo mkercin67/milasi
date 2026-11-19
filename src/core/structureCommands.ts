@@ -191,7 +191,15 @@ export function insertMeasure(index?: number): Command {
         const timeSig = refMeasure ? { ...refMeasure.timeSig } : { num: 4, den: 4 };
         const keySig = refMeasure ? refMeasure.keySig : 0;
 
-        const newMDef = createMeasure(timeSig, keySig);
+        const isAtEnd = targetIdx >= draft.measures.length;
+        const lastMDef = draft.measures[draft.measures.length - 1];
+        const hadFinal = isAtEnd && lastMDef?.endBarline === 'final';
+        if (hadFinal && lastMDef) {
+          lastMDef.endBarline = 'single';
+        }
+
+        const newEndBarline: BarlineType = hadFinal ? 'final' : 'single';
+        const newMDef = createMeasure(timeSig, keySig, undefined, undefined, newEndBarline);
         draft.measures.splice(targetIdx, 0, newMDef);
 
         const mDuration = measureTicks(timeSig);

@@ -12,9 +12,14 @@ function killProcessTree(proc) {
       execSync(`taskkill /pid ${proc.pid} /f /t`, { stdio: 'ignore' });
     } else {
       try {
+        execSync(`pkill -P ${proc.pid}`, { stdio: 'ignore' });
+      } catch {}
+      try {
         process.kill(-proc.pid, 'SIGKILL');
       } catch {
-        proc.kill('SIGKILL');
+        try {
+          proc.kill('SIGKILL');
+        } catch {}
       }
     }
   } catch {}
@@ -67,9 +72,11 @@ async function runSmokeTest() {
   const baseUrl = `http://localhost:${port}`;
   console.log(`Starting Vite preview server for smoke test on port ${port}...`);
 
+  const isWin = process.platform === 'win32';
   const preview = spawn('npx', ['vite', 'preview', '--port', String(port), '--strictPort'], {
-    shell: true,
-    stdio: 'pipe',
+    shell: isWin,
+    detached: !isWin,
+    stdio: 'ignore',
   });
 
   let browser;
