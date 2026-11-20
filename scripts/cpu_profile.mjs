@@ -60,6 +60,13 @@ function waitForServer(url, timeoutMs = 15000) {
 }
 
 async function runCpuProfile() {
+  const args = process.argv.slice(2);
+  let stateName = 'benchmark_200_full';
+  const stateIdx = args.indexOf('--state');
+  if (stateIdx !== -1 && args[stateIdx + 1]) {
+    stateName = args[stateIdx + 1];
+  }
+
   const port = 4199;
   const baseUrl = `http://localhost:${port}`;
   console.log(`Starting Vite preview server on port ${port}...`);
@@ -84,8 +91,8 @@ async function runCpuProfile() {
 
     const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
 
-    console.log('Navigating to benchmark_200_full...');
-    await page.goto(`${baseUrl}/?state=benchmark_200_full`, { waitUntil: 'networkidle' });
+    console.log(`Navigating to ${stateName}...`);
+    await page.goto(`${baseUrl}/?state=${stateName}`, { waitUntil: 'networkidle' });
     await page.waitForSelector('.score-event-group', { timeout: 15000 });
 
     // Select first note
@@ -212,14 +219,12 @@ async function runCpuProfile() {
     // 7. SVG DOM commit
     // 8. harness overhead
     const buckets = {
-      'command apply (immer)': 0,
+      'buildSchedule': 0,
       'validateScore': 0,
-      'layoutScore': 0,
-      'selection/derived state': 0,
-      'React render (list components)': 0,
-      'autosave/serialisation': 0,
-      'SVG DOM commit': 0,
-      'harness overhead': 0,
+      'Immer produce': 0,
+      'layout': 0,
+      'React commit': 0,
+      'GC': 0,
       'other/idle': 0,
     };
 
@@ -235,29 +240,61 @@ async function runCpuProfile() {
       const allNames = chainNames.join(' ');
       const allUrls = chainUrls.join(' ');
 
-      if (allNames.includes('validateScore') || allNames.includes('validateMeasure')) {
+      if (
+        allNames.includes('(garbage collector)') ||
+        allNames.includes('GCTracer') ||
+        allNames.includes('MajorGC') ||
+        allNames.includes('MinorGC')
+      ) {
+        return 'GC';
+      }
+      if (
+        allNames.includes('buildSchedule') ||
+        allNames.includes('scheduleMeasure') ||
+        allNames.includes('PlaybackSchedule')
+      ) {
+        return 'buildSchedule';
+      }
+      if (
+        allNames.includes('validateScore') ||
+        allNames.includes('validateMeasure') ||
+        allNames.includes('Lp')
+      ) {
         return 'validateScore';
       }
-      if (allNames.includes('produce') || allNames.includes('createDraft') || allNames.includes('finalize') || allNames.includes('shallowCopy') || allNames.includes('immer')) {
-        return 'command apply (immer)';
+      if (
+        allNames.includes('produce') ||
+        allNames.includes('createDraft') ||
+        allNames.includes('finalize') ||
+        allNames.includes('shallowCopy') ||
+        allNames.includes('immer')
+      ) {
+        return 'Immer produce';
       }
-      if (allNames.includes('layoutScore') || allNames.includes('computeBeamGroupGeometry') || allNames.includes('calculateNextColumnInterval') || allNames.includes('formatMeasureWidths')) {
-        return 'layoutScore';
+      if (
+        allNames.includes('layoutScore') ||
+        allNames.includes('computeBeamGroupGeometry') ||
+        allNames.includes('calculateNextColumnInterval') ||
+        allNames.includes('formatMeasureWidths') ||
+        allNames.includes('ti') ||
+        allNames.includes('y2') ||
+        allNames.includes('v2') ||
+        allNames.includes('Ec') ||
+        allNames.includes('al') ||
+        allNames.includes('jf')
+      ) {
+        return 'layout';
       }
-      if (allNames.includes('saveScore') || allNames.includes('serializeScore') || allNames.includes('JSON.stringify') || allNames.includes('autosave')) {
-        return 'autosave/serialisation';
-      }
-      if (allNames.includes('commitMutationEffects') || allNames.includes('commitRoot') || allNames.includes('setAttribute') || allNames.includes('insertBefore') || allNames.includes('removeChild') || allNames.includes('appendChild')) {
-        return 'SVG DOM commit';
-      }
-      if (allNames.includes('findActiveEvent') || allNames.includes('getActivePitches') || allNames.includes('useActivePlaybackPitches') || allNames.includes('selectedEventIds')) {
-        return 'selection/derived state';
-      }
-      if (allNames.includes('renderWithHooks') || allNames.includes('beginWork') || allNames.includes('performUnitOfWork') || allNames.includes('EditorShell') || allNames.includes('ScoreView') || allNames.includes('SystemView') || allNames.includes('Toolbar') || allNames.includes('StatusBar') || allNames.includes('ScoreSvgLayers')) {
-        return 'React render (list components)';
-      }
-      if (allNames.includes('sleep') || allNames.includes('keyboard.press') || allNames.includes('UtilityScript') || allNames.includes('evaluate')) {
-        return 'harness overhead';
+      if (
+        allNames.includes('commitMutationEffects') ||
+        allNames.includes('commitRoot') ||
+        allNames.includes('setAttribute') ||
+        allNames.includes('insertBefore') ||
+        allNames.includes('removeChild') ||
+        allNames.includes('appendChild') ||
+        allNames.includes('commitWork')
+      ) {
+        return 'React commit';
       }
       return 'other/idle';
     }
@@ -292,7 +329,7 @@ async function runCpuProfile() {
     fs.mkdirSync(outDir, { recursive: true });
     const profileSummary = {
       timestamp: new Date().toISOString(),
-      scoreMeasures: 200,
+      state: stateName,
       edits: editCount,
       samplingIntervalUs: 100,
       totalSampledMs: Number((totalSampledUs / 1000).toFixed(2)),
@@ -300,7 +337,7 @@ async function runCpuProfile() {
       buckets: bucketResults,
     };
 
-    const outPath = path.join(outDir, 'profile-200-cpu.json');
+    const outPath = path.join(outDir, `profile-${stateName}-cpu.json`);
     fs.writeFileSync(outPath, JSON.stringify(profileSummary, null, 2));
     console.log(`Saved CPU profile summary to ${outPath}`);
   } finally {
