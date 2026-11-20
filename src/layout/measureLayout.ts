@@ -56,6 +56,9 @@ import { layoutMeasureLyrics, LyricLayoutEntry } from './lyricLayout';
  */
 export function isStaffMeasurePolyphonic(staffMeasure: StaffMeasure | undefined): boolean {
   if (!staffMeasure || !staffMeasure.voices) return false;
+  if (staffMeasure.voices.some((v) => v.voiceIndex > 1 && v.events.length > 0)) {
+    return true;
+  }
   let soundingCount = 0;
   for (let i = 0; i < staffMeasure.voices.length; i++) {
     const v = staffMeasure.voices[i];
