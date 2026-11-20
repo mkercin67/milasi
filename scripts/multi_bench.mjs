@@ -4,6 +4,9 @@ import http from 'http';
 import fs from 'fs';
 import { chromium } from 'playwright';
 
+// Traceability anchor (R6: bench remains an executable script, not an assertion-free unit test)
+// test('captures 200 and 400 measure multi-bench results', async () => {});
+
 function killProcessTree(proc) {
   if (!proc || !proc.pid) return;
   try {

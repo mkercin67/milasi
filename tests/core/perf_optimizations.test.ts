@@ -220,12 +220,8 @@ describe('Perf-2: Performance Optimizations (P1–P4)', () => {
     });
   });
 
-  describe('P3 & T5: Documentation & Benchmark verification', () => {
+  describe('P3: Documentation & Invariants verification', () => {
     it('P3: validates Immer setAutoFreeze decision and immutability invariants', () => {
-      expect(true).toBe(true);
-    });
-
-    it('T5: verifies bench report captures 200 and 400 measure multi-bench results', () => {
       expect(true).toBe(true);
     });
   });

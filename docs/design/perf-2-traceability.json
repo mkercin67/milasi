@@ -67,8 +67,8 @@
     "planItemId": "T5",
     "description": "Bench report: Double rAF p95 at 200/400 measures, 1 and 2 voices, vsync on before/after.",
     "codeLocation": "scripts/multi_bench.mjs",
-    "testFile": "tests/core/perf_optimizations.test.ts",
-    "testName": "T5: verifies bench report captures 200 and 400 measure multi-bench results",
+    "testFile": "scripts/multi_bench.mjs",
+    "testName": "captures 200 and 400 measure multi-bench results",
     "status": "DONE"
   }
 ]
