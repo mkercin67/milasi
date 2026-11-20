@@ -6,6 +6,7 @@ import { chromium } from 'playwright';
 
 // Traceability anchor (R6: bench remains an executable script, not an assertion-free unit test)
 // test('captures 200 and 400 measure multi-bench results', async () => {});
+// test('captures grand-staff 100 and 200 measure multi-bench results', async () => {});
 
 function killProcessTree(proc) {
   if (!proc || !proc.pid) return;
@@ -143,6 +144,7 @@ async function main() {
   const args = process.argv.slice(2);
   const disableVsync = args.includes('--no-vsync');
   const isPoly = args.includes('--poly');
+  const isGrand = args.includes('--grand');
   const runsCount = 5;
   const editsPerRun = 50;
 
@@ -173,6 +175,46 @@ async function main() {
     });
 
     const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+
+    if (isGrand) {
+      // M7b-2 gate: grand staff (2 staves) against the single-staff reference at the same length.
+      const scenarios = [
+        ['single-100', 'benchmark_100_full'],
+        ['grand-100', 'benchmark_100_grand'],
+        ['grand-200', 'benchmark_200_grand'],
+      ];
+      const grandSummary = { timestamp: new Date().toISOString(), vsyncDisabled: disableVsync, scenarios: {} };
+      for (const [label, stateName] of scenarios) {
+        console.log(`\n--- ${label} (${runsCount} runs x ${editsPerRun} edits) ---`);
+        const runs = [];
+        for (let r = 0; r < runsCount; r++) {
+          process.stdout.write(`  Run ${r + 1}/${runsCount}... `);
+          const res = await runScenario(page, stateName, editsPerRun);
+          runs.push({
+            median: Number(res.doubleRaf.median.toFixed(2)),
+            p95: Number(res.doubleRaf.p95.toFixed(2)),
+            max: Number(res.doubleRaf.max.toFixed(2)),
+            appPerfP95: res.appPerf ? Number(res.appPerf.p95.toFixed(2)) : null,
+          });
+          console.log(`Median: ${runs[r].median} ms, p95: ${runs[r].p95} ms, Max: ${runs[r].max} ms`);
+        }
+        const p95s = runs.map((x) => x.p95);
+        grandSummary.scenarios[label] = {
+          runs,
+          p95Avg: Number((p95s.reduce((a, b) => a + b, 0) / p95s.length).toFixed(2)),
+          p95Max: Math.max(...p95s),
+        };
+      }
+      await browser.close();
+      console.log('\n=== GRAND SUMMARY (double-rAF p95, ms) ===');
+      for (const [label, v] of Object.entries(grandSummary.scenarios)) {
+        console.log(`${label}: p95 avg ${v.p95Avg}, worst run ${v.p95Max}`);
+      }
+      const gOut = `docs/review/perf/multi-bench-grand-${disableVsync ? 'no-vsync' : 'vsync'}.json`;
+      fs.writeFileSync(gOut, JSON.stringify(grandSummary, null, 2));
+      console.log(`Saved summary to ${gOut}`);
+      return;
+    }
 
     const results64 = [];
     if (!isPoly) {

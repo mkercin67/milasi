@@ -7,8 +7,9 @@ import {
   createPitch,
   createRest,
   createScore,
+  newId,
 } from '../core/factory';
-import { Score } from '../core/model';
+import { PitchStep, Score, Staff } from '../core/model';
 
 /**
  * Builds a comprehensive test score exercising all Milestone 2 layout requirements.
@@ -269,6 +270,31 @@ export function createBenchmarkFullFeaturedScore(measureCount: number = 64): Sco
     }
   }
 
+  return score;
+}
+
+/**
+ * Grand-staff variant of the full-featured benchmark: the same treble staff plus a bass staff of
+ * eighth-note runs, in a brace group (Milestone 7b-2 end-to-end performance gate).
+ */
+export function createBenchmarkGrandStaffScore(measureCount: number = 100): Score {
+  const score = createBenchmarkFullFeaturedScore(measureCount);
+  const part = score.parts[0];
+  const bass: Staff = { id: newId(), clef: { sign: 'F', line: 4 }, measures: {}, slurs: [] };
+  const steps: PitchStep[] = ['C', 'E', 'G', 'E', 'C', 'G', 'E', 'G'];
+  for (const mDef of score.measures) {
+    bass.measures[mDef.id] = {
+      voices: [
+        {
+          id: newId(),
+          voiceIndex: 1,
+          events: steps.map((s) => createNote({ pitches: [createPitch(s, 3, 0)], baseType: 'eighth' })),
+        },
+      ],
+    };
+  }
+  part.staves.push(bass);
+  score.groups = [{ id: newId(), partIds: [part.id], bracket: 'brace', barlineSpan: 'through' }];
   return score;
 }
 

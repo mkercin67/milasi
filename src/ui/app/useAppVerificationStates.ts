@@ -7,6 +7,7 @@ import {
   buildSampleScore,
   createBenchmark64Score,
   createBenchmarkFullFeaturedScore,
+  createBenchmarkGrandStaffScore,
   createBenchmarkPolyphonicScore,
 } from '../Demo';
 import { buildSutIctimScore } from '../sutIctimScore';
@@ -99,6 +100,18 @@ export function useAppVerificationStates({
       }
       if (stateParam === 'benchmark_400_full') {
         const bScore = createBenchmarkFullFeaturedScore(400);
+        resetScore(bScore);
+        setMode('select');
+        return;
+      }
+      if (stateParam === 'benchmark_100_grand' || stateParam === 'benchmark_200_grand') {
+        const bScore = createBenchmarkGrandStaffScore(stateParam === 'benchmark_100_grand' ? 100 : 200);
+        resetScore(bScore);
+        setMode('select');
+        return;
+      }
+      if (stateParam === 'benchmark_100_full') {
+        const bScore = createBenchmarkFullFeaturedScore(100);
         resetScore(bScore);
         setMode('select');
         return;
