@@ -10,6 +10,7 @@ import { EditorMode } from './keymap';
 import { ToolbarFileHistory } from './toolbar/ToolbarFileHistory';
 import { ToolbarPlayback } from './toolbar/ToolbarPlayback';
 import { ToolbarModePalette } from './toolbar/ToolbarModePalette';
+import { ToolbarVoiceSelector } from './toolbar/ToolbarVoiceSelector';
 import { ToolbarNotations } from './toolbar/ToolbarNotations';
 import { ToolbarSettings } from './toolbar/ToolbarSettings';
 
@@ -37,6 +38,10 @@ export interface ToolbarProps {
   onToggleDot: () => void;
   isRestSelected: boolean;
   onToggleRest: () => void;
+  // Multi-voice selector (M7a-4)
+  activeVoiceIndex?: 1 | 2 | 3 | 4;
+  onSelectVoice?: (voiceIndex: 1 | 2 | 3 | 4) => void;
+  voicesWithContent?: Set<number> | number[];
   // Playback transport controls
   isPlaying?: boolean;
   isPaused?: boolean;
@@ -96,6 +101,9 @@ export const Toolbar: React.FC<ToolbarProps> = ({
   onToggleDot,
   isRestSelected,
   onToggleRest,
+  activeVoiceIndex = 1,
+  onSelectVoice,
+  voicesWithContent = [],
   isPlaying = false,
   isPaused = false,
   onTogglePlay,
@@ -208,6 +216,14 @@ export const Toolbar: React.FC<ToolbarProps> = ({
           onToggleDot={onToggleDot}
           isRestSelected={isRestSelected}
           onToggleRest={onToggleRest}
+          handleButtonClick={handleButtonClick}
+        />
+
+        <ToolbarVoiceSelector
+          mode={mode}
+          activeVoiceIndex={activeVoiceIndex}
+          onSelectVoice={onSelectVoice ?? (() => {})}
+          voicesWithContent={voicesWithContent}
           handleButtonClick={handleButtonClick}
         />
 

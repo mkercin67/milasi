@@ -249,6 +249,16 @@ async function runI18nPlaywrightCheck() {
   let trBrandPass = await checkNoScoreForgeInDom(page, 'Turkish Main View');
   if (!trBrandPass) allPassed = false;
 
+  // Check toolbar voice buttons in Turkish
+  const v1TextTr = await page.textContent('[data-voice-btn="1"]');
+  const v2TextTr = await page.textContent('[data-voice-btn="2"]');
+  if (!v1TextTr?.includes('Ses 1') || !v2TextTr?.includes('Ses 2')) {
+    console.error(`FAILED (T6): Turkish toolbar voice buttons missing "Ses 1" / "Ses 2". Found: "${v1TextTr}", "${v2TextTr}"`);
+    allPassed = false;
+  } else {
+    console.log('PASS (T6): Turkish toolbar voice buttons show "Ses 1" and "Ses 2".');
+  }
+
   // test('Turkish status bar shows "Ses 2" after entering input mode and pressing Tab')
   // T6: Enter input mode (KeyN), press Tab, and verify status bar shows "Ses 2" in Turkish
   await page.keyboard.press('KeyN');
@@ -317,6 +327,16 @@ async function runI18nPlaywrightCheck() {
   if (!enPass) allPassed = false;
   let enBrandPass = await checkNoScoreForgeInDom(page, 'English Main View');
   if (!enBrandPass) allPassed = false;
+
+  // Check toolbar voice buttons in English
+  const v1TextEn = await page.textContent('[data-voice-btn="1"]');
+  const v2TextEn = await page.textContent('[data-voice-btn="2"]');
+  if (!v1TextEn?.includes('Voice 1') || !v2TextEn?.includes('Voice 2')) {
+    console.error(`FAILED (T6): English toolbar voice buttons missing "Voice 1" / "Voice 2". Found: "${v1TextEn}", "${v2TextEn}"`);
+    allPassed = false;
+  } else {
+    console.log('PASS (T6): English toolbar voice buttons show "Voice 1" and "Voice 2".');
+  }
 
   // T6: Enter input mode (KeyN), press Tab, and verify status bar shows "Voice 2" in English
   await page.keyboard.press('KeyN');
