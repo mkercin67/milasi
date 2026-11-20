@@ -398,9 +398,9 @@ export function useEditorInput({
   );
 
   const setCursorToMeasure = useCallback(
-    (measureId: string, tick = 0) => {
-      const sId = firstStaff(score)?.id;
-      const staff = firstStaff(score);
+    (measureId: string, tick = 0, staffId?: string) => {
+      const staff = (staffId ? findStaff(score, staffId) : undefined) ?? firstStaff(score);
+      const sId = staff?.id;
       const sm = staff?.measures[measureId];
       const voice1 = sm?.voices.find((v) => v.voiceIndex === 1);
       if (sId && voice1) {

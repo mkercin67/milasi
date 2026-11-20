@@ -9,10 +9,10 @@ import {
   staffPositionToY,
   yToStaffPosition,
 } from '../../layout/pitch';
-import { xToEntryCursor } from '../../layout/pointerCursor';
+import { resolvePointerStaff, xToEntryCursor } from '../../layout/pointerCursor';
 import { computeCursorPosition } from '../../layout/cursor';
 import { GhostNoteData } from './types';
-import { firstStaff } from '../../core/staffLookup';
+import { findStaff, firstStaff } from '../../core/staffLookup';
 
 export function useGhostNote(
   score: Score,
@@ -34,33 +34,32 @@ export function useGhostNote(
     const relX = (clientX - containerRectRef.current.left) / staffSpacePx;
     const relY = (clientY - containerRectRef.current.top) / staffSpacePx;
 
-    let targetSys = layout.systems[0] ?? null;
-    let minDist = Infinity;
-    for (const sys of layout.systems) {
-      const dist = Math.abs(relY - (sys.y + 2));
-      if (dist < minDist) {
-        minDist = dist;
-        targetSys = sys;
-      }
-    }
-    if (!targetSys) return null;
+    // System first, then the nearest staff by y inside it (grand staff, M7b-3b).
+    const hit = resolvePointerStaff(layout, relY);
+    if (!hit) return null;
+    const targetSys = hit.system;
     return {
       relX,
       relY,
       targetSys,
+      staffId: hit.staffId,
       sysRelX: relX - targetSys.x,
+      /** Relative to the top line of the first staff of the system (hit testing, system items). */
       sysRelY: relY - targetSys.y,
+      /** Relative to the top line of the staff under the pointer (pitch, staff-area test). */
+      staffRelY: relY - targetSys.y - hit.staffOffset,
+      staffOffset: hit.staffOffset,
     };
   };
 
   const isInsideStaffArea = (
-    coords: { relX: number; targetSys: { x: number; width: number }; sysRelY: number }
+    coords: { relX: number; targetSys: { x: number; width: number }; staffRelY: number }
   ) => {
     return (
       coords.relX >= coords.targetSys.x &&
       coords.relX <= coords.targetSys.x + coords.targetSys.width &&
-      coords.sysRelY >= -2.5 &&
-      coords.sysRelY <= 6.5
+      coords.staffRelY >= -2.5 &&
+      coords.staffRelY <= 6.5
     );
   };
 
@@ -78,10 +77,10 @@ export function useGhostNote(
       return;
     }
 
-    const { targetSys, sysRelX: systemRelX, sysRelY: systemRelY } = coords;
-    const clef = firstStaff(score)?.clef ?? { sign: 'G', line: 2 };
+    const { targetSys, sysRelX: systemRelX, staffRelY: systemRelY, staffId, staffOffset } = coords;
+    const clef = (findStaff(score, staffId) ?? firstStaff(score))?.clef ?? { sign: 'G', line: 2 };
     const activeVoiceIndex = cursor?.voiceIndex ?? 1;
-    const targetCursor = xToEntryCursor(layout, score, targetSys.index, systemRelX, activeVoiceIndex);
+    const targetCursor = xToEntryCursor(layout, score, targetSys.index, systemRelX, activeVoiceIndex, staffId);
     const mDef = score.measures.find((m) => m.id === targetCursor?.measureId) ?? score.measures[0];
     const keySig = mDef?.keySig ?? 0;
 
@@ -129,7 +128,7 @@ export function useGhostNote(
     setGhostNote({
       pitch: hoveredPitch,
       sysIndex: targetSys.index,
-      sysY: targetSys.y,
+      sysY: targetSys.y + staffOffset,
       x: ghostX,
       y: snappedY,
       glyph,
@@ -142,9 +141,9 @@ export function useGhostNote(
     const coords = getPointerSystemCoords(clientX, clientY);
     if (!coords || !isInsideStaffArea(coords)) return;
 
-    const { targetSys, sysRelX, sysRelY } = coords;
-    const clef = firstStaff(score)?.clef ?? { sign: 'G', line: 2 };
-    const clickedCursor = xToEntryCursor(layout, score, targetSys.index, sysRelX, cursor?.voiceIndex ?? 1);
+    const { targetSys, sysRelX, staffRelY: sysRelY, staffId } = coords;
+    const clef = (findStaff(score, staffId) ?? firstStaff(score))?.clef ?? { sign: 'G', line: 2 };
+    const clickedCursor = xToEntryCursor(layout, score, targetSys.index, sysRelX, cursor?.voiceIndex ?? 1, staffId);
     const mDef = score.measures.find((m) => m.id === clickedCursor?.measureId) ?? score.measures[0];
     const keySig = mDef?.keySig ?? 0;
     const clickedPitch = yToStaffPosition(clef, sysRelY, keySig);

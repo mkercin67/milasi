@@ -2,7 +2,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { BaseDurationType, NoteEvent, Pitch, Score } from '../../core/model';
 import { LayoutResult } from '../../layout/types';
-import { RangeSelection } from '../../core/selection';
+import { RangeSelection, findEventContext } from '../../core/selection';
 import { EditorMode, isCancelDragEvent } from '../keymap';
 import { ScoreCursor } from '../../core/input';
 import {
@@ -23,7 +23,13 @@ import { findEventLocation } from './types';
 import { renderManualDragFeedback, renderPitchDragFeedback } from './scoreDragFeedback';
 import { useScoreMarquee } from './useScoreMarquee';
 import { useGhostNote } from './useGhostNote';
-import { firstStaff } from '../../core/staffLookup';
+import { findStaff, firstStaff } from '../../core/staffLookup';
+
+/** Clef of the staff that holds the event (pitch maths of a drag must use it, not staff 0's). */
+function clefOfEvent(score: Score, eventId: string) {
+  const staff = findStaff(score, findEventContext(score, eventId)?.staffId) ?? firstStaff(score);
+  return staff?.clef ?? { sign: 'G' as const, line: 2 };
+}
 
 export interface UseScoreInteractionsParams {
   score: Score;
@@ -44,7 +50,7 @@ export interface UseScoreInteractionsParams {
   onSelectEvent: (eventId: string | null) => void;
   onSelectRange?: (range: RangeSelection | null) => void;
   onExtendSelectionTo?: (targetEventId: string) => void;
-  onSelectMeasure?: (measureId: string, tick?: number) => void;
+  onSelectMeasure?: (measureId: string, tick?: number, staffId?: string) => void;
   onEnterPitchDirect?: (pitch: Pitch, customCursor?: ScoreCursor) => void;
   onApplyOverride?: (eventId: string, dx: number, dy: number, accumulate?: boolean) => void;
   onChangePitch?: (eventId: string, pitches: Pitch[]) => void;
@@ -228,9 +234,9 @@ export function useScoreInteractions({
     suppressNextClickRef.current = false;
     hasDraggedRef.current = false;
 
-    if (containerRectRef.current.width === 0) {
-      updateContainerRect();
-    }
+    // The surrounding UI can shift (status bar, toolbar) without any resize/scroll event, so the
+    // cached rect is refreshed on every press and move; a stale rect offsets hit tests and ghost notes.
+    updateContainerRect();
 
     if (mode === 'input') {
       inputPressRef.current = {
@@ -290,7 +296,7 @@ export function useScoreInteractions({
       return;
     }
 
-    const clef = firstStaff(score)?.clef ?? { sign: 'G', line: 2 };
+    const clef = clefOfEvent(score, hit.eventId);
     const originalPitches = isNote ? (loc.event as NoteEvent).pitches : [];
     const startStepPositions = originalPitches.map((p) => pitchToStaffPosition(p, clef));
 
@@ -314,6 +320,7 @@ export function useScoreInteractions({
   };
 
   const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    updateContainerRect();
     // 0. Marquee drag tracking in select mode
     if (
       handleMarqueeMove(
@@ -365,7 +372,7 @@ export function useScoreInteractions({
     const { dragMode, eventId, isNote, isRest, measureId, startStepPositions } = dragStateRef.current;
 
     if (dragMode === 'select' && isNote && startStepPositions.length > 0) {
-      const clef = firstStaff(score)?.clef ?? { sign: 'G', line: 2 };
+      const clef = clefOfEvent(score, eventId);
       const mDef = score.measures.find((m) => m.id === measureId) ?? score.measures[0];
       const keySig = mDef?.keySig ?? 0;
 
@@ -535,9 +542,7 @@ export function useScoreInteractions({
       return;
     }
 
-    if (containerRectRef.current.width === 0) {
-      updateContainerRect();
-    }
+    updateContainerRect();
     const coords = getPointerSystemCoords(e.clientX, e.clientY);
     const hit = coords ? hitTestEvent(layout, coords.targetSys.index, coords.sysRelX, coords.sysRelY) : null;
 
@@ -551,9 +556,9 @@ export function useScoreInteractions({
     }
 
     if (mode === 'select' && coords && onSelectMeasure) {
-      const found = xToCursor(layout, coords.targetSys.index, coords.sysRelX, score);
+      const found = xToCursor(layout, coords.targetSys.index, coords.sysRelX, score, { staffId: coords.staffId });
       if (found) {
-        onSelectMeasure(found.measureId, found.tick);
+        onSelectMeasure(found.measureId, found.tick, coords.staffId);
       }
     }
     onSelectEvent(null);

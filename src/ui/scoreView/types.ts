@@ -17,7 +17,7 @@ export interface ScoreViewProps {
   mode?: EditorMode;
   activeDuration?: BaseDurationType;
   activeDots?: number;
-  onSelectMeasure?: (measureId: string, tick?: number) => void;
+  onSelectMeasure?: (measureId: string, tick?: number, staffId?: string) => void;
   onEnterPitchDirect?: (pitch: Pitch, customCursor?: ScoreCursor) => void;
   onApplyOverride?: (eventId: string, dx: number, dy: number, accumulate?: boolean) => void;
   onChangePitch?: (eventId: string, pitches: Pitch[]) => void;

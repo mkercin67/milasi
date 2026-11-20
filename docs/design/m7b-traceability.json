@@ -122,7 +122,10 @@
   {
     "planItemId": "B8",
     "description": "Mouse resolves nearest staff by y (M7b-3).",
-    "status": "PLANNED"
+    "codeLocation": "src/layout/pointerCursor.ts:resolvePointerStaff",
+    "testFile": "tests/layout/pointer_staff.test.ts",
+    "testName": "P1: resolvePointerStaff picks the nearest staff by y, the midpoint tie goes to the upper staff",
+    "status": "DONE"
   },
   {
     "planItemId": "B9",
@@ -150,8 +153,11 @@
   },
   {
     "planItemId": "B11",
-    "description": "Selection and clipboard per staff (M7b-3).",
-    "status": "PLANNED"
+    "description": "Selection (click, marquee) per staff under the pointer (M7b-3b); keyboard selection per staff was done in 3a.",
+    "codeLocation": "src/ui/scoreView/useScoreMarquee.ts:handleMarqueeUp",
+    "testFile": "scripts/test_grand_staff_mouse_e2e.mjs",
+    "testName": "marquee, select, delete, undo and redo each work inside the staff under the pointer",
+    "status": "DONE"
   },
   {
     "planItemId": "B12",

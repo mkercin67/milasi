@@ -3,7 +3,7 @@ import { useRef, useState } from 'react';
 import { Score, ScoreEvent } from '../../core/model';
 import { LayoutResult } from '../../layout/types';
 import { RangeSelection, findEventContext } from '../../core/selection';
-import { firstStaff } from '../../core/staffLookup';
+import { findStaff, firstStaff } from '../../core/staffLookup';
 
 export function useScoreMarquee(
   score: Score,
@@ -78,7 +78,11 @@ export function useScoreMarquee(
           }
         }
 
-        const staff = firstStaff(score);
+        // The marquee selects inside ONE staff: the staff of the first event it touches (S5).
+        const firstHitId = intersectingEventIds.values().next().value as string | undefined;
+        const staff =
+          (firstHitId ? findStaff(score, findEventContext(score, firstHitId)?.staffId) : undefined) ??
+          firstStaff(score);
         if (staff && intersectingEventIds.size > 0) {
           const orderedEvents: ScoreEvent[] = [];
           for (const mDef of score.measures) {

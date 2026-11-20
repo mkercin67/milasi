@@ -3,11 +3,12 @@
  * Pointer drag thresholds, snapping, axis-lock, and cursor positioning helpers.
  */
 
-import { LayoutResult } from './types';
+import { LayoutResult, LayoutSystem } from './types';
 import { Score } from '../core/model';
 import { measureTicks as timeSigTicks } from '../core/time';
 import type { ScoreCursor } from '../core/input';
-import { firstStaff } from '../core/staffLookup';
+import { findStaff, firstPartStaves, firstStaff } from '../core/staffLookup';
+import { staffOffsetInSystem } from './systemStaves';
 
 /**
  * Checks if a pointer movement exceeds the drag initiation threshold (default 4px).
@@ -67,7 +68,8 @@ export function applyAxisLock(
  * @param systemIndex - Index of the target system.
  * @param x - Pointer X coordinate in staff spaces relative to the system left.
  * @param score - Optional score model (falls back to layout.score).
- * @param options - `allVoices: true` resolves the tick from the event columns of ALL voices in
+ * @param options - `staffId` picks the staff whose events are used (default: the first staff).
+ *   `allVoices: true` resolves the tick from the event columns of ALL voices in
  *   the measure (used by note entry, where the active voice may be empty or rest-only). Without
  *   it the legacy behaviour (voice 1 only) is kept for selection clicks.
  * @returns Cursor position { measureId, tick }, or null if system not found.
@@ -77,7 +79,7 @@ export function xToCursor(
   systemIndex: number,
   x: number,
   score?: Score,
-  options?: { allVoices?: boolean }
+  options?: { allVoices?: boolean; staffId?: string }
 ): { measureId: string; tick: number } | null {
   const system = layout.systems[systemIndex];
   if (!system) return null;
@@ -145,7 +147,7 @@ export function xToCursor(
   }
 
   // 2. Identify events and ticks in the target measure
-  const staff = firstStaff(effectiveScore);
+  const staff = (options?.staffId ? findStaff(effectiveScore, options.staffId) : undefined) ?? firstStaff(effectiveScore);
   const sm = staff?.measures[targetMeasure.measureId];
   const voice = sm?.voices.find((v) => v.voiceIndex === 1);
   const mDef = effectiveScore.measures.find((m) => m.id === targetMeasure.measureId);
@@ -154,7 +156,7 @@ export function xToCursor(
   if (options?.allVoices) {
     return {
       measureId: targetMeasure.measureId,
-      tick: columnFromAllVoices(system, sm?.voices ?? [], x).tick,
+      tick: columnFromAllVoices(system, voicesOfMeasure(effectiveScore, targetMeasure.measureId), x).tick,
     };
   }
 
@@ -194,6 +196,14 @@ export function xToCursor(
 
   // Beyond all events: end-of-measure tick
   return { measureId: targetMeasure.measureId, tick: measureTicks };
+}
+
+/**
+ * Every voice of every staff of the first part in one measure. The staves of a grand staff share
+ * one column grid (M7b-1), so the beat columns of ALL staves decide where a click lands.
+ */
+function voicesOfMeasure(score: Score, measureId: string): VoiceLike[] {
+  return firstPartStaves(score).flatMap((st) => st.measures[measureId]?.voices ?? []);
 }
 
 type VoiceLike = { events: Array<{ id: string; kind: string; duration: number }> };
@@ -251,14 +261,50 @@ export function xToEntryCursor(
   score: Score,
   systemIndex: number,
   x: number,
-  voiceIndex: ScoreCursor['voiceIndex']
+  voiceIndex: ScoreCursor['voiceIndex'],
+  targetStaffId?: string
 ): (ScoreCursor & { columnX: number | null }) | null {
-  const staffId = firstStaff(score)?.id;
+  const staffId = ((targetStaffId ? findStaff(score, targetStaffId) : undefined) ?? firstStaff(score))?.id;
   if (!staffId) return null;
-  const found = xToCursor(layout, systemIndex, x, score, { allVoices: true });
+  const found = xToCursor(layout, systemIndex, x, score, { allVoices: true, staffId });
   if (!found) return null;
-  const sm = firstStaff(score)!.measures[found.measureId];
   const system = layout.systems[systemIndex];
-  const columnX = system ? columnFromAllVoices(system, sm?.voices ?? [], x).columnX : null;
+  const columnX = system
+    ? columnFromAllVoices(system, voicesOfMeasure(score, found.measureId), x).columnX
+    : null;
   return { staffId, voiceIndex, measureId: found.measureId, tick: found.tick, columnX };
+}
+
+/** A pointer position resolved to a system and, on multi-staff systems, to one of its staves. */
+export interface PointerStaff {
+  system: LayoutSystem;
+  /** Undefined on single-staff systems (legacy behaviour, staff 0 implied). */
+  staffId?: string;
+  /** Offset of the staff's top line from the system's top line, in staff spaces. */
+  staffOffset: number;
+}
+
+/**
+ * Resolves the pointer height (staff spaces, same origin as `LayoutSystem.y`) to a system and the
+ * NEAREST staff by distance to the staff centre: on a grand staff the boundary between the two
+ * staves is the midpoint of their centres (an exact tie goes to the upper staff).
+ * Single-staff systems yield no staffId. Returns null for a layout without systems.
+ */
+export function resolvePointerStaff(layout: LayoutResult, relY: number): PointerStaff | null {
+  let best: PointerStaff | null = null;
+  let bestDist = Infinity;
+  for (const system of layout.systems) {
+    const multi = system.staves.length > 1;
+    const candidates = multi
+      ? system.staves.map((st) => ({ staffId: st.id as string | undefined, offset: staffOffsetInSystem(system, st.id) }))
+      : [{ staffId: undefined as string | undefined, offset: 0 }];
+    for (const c of candidates) {
+      const dist = Math.abs(relY - (system.y + c.offset + 2));
+      if (dist < bestDist) {
+        bestDist = dist;
+        best = { system, staffId: c.staffId, staffOffset: c.offset };
+      }
+    }
+  }
+  return best;
 }
