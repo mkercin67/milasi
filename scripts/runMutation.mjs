@@ -48,6 +48,35 @@ console.log(`Patch: ${patchPath}`);
 console.log(`Target test: ${targetTest}`);
 console.log(`Creating isolated worktree at ${tempWorktreePath}...`);
 
+// Drop registrations of worktrees whose directories no longer exist (killed earlier runs).
+try {
+  execSync('git worktree prune', { stdio: 'pipe' });
+} catch {
+  // ignore
+}
+
+function cleanupWorktree() {
+  console.log('Cleaning up isolated worktree...');
+  try {
+    const wtNodeModules = path.join(tempWorktreePath, 'node_modules');
+    if (fs.existsSync(wtNodeModules)) {
+      if (process.platform === 'win32') {
+        execSync(`cmd /c rmdir "${wtNodeModules}"`, { stdio: 'pipe' });
+      } else {
+        fs.unlinkSync(wtNodeModules);
+      }
+    }
+  } catch (e) {
+    // ignore
+  }
+
+  try {
+    execSync(`git worktree remove --force "${tempWorktreePath}"`, { stdio: 'pipe' });
+  } catch (e) {
+    // ignore
+  }
+}
+
 let exitCode = 0;
 try {
   execSync(`git worktree add --detach "${tempWorktreePath}" HEAD`, { stdio: 'pipe' });
@@ -94,6 +123,8 @@ try {
     if (err.stderr) {
       console.error(err.stderr.toString().trim());
     }
+    // process.exit would skip the finally block and leak the worktree, so clean up first.
+    cleanupWorktree();
     process.exit(2);
   }
 
@@ -139,25 +170,7 @@ try {
     console.log(`\n=== MUTATION CHECK ${id}: PASS (Failure caught cleanly) ===\n`);
   }
 } finally {
-  console.log('Cleaning up isolated worktree...');
-  try {
-    const wtNodeModules = path.join(tempWorktreePath, 'node_modules');
-    if (fs.existsSync(wtNodeModules)) {
-      if (process.platform === 'win32') {
-        execSync(`cmd /c rmdir "${wtNodeModules}"`, { stdio: 'pipe' });
-      } else {
-        fs.unlinkSync(wtNodeModules);
-      }
-    }
-  } catch (e) {
-    // ignore
-  }
-
-  try {
-    execSync(`git worktree remove --force "${tempWorktreePath}"`, { stdio: 'pipe' });
-  } catch (e) {
-    // ignore
-  }
+  cleanupWorktree();
 }
 
 process.exit(exitCode);

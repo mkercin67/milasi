@@ -15,6 +15,9 @@ describe('runMutation.mjs Patch Application Behavior (F4)', () => {
 +NON_EXISTENT_CONTENT_FOR_TESTING_THAT_FAILS_GIT_APPLY
 `;
     (fs as any).writeFileSync(invalidPatchPath, invalidDiff);
+    const leftovers = () =>
+      (fs as any).readdirSync('.').filter((n: string) => n.startsWith('.wt-mutation-INVALID-TEST-PATCH-'));
+    const before = leftovers().length;
 
     try {
       let threw = false;
@@ -32,6 +35,8 @@ describe('runMutation.mjs Patch Application Behavior (F4)', () => {
       expect(threw).toBe(true);
       expect(output).toContain('ERROR: PATCH DID NOT APPLY');
       expect(output).toContain('INVALID-TEST-PATCH.patch failed to apply to isolated worktree');
+      // The failed run must not leave its temporary worktree directory behind.
+      expect(leftovers().length).toBe(before);
     } finally {
       if ((fs as any).existsSync(invalidPatchPath)) {
         (fs as any).unlinkSync(invalidPatchPath);
