@@ -1,0 +1,29 @@
+Keys handled in input mode (as of commit 88e4484):
+-------------------------------------------------------------------------------------------------------------------------
+Key / Combo            | Action ID               | Handler / Target (file:line)                    | Description
+-------------------------------------------------------------------------------------------------------------------------
+N                      | toggle-note-input       | keymap.ts:251, useAppKeyboard.ts:283            | Exits note input mode (toggles back to select mode)
+Escape                 | exit-note-input         | keymap.ts:243, useAppKeyboard.ts:286            | Exits note input mode to select mode
+Tab                    | next-voice              | keymap.ts:384, useAppKeyboard.ts:326            | Cycles to next voice (voiceIndex + 1, wraps 1-4)
+Shift+Tab              | prev-voice              | keymap.ts:384, useAppKeyboard.ts:329            | Cycles to previous voice (voiceIndex - 1, wraps 1-4)
+ArrowLeft              | select-prev             | keymap.ts:426, useAppKeyboard.ts:343            | Moves cursor to previous event start (moveCursorDirection('prev'))
+ArrowRight             | select-next             | keymap.ts:427, useAppKeyboard.ts:351            | Moves cursor to next event start (moveCursorDirection('next'))
+ArrowUp                | transpose-semitone-up   | keymap.ts:428, useAppKeyboard.ts:358            | Transposes selected event up 1 semitone
+ArrowDown              | transpose-semitone-down | keymap.ts:429, useAppKeyboard.ts:374            | Transposes selected event down 1 semitone
+Ctrl+ArrowUp           | transpose-octave-up     | keymap.ts:207, useAppKeyboard.ts:390            | Transposes selected event up 1 octave
+Ctrl+ArrowDown         | transpose-octave-down   | keymap.ts:210, useAppKeyboard.ts:397            | Transposes selected event down 1 octave
+Delete / Backspace     | convert-to-rest         | keymap.ts:430, useAppKeyboard.ts:428            | Converts note at cursor/selection to rest
+Digit2..Digit7         | set-duration-half..64th | keymap.ts:421, useAppKeyboard.ts:457            | Sets active input duration (2: half, 3: whole, 4: 8th, 5: quarter, 6: 16th, 7: 32nd)
+Period (.)             | toggle-dot              | keymap.ts:271, useAppKeyboard.ts:441            | Toggles dotted note duration
+Digit0                 | enter-rest              | keymap.ts:416, useAppKeyboard.ts:437            | Enters rest of current active duration at cursor tick
+KeyC..KeyB (C,D,E,F,G,A,B)| enter-pitch          | keymap.ts:411, useAppKeyboard.ts:449            | Enters note pitch at cursor tick in active voice
+KeyT                   | toggle-tie              | keymap.ts:403, useAppKeyboard.ts:411            | Toggles tie on selected/cursor event
+KeyS                   | toggle-slur             | keymap.ts:404, useAppKeyboard.ts:414            | Toggles slur
+KeyX                   | reset-accidental        | keymap.ts:405, useAppKeyboard.ts:417            | Resets accidental to natural/auto
+KeyJ                   | toggle-staccato         | keymap.ts:406, useAppKeyboard.ts:420            | Toggles staccato articulation
+KeyK                   | toggle-tenuto           | keymap.ts:407, useAppKeyboard.ts:422            | Toggles tenuto articulation
+KeyL                   | toggle-accent           | keymap.ts:408, useAppKeyboard.ts:424            | Toggles accent articulation
+Home                   | (unmapped / null)       | keymap.ts:440                                   | Unmapped in input mode (returns null, falls through to browser scroll)
+End                    | (unmapped / null)       | keymap.ts:440                                   | Unmapped in input mode (returns null, falls through to browser scroll)
+Enter                  | (unmapped / null)       | keymap.ts:440                                   | Unmapped in input mode (returns null)
+-------------------------------------------------------------------------------------------------------------------------

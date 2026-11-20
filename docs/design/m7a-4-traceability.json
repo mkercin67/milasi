@@ -1,0 +1,178 @@
+[
+  {
+    "planItemId": "U1",
+    "description": "Left/Right move cursor to previous/next event start in active voice, stopping at first event and append position, preventDefault only in input mode.",
+    "codeLocation": "src/core/input.ts:moveCursor",
+    "testFile": "tests/core/voice_entry_navigation.test.ts",
+    "testName": "T4: Left and Right navigation on missing voice stops at first event and append position without creating events",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "U2",
+    "description": "Home and End move cursor to start (tick 0) and end boundary (tick mLength) of the current measure in active voice.",
+    "codeLocation": "src/core/input.ts:moveCursorToMeasureBoundary",
+    "testFile": "tests/core/voice_entry_navigation.test.ts",
+    "testName": "T1: keyboard-only two-voice measure enters quarters in voice 1, Home, Tab, then quarters in voice 2",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "U3",
+    "description": "Toolbar buttons 'Ses 1'..'Ses 4' visible in all modes, clickable in input mode, with content dots for voices with notes in active measure.",
+    "codeLocation": "src/ui/toolbar/ToolbarVoiceSelector.tsx",
+    "testFile": "tests/ui/voice_toolbar_buttons.test.tsx",
+    "testName": "T6: toolbar voice buttons match Tab behavior, highlight active voice, show content dots, and support tr/en",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "U4",
+    "description": "Input mode status bar shows duration, measure, beat position, and voice index with contextual shortcut hints in Turkish and English.",
+    "codeLocation": "src/ui/StatusBar.tsx",
+    "testFile": "tests/ui/status_bar_beat.test.tsx",
+    "testName": "T12: status bar displays beat position for 4/4, 3/4, and compound 6/8 in Turkish and English",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "U5",
+    "description": "Undo and redo restore cursor voiceIndex and tick for every new key navigation path.",
+    "codeLocation": "src/ui/editor/useEditorInput.ts",
+    "testFile": "tests/core/voice_entry_navigation.test.ts",
+    "testName": "T5: undo and redo restore cursor voiceIndex and tick for every new key path",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "U6",
+    "description": "Out of scope items recorded: chord entry, voice crossing, rest consolidation.",
+    "codeLocation": "docs/design/m7a-4-voice-entry-ergonomics.md:U6",
+    "testFile": "tests/core/voice_entry_navigation.test.ts",
+    "testName": "T1: keyboard-only two-voice measure enters quarters in voice 1, Home, Tab, then quarters in voice 2",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "U7",
+    "description": "Per-voice caret indicator with numeric label (1..4) and status chip with WCAG contrast >= 4.5:1 against white and distinct from blue.",
+    "codeLocation": "src/ui/voiceColors.ts",
+    "testFile": "tests/ui/voice_colors_contrast.test.ts",
+    "testName": "T11: per-voice caret label equals active voice, chip matches, WCAG contrast >= 4.5:1, distinct from selection blue",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "U8",
+    "description": "Beat guide with tick marks and beat numbers, pending slot band, coincident event line, zero layout passes on cursor move.",
+    "codeLocation": "src/ui/scoreView/ScoreSvgLayers.tsx",
+    "testFile": "tests/ui/beat_guide.test.tsx",
+    "testName": "T9: beat guide aligns tick marks with event columns for 4/4 and 6/8 and moving cursor 100 times causes zero layout runs",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "U9",
+    "description": "Discoverability tip banner on first entry to input mode with localStorage wrapped in try/catch.",
+    "codeLocation": "src/ui/TwoVoiceTipBanner.tsx",
+    "testFile": "tests/ui/input_tip.test.tsx",
+    "testName": "T13: two-voice entry tip is shown on first input mode entry, remembered on dismiss, and survives localStorage throwing",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "T1",
+    "description": "Keyboard-only two-voice measure: N, quarters in voice 1, Home, Tab, quarters in voice 2. Mutation M: Home moves to measure end.",
+    "codeLocation": "src/core/input.ts",
+    "testFile": "tests/core/voice_entry_navigation.test.ts",
+    "testName": "T1: keyboard-only two-voice measure enters quarters in voice 1, Home, Tab, then quarters in voice 2",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "T2",
+    "description": "Reverse order: Tab first for voice 2 notes, Home, Shift+Tab for voice 1 notes.",
+    "codeLocation": "src/core/input.ts",
+    "testFile": "tests/core/voice_entry_navigation.test.ts",
+    "testName": "T2: reverse order enters voice 2 notes first, Home, Shift+Tab, then voice 1 notes",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "T3",
+    "description": "Mid-measure Left Left back to beat 1, Tab, enter voice 2 notes. Mutation M: Left moves by one tick.",
+    "codeLocation": "src/core/input.ts",
+    "testFile": "tests/core/voice_entry_navigation.test.ts",
+    "testName": "T3: mid-measure navigation with Left arrow moves back to beat 1 without touching existing notes",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "T4",
+    "description": "Left/Right on missing voice stops at first event and append position, never creating events.",
+    "codeLocation": "src/core/input.ts",
+    "testFile": "tests/core/voice_entry_navigation.test.ts",
+    "testName": "T4: Left and Right navigation on missing voice stops at first event and append position without creating events",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "T5",
+    "description": "Undo and redo restore cursor voiceIndex and tick across navigation key paths.",
+    "codeLocation": "src/ui/editor/useEditorInput.ts",
+    "testFile": "tests/core/voice_entry_navigation.test.ts",
+    "testName": "T5: undo and redo restore cursor voiceIndex and tick for every new key path",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "T6",
+    "description": "Toolbar voice buttons reflect Tab behavior, highlight active voice, show content dots, and tr/en labels.",
+    "codeLocation": "src/ui/toolbar/ToolbarVoiceSelector.tsx",
+    "testFile": "tests/ui/voice_toolbar_buttons.test.tsx",
+    "testName": "T6: toolbar voice buttons match Tab behavior, highlight active voice, show content dots, and support tr/en",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "T7",
+    "description": "Playwright E2E verifies keyboard two-voice measure, DOM glyph counts, no toast in screenshot, exported score.",
+    "codeLocation": "scripts/test_two_voice_keyboard_e2e.mjs",
+    "testFile": "tests/ui/two_voice_keyboard_e2e_spec.test.ts",
+    "testName": "T7: Playwright E2E verifies keyboard-only two-voice measure with real keystrokes and export verification",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "T8",
+    "description": "Existing test suite and snapshots remain intact.",
+    "codeLocation": "tests/render/gallery_snapshots.test.ts",
+    "testFile": "tests/render/gallery_snapshots.test.ts",
+    "testName": "T8: existing test suite, Playwright suites, and gallery snapshots remain unchanged and green",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "T9",
+    "description": "Beat guide aligns tick marks, monotonic interpolation, 6/8 pulses, 0 layout runs on 100 cursor moves. Mutation M: forces layout run.",
+    "codeLocation": "src/ui/scoreView/ScoreSvgLayers.tsx",
+    "testFile": "tests/ui/beat_guide.test.tsx",
+    "testName": "T9: beat guide aligns tick marks with event columns for 4/4 and 6/8 and moving cursor 100 times causes zero layout runs",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "T10",
+    "description": "Pending-slot band spans cursor tick to duration, updates on duration change, clamped at measure end, voice color.",
+    "codeLocation": "src/ui/scoreView/ScoreSvgLayers.tsx",
+    "testFile": "tests/ui/beat_guide.test.tsx",
+    "testName": "T10: pending-slot band spans cursor tick to duration, updates on duration change, clamps at measure end, and uses voice color",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "T11",
+    "description": "Voice color contrast >= 4.5:1 against white, distinct from blue, caret label matches voice.",
+    "codeLocation": "src/ui/voiceColors.ts",
+    "testFile": "tests/ui/voice_colors_contrast.test.ts",
+    "testName": "T11: per-voice caret label equals active voice, chip matches, WCAG contrast >= 4.5:1, distinct from selection blue",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "T12",
+    "description": "Status bar displays beat position for 4/4, 3/4, 6/8 in Turkish and English.",
+    "codeLocation": "src/ui/StatusBar.tsx",
+    "testFile": "tests/ui/status_bar_beat.test.tsx",
+    "testName": "T12: status bar displays beat position for 4/4, 3/4, and compound 6/8 in Turkish and English",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "T13",
+    "description": "Two-voice tip shown on first entry, dismissal remembered, survives storage errors.",
+    "codeLocation": "src/ui/TwoVoiceTipBanner.tsx",
+    "testFile": "tests/ui/input_tip.test.tsx",
+    "testName": "T13: two-voice entry tip is shown on first input mode entry, remembered on dismiss, and survives localStorage throwing",
+    "status": "DONE"
+  }
+]

@@ -241,8 +241,8 @@ Detailed in `docs/design/perf-2.md`:
     1. Unchanged measure item arrays (`PlacedItem[]`) in `layoutMeasure` / `layoutScore`.
     2. Transient `ValidationProblem[]` objects instantiated across 400 measures on every keystroke during synchronous `validateScore`.
     3. Transient audio preview gain/oscillator nodes during cursor pitch audition.
-  - GC per edit before optimization: **1.36 ms / edit** (in 400-measure full-featured score).
-  - GC per edit after deferring validation bursts and reusing unchanged measure layout arrays: **~0.59 ms / edit**.
+  - GC per edit before optimization: **1.36 ms / edit** (in 400-measure full-featured score baseline, `1.0_cpu_profile_400_full.txt`).
+  - *Retraction regarding after-GC claim:* The '~0.59 ms / edit' figure previously mentioned was inadvertently taken from the baseline 400-measure two-voice polyphonic profile (Table 3.2: 0.59 ms), rather than a separate post-optimization V8 CPU profile run of 400m mono full. While the multi-bench confirmed a 5.5 ms reduction in 400m mono p95 Double rAF (from 46.6 ms down to 41.1 ms) by removing synchronous validation allocations and reusing layout arrays, an isolated post-optimization CPU profile specifically measuring GC self-time was not recorded. Therefore, the specific numeric claim of ~0.59 ms GC after-figure for mono 400 is retracted.
 - **C4: `buildSchedule` = 0.00 ms in Profiler:**
   - `buildSchedule` was not invoked during the 50 single-note pitch edits (`ArrowUp`/`ArrowDown`) in the idle editor because playback was not running.
   - In M7a-2a, playback schedule compilation was benchmarked explicitly under playback preparation, which measured ~1.2 ms.
