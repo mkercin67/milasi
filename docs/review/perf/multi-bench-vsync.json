@@ -1,163 +1,163 @@
 {
-  "timestamp": "2026-11-19T12:38:41.783Z",
+  "timestamp": "2026-11-20T00:01:02.382Z",
   "vsyncDisabled": false,
   "scenario64": {
     "runs": [
       {
         "run": 1,
-        "median": 10.7,
-        "p95": 18.1,
-        "max": 18.5,
+        "median": 11,
+        "p95": 17.4,
+        "max": 17.6,
         "eventTimingMed": 16,
         "eventTimingP95": 16
       },
       {
         "run": 2,
-        "median": 10.2,
-        "p95": 17.5,
-        "max": 18.4,
+        "median": 10.3,
+        "p95": 16.7,
+        "max": 17.3,
         "eventTimingMed": 16,
         "eventTimingP95": 16
       },
       {
         "run": 3,
-        "median": 10,
-        "p95": 18.2,
-        "max": 18.4,
+        "median": 11.4,
+        "p95": 17.9,
+        "max": 20,
         "eventTimingMed": 16,
-        "eventTimingP95": 16
+        "eventTimingP95": 24
       },
       {
         "run": 4,
-        "median": 10.7,
-        "p95": 17.7,
-        "max": 18.3,
+        "median": 9.6,
+        "p95": 17,
+        "max": 18.5,
         "eventTimingMed": 16,
-        "eventTimingP95": 16
+        "eventTimingP95": 24
       },
       {
         "run": 5,
-        "median": 9.9,
-        "p95": 17.6,
-        "max": 18.1,
+        "median": 10.1,
+        "p95": 17.2,
+        "max": 17.6,
         "eventTimingMed": 16,
         "eventTimingP95": 16
       }
     ],
     "summary": {
-      "medianAvg": 10.3,
-      "medianSpread": 0.8,
-      "p95Avg": 17.82,
-      "p95Min": 17.5,
-      "p95Max": 18.2,
-      "p95Spread": 0.7,
-      "maxOverall": 18.5
+      "medianAvg": 10.48,
+      "medianSpread": 1.8,
+      "p95Avg": 17.24,
+      "p95Min": 16.7,
+      "p95Max": 17.9,
+      "p95Spread": 1.2,
+      "maxOverall": 20
     }
   },
   "scenario200": {
     "runs": [
       {
         "run": 1,
-        "median": 10.5,
-        "p95": 17.9,
-        "max": 18.5,
+        "median": 13.7,
+        "p95": 18.9,
+        "max": 24.2,
         "eventTimingMed": 16,
-        "eventTimingP95": 16
+        "eventTimingP95": 24
       },
       {
         "run": 2,
-        "median": 10.5,
-        "p95": 17.3,
-        "max": 17.5,
+        "median": 13.4,
+        "p95": 17.8,
+        "max": 20.6,
         "eventTimingMed": 16,
-        "eventTimingP95": 16
+        "eventTimingP95": 24
       },
       {
         "run": 3,
-        "median": 11.1,
-        "p95": 17.4,
-        "max": 18.1,
+        "median": 13.1,
+        "p95": 17.1,
+        "max": 19.2,
         "eventTimingMed": 16,
-        "eventTimingP95": 16
+        "eventTimingP95": 24
       },
       {
         "run": 4,
-        "median": 10.6,
-        "p95": 18.2,
-        "max": 18.3,
+        "median": 13.2,
+        "p95": 18.3,
+        "max": 19.7,
         "eventTimingMed": 16,
         "eventTimingP95": 24
       },
       {
         "run": 5,
-        "median": 11.1,
-        "p95": 17.4,
-        "max": 17.5,
+        "median": 13.6,
+        "p95": 18.2,
+        "max": 23.7,
         "eventTimingMed": 16,
-        "eventTimingP95": 16
+        "eventTimingP95": 24
       }
     ],
     "summary": {
-      "medianAvg": 10.76,
+      "medianAvg": 13.4,
       "medianSpread": 0.6,
-      "p95Avg": 17.64,
-      "p95Min": 17.3,
-      "p95Max": 18.2,
-      "p95Spread": 0.9,
-      "maxOverall": 18.5
+      "p95Avg": 18.06,
+      "p95Min": 17.1,
+      "p95Max": 18.9,
+      "p95Spread": 1.8,
+      "maxOverall": 24.2
     }
   },
   "scenario400": {
     "runs": [
       {
         "run": 1,
-        "median": 11.3,
-        "p95": 17.4,
-        "max": 18.5,
-        "eventTimingMed": null,
-        "eventTimingP95": null
+        "median": 33.5,
+        "p95": 40.6,
+        "max": 51.3,
+        "eventTimingMed": 40,
+        "eventTimingP95": 56
       },
       {
         "run": 2,
-        "median": 9.1,
-        "p95": 17.3,
-        "max": 18.1,
-        "eventTimingMed": null,
-        "eventTimingP95": null
+        "median": 33.3,
+        "p95": 41.1,
+        "max": 41.7,
+        "eventTimingMed": 40,
+        "eventTimingP95": 48
       },
       {
         "run": 3,
-        "median": 10.8,
-        "p95": 17.2,
-        "max": 19.5,
-        "eventTimingMed": null,
-        "eventTimingP95": null
+        "median": 33.6,
+        "p95": 40,
+        "max": 41.9,
+        "eventTimingMed": 40,
+        "eventTimingP95": 48
       },
       {
         "run": 4,
-        "median": 9.1,
-        "p95": 16.4,
-        "max": 18.7,
-        "eventTimingMed": null,
-        "eventTimingP95": null
+        "median": 34.8,
+        "p95": 42.6,
+        "max": 43.9,
+        "eventTimingMed": 40,
+        "eventTimingP95": 48
       },
       {
         "run": 5,
-        "median": 9.7,
-        "p95": 18,
-        "max": 18.9,
-        "eventTimingMed": null,
-        "eventTimingP95": null
+        "median": 35,
+        "p95": 41.9,
+        "max": 45.4,
+        "eventTimingMed": 40,
+        "eventTimingP95": 48
       }
     ],
     "summary": {
-      "medianAvg": 10,
-      "medianSpread": 2.2,
-      "p95Avg": 17.26,
-      "p95Min": 16.4,
-      "p95Max": 18,
-      "p95Spread": 1.6,
-      "maxOverall": 19.5
+      "medianAvg": 34.04,
+      "medianSpread": 1.7,
+      "p95Avg": 41.24,
+      "p95Min": 40,
+      "p95Max": 42.6,
+      "p95Spread": 2.6,
+      "maxOverall": 51.3
     }
   }
 }

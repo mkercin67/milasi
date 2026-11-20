@@ -1,0 +1,271 @@
+{
+  "timestamp": "2026-11-19T23:49:11.695Z",
+  "state": "benchmark_400_full",
+  "edits": 50,
+  "samplingIntervalUs": 100,
+  "totalSampledMs": 7321.75,
+  "top25Functions": [
+    {
+      "rank": 1,
+      "functionName": "(idle)",
+      "file": "(native/v8)",
+      "line": -1,
+      "selfTimeTotalMs": 4935.93,
+      "selfTimePerEditMs": 98.719,
+      "percentOfTotal": 67.4
+    },
+    {
+      "rank": 2,
+      "functionName": "Ec",
+      "file": "index-D3toL00N.js",
+      "line": 39,
+      "selfTimeTotalMs": 567.45,
+      "selfTimePerEditMs": 11.349,
+      "percentOfTotal": 7.8
+    },
+    {
+      "rank": 3,
+      "functionName": "y2",
+      "file": "index-D3toL00N.js",
+      "line": 39,
+      "selfTimeTotalMs": 534.64,
+      "selfTimePerEditMs": 10.693,
+      "percentOfTotal": 7.3
+    },
+    {
+      "rank": 4,
+      "functionName": "(program)",
+      "file": "(native/v8)",
+      "line": -1,
+      "selfTimeTotalMs": 295.36,
+      "selfTimePerEditMs": 5.907,
+      "percentOfTotal": 4
+    },
+    {
+      "rank": 5,
+      "functionName": "(anonymous)",
+      "file": "index-D3toL00N.js",
+      "line": 39,
+      "selfTimeTotalMs": 292.8,
+      "selfTimePerEditMs": 5.856,
+      "percentOfTotal": 4
+    },
+    {
+      "rank": 6,
+      "functionName": "Lp",
+      "file": "index-D3toL00N.js",
+      "line": 39,
+      "selfTimeTotalMs": 135.45,
+      "selfTimePerEditMs": 2.709,
+      "percentOfTotal": 1.8
+    },
+    {
+      "rank": 7,
+      "functionName": "(garbage collector)",
+      "file": "(native/v8)",
+      "line": -1,
+      "selfTimeTotalMs": 68.23,
+      "selfTimePerEditMs": 1.365,
+      "percentOfTotal": 0.9
+    },
+    {
+      "rank": 8,
+      "functionName": "v2",
+      "file": "index-D3toL00N.js",
+      "line": 39,
+      "selfTimeTotalMs": 56.99,
+      "selfTimePerEditMs": 1.14,
+      "percentOfTotal": 0.8
+    },
+    {
+      "rank": 9,
+      "functionName": "(anonymous)",
+      "file": "index-D3toL00N.js",
+      "line": 329,
+      "selfTimeTotalMs": 34.23,
+      "selfTimePerEditMs": 0.685,
+      "percentOfTotal": 0.5
+    },
+    {
+      "rank": 10,
+      "functionName": "Cc",
+      "file": "index-D3toL00N.js",
+      "line": 39,
+      "selfTimeTotalMs": 31.54,
+      "selfTimePerEditMs": 0.631,
+      "percentOfTotal": 0.4
+    },
+    {
+      "rank": 11,
+      "functionName": "al",
+      "file": "index-D3toL00N.js",
+      "line": 39,
+      "selfTimeTotalMs": 22.07,
+      "selfTimePerEditMs": 0.441,
+      "percentOfTotal": 0.3
+    },
+    {
+      "rank": 12,
+      "functionName": "U0e",
+      "file": "index-D3toL00N.js",
+      "line": 39,
+      "selfTimeTotalMs": 21.33,
+      "selfTimePerEditMs": 0.427,
+      "percentOfTotal": 0.3
+    },
+    {
+      "rank": 13,
+      "functionName": "ti",
+      "file": "index-D3toL00N.js",
+      "line": 39,
+      "selfTimeTotalMs": 16.92,
+      "selfTimePerEditMs": 0.338,
+      "percentOfTotal": 0.2
+    },
+    {
+      "rank": 14,
+      "functionName": "wc",
+      "file": "index-D3toL00N.js",
+      "line": 39,
+      "selfTimeTotalMs": 14.5,
+      "selfTimePerEditMs": 0.29,
+      "percentOfTotal": 0.2
+    },
+    {
+      "rank": 15,
+      "functionName": "ud",
+      "file": "index-D3toL00N.js",
+      "line": 39,
+      "selfTimeTotalMs": 13.97,
+      "selfTimePerEditMs": 0.279,
+      "percentOfTotal": 0.2
+    },
+    {
+      "rank": 16,
+      "functionName": "pd",
+      "file": "index-D3toL00N.js",
+      "line": 39,
+      "selfTimeTotalMs": 13.81,
+      "selfTimePerEditMs": 0.276,
+      "percentOfTotal": 0.2
+    },
+    {
+      "rank": 17,
+      "functionName": "pi",
+      "file": "index-D3toL00N.js",
+      "line": 134,
+      "selfTimeTotalMs": 11,
+      "selfTimePerEditMs": 0.22,
+      "percentOfTotal": 0.2
+    },
+    {
+      "rank": 18,
+      "functionName": "Eu",
+      "file": "index-D3toL00N.js",
+      "line": 115,
+      "selfTimeTotalMs": 10.88,
+      "selfTimePerEditMs": 0.218,
+      "percentOfTotal": 0.1
+    },
+    {
+      "rank": 19,
+      "functionName": "setAttribute",
+      "file": "(native/v8)",
+      "line": -1,
+      "selfTimeTotalMs": 10.63,
+      "selfTimePerEditMs": 0.213,
+      "percentOfTotal": 0.1
+    },
+    {
+      "rank": 20,
+      "functionName": "connect",
+      "file": "(native/v8)",
+      "line": -1,
+      "selfTimeTotalMs": 10.37,
+      "selfTimePerEditMs": 0.207,
+      "percentOfTotal": 0.1
+    },
+    {
+      "rank": 21,
+      "functionName": "cm",
+      "file": "index-D3toL00N.js",
+      "line": 16,
+      "selfTimeTotalMs": 10.11,
+      "selfTimePerEditMs": 0.202,
+      "percentOfTotal": 0.1
+    },
+    {
+      "rank": 22,
+      "functionName": "jf",
+      "file": "index-D3toL00N.js",
+      "line": 39,
+      "selfTimeTotalMs": 9.31,
+      "selfTimePerEditMs": 0.186,
+      "percentOfTotal": 0.1
+    },
+    {
+      "rank": 23,
+      "functionName": "createGain",
+      "file": "(native/v8)",
+      "line": -1,
+      "selfTimeTotalMs": 8.63,
+      "selfTimePerEditMs": 0.173,
+      "percentOfTotal": 0.1
+    },
+    {
+      "rank": 24,
+      "functionName": "randomUUID",
+      "file": "(native/v8)",
+      "line": -1,
+      "selfTimeTotalMs": 7.45,
+      "selfTimePerEditMs": 0.149,
+      "percentOfTotal": 0.1
+    },
+    {
+      "rank": 25,
+      "functionName": "(anonymous)",
+      "file": "index-D3toL00N.js",
+      "line": 115,
+      "selfTimeTotalMs": 6.37,
+      "selfTimePerEditMs": 0.127,
+      "percentOfTotal": 0.1
+    }
+  ],
+  "buckets": {
+    "buildSchedule": {
+      "totalMs": 0,
+      "msPerEdit": 0,
+      "percent": 0
+    },
+    "validateScore": {
+      "totalMs": 209.39,
+      "msPerEdit": 4.19,
+      "percent": 2.9
+    },
+    "Immer produce": {
+      "totalMs": 31.38,
+      "msPerEdit": 0.63,
+      "percent": 0.4
+    },
+    "layout": {
+      "totalMs": 1441.31,
+      "msPerEdit": 28.83,
+      "percent": 19.7
+    },
+    "React commit": {
+      "totalMs": 10.63,
+      "msPerEdit": 0.21,
+      "percent": 0.1
+    },
+    "GC": {
+      "totalMs": 68.23,
+      "msPerEdit": 1.36,
+      "percent": 0.9
+    },
+    "other/idle": {
+      "totalMs": 5560.81,
+      "msPerEdit": 111.22,
+      "percent": 75.9
+    }
+  }
+}

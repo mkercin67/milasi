@@ -1,0 +1,74 @@
+[
+  {
+    "planItemId": "P1",
+    "description": "buildSchedule is lazy, memoized by score ref, rebuilt on Play or max once per frame during playback; scheduleBuildCounter instruments builds.",
+    "codeLocation": "src/playback/schedule.ts:buildSchedule",
+    "testFile": "tests/core/perf_optimizations.test.ts",
+    "testName": "T1: 100 edits without playing keep scheduleBuildCounter at 0; Play builds exactly 1; live edit during playback throttles to <= 1 rebuild per frame",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "P2",
+    "description": "validateScore per edit is deferred (100 ms debounce, max wait 250 ms), cancelled on next edit; Load, undo, redo, Save and Play validate synchronously; validateRunCounter instruments runs.",
+    "codeLocation": "src/core/validate.ts:validateScore",
+    "testFile": "tests/core/perf_optimizations.test.ts",
+    "testName": "T2: 100 rapid edits defer validateScore (validateRunCounter <= 2); Save, Play, load, undo, redo validate synchronously",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "P3",
+    "description": "Immer setAutoFreeze(false) measured on 400 measures (<0.25 ms savings < 0.5 ms threshold); freezing retained for safety.",
+    "codeLocation": "docs/design/perf-2.md:P3",
+    "testFile": "tests/core/perf_optimizations.test.ts",
+    "testName": "P3: validates Immer setAutoFreeze decision and immutability invariants",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "P4",
+    "description": "GC top 3 allocation sources profiled; low-risk reductions implemented by reusing layout arrays in per-measure and system layout cache.",
+    "codeLocation": "src/layout/layoutScore.ts:layoutScore",
+    "testFile": "tests/core/perf_optimizations.test.ts",
+    "testName": "T4: layout cache reuses cached item arrays across edits of unchanged measures",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "T1",
+    "description": "100 edits without playing keep scheduleBuildCounter at 0; Play builds exactly 1; edit during playback <= 1 rebuild/frame; lazy schedule deep-equals fresh build.",
+    "codeLocation": "src/playback/player.ts:Player",
+    "testFile": "tests/core/perf_optimizations.test.ts",
+    "testName": "T1: 100 edits without playing keep scheduleBuildCounter at 0; Play builds exactly 1; live edit during playback throttles to <= 1 rebuild per frame",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "T2",
+    "description": "100 rapid edits defer validateScore (validateRunCounter <= 2); Save, Play, load, undo, redo validate synchronously.",
+    "codeLocation": "src/ui/app/useAppValidation.ts:useAppValidation",
+    "testFile": "tests/core/perf_optimizations.test.ts",
+    "testName": "T2: 100 rapid edits defer validateScore (validateRunCounter <= 2); Save, Play, load, undo, redo validate synchronously",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "T3",
+    "description": "Playing right after an edit burst compiles and plays updated score without stale notes.",
+    "codeLocation": "src/ui/App.tsx:handleTogglePlay",
+    "testFile": "tests/core/perf_optimizations.test.ts",
+    "testName": "T3: playing immediately after rapid edit burst compiles and plays the updated score without stale notes",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "T4",
+    "description": "Existing property tests (voice_property*, undo/redo reversibility) stay green.",
+    "codeLocation": "tests/core/voice_property_m7a3.test.ts",
+    "testFile": "tests/core/voice_property_m7a3.test.ts",
+    "testName": "verifies 20 seeds x 100 steps of random voice operations, isolation, and undo/redo reversibility",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "T5",
+    "description": "Bench report: Double rAF p95 at 200/400 measures, 1 and 2 voices, vsync on before/after.",
+    "codeLocation": "scripts/multi_bench.mjs",
+    "testFile": "tests/core/perf_optimizations.test.ts",
+    "testName": "T5: verifies bench report captures 200 and 400 measure multi-bench results",
+    "status": "DONE"
+  }
+]
