@@ -9,6 +9,7 @@ import { measureTicks as timeSigTicks } from '../core/time';
 import type { ScoreCursor } from '../core/input';
 import { findStaff, firstPartStaves, firstStaff } from '../core/staffLookup';
 import { staffOffsetInSystem } from './systemStaves';
+import { getSystemMeasureBounds } from './mouse';
 
 /**
  * Checks if a pointer movement exceeds the drag initiation threshold (default 4px).
@@ -252,9 +253,50 @@ function columnFromAllVoices(
 }
 
 /**
+ * Distance (staff spaces) between the left bound of a measure and the place where its first beat is
+ * drawn. The mouse grid of an empty measure starts there, so a click on the first visible beat means
+ * tick 0 instead of a rest in front of the note (M7b-6).
+ */
+export const GRID_LEAD_IN_SP = 1.2;
+
+/**
+ * Narrowest grid slot (staff spaces) the mouse can aim at. An empty measure is only about 8 sp wide,
+ * so a grid of sixteenths (0.4 sp per slot) is not usable: below this width the click stays on the
+ * first beat and rests in front of the note are entered with the keyboard (M7b-6).
+ */
+export const MIN_GRID_SLOT_SP = 1.5;
+
+/**
+ * Grid slot nearest to x in a measure that has no sounding events (M7b-6). The measure span
+ * [leftX, rightX] is cut into `floor(measureTicks / stepTicks)` equal slots; the slot whose start is
+ * nearest to x is returned as its start tick and the x where that tick sits on the same linear scale. x outside
+ * the span clamps to the first / last slot.
+ */
+export function gridSlotInMeasure(
+  leftX: number,
+  rightX: number,
+  x: number,
+  measureTicks: number,
+  stepTicks: number
+): { tick: number; x: number } {
+  const span = rightX - leftX;
+  if (!(span > 0) || !(stepTicks > 0) || !(measureTicks > 0)) return { tick: 0, x: leftX };
+  const slots = Math.max(1, Math.floor(measureTicks / stepTicks));
+  const frac = Math.min(Math.max((x - leftX) / span, 0), 1);
+  // Nearest slot start, so the ghost note sits closest to the pointer (M7b-6).
+  const slot = Math.min(slots - 1, Math.round(frac * slots));
+  const tick = slot * stepTicks;
+  return { tick, x: leftX + (tick / measureTicks) * span };
+}
+
+/**
  * Cursor for mouse note entry: the clicked measure and tick (from all voices' columns) in the
  * ACTIVE voice, plus the x of that beat column (null when the measure holds only rests).
  * The voice does not need to exist yet; entry creates it (M7a-2b D3).
+ *
+ * With `gridStepTicks` (the active note value in ticks) a measure that holds only rests is cut
+ * into a grid of that step: the tick and the x come from the slot under the pointer instead of
+ * always being the first beat (M7b-6).
  */
 export function xToEntryCursor(
   layout: LayoutResult,
@@ -262,7 +304,8 @@ export function xToEntryCursor(
   systemIndex: number,
   x: number,
   voiceIndex: ScoreCursor['voiceIndex'],
-  targetStaffId?: string
+  targetStaffId?: string,
+  gridStepTicks?: number
 ): (ScoreCursor & { columnX: number | null }) | null {
   const staffId = ((targetStaffId ? findStaff(score, targetStaffId) : undefined) ?? firstStaff(score))?.id;
   if (!staffId) return null;
@@ -272,6 +315,19 @@ export function xToEntryCursor(
   const columnX = system
     ? columnFromAllVoices(system, voicesOfMeasure(score, found.measureId), x).columnX
     : null;
+  if (system && columnX === null && gridStepTicks) {
+    const bounds = getSystemMeasureBounds(system).find((b) => b.measureId === found.measureId);
+    const mDef = score.measures.find((m) => m.id === found.measureId);
+    if (bounds && mDef) {
+      const ticks = mDef.actualTicks ?? timeSigTicks(mDef.timeSig);
+      const origin = bounds.leftBound + GRID_LEAD_IN_SP;
+      const slotWidth = (bounds.rightBound - origin) / Math.max(1, Math.floor(ticks / gridStepTicks));
+      if (slotWidth >= MIN_GRID_SLOT_SP) {
+        const slot = gridSlotInMeasure(origin, bounds.rightBound, x, ticks, gridStepTicks);
+        return { staffId, voiceIndex, measureId: found.measureId, tick: slot.tick, columnX: slot.x };
+      }
+    }
+  }
   return { staffId, voiceIndex, measureId: found.measureId, tick: found.tick, columnX };
 }
 

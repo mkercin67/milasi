@@ -192,7 +192,8 @@ export function useEditorInput({
         return;
       }
 
-      const activeCursor = snapCursor(score, targetC);
+      // Mouse entry may point into a rest (grid slot of an empty measure): keep that tick.
+      const activeCursor = snapCursor(score, targetC, { keepInsideRest: true });
       const mDef = score.measures.find((m) => m.id === activeCursor.measureId);
       if (!mDef) return;
 

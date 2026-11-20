@@ -174,5 +174,21 @@
     "testFile": "tests/layout/skyline_spacing.test.ts",
     "testName": "K2: colliding low treble and high bass notes grow the gap and no items of the two staves overlap",
     "status": "DONE"
+  },
+  {
+    "planItemId": "B14",
+    "description": "Mouse entry in an empty measure follows the grid of the active note value when a slot is at least 1.5 sp wide, otherwise stays on the first beat (M7b-6).",
+    "codeLocation": "src/layout/pointerCursor.ts:gridSlotInMeasure",
+    "testFile": "tests/layout/pointer_grid.test.ts",
+    "testName": "M3: with a wide enough slot (quarter notes) an empty grand-staff measure maps x to the grid slot, in either staff, with its x on the same scale",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B15",
+    "description": "Entering a note inside a rest splits the rest (rests before and after stay); keyboard cursors are unchanged.",
+    "codeLocation": "src/core/input.ts:planEnter",
+    "testFile": "tests/core/enter_inside_rest.test.ts",
+    "testName": "R1: entering a 16th at tick 720 of a whole-rest measure keeps rests before and after, filling the measure exactly",
+    "status": "DONE"
   }
 ]

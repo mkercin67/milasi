@@ -176,9 +176,10 @@ export async function runGrandStaffMouseE2E() {
 
     const gClef = await box('svg use[href="#glyph-gClef"]');
     const fClef = await box('svg use[href="#glyph-fClef"]');
-    // Click inside measure 1 (the checks below read measure 1): at the whole rest of the treble staff.
+    // Click inside the first half of measure 1 (the checks below read measure 1).
     const restBox = await box('svg use[href^="#glyph-rest"]');
-    const clickX = restBox.x;
+    // The whole rest is centred in the measure; a click 40 px left of it is in the first grid slot (tick 0).
+    const clickX = restBox.x - 40;
 
     // 2. Click entry: treble first, then bass
     console.log('Click target:', JSON.stringify({ clickX, gY: gClef.y, fY: fClef.y }));

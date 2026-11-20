@@ -56,6 +56,10 @@ jobs:
         timeout-minutes: 10
         run: node scripts/test_grand_staff_mouse_e2e.mjs
 
+      - name: Run Playwright empty-measure mouse grid E2E (M7b-6)
+        timeout-minutes: 10
+        run: node scripts/test_empty_measure_grid_e2e.mjs
+
       - name: Upload artifacts on failure
         if: failure()
         uses: actions/upload-artifact@v6

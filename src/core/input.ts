@@ -101,6 +101,8 @@ export type PlanResult =
       newEvent: ScoreEvent;
       remainderRests: RestEvent[];
       removedIds: string[];
+      /** Rests that keep the part of a split rest BEFORE the cursor (cursor inside a rest, M7b-6). */
+      leadingRests: RestEvent[];
       mLength: number;
     }
   | {
@@ -163,6 +165,7 @@ export function planEnter(
   // Identify all events that start inside [spanStart, spanEnd)
   const removedIds: string[] = [];
   let lastRemovedEnd = spanEnd;
+  let leadingTypes: ReturnType<typeof restsForSpan> = [];
 
   t = 0;
   for (const ev of events) {
@@ -173,8 +176,19 @@ export function planEnter(
     if (evStart >= spanStart && evStart < spanEnd) {
       removedIds.push(ev.id);
       lastRemovedEnd = Math.max(lastRemovedEnd, evEnd);
+    } else if (ev.kind === 'rest' && evStart < spanStart && evEnd > spanStart) {
+      // The cursor is inside a rest (mouse entry on a grid slot, M7b-6): the rest is split. The part
+      // before the cursor stays a rest, the part after the new event becomes the remainder.
+      removedIds.push(ev.id);
+      lastRemovedEnd = Math.max(lastRemovedEnd, evEnd);
+      leadingTypes = restsForSpan(evStart, spanStart - evStart, mLength);
     }
   }
+  const leadingRests: RestEvent[] = leadingTypes.map((rt) =>
+    rt === 'wholeMeasure'
+      ? createRest({ baseType: 'whole', duration: mLength, wholeMeasure: true })
+      : createRest({ baseType: rt, duration: durationTicks(rt, 0) })
+  );
 
   // Remainder rests for truncated remainder
   const remainderSpan = lastRemovedEnd - spanEnd;
@@ -205,6 +219,7 @@ export function planEnter(
     newEvent,
     remainderRests,
     removedIds,
+    leadingRests,
     mLength,
   };
 }
@@ -253,23 +268,20 @@ export function enterEventCommand(cursor: ScoreCursor, spec: InputNoteSpec): Com
             return;
           }
 
-          // Find where spanStart begins in voice.events
+          // The new event goes after every kept event that starts before the cursor
           let currentTick = 0;
-          let insertIndex = voice.events.length;
-          for (let i = 0; i < voice.events.length; i++) {
-            if (currentTick >= cursor.tick) {
-              insertIndex = i;
-              break;
+          let insertionPoint = 0;
+          const keptEvents: ScoreEvent[] = [];
+          for (const ev of voice.events) {
+            if (!plan.removedIds.includes(ev.id)) {
+              keptEvents.push(ev);
+              if (currentTick < cursor.tick) insertionPoint = keptEvents.length;
             }
-            currentTick += voice.events[i].duration;
+            currentTick += ev.duration;
           }
 
-          // Filter out removed events
-          const keptEvents = voice.events.filter((ev) => !plan.removedIds.includes(ev.id));
-
-          // Insert new event followed by remainder rests
-          const insertionPoint = Math.min(insertIndex, keptEvents.length);
-          keptEvents.splice(insertionPoint, 0, plan.newEvent, ...plan.remainderRests);
+          // Insert leading rests (split rest), the new event, then the remainder rests
+          keptEvents.splice(insertionPoint, 0, ...plan.leadingRests, plan.newEvent, ...plan.remainderRests);
           voice.events = keptEvents;
 
           // Clean overrides for removed events
@@ -602,7 +614,11 @@ export function moveCursor(
 /**
  * Snaps a cursor tick to the nearest preceding event start in the measure.
  */
-export function snapCursor(score: Score, cursor: ScoreCursor): ScoreCursor {
+export function snapCursor(
+  score: Score,
+  cursor: ScoreCursor,
+  options?: { keepInsideRest?: boolean }
+): ScoreCursor {
   const part = score.parts.find((p) => p.staves.some((s) => s.id === cursor.staffId));
   const staff = part?.staves.find((s) => s.id === cursor.staffId);
   const sm = staff?.measures[cursor.measureId];
@@ -617,6 +633,10 @@ export function snapCursor(score: Score, cursor: ScoreCursor): ScoreCursor {
   for (const ev of voice.events) {
     if (t <= cursor.tick) {
       bestTick = t;
+      // Mouse entry may point into a rest: the rest is split by the entry (M7b-6).
+      if (options?.keepInsideRest && ev.kind === 'rest' && cursor.tick < t + ev.duration) {
+        return { ...cursor };
+      }
     } else {
       break;
     }

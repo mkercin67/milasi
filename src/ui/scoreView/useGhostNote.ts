@@ -12,6 +12,7 @@ import {
 import { resolvePointerStaff, xToEntryCursor } from '../../layout/pointerCursor';
 import { computeCursorPosition } from '../../layout/cursor';
 import { GhostNoteData } from './types';
+import { durationTicks } from '../../core/time';
 import { findStaff, firstStaff } from '../../core/staffLookup';
 
 export function useGhostNote(
@@ -80,7 +81,15 @@ export function useGhostNote(
     const { targetSys, sysRelX: systemRelX, staffRelY: systemRelY, staffId, staffOffset } = coords;
     const clef = (findStaff(score, staffId) ?? firstStaff(score))?.clef ?? { sign: 'G', line: 2 };
     const activeVoiceIndex = cursor?.voiceIndex ?? 1;
-    const targetCursor = xToEntryCursor(layout, score, targetSys.index, systemRelX, activeVoiceIndex, staffId);
+    const targetCursor = xToEntryCursor(
+      layout,
+      score,
+      targetSys.index,
+      systemRelX,
+      activeVoiceIndex,
+      staffId,
+      durationTicks(activeDuration)
+    );
     const mDef = score.measures.find((m) => m.id === targetCursor?.measureId) ?? score.measures[0];
     const keySig = mDef?.keySig ?? 0;
 
@@ -143,7 +152,15 @@ export function useGhostNote(
 
     const { targetSys, sysRelX, staffRelY: sysRelY, staffId } = coords;
     const clef = (findStaff(score, staffId) ?? firstStaff(score))?.clef ?? { sign: 'G', line: 2 };
-    const clickedCursor = xToEntryCursor(layout, score, targetSys.index, sysRelX, cursor?.voiceIndex ?? 1, staffId);
+    const clickedCursor = xToEntryCursor(
+      layout,
+      score,
+      targetSys.index,
+      sysRelX,
+      cursor?.voiceIndex ?? 1,
+      staffId,
+      durationTicks(activeDuration)
+    );
     const mDef = score.measures.find((m) => m.id === clickedCursor?.measureId) ?? score.measures[0];
     const keySig = mDef?.keySig ?? 0;
     const clickedPitch = yToStaffPosition(clef, sysRelY, keySig);
