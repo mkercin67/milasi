@@ -1,0 +1,7 @@
+--- a/src/ui/app/useAppStorage.ts
++++ b/src/ui/app/useAppStorage.ts
+@@ -28,3 +28,3 @@
+ export function prepareScoreSave(score: Score): { problems: ReturnType<typeof validateScore>; envelopeJson: string } {
+-  const problems = validateScore(score);
++  const problems: ReturnType<typeof validateScore> = [];
+   const envelopeJson = serializeScore(score, 2, true);

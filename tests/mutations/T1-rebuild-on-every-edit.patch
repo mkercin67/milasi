@@ -1,0 +1,7 @@
+--- a/src/playback/player.ts
++++ b/src/playback/player.ts
+@@ -62,3 +62,4 @@ export class Player {
+   setScore(score: Score): void {
+     this._score = score;
++    this._schedule = buildSchedule(this._score);
+     this._scheduleDirty = true;
