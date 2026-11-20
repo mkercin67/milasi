@@ -33,6 +33,7 @@ describe('Corpus & Intellectual Property Policy Enforcement (docs/CORPUS_POLICY.
     const fixtureFiles = [
       path.resolve('src/ui/sutIctimScore.ts'),
       path.resolve('src/ui/beamDemoScore.ts'),
+      path.resolve('tests/fixtures/bwv772Mm1to7.ts'),
     ];
 
     const requiredMetadataTags = [

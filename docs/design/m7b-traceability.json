@@ -214,5 +214,13 @@
     "testFile": "tests/layout/tie_system_break.test.ts",
     "testName": "T1: the entering half-tie of a grand staff starts right of the clef and has a visible length",
     "status": "DONE"
+  },
+  {
+    "planItemId": "B19",
+    "description": "M7b-5 acceptance: Bach BWV 772 mm. 1-7 hand-entered fixture lays out without overlaps, with aligned columns and through barlines, plays 14 s with the tie as one note, and survives save/load.",
+    "codeLocation": "tests/fixtures/bwv772Mm1to7.ts:buildBwv772Mm1to7",
+    "testFile": "tests/layout/bwv772_acceptance.test.ts",
+    "testName": "A3: events that start on the same tick in both hands share one x (aligned columns)",
+    "status": "DONE"
   }
 ]

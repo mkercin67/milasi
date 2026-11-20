@@ -1,6 +1,6 @@
 # M7b-5 Acceptance: two public-domain piano excerpts, hand-entered
 
-**Status:** approved procedure (user), results pending.
+**Status:** approved procedure (user). Bach BWV 772 mm. 1-7 entered and verified (see `docs/review/m7b-5-bwv772-gaps.md`); Mozart K. 545 pending.
 **Policy:** `docs/CORPUS_POLICY.md` applies. The reference score is read from a public-domain edition (Bach-Gesellschaft for BWV 772, Mozart: Breitkopf & Haertel complete edition for K. 545, both via IMSLP). The PDF stays in `tests/private/` (git-ignored). No PDF, scan or screenshot of an edition is committed.
 
 ## Pieces (measures 1-8 of each)
