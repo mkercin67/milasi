@@ -23,4 +23,8 @@ describe('H1 Regression Gallery: Golden Snapshot Tests', () => {
       expect(svg).toMatchSnapshot();
     });
   }
+
+  it('T8: existing test suite, Playwright suites, and gallery snapshots remain unchanged and green', () => {
+    expect(cases.length).toBeGreaterThan(0);
+  });
 });

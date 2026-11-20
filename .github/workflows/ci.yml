@@ -44,6 +44,10 @@ jobs:
         timeout-minutes: 10
         run: node scripts/test_voice_selection_e2e.mjs
 
+      - name: Run Playwright keyboard two-voice entry E2E (M7a-4 T7)
+        timeout-minutes: 10
+        run: node scripts/test_two_voice_keyboard_e2e.mjs
+
       - name: Upload artifacts on failure
         if: failure()
         uses: actions/upload-artifact@v6
