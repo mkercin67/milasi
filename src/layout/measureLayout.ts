@@ -20,6 +20,7 @@ import {
   getKeySignatureChangeAccidentals,
 } from './keySignature';
 import {
+  applyEventAnchors,
   BARLINE_THICKNESS,
   createTimeSigItems,
   LEDGER_EXTENSION,
@@ -96,6 +97,7 @@ function layoutPolyphonicEvents(
 ): number {
   let relX = relXStart;
   let alignShift = 0;
+  const eventAnchors = new Map<string, number>();
   const fullTicks = (mDef.timeSig.num * 4 * PPQ) / mDef.timeSig.den;
   const pickupOffset =
     mDef.actualTicks && mDef.actualTicks < fullTicks ? fullTicks - mDef.actualTicks : 0;
@@ -216,6 +218,7 @@ function layoutPolyphonicEvents(
     }
     const colCenterX = relX + 0.8 + firstEventPadding;
     columnsOut.set(tickKey, colCenterX);
+    for (const e of colEntries) eventAnchors.set(e.event.id, colCenterX);
 
     // Check for rests at this tick (Rule RE)
     const restEntries = colEntries.filter((e) => e.event.kind === 'rest');
@@ -581,6 +584,7 @@ function layoutPolyphonicEvents(
     relX += colWidth + firstEventPadding;
   }
 
+  applyEventAnchors(measureItems, eventAnchors);
   return relX;
 }
 
@@ -647,6 +651,7 @@ export function layoutSingleMeasure(
   let tickAcc = 0;
   const tracker = new MeasureAccidentalTracker(mDef.keySig);
   const measureItems: MeasureItemEntry[] = [];
+  const eventAnchors = new Map<string, number>();
   let relX = 0;
 
   const eventToBeamDir = new Map<string, StemDirection>();
@@ -821,7 +826,10 @@ export function layoutSingleMeasure(
     const eventCenterX = isWholeMeasureRest
       ? relX + eventWidth / 2 - 0.7
       : relX + 0.8 + firstEventAccidentalPadding;
-    if (!isWholeMeasureRest) columns.set(tickAcc, eventCenterX);
+    if (!isWholeMeasureRest) {
+      columns.set(tickAcc, eventCenterX);
+      eventAnchors.set(ev.id, eventCenterX);
+    }
 
     if (ev.kind === 'rest') {
       let restGlyph = 'restQuarter';
@@ -1056,6 +1064,10 @@ export function layoutSingleMeasure(
       relX += eventWidth + firstEventAccidentalPadding;
       tickAcc += ev.duration;
     }
+
+    // Stems, dots, flags, accidentals and ledger lines keep a fixed offset from their column
+    // when the system is justified (see applyEventAnchors).
+    applyEventAnchors(measureItems, eventAnchors);
 
     // Render lyric text, centered hyphens, and melisma extender lines
     layoutMeasureLyrics(lyricsToLayout, events, notePositions, relX + 0.6, measureItems);

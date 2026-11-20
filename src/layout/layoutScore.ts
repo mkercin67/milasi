@@ -504,9 +504,19 @@ export function layoutScore(score: Score, options: LayoutOptions = {}): LayoutRe
             finalX = targetWidth - barlineThickness;
             finalX2 = finalX;
           } else if (entry.ledgerNoteRelativeX !== undefined) {
-            const stretchedNoteX = contentOffset + entry.ledgerNoteRelativeX * stretchRatio;
+            const stretchedNoteX =
+              entry.anchorX !== undefined
+                ? contentOffset + entry.anchorX * stretchRatio + (entry.ledgerNoteRelativeX - entry.anchorX)
+                : contentOffset + entry.ledgerNoteRelativeX * stretchRatio;
             finalX = stretchedNoteX - LEDGER_EXTENSION;
             finalX2 = stretchedNoteX + NOTEHEAD_WIDTH + LEDGER_EXTENSION;
+          } else if (entry.anchorX !== undefined) {
+            // Fixed offset from the stretched column: stems/dots/flags must not scale with the ratio.
+            const anchorFinal = contentOffset + entry.anchorX * stretchRatio;
+            finalX = anchorFinal + (itemToPlace.x - entry.anchorX);
+            if (itemToPlace.x2 !== undefined) {
+              finalX2 = anchorFinal + (itemToPlace.x2 - entry.anchorX);
+            }
           } else {
             finalX = contentOffset + itemToPlace.x * stretchRatio;
             if (itemToPlace.x2 !== undefined) {

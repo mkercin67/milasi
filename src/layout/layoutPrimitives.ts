@@ -51,6 +51,35 @@ export interface MeasureItemEntry {
   item: LayoutItem;
   /** If this item is a ledger line attached to a note, relative offset to note center */
   ledgerNoteRelativeX?: number;
+  /**
+   * x (measure-relative) of the event column this item hangs on (stem, flag, dot, accidental,
+   * displaced notehead, ledger line). System justification stretches the ANCHOR only; the item
+   * keeps its fixed offset from it, so a stem stays on its notehead edge at any stretch ratio.
+   */
+  anchorX?: number;
+}
+
+const EVENT_ATTACHED_ID = /-(stem|flag|acc-\d+|dot-(\d+-)?\d+|pitch-\d+|ledger-.+)$/;
+
+/**
+ * Marks every item that is physically attached to an event (notehead, stem, flag, dots,
+ * accidentals, ledger lines) with the x of that event's column. Spanning items such as lyric
+ * extenders are left alone: they must stretch with the distance between columns.
+ */
+export function applyEventAnchors(
+  entries: MeasureItemEntry[],
+  anchors: ReadonlyMap<string, number>
+): void {
+  for (const entry of entries) {
+    const eventId = entry.item.eventId;
+    if (eventId === undefined) continue;
+    const anchor = anchors.get(eventId);
+    if (anchor === undefined) continue;
+    const id = entry.item.id;
+    if (id === eventId || (id.startsWith(eventId) && EVENT_ATTACHED_ID.test(id.slice(eventId.length)))) {
+      entry.anchorX = anchor;
+    }
+  }
 }
 
 /** Metadata captured per measure for a beam group, independent of system stretching/overrides. */
