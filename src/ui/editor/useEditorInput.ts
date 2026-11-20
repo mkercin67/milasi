@@ -10,10 +10,12 @@ import {
   enterRest,
   getLastNotePitchBeforeCursor,
   moveCursor,
+  moveCursorToMeasureBoundary,
   pitchFromLetter,
   planEnter,
   ScoreCursor,
   snapCursor,
+  switchToVoice,
 } from '../../core/input';
 import { durationTicks, measureTicks } from '../../core/time';
 import { newId } from '../../core/factory';
@@ -310,6 +312,37 @@ export function useEditorInput({
     [cursor, score, setSelectedEventId]
   );
 
+  const moveCursorToBoundary = useCallback(
+    (boundary: 'start' | 'end') => {
+      if (!cursor) return;
+      const nextCursor = moveCursorToMeasureBoundary(score, cursor, boundary);
+      setCursor(nextCursor);
+      lastEnteredPitchRef.current = getLastNotePitchBeforeCursor(score, nextCursor);
+
+      const staff = score.parts[0]?.staves.find((s) => s.id === nextCursor.staffId);
+      const sm = staff?.measures[nextCursor.measureId];
+      const voice = sm?.voices.find((v) => v.voiceIndex === nextCursor.voiceIndex);
+      if (voice) {
+        let t = 0;
+        let found = false;
+        for (const ev of voice.events) {
+          if (t === nextCursor.tick) {
+            setSelectedEventId(ev.id);
+            found = true;
+            break;
+          }
+          t += ev.duration;
+        }
+        if (!found) {
+          setSelectedEventId(null);
+        }
+      } else {
+        setSelectedEventId(null);
+      }
+    },
+    [cursor, score, setSelectedEventId]
+  );
+
   const setCursorToMeasure = useCallback(
     (measureId: string, tick = 0) => {
       const sId = score.parts[0]?.staves[0]?.id;
@@ -330,6 +363,16 @@ export function useEditorInput({
       setCursor((curr) => {
         if (!curr) return null;
         return cycleVoice(score, curr, direction);
+      });
+    },
+    [score]
+  );
+
+  const selectVoice = useCallback(
+    (targetVoiceIndex: 1 | 2 | 3 | 4) => {
+      setCursor((curr) => {
+        if (!curr) return null;
+        return switchToVoice(score, curr, targetVoiceIndex);
       });
     },
     [score]
@@ -359,7 +402,9 @@ export function useEditorInput({
     enterPitchDirect,
     enterRestAtCursor,
     moveCursorDirection,
+    moveCursorToBoundary,
     cycleVoiceDirection,
+    selectVoice,
     setCursorToMeasure,
   };
 }

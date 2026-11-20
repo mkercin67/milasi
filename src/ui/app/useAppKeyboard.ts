@@ -51,6 +51,7 @@ export interface UseAppKeyboardParams {
   applySlur: () => void;
   clearNotations: () => void;
   moveCursorDirection: (direction: 'prev' | 'next') => void;
+  moveCursorToBoundary?: (boundary: 'start' | 'end') => void;
   cycleVoiceDirection: (direction: 'next' | 'prev') => void;
   transposeSelection: (semitones: number) => void;
   executeCommand: (cmd: Command) => Score;
@@ -119,6 +120,7 @@ export function useAppKeyboard(params: UseAppKeyboardParams) {
     applySlur,
     clearNotations,
     moveCursorDirection,
+    moveCursorToBoundary,
     cycleVoiceDirection,
     transposeSelection,
     executeCommand,
@@ -339,6 +341,16 @@ export function useAppKeyboard(params: UseAppKeyboardParams) {
             clearNotations();
             recordSample('ClearNotations');
             break;
+          case 'cursor-measure-start':
+            if (mode === 'input') {
+              moveCursorToBoundary?.('start');
+            }
+            break;
+          case 'cursor-measure-end':
+            if (mode === 'input') {
+              moveCursorToBoundary?.('end');
+            }
+            break;
           case 'select-prev':
             if (mode === 'input') {
               moveCursorDirection('prev');
@@ -528,6 +540,7 @@ export function useAppKeyboard(params: UseAppKeyboardParams) {
     applySlur,
     clearNotations,
     moveCursorDirection,
+    moveCursorToBoundary,
     cycleVoiceDirection,
     transposeSelection,
     executeCommand,

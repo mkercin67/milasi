@@ -419,8 +419,30 @@ export function advanceCursor(
 }
 
 /**
+ * Moves cursor to the start or end boundary of the current measure in the active voice.
+ * - 'start': tick 0 of cursor.measureId
+ * - 'end': mLength of cursor.measureId
+ * Preserves staffId, measureId, and voiceIndex without mutating the score.
+ */
+export function moveCursorToMeasureBoundary(
+  score: Score,
+  cursor: ScoreCursor,
+  boundary: 'start' | 'end'
+): ScoreCursor {
+  const mDef = score.measures.find((m) => m.id === cursor.measureId);
+  const mLength = mDef ? measureTicks(mDef.timeSig) : 3840;
+  return {
+    staffId: cursor.staffId,
+    measureId: cursor.measureId,
+    voiceIndex: cursor.voiceIndex,
+    tick: boundary === 'start' ? 0 : mLength,
+  };
+}
+
+/**
  * Moves cursor to the previous or next event start position across measures.
  * Operates strictly within cursor.voiceIndex without falling back to voice 1.
+ * Stops at first event on Left; stops at append position on Right without creating events.
  */
 export function moveCursor(
   score: Score,
@@ -462,6 +484,16 @@ export function moveCursor(
     }
   }
 
+  // Append position at the end of the last measure
+  const lastMDef = score.measures[score.measures.length - 1];
+  if (lastMDef) {
+    const lastMLength = measureTicks(lastMDef.timeSig);
+    locations.push({
+      measureId: lastMDef.id,
+      tick: lastMLength,
+    });
+  }
+
   if (locations.length === 0) return { ...cursor };
 
   // Locate closest matching index
@@ -469,7 +501,20 @@ export function moveCursor(
     (loc) => loc.measureId === cursor.measureId && loc.tick === cursor.tick
   );
   if (currIdx === -1) {
-    currIdx = locations.findIndex((loc) => loc.measureId === cursor.measureId);
+    // If exact match not found, find closest index in the current measure <= cursor.tick
+    const measureIndices: number[] = [];
+    locations.forEach((loc, idx) => {
+      if (loc.measureId === cursor.measureId) measureIndices.push(idx);
+    });
+    if (measureIndices.length > 0) {
+      let best = measureIndices[0];
+      for (const idx of measureIndices) {
+        if (locations[idx].tick <= cursor.tick) {
+          best = idx;
+        }
+      }
+      currIdx = best;
+    }
   }
   if (currIdx === -1) currIdx = 0;
 
@@ -522,26 +567,18 @@ export function snapCursor(score: Score, cursor: ScoreCursor): ScoreCursor {
 }
 
 /**
- * Cycles the score cursor to the next or previous voiceIndex (1 > 2 > 3 > 4 > 1).
+ * Switches the score cursor to a specific target voiceIndex (1..4).
  *
  * If the target voice exists in the measure, the tick snaps to the START of the
  * event of that voice sounding at the current tick (never forward).
  * If the target voice does not exist in the measure, a virtual cursor is kept
  * at the same tick (Decision D2).
  */
-export function cycleVoice(
+export function switchToVoice(
   score: Score,
   cursor: ScoreCursor,
-  direction: 'next' | 'prev' = 'next'
+  targetVoiceIndex: 1 | 2 | 3 | 4
 ): ScoreCursor {
-  const currentVoiceIndex = cursor.voiceIndex ?? 1;
-  let targetVoiceIndex: 1 | 2 | 3 | 4;
-  if (direction === 'next') {
-    targetVoiceIndex = (currentVoiceIndex === 4 ? 1 : (currentVoiceIndex + 1)) as 1 | 2 | 3 | 4;
-  } else {
-    targetVoiceIndex = (currentVoiceIndex === 1 ? 4 : (currentVoiceIndex - 1)) as 1 | 2 | 3 | 4;
-  }
-
   const part = score.parts.find((p) => p.staves.some((s) => s.id === cursor.staffId));
   const staff = part?.staves.find((s) => s.id === cursor.staffId);
   const sm = staff?.measures[cursor.measureId];
@@ -577,6 +614,30 @@ export function cycleVoice(
     voiceIndex: targetVoiceIndex,
     tick: bestTick,
   };
+}
+
+/**
+ * Cycles the score cursor to the next or previous voiceIndex (1 > 2 > 3 > 4 > 1).
+ *
+ * If the target voice exists in the measure, the tick snaps to the START of the
+ * event of that voice sounding at the current tick (never forward).
+ * If the target voice does not exist in the measure, a virtual cursor is kept
+ * at the same tick (Decision D2).
+ */
+export function cycleVoice(
+  score: Score,
+  cursor: ScoreCursor,
+  direction: 'next' | 'prev' = 'next'
+): ScoreCursor {
+  const currentVoiceIndex = cursor.voiceIndex ?? 1;
+  let targetVoiceIndex: 1 | 2 | 3 | 4;
+  if (direction === 'next') {
+    targetVoiceIndex = (currentVoiceIndex === 4 ? 1 : (currentVoiceIndex + 1)) as 1 | 2 | 3 | 4;
+  } else {
+    targetVoiceIndex = (currentVoiceIndex === 1 ? 4 : (currentVoiceIndex - 1)) as 1 | 2 | 3 | 4;
+  }
+
+  return switchToVoice(score, cursor, targetVoiceIndex);
 }
 
 const STEP_DIATONIC: Record<PitchStep, number> = {

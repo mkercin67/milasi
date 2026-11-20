@@ -57,6 +57,8 @@ export type UserAction =
   | 'toggle-diagnostics'
   | 'next-voice'
   | 'prev-voice'
+  | 'cursor-measure-start'
+  | 'cursor-measure-end'
   | { type: 'apply-dynamic'; dynamic: DynamicType }
   | { type: 'toggle-articulation'; articulation: ArticulationType }
   | { type: 'nudge-override'; dx: number; dy: number }
@@ -425,6 +427,8 @@ export function mapKeyEvent(
     // Navigation and editing
     if (e.code === 'ArrowLeft') return 'select-prev';
     if (e.code === 'ArrowRight') return 'select-next';
+    if (e.code === 'Home') return 'cursor-measure-start';
+    if (e.code === 'End') return 'cursor-measure-end';
     if (e.code === 'ArrowUp') return 'transpose-semitone-up';
     if (e.code === 'ArrowDown') return 'transpose-semitone-down';
     if (e.code === 'Delete' || e.code === 'Backspace') return 'convert-to-rest';
@@ -544,6 +548,8 @@ export function getCompleteKeyTable(): KeyTableEntry[] {
     // Input mode shortcuts
     { key: 'Tab', code: 'Tab', modifiers: 'none', mode: 'input', action: 'next-voice' },
     { key: 'Tab', code: 'Tab', modifiers: 'Shift', mode: 'input', action: 'prev-voice' },
+    { key: 'Home', code: 'Home', modifiers: 'none', mode: 'input', action: 'cursor-measure-start' },
+    { key: 'End', code: 'End', modifiers: 'none', mode: 'input', action: 'cursor-measure-end' },
     { key: 'C..B', code: 'KeyC..KeyB', modifiers: 'none', mode: 'input', action: 'enter-pitch' },
     { key: '0', code: 'Digit0', modifiers: 'none', mode: 'input', action: 'enter-rest' },
     { key: 'B', code: 'KeyB', modifiers: 'Ctrl', mode: 'input', action: 'insert-measure' },
