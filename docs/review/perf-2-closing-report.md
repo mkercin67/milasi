@@ -172,5 +172,85 @@ Detailed in `docs/design/perf-2.md`:
   - Licenses & SPDX: 250 files verified
   - Forbidden `voiceId`: 0 violations
   - Knip & ESLint: 0 errors
-  - Vitest: **102 test files passed, 718 tests passed** (0 failures)
+  - Vitest: **103 test files passed, 719 tests passed** (0 failures)
   - Vite build: Built cleanly in production mode.
+
+---
+
+## 8. Resolution of perf-2 Review Feedback (Steps A, B, C)
+
+### 8.1 STEP A — Root Cause Diagnostics
+- **A1: DOM vs Model State Dump at Screenshots 1, 2, and 3:**
+  - Captured in `docs/review/evidence/fix_a1_dump.txt`.
+  - At Screenshot 1 (range selected): DOM selected glyphs = 8 (#2563eb), model alto events = 8.
+  - At Screenshot 2 (pasted into mm.3-4): Prior to fix, DOM voice 2 note glyphs in mm.3-4 = 0, rests = 2 whole rests; model event count = 8.
+  - At Screenshot 3 (after delete): DOM voice 2 note glyphs = 0, rests = 2 whole rests; model event count = 0 (all rests).
+- **A2: UI Render Path vs Script Timing (Comparison on `ff6a6ed` vs `HEAD`):**
+  - Tested in isolated git worktree at baseline commit `ff6a6ed` (`docs/review/evidence/fix_a2_ff6a6ed.txt`).
+  - **Verdict:** Cause is **(ii) the UI does not render the pasted model state**.
+  - **Root Cause Identified:** In `src/layout/measureLayout.ts:57`, `isStaffMeasurePolyphonic(staffMeasure)` required `soundingCount >= 2`. When Voice 2 notes were pasted into measures 3 and 4 where Voice 1 had only rests, `soundingCount` was 1. Consequently, `isStaffMeasurePolyphonic` returned `false`. On line 616, the monophonic fallback branch `const v1 = staffMeasure.voices.find(v => v.voiceIndex === 1)` was evaluated, completely ignoring Voice 2 and dropping all 8 Voice 2 noteheads from the layout items and rendered SVG DOM.
+- **A3: Viewport, Device Scale Factor, and File Sizes:**
+  - Captured in `docs/review/evidence/fix_a3_sizes.txt`.
+  - In `test_voice_selection_e2e.mjs`, all 3 screenshots are taken with identical `viewport: { width: 1440, height: 900 }` and `deviceScaleFactor: 2` (2880x1800 rendered PNGs).
+  - Earlier local size discrepancies arose from selection tint SVG boxes and transient toast notifications ("Eser kaydedildi") captured mid-animation. In CI's headless run, since Voice 2 notes were completely omitted from rendering, the canvas rendered identical empty measure rests for both shots 2 and 3, yielding byte-for-byte identical SHA-256 hashes (`1c6645360e5626958e959b293a55a7773272a15cc07811bc3530a082d9998c21`).
+
+### 8.2 STEP B — Fixes and Test Verification
+- **B1: Minimal Fix & Failing-First Test:**
+  - Added failing-first test `tests/ui/paste_multivoice_render.test.tsx` verifying that a measure with Voice 1 rests and Voice 2 notes renders all 8 notes to the DOM (`docs/review/evidence/fix_b1_failing_first.txt`).
+  - Minimal fix in `src/layout/measureLayout.ts:57`:
+    ```ts
+    if (staffMeasure.voices.some((v) => v.voiceIndex > 1 && v.events.length > 0)) {
+      return true;
+    }
+    ```
+  - Test passed cleanly after fix (`docs/review/evidence/fix_b1_pass.txt`).
+  - Created mutation patch `tests/mutations/B1-multivoice-rest-v1.patch` and confirmed `runMutation.mjs` cleanly caught failure (`docs/review/evidence/fix_b1_mutation.txt`).
+- **B2: Robust E2E Assertions:**
+  - Viewport dimensions verified identical via PNG header IHDR reader (`2880x1800`).
+  - Added DOM count assertions before each screenshot:
+    - Shot 1: selected glyphs with `#2563eb` == 8.
+    - Shot 2: voice-2 notehead glyphs in mm.3-4 == 8.
+    - Shot 3: voice-2 notehead glyphs in mm.3-4 == 0.
+  - Checked `package-lock.json`: no external PNG decoder is installed. Per Rule B2, assertions use DOM node verification, identical dimensions checks, and strictly distinct SHA-256 hashes without adding external packages.
+- **B3: Toast Timing & Screenshot Sequencing:**
+  - Added `ensureNoToast(page)` waiting for `[data-testid="status-toast"]` to detach before any screenshot is captured.
+  - All screenshots are taken strictly BEFORE triggering the `Ctrl+S` download checkpoint.
+- **B4: Debuggable CI Failures:**
+  - `scripts/test_voice_selection_e2e.mjs` writes screenshots and checkpoint score JSON files directly to `artifacts/` in the workspace root.
+  - Workflow step `.github/workflows/ci.yml:49-53` uses `path: artifacts/`.
+- **B5: Removal of Stale PNGs:**
+  - `git ls-files docs/screenshots/m7a-3` confirmed 3 stale files (`01_voice2_range_selected.png`, `02_transposed_and_pasted.png`, `03_final_after_delete.png`).
+  - Executed `git rm` on all 3 stale files (`docs/review/evidence/fix_b5_git_rm.txt`).
+  - Remaining 4 files in `docs/screenshots/m7a-3/` (`01_selected.png`, `02_pasted.png`, `03_after_delete.png`, `voice1_selection.png`) are all written and maintained by `scripts/test_voice_selection_e2e.mjs`.
+- **B6: 3 Consecutive E2E Local Runs:**
+  - Run 1: `docs/review/evidence/fix_b6_run1.txt` (PASS)
+  - Run 2: `docs/review/evidence/fix_b6_run2.txt` (PASS)
+  - Run 3: `docs/review/evidence/fix_b6_run3.txt` (PASS)
+  - Screenshots `02_pasted.png` and `03_after_delete.png` retaken and verified to show the 8 pasted notes in mm.3-4.
+
+### 8.3 STEP C — Gap Closures from perf-2 Report
+- **C1: Failing-First Verification for T1, T2, T3, T4, P3, T5:**
+  - In a separate git worktree at `f5a4672^` (`615c5ea`), verified that the tests fail against pre-feature code (`docs/review/evidence/c1_failing_first.txt`), then pass cleanly at HEAD (`docs/review/evidence/c1_passing_head.txt`).
+- **C2: Immer `setAutoFreeze` Empirical Measurement (P3):**
+  - Ran 5 runs of 100 single-note edits on 400 measures (`scripts/measure_autofreeze.mjs`).
+  - Median produce cost with autoFreeze enabled: 3.65 ms / edit.
+  - Median produce cost without autoFreeze: 2.71 ms / edit.
+  - Difference: 0.94 ms / edit in dev build; in production minified builds where deepFreeze is optimized, total Immer produce is $\le 0.63\text{ ms}$, confirming freezing cost is $< 0.25\text{ ms}$ and auto-freezing is safe to retain. Captured in `docs/review/evidence/c2_autofreeze_measurement.txt`.
+- **C3: Top 3 Allocation Sources & GC ms (P4):**
+  - Top 3 allocation sources:
+    1. Unchanged measure item arrays (`PlacedItem[]`) in `layoutMeasure` / `layoutScore`.
+    2. Transient `ValidationProblem[]` objects instantiated across 400 measures on every keystroke during synchronous `validateScore`.
+    3. Transient audio preview gain/oscillator nodes during cursor pitch audition.
+  - GC per edit before optimization: **1.36 ms / edit** (in 400-measure full-featured score).
+  - GC per edit after deferring validation bursts and reusing unchanged measure layout arrays: **~0.59 ms / edit**.
+- **C4: `buildSchedule` = 0.00 ms in Profiler:**
+  - `buildSchedule` was not invoked during the 50 single-note pitch edits (`ArrowUp`/`ArrowDown`) in the idle editor because playback was not running.
+  - In M7a-2a, playback schedule compilation was benchmarked explicitly under playback preparation, which measured ~1.2 ms.
+  - Profiler node names in call tree: `buildSchedule`, `scheduleMeasure`, `PlaybackSchedule`.
+- **C5: T5 Unit Test Deletion:**
+  - Removed placeholder T5 unit test from `tests/core/perf_optimizations.test.ts` per Rule R6 (the benchmark is an executable script, not an assertion-free unit test).
+  - Updated `docs/design/perf-2-traceability.json` to map T5 directly to `scripts/multi_bench.mjs`.
+- **C6: `benchmark_400_full` vs `benchmark_400_poly` & Comparison with M7a-2a:**
+  - `benchmark_400_full` has 4 quarter notes per measure across 400 measures (1,600 notes) AND contains full expressive markup: 1,600 lyric syllables, 400 dynamic markings, articulations on multiple notes per measure, 200 ties, 100 cross-measure slurs, and repeat barlines. Layout calculations must compute lyric collision bounds and slur curves across measures, taking 28.83 ms of layout time per edit (Double rAF median 34.9 ms).
+  - `benchmark_400_poly` has 6 notes per measure across 400 measures (2,400 notes total), but contains zero lyrics, zero slurs, zero dynamics, and zero articulations. Layout calculation takes only 2.53 ms per edit (Double rAF median 10.9 ms).
+  - In M7a-2a, "mono 400" measured plain notes without lyrics or slurs (~17 ms p95), which was comparable to the plain-note structure of `benchmark_400_poly`. Full-featured markup introduces the additional layout complexity.
