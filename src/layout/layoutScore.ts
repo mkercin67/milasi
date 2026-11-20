@@ -28,7 +28,7 @@ import { computeHeaderLayout } from './headerLayout';
 import { layoutSingleMeasure } from './measureLayout';
 import { applyVisualOverrides } from './overrideLayout';
 import { generateSingleSystemBeams, generateSystemBeams, SystemPlan } from './systemBeams';
-import { firstStaff } from '../core/staffLookup';
+import { firstPartStaves, firstStaff } from '../core/staffLookup';
 
 export * from './layoutPrimitives';
 export * from './headerLayout';
@@ -63,7 +63,7 @@ export function layoutScore(score: Score, options: LayoutOptions = {}): LayoutRe
 
   // Multi-staff (Milestone 7b): all staves of the first part form one grand-staff system.
   // A single-staff score takes exactly the code paths it always did.
-  const staves = score.parts[0]?.staves ?? [];
+  const staves = firstPartStaves(score);
   const staffCount = Math.max(1, staves.length);
   const multiStaff = staffCount > 1;
   const staffPitch = 4 + STAFF_GAP_SP; // top line to top line

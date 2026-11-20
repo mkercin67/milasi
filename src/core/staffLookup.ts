@@ -24,3 +24,11 @@ export function findStaff(score: Score, staffId: Id | undefined | null): Staff |
 export function firstStaff(score: Score): Staff | undefined {
   return score.parts[0]?.staves[0]; // staff-zero-ok: the single definition of the legacy default staff
 }
+
+/**
+ * All staves of the first part (a grand staff is one part with several staves).
+ * Layout draws exactly this set as one system until multi-part scores (M7c).
+ */
+export function firstPartStaves(score: Score): Staff[] {
+  return score.parts[0]?.staves ?? []; // staff-zero-ok: the single definition of the layout part
+}
