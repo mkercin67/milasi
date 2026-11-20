@@ -25,7 +25,7 @@ export const RegressionGallery: React.FC = () => {
     const standardCases: RenderedGalleryCase[] = cases.map((c) => {
       const score = c.build();
       const layout = layoutScore(score, { width: 70 });
-      const svgHtml = renderSvgToString(layout, { staffSpacePx: 10, score, responsive: true });
+      const svgHtml = renderSvgToString(layout, { staffSpacePx: 10, score, responsive: !c.fixedSize });
 
       if (c.id === 'wrapping-three-widths') {
         const layout385 = layoutScore(score, { width: 38.5 });

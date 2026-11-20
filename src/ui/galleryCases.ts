@@ -38,6 +38,8 @@ export interface GalleryCase {
   title: string;
   description: string;
   pending?: boolean;
+  /** Draw at natural size (10 px per staff space) instead of stretching to the card width. */
+  fixedSize?: boolean;
   build: () => Score;
 }
 
@@ -481,6 +483,7 @@ export function getGalleryCases(): GalleryCase[] {
       id: 'grand-staff-piano',
       title: '27. Grand Staff (Piano)',
       description: 'One part, two staves with a brace, aligned columns and through barlines.',
+      fixedSize: true,
       build: () => {
         let score = createGrandStaffScore({ title: 'Grand Staff (Piano)', measures: 2 });
         const lower = score.parts[0].staves[1].id;
