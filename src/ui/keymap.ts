@@ -59,6 +59,10 @@ export type UserAction =
   | 'prev-voice'
   | 'cursor-measure-start'
   | 'cursor-measure-end'
+  | 'cursor-score-start'
+  | 'cursor-score-end'
+  | 'cursor-prev-measure'
+  | 'cursor-next-measure'
   | { type: 'apply-dynamic'; dynamic: DynamicType }
   | { type: 'toggle-articulation'; articulation: ArticulationType }
   | { type: 'nudge-override'; dx: number; dy: number }
@@ -225,6 +229,13 @@ export function mapKeyEvent(
     } else if (mode === 'input') {
       if (e.code === 'KeyB') return 'insert-measure';
       if (e.code === 'KeyV') return 'paste';
+      // Cursor navigation across the score (no Alt combinations: AltGr on Turkish keyboards)
+      if (!isShift) {
+        if (e.code === 'Home') return 'cursor-score-start';
+        if (e.code === 'End') return 'cursor-score-end';
+        if (e.code === 'ArrowLeft') return 'cursor-prev-measure';
+        if (e.code === 'ArrowRight') return 'cursor-next-measure';
+      }
     }
     return null;
   }
@@ -550,6 +561,10 @@ export function getCompleteKeyTable(): KeyTableEntry[] {
     { key: 'Tab', code: 'Tab', modifiers: 'Shift', mode: 'input', action: 'prev-voice' },
     { key: 'Home', code: 'Home', modifiers: 'none', mode: 'input', action: 'cursor-measure-start' },
     { key: 'End', code: 'End', modifiers: 'none', mode: 'input', action: 'cursor-measure-end' },
+    { key: 'Home', code: 'Home', modifiers: 'Ctrl', mode: 'input', action: 'cursor-score-start' },
+    { key: 'End', code: 'End', modifiers: 'Ctrl', mode: 'input', action: 'cursor-score-end' },
+    { key: 'Left', code: 'ArrowLeft', modifiers: 'Ctrl', mode: 'input', action: 'cursor-prev-measure' },
+    { key: 'Right', code: 'ArrowRight', modifiers: 'Ctrl', mode: 'input', action: 'cursor-next-measure' },
     { key: 'C..B', code: 'KeyC..KeyB', modifiers: 'none', mode: 'input', action: 'enter-pitch' },
     { key: '0', code: 'Digit0', modifiers: 'none', mode: 'input', action: 'enter-rest' },
     { key: 'B', code: 'KeyB', modifiers: 'Ctrl', mode: 'input', action: 'insert-measure' },

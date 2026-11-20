@@ -93,6 +93,10 @@ Activated via `KeyN`. Enter pitches, rests, and note durations.
 | `Tab` | `Tab` | `Shift` | prev-voice |
 | `Home` | `Home` | - | cursor-measure-start |
 | `End` | `End` | - | cursor-measure-end |
+| `Home` | `Home` | `Ctrl` | cursor-score-start |
+| `End` | `End` | `Ctrl` | cursor-score-end |
+| `Left` | `ArrowLeft` | `Ctrl` | cursor-prev-measure |
+| `Right` | `ArrowRight` | `Ctrl` | cursor-next-measure |
 | `C..B` | `KeyC..KeyB` | - | enter-pitch |
 | `0` | `Digit0` | - | enter-rest |
 | `B` | `KeyB` | `Ctrl` | insert-measure |

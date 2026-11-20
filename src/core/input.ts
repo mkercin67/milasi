@@ -430,13 +430,72 @@ export function moveCursorToMeasureBoundary(
   boundary: 'start' | 'end'
 ): ScoreCursor {
   const mDef = score.measures.find((m) => m.id === cursor.measureId);
-  const mLength = mDef ? measureTicks(mDef.timeSig) : 3840;
+  const mLength = mDef ? measureLengthTicks(mDef) : 3840;
   return {
     staffId: cursor.staffId,
     measureId: cursor.measureId,
     voiceIndex: cursor.voiceIndex,
     tick: boundary === 'start' ? 0 : mLength,
   };
+}
+
+/**
+ * Length of a measure in ticks. A measure with an explicit actualTicks (pickup or
+ * shortened measure) uses that value; otherwise the time signature decides.
+ */
+function measureLengthTicks(mDef: Score['measures'][number]): number {
+  return mDef.actualTicks ?? measureTicks(mDef.timeSig);
+}
+
+/**
+ * Moves the cursor to the very start or end of the score in the active voice.
+ * - 'start': tick 0 of the first measure
+ * - 'end': the append position (end of the last measure)
+ * Preserves staffId and voiceIndex without mutating the score.
+ */
+export function moveCursorToScoreBoundary(
+  score: Score,
+  cursor: ScoreCursor,
+  boundary: 'start' | 'end'
+): ScoreCursor {
+  const target =
+    boundary === 'start' ? score.measures[0] : score.measures[score.measures.length - 1];
+  if (!target) return { ...cursor };
+  return {
+    staffId: cursor.staffId,
+    voiceIndex: cursor.voiceIndex,
+    measureId: target.id,
+    tick: boundary === 'start' ? 0 : measureLengthTicks(target),
+  };
+}
+
+/**
+ * Moves the cursor to the start of the previous or next measure in the active voice.
+ * - 'prev': if the cursor is inside a measure (tick > 0) it goes to the start of that
+ *   measure; at tick 0 it goes to the start of the previous measure (stays at the first).
+ * - 'next': goes to the start of the next measure; in the last measure it goes to the
+ *   append position (end of that measure).
+ * Preserves staffId and voiceIndex without mutating the score.
+ */
+export function moveCursorToAdjacentMeasure(
+  score: Score,
+  cursor: ScoreCursor,
+  direction: 'prev' | 'next'
+): ScoreCursor {
+  const idx = score.measures.findIndex((m) => m.id === cursor.measureId);
+  if (idx === -1) return { ...cursor };
+  const base = { staffId: cursor.staffId, voiceIndex: cursor.voiceIndex };
+
+  if (direction === 'prev') {
+    if (cursor.tick > 0) return { ...base, measureId: cursor.measureId, tick: 0 };
+    if (idx === 0) return { ...cursor };
+    return { ...base, measureId: score.measures[idx - 1].id, tick: 0 };
+  }
+
+  if (idx + 1 < score.measures.length) {
+    return { ...base, measureId: score.measures[idx + 1].id, tick: 0 };
+  }
+  return { ...base, measureId: cursor.measureId, tick: measureLengthTicks(score.measures[idx]) };
 }
 
 /**
@@ -487,7 +546,7 @@ export function moveCursor(
   // Append position at the end of the last measure
   const lastMDef = score.measures[score.measures.length - 1];
   if (lastMDef) {
-    const lastMLength = measureTicks(lastMDef.timeSig);
+    const lastMLength = measureLengthTicks(lastMDef);
     locations.push({
       measureId: lastMDef.id,
       tick: lastMLength,

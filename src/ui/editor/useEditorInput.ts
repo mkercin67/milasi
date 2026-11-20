@@ -10,7 +10,9 @@ import {
   enterRest,
   getLastNotePitchBeforeCursor,
   moveCursor,
+  moveCursorToAdjacentMeasure,
   moveCursorToMeasureBoundary,
+  moveCursorToScoreBoundary,
   pitchFromLetter,
   planEnter,
   ScoreCursor,
@@ -312,6 +314,48 @@ export function useEditorInput({
     [cursor, score, setSelectedEventId]
   );
 
+  // Shared tail of every cursor jump: sets the cursor, refreshes the pitch context
+  // and selects the event that starts exactly at the new cursor position (if any).
+  const applyCursorJump = useCallback(
+    (nextCursor: ScoreCursor) => {
+      setCursor(nextCursor);
+      lastEnteredPitchRef.current = getLastNotePitchBeforeCursor(score, nextCursor);
+
+      const staff = score.parts[0]?.staves.find((s) => s.id === nextCursor.staffId);
+      const sm = staff?.measures[nextCursor.measureId];
+      const voice = sm?.voices.find((v) => v.voiceIndex === nextCursor.voiceIndex);
+      let foundId: string | null = null;
+      if (voice) {
+        let t = 0;
+        for (const ev of voice.events) {
+          if (t === nextCursor.tick) {
+            foundId = ev.id;
+            break;
+          }
+          t += ev.duration;
+        }
+      }
+      setSelectedEventId(foundId);
+    },
+    [score, setSelectedEventId]
+  );
+
+  const moveCursorToScoreEdge = useCallback(
+    (boundary: 'start' | 'end') => {
+      if (!cursor) return;
+      applyCursorJump(moveCursorToScoreBoundary(score, cursor, boundary));
+    },
+    [cursor, score, applyCursorJump]
+  );
+
+  const moveCursorToMeasure = useCallback(
+    (direction: 'prev' | 'next') => {
+      if (!cursor) return;
+      applyCursorJump(moveCursorToAdjacentMeasure(score, cursor, direction));
+    },
+    [cursor, score, applyCursorJump]
+  );
+
   const moveCursorToBoundary = useCallback(
     (boundary: 'start' | 'end') => {
       if (!cursor) return;
@@ -403,6 +447,8 @@ export function useEditorInput({
     enterRestAtCursor,
     moveCursorDirection,
     moveCursorToBoundary,
+    moveCursorToScoreEdge,
+    moveCursorToMeasure,
     cycleVoiceDirection,
     selectVoice,
     setCursorToMeasure,

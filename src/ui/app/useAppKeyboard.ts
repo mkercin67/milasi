@@ -52,6 +52,8 @@ export interface UseAppKeyboardParams {
   clearNotations: () => void;
   moveCursorDirection: (direction: 'prev' | 'next') => void;
   moveCursorToBoundary?: (boundary: 'start' | 'end') => void;
+  moveCursorToScoreEdge?: (boundary: 'start' | 'end') => void;
+  moveCursorToMeasure?: (direction: 'prev' | 'next') => void;
   cycleVoiceDirection: (direction: 'next' | 'prev') => void;
   transposeSelection: (semitones: number) => void;
   executeCommand: (cmd: Command) => Score;
@@ -121,6 +123,8 @@ export function useAppKeyboard(params: UseAppKeyboardParams) {
     clearNotations,
     moveCursorDirection,
     moveCursorToBoundary,
+    moveCursorToScoreEdge,
+    moveCursorToMeasure,
     cycleVoiceDirection,
     transposeSelection,
     executeCommand,
@@ -351,6 +355,26 @@ export function useAppKeyboard(params: UseAppKeyboardParams) {
               moveCursorToBoundary?.('end');
             }
             break;
+          case 'cursor-score-start':
+            if (mode === 'input') {
+              moveCursorToScoreEdge?.('start');
+            }
+            break;
+          case 'cursor-score-end':
+            if (mode === 'input') {
+              moveCursorToScoreEdge?.('end');
+            }
+            break;
+          case 'cursor-prev-measure':
+            if (mode === 'input') {
+              moveCursorToMeasure?.('prev');
+            }
+            break;
+          case 'cursor-next-measure':
+            if (mode === 'input') {
+              moveCursorToMeasure?.('next');
+            }
+            break;
           case 'select-prev':
             if (mode === 'input') {
               moveCursorDirection('prev');
@@ -541,6 +565,8 @@ export function useAppKeyboard(params: UseAppKeyboardParams) {
     clearNotations,
     moveCursorDirection,
     moveCursorToBoundary,
+    moveCursorToScoreEdge,
+    moveCursorToMeasure,
     cycleVoiceDirection,
     transposeSelection,
     executeCommand,

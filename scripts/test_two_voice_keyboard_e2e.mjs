@@ -348,6 +348,62 @@ export async function runTwoVoiceKeyboardE2E() {
       throw new Error(`Voice 2 events differ. Expected ${JSON.stringify(expectV2)}, got ${JSON.stringify(describe(v2))}`);
     }
 
+    // ---- Phase 2 (U2b): score-level navigation with real keystrokes -------------
+    // Ctrl+Home / Ctrl+Right / Shift+Tab: fill measure 2 in both voices without the mouse.
+    console.log('Phase 2: Ctrl+Home, Ctrl+Right, Shift+Tab, then measure 2 in voice 1 and voice 2...');
+    const statusText = async () => page.evaluate(() => document.body.innerText);
+    const expectStatus = async (re, label) => {
+      await sleep(150);
+      const txt = await statusText();
+      if (!re.test(txt)) {
+        throw new Error(`Status bar check failed (${label}): expected ${re}, page text: ${txt.slice(0, 400)}`);
+      }
+    };
+    await page.keyboard.press('ControlOrMeta+Home');
+    await expectStatus(/Ölçü 1\s*·\s*Vuruş 1/, 'after Ctrl+Home');
+    await page.keyboard.press('ControlOrMeta+ArrowRight');
+    await expectStatus(/Ölçü 2\s*·\s*Vuruş 1/, 'after Ctrl+Right');
+    await page.keyboard.press('Shift+Tab');
+    await expectStatus(/Ses 1/, 'after Shift+Tab');
+    for (const k of ['KeyG', 'KeyA', 'KeyB', 'KeyC']) {
+      await page.keyboard.press(k);
+      await sleep(120);
+    }
+    await page.keyboard.press('ControlOrMeta+Home');
+    await expectStatus(/Ölçü 1\s*·\s*Vuruş 1/, 'second Ctrl+Home');
+    await page.keyboard.press('ControlOrMeta+ArrowRight');
+    await expectStatus(/Ölçü 2\s*·\s*Vuruş 1/, 'second Ctrl+Right');
+    await page.keyboard.press('Tab');
+    await expectStatus(/Ses 2/, 'Tab to voice 2 in measure 2');
+    for (const k of ['KeyG', 'KeyA', 'KeyB', 'KeyC']) {
+      await page.keyboard.press(k);
+      await sleep(120);
+    }
+    const phase2 = await page.evaluate(() => {
+      const s = window.__getScoreForTest();
+      const out = {};
+      s.measures.slice(0, 2).forEach((m, i) => {
+        const sm = s.parts[0].staves[0].measures[m.id];
+        for (const v of sm.voices) {
+          out[`m${i + 1}v${v.voiceIndex}`] = v.events.map((e) =>
+            e.kind === 'note' ? `${e.pitches[0].step}:${e.duration}` : `rest:${e.duration}`
+          );
+        }
+      });
+      return out;
+    });
+    console.log('Phase 2 score dump:', JSON.stringify(phase2));
+    const expectStd = ['G:960', 'A:960', 'B:960', 'C:960'];
+    for (const key of ['m2v1', 'm2v2']) {
+      if (JSON.stringify(phase2[key]) !== JSON.stringify(expectStd)) {
+        throw new Error(`Phase 2 ${key} differs. Expected ${JSON.stringify(expectStd)}, got ${JSON.stringify(phase2[key])}`);
+      }
+    }
+    if (phase2.m1v1?.length !== 4 || phase2.m1v2?.length !== 4) {
+      throw new Error(`Phase 2: measure 1 changed unexpectedly: ${JSON.stringify(phase2)}`);
+    }
+    await page.screenshot({ path: path.join(screenshotsDir, '06_two_measures_two_voices.png') });
+
     success = true;
     console.log('✓ Playwright E2E Keyboard-Only Two-Voice Entry PASSED successfully!');
   } finally {

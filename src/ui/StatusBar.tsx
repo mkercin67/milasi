@@ -341,6 +341,8 @@ export const StatusBar: React.FC<StatusBarProps> = ({
             <span>{t('shortcut.inputHome')}</span>
             <span>•</span>
             <span>{t('shortcut.inputArrows')}</span>
+            <span>•</span>
+            <span>{t('shortcut.inputScore')}</span>
           </>
         ) : mode === 'position' ? (
           <>

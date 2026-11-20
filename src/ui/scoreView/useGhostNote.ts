@@ -9,7 +9,7 @@ import {
   staffPositionToY,
   yToStaffPosition,
 } from '../../layout/pitch';
-import { xToCursor } from '../../layout/mouse';
+import { xToEntryCursor } from '../../layout/pointerCursor';
 import { computeCursorPosition } from '../../layout/cursor';
 import { GhostNoteData } from './types';
 
@@ -18,7 +18,8 @@ export function useGhostNote(
   layout: LayoutResult,
   staffSpacePx: number,
   activeDuration: BaseDurationType,
-  _cursor: ScoreCursor | null,
+  // Bug-fix: renamed from _cursor to cursor so the active voice is accessible.
+  cursor: ScoreCursor | null,
   cursorPos: { x: number; y1: number; y2: number; systemIndex: number } | null,
   containerRectRef: React.MutableRefObject<{ left: number; top: number; width: number; height: number }>,
   onEnterPitchDirect?: (pitch: Pitch, customCursor?: ScoreCursor) => void,
@@ -78,7 +79,8 @@ export function useGhostNote(
 
     const { targetSys, sysRelX: systemRelX, sysRelY: systemRelY } = coords;
     const clef = score.parts[0]?.staves[0]?.clef ?? { sign: 'G', line: 2 };
-    const targetCursor = xToCursor(layout, targetSys.index, systemRelX, score);
+    const activeVoiceIndex = cursor?.voiceIndex ?? 1;
+    const targetCursor = xToEntryCursor(layout, score, targetSys.index, systemRelX, activeVoiceIndex);
     const mDef = score.measures.find((m) => m.id === targetCursor?.measureId) ?? score.measures[0];
     const keySig = mDef?.keySig ?? 0;
 
@@ -108,23 +110,19 @@ export function useGhostNote(
         ? 'noteheadHalf'
         : 'noteheadBlack';
 
+    // The ghost sits on the beat column under the pointer (columns are shared by all voices).
+    // Measures with rests only have no column: fall back to the computed cursor position.
     let ghostX = cursorPos && cursorPos.systemIndex === targetSys.index ? cursorPos.x : systemRelX;
-    if (targetCursor) {
-      const sId = score.parts[0]?.staves[0]?.id;
-      const staff = score.parts[0]?.staves[0];
-      const sm = staff?.measures[targetCursor.measureId];
-      const voice1 = sm?.voices.find((v) => v.voiceIndex === 1);
-      if (sId && voice1) {
-        const computed = computeCursorPosition(layout, score, {
-          staffId: sId,
-          voiceIndex: 1,
-          measureId: targetCursor.measureId,
-          tick: targetCursor.tick,
-        });
-        if (computed && computed.systemIndex === targetSys.index) {
-          ghostX = computed.x;
-        }
-      }
+    if (targetCursor?.columnX != null) {
+      ghostX = targetCursor.columnX - 0.2;
+    } else if (targetCursor) {
+      const computed = computeCursorPosition(layout, score, {
+        staffId: targetCursor.staffId,
+        voiceIndex: targetCursor.voiceIndex,
+        measureId: targetCursor.measureId,
+        tick: targetCursor.tick,
+      });
+      if (computed && computed.systemIndex === targetSys.index) ghostX = computed.x;
     }
 
     setGhostNote({
@@ -145,24 +143,19 @@ export function useGhostNote(
 
     const { targetSys, sysRelX, sysRelY } = coords;
     const clef = score.parts[0]?.staves[0]?.clef ?? { sign: 'G', line: 2 };
-    const clickedCursor = xToCursor(layout, targetSys.index, sysRelX, score);
+    const clickedCursor = xToEntryCursor(layout, score, targetSys.index, sysRelX, cursor?.voiceIndex ?? 1);
     const mDef = score.measures.find((m) => m.id === clickedCursor?.measureId) ?? score.measures[0];
     const keySig = mDef?.keySig ?? 0;
     const clickedPitch = yToStaffPosition(clef, sysRelY, keySig);
 
+    // The active voice (Tab / toolbar) receives the note; a missing voice is created by entry.
     if (clickedCursor) {
-      const sId = score.parts[0]?.staves[0]?.id;
-      const staff = score.parts[0]?.staves[0];
-      const sm = staff?.measures[clickedCursor.measureId];
-      const voice1 = sm?.voices.find((v) => v.voiceIndex === 1);
-      if (sId && voice1) {
-        onEnterPitchDirect(clickedPitch, {
-          staffId: sId,
-          voiceIndex: 1,
-          measureId: clickedCursor.measureId,
-          tick: clickedCursor.tick,
-        });
-      }
+      onEnterPitchDirect(clickedPitch, {
+        staffId: clickedCursor.staffId,
+        voiceIndex: clickedCursor.voiceIndex,
+        measureId: clickedCursor.measureId,
+        tick: clickedCursor.tick,
+      });
     }
   };
 

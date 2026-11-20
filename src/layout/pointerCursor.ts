@@ -5,6 +5,8 @@
 
 import { LayoutResult } from './types';
 import { Score } from '../core/model';
+import { measureTicks as timeSigTicks } from '../core/time';
+import type { ScoreCursor } from '../core/input';
 
 /**
  * Checks if a pointer movement exceeds the drag initiation threshold (default 4px).
@@ -64,13 +66,17 @@ export function applyAxisLock(
  * @param systemIndex - Index of the target system.
  * @param x - Pointer X coordinate in staff spaces relative to the system left.
  * @param score - Optional score model (falls back to layout.score).
+ * @param options - `allVoices: true` resolves the tick from the event columns of ALL voices in
+ *   the measure (used by note entry, where the active voice may be empty or rest-only). Without
+ *   it the legacy behaviour (voice 1 only) is kept for selection clicks.
  * @returns Cursor position { measureId, tick }, or null if system not found.
  */
 export function xToCursor(
   layout: LayoutResult,
   systemIndex: number,
   x: number,
-  score?: Score
+  score?: Score,
+  options?: { allVoices?: boolean }
 ): { measureId: string; tick: number } | null {
   const system = layout.systems[systemIndex];
   if (!system) return null;
@@ -142,9 +148,14 @@ export function xToCursor(
   const sm = staff?.measures[targetMeasure.measureId];
   const voice = sm?.voices.find((v) => v.voiceIndex === 1);
   const mDef = effectiveScore.measures.find((m) => m.id === targetMeasure.measureId);
-  const measureTicks = mDef
-    ? (mDef.timeSig.num * 480 * 4) / mDef.timeSig.den
-    : 480 * 4;
+  const measureTicks = mDef ? (mDef.actualTicks ?? timeSigTicks(mDef.timeSig)) : timeSigTicks({ num: 4, den: 4 });
+
+  if (options?.allVoices) {
+    return {
+      measureId: targetMeasure.measureId,
+      tick: columnFromAllVoices(system, sm?.voices ?? [], x).tick,
+    };
+  }
 
   if (!voice || voice.events.length === 0) {
     return { measureId: targetMeasure.measureId, tick: 0 };
@@ -182,4 +193,71 @@ export function xToCursor(
 
   // Beyond all events: end-of-measure tick
   return { measureId: targetMeasure.measureId, tick: measureTicks };
+}
+
+type VoiceLike = { events: Array<{ id: string; kind: string; duration: number }> };
+
+/**
+ * Picks the beat column under x from the event columns of every voice that contains sounding
+ * events. Voices made only of rests (for example a freshly created voice) follow the other
+ * voices instead of swallowing the click. Right of the last column the LAST column is used
+ * (a complete measure has no free slot after its last beat). If every voice is rests only the
+ * answer is tick 0 with no column.
+ */
+function columnFromAllVoices(
+  system: LayoutResult['systems'][number],
+  voices: VoiceLike[],
+  x: number
+): { tick: number; columnX: number | null } {
+  const active = voices.filter((v) => v.events.some((e) => e.kind !== 'rest'));
+  if (active.length === 0) return { tick: 0, columnX: null };
+
+  const columns = new Map<number, { maxX: number; minX: number }>();
+  for (const v of active) {
+    let tick = 0;
+    for (const ev of v.events) {
+      const start = tick;
+      tick += ev.duration;
+      const items = system.items.filter((it) => it.eventId === ev.id && !it.hidden);
+      if (items.length === 0) continue;
+      const maxX = Math.max(...items.map((it) => it.x2 ?? it.x + (it.width ?? 1.2)));
+      const minX = Math.min(...items.map((it) => it.x));
+      const prev = columns.get(start);
+      columns.set(start, {
+        maxX: Math.max(prev?.maxX ?? -Infinity, maxX),
+        minX: Math.min(prev?.minX ?? Infinity, minX),
+      });
+    }
+  }
+  const ticks = [...columns.keys()].sort((a, b) => a - b);
+  if (ticks.length === 0) return { tick: 0, columnX: null };
+  for (const start of ticks) {
+    if (x <= (columns.get(start) as { maxX: number }).maxX) {
+      return { tick: start, columnX: (columns.get(start) as { minX: number }).minX };
+    }
+  }
+  const last = ticks[ticks.length - 1];
+  return { tick: last, columnX: (columns.get(last) as { minX: number }).minX };
+}
+
+/**
+ * Cursor for mouse note entry: the clicked measure and tick (from all voices' columns) in the
+ * ACTIVE voice, plus the x of that beat column (null when the measure holds only rests).
+ * The voice does not need to exist yet; entry creates it (M7a-2b D3).
+ */
+export function xToEntryCursor(
+  layout: LayoutResult,
+  score: Score,
+  systemIndex: number,
+  x: number,
+  voiceIndex: ScoreCursor['voiceIndex']
+): (ScoreCursor & { columnX: number | null }) | null {
+  const staffId = score.parts[0]?.staves[0]?.id;
+  if (!staffId) return null;
+  const found = xToCursor(layout, systemIndex, x, score, { allVoices: true });
+  if (!found) return null;
+  const sm = score.parts[0].staves[0].measures[found.measureId];
+  const system = layout.systems[systemIndex];
+  const columnX = system ? columnFromAllVoices(system, sm?.voices ?? [], x).columnX : null;
+  return { staffId, voiceIndex, measureId: found.measureId, tick: found.tick, columnX };
 }

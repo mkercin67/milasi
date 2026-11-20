@@ -252,6 +252,8 @@ export function useEditor(initialScore?: Score) {
     enterRestAtCursor: inputHook.enterRestAtCursor,
     moveCursorDirection: inputHook.moveCursorDirection,
     moveCursorToBoundary: inputHook.moveCursorToBoundary,
+    moveCursorToScoreEdge: inputHook.moveCursorToScoreEdge,
+    moveCursorToMeasure: inputHook.moveCursorToMeasure,
     cycleVoiceDirection: inputHook.cycleVoiceDirection,
     selectVoice: inputHook.selectVoice,
     selection: selectionHook.selection,

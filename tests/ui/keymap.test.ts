@@ -367,4 +367,19 @@ describe('keymap', () => {
       });
     }
   });
+
+  it('U2b: Ctrl+Home/End and Ctrl+Left/Right navigate the score in input mode only', () => {
+    expect(mapKeyEvent({ code: 'Home', ctrlKey: true }, 'input')).toBe('cursor-score-start');
+    expect(mapKeyEvent({ code: 'End', ctrlKey: true }, 'input')).toBe('cursor-score-end');
+    expect(mapKeyEvent({ code: 'ArrowLeft', ctrlKey: true }, 'input')).toBe('cursor-prev-measure');
+    expect(mapKeyEvent({ code: 'ArrowRight', ctrlKey: true }, 'input')).toBe('cursor-next-measure');
+    // Plain Home/End keep their measure-level meaning
+    expect(mapKeyEvent({ code: 'Home' }, 'input')).toBe('cursor-measure-start');
+    expect(mapKeyEvent({ code: 'End' }, 'input')).toBe('cursor-measure-end');
+    // Not active outside input mode
+    for (const mode of ['select', 'position', 'lyrics'] as EditorMode[]) {
+      expect(mapKeyEvent({ code: 'Home', ctrlKey: true }, mode)).not.toBe('cursor-score-start');
+      expect(mapKeyEvent({ code: 'ArrowRight', ctrlKey: true }, mode)).not.toBe('cursor-next-measure');
+    }
+  });
 });
