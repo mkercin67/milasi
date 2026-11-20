@@ -91,6 +91,8 @@ Activated via `KeyN`. Enter pitches, rests, and note durations.
 | `8` | `Digit8` | `Shift` | apply-dynamic: fp |
 | `Tab` | `Tab` | - | next-voice |
 | `Tab` | `Tab` | `Shift` | prev-voice |
+| `[` | `BracketLeft` | - | staff-up |
+| `]` | `BracketRight` | - | staff-down |
 | `Home` | `Home` | - | cursor-measure-start |
 | `End` | `End` | - | cursor-measure-end |
 | `Home` | `Home` | `Ctrl` | cursor-score-start |

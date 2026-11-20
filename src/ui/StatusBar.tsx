@@ -56,6 +56,8 @@ export interface StatusBarProps {
   errorCount?: number;
   warningCount?: number;
   voiceIndex?: 1 | 2 | 3 | 4;
+  /** Position of the cursor's staff inside its part; shown only when the part has several staves. */
+  staffInfo?: { index: number; total: number } | null;
 }
 
 const MODE_COLORS: Record<EditorMode, { bg: string; fg: string; border: string }> = {
@@ -82,6 +84,7 @@ export const StatusBar: React.FC<StatusBarProps> = ({
   errorCount,
   warningCount,
   voiceIndex = 1,
+  staffInfo = null,
 }) => {
   if (typeof window !== 'undefined') {
     const w = window as unknown as { __componentRenders?: Record<string, number> };
@@ -151,6 +154,14 @@ export const StatusBar: React.FC<StatusBarProps> = ({
             />
             <span>{voiceText}</span>
           </span>
+          {staffInfo && staffInfo.total > 1 && (
+            <>
+              <span>·</span>
+              <span data-testid="status-staff-indicator">
+                {t('status.staff', { num: staffInfo.index, total: staffInfo.total })}
+              </span>
+            </>
+          )}
           {pointerText}
         </span>
       );
@@ -338,6 +349,12 @@ export const StatusBar: React.FC<StatusBarProps> = ({
           <>
             <span>{t('shortcut.inputVoice')}</span>
             <span>•</span>
+            {staffInfo && staffInfo.total > 1 && (
+              <>
+                <span>{t('shortcut.inputStaff')}</span>
+                <span>•</span>
+              </>
+            )}
             <span>{t('shortcut.inputHome')}</span>
             <span>•</span>
             <span>{t('shortcut.inputArrows')}</span>

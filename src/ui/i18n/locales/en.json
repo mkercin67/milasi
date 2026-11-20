@@ -182,5 +182,10 @@
   "dialog.newScore.pickupLength": "Pickup duration",
   "status.errors": "{count} errors",
   "status.warnings": "{count} warnings",
-  "dialog.removeVoiceConfirm": "Voice contains notes. Are you sure you want to remove it?"
+  "dialog.removeVoiceConfirm": "Voice contains notes. Are you sure you want to remove it?",
+  "status.staff": "Staff {num}/{total}",
+  "shortcut.inputStaff": "[ / ]: Staff",
+  "dialog.newScore.template": "Template",
+  "dialog.newScore.templateSingle": "Single staff",
+  "dialog.newScore.templatePiano": "Piano (grand staff)"
 }

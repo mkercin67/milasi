@@ -32,3 +32,19 @@ export function firstStaff(score: Score): Staff | undefined {
 export function firstPartStaves(score: Score): Staff[] {
   return score.parts[0]?.staves ?? []; // staff-zero-ok: the single definition of the layout part
 }
+
+/**
+ * Position of a staff inside its part (1-based) and the number of staves of that part,
+ * for the status bar ("Porte 1/2"). Undefined for an unknown staff id.
+ */
+export function staffPosition(
+  score: Score,
+  staffId: Id | undefined | null
+): { index: number; total: number } | undefined {
+  if (!staffId) return undefined;
+  for (const part of score.parts) {
+    const i = part.staves.findIndex((s) => s.id === staffId);
+    if (i >= 0) return { index: i + 1, total: part.staves.length };
+  }
+  return undefined;
+}

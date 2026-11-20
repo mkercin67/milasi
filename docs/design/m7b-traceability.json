@@ -81,8 +81,43 @@
   },
   {
     "planItemId": "B7",
-    "description": "Staff switch keys, keeping measure/tick/voice (M7b-3).",
-    "status": "PLANNED"
+    "description": "Staff switch keys BracketLeft/BracketRight (Turkish Q: G-breve / U-diaeresis), input mode only, keep measure/tick/voice, snap to event start, no wrap.",
+    "status": "DONE",
+    "codeLocation": "src/core/input.ts:moveCursorToStaff",
+    "testFile": "tests/core/staff_switch.test.ts",
+    "testName": "S2: a tick in the middle of a lower-staff event snaps back to that event start, never forward"
+  },
+  {
+    "planItemId": "B7b",
+    "description": "Keymap: staff keys only in input mode, no modifiers.",
+    "codeLocation": "src/ui/keymap.ts:mapKeyEvent",
+    "testFile": "tests/ui/m7b3a_grand_staff_keyboard.test.tsx",
+    "testName": "K1: BracketLeft / BracketRight map to staff-up / staff-down in input mode only, without modifiers",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B7c",
+    "description": "Pitch context follows the staff of the cursor (bass staff does not read the treble staff).",
+    "codeLocation": "src/ui/editor/useEditorInput.ts:moveCursorToStaff",
+    "testFile": "tests/ui/m7b3a_grand_staff_keyboard.test.tsx",
+    "testName": "K4: after switching to the bass staff the pitch context comes from the bass staff, not the treble staff",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B7d",
+    "description": "Caret and beat guide sit in the staff of the cursor.",
+    "codeLocation": "src/layout/cursor.ts:computeCursorPosition",
+    "testFile": "tests/ui/m7b3a_grand_staff_keyboard.test.tsx",
+    "testName": "K5: the caret and the beat guide of the bass staff sit 11 sp (4 + 7) below those of the treble staff",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B7e",
+    "description": "Status bar shows the staff position (Porte n/m) on multi-staff parts.",
+    "codeLocation": "src/ui/StatusBar.tsx:StatusBar",
+    "testFile": "tests/ui/m7b3a_grand_staff_keyboard.test.tsx",
+    "testName": "K6: the status bar shows \"Porte 2/2\" (tr) / \"Staff 2/2\" (en) in input mode on a grand staff, and nothing on one staff",
+    "status": "DONE"
   },
   {
     "planItemId": "B8",
@@ -91,13 +126,27 @@
   },
   {
     "planItemId": "B9",
-    "description": "New Score template Piano (M7b-3).",
-    "status": "PLANNED"
+    "description": "New Score template Piano (grand staff) via createGrandStaffScore.",
+    "status": "DONE",
+    "codeLocation": "src/ui/NewScoreModal.tsx:NewScoreModal",
+    "testFile": "tests/ui/m7b3a_grand_staff_keyboard.test.tsx",
+    "testName": "K7: the New Score dialog offers the single-staff and piano templates"
+  },
+  {
+    "planItemId": "B9b",
+    "description": "Save and load keep both staves, clefs and the brace group.",
+    "codeLocation": "src/io/json.ts:serializeScore",
+    "testFile": "tests/ui/m7b3a_grand_staff_keyboard.test.tsx",
+    "testName": "K9: a two-staff score round-trips through save and load (staves, clefs, group, notes)",
+    "status": "DONE"
   },
   {
     "planItemId": "B10",
-    "description": "Playback schedules both staves (M7b-3).",
-    "status": "PLANNED"
+    "description": "Playback schedules both staves in time order.",
+    "status": "DONE",
+    "codeLocation": "src/playback/schedule.ts:buildSchedule",
+    "testFile": "tests/ui/m7b3a_grand_staff_keyboard.test.tsx",
+    "testName": "K8: playback schedules the notes of both staves in time order and lasts as long as the score"
   },
   {
     "planItemId": "B11",

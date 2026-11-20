@@ -48,6 +48,10 @@ jobs:
         timeout-minutes: 10
         run: node scripts/test_two_voice_keyboard_e2e.mjs
 
+      - name: Run Playwright keyboard grand staff E2E (M7b-3a)
+        timeout-minutes: 10
+        run: node scripts/test_grand_staff_keyboard_e2e.mjs
+
       - name: Upload artifacts on failure
         if: failure()
         uses: actions/upload-artifact@v6

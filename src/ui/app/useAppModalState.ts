@@ -12,11 +12,11 @@ import {
   setTimeSignature,
   Command,
 } from '../../core/commands';
-import { createEmptyScore, createRest } from '../../core/factory';
+import { createEmptyScore, createGrandStaffScore, createRest } from '../../core/factory';
+import { firstPartStaves } from '../../core/staffLookup';
 import { SelectedEventInfo } from './types';
 import { NewScoreConfig } from '../NewScoreModal';
 import { EditorMode } from '../keymap';
-import { firstStaff } from '../../core/staffLookup';
 
 export interface UseAppModalStateParams {
   score: Score;
@@ -222,26 +222,26 @@ export function useAppModalState({
 
   const handleCreateNewScore = (config: NewScoreConfig) => {
     const t0 = performance.now();
-    const fresh = createEmptyScore({
+    const options = {
       clef: config.clef,
       keySig: config.keySig,
       timeSig: config.timeSig,
       measures: config.measures,
-    });
+    };
+    const fresh = config.template === 'piano' ? createGrandStaffScore(options) : createEmptyScore(options);
     if (config.isPickup && config.pickupDurationTicks) {
-      fresh.measures[0].actualTicks = config.pickupDurationTicks;
+      const pickupTicks = config.pickupDurationTicks;
+      fresh.measures[0].actualTicks = pickupTicks;
       const m0Id = fresh.measures[0].id;
-      firstStaff(fresh)!.measures[m0Id].voices.find((v) => v.voiceIndex === 1)!.events = [
-        createRest({
-          baseType:
-            config.pickupDurationTicks === 480
-              ? 'eighth'
-              : config.pickupDurationTicks === 1920
-              ? 'half'
-              : 'quarter',
-          duration: config.pickupDurationTicks,
-        }),
-      ];
+      // Every staff of the first part gets the pickup rest (one staff, or both of a grand staff).
+      for (const st of firstPartStaves(fresh)) {
+        st.measures[m0Id].voices.find((v) => v.voiceIndex === 1)!.events = [
+          createRest({
+            baseType: pickupTicks === 480 ? 'eighth' : pickupTicks === 1920 ? 'half' : 'quarter',
+            duration: pickupTicks,
+          }),
+        ];
+      }
     }
     resetScore(fresh);
     setMode('select');

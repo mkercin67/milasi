@@ -255,7 +255,8 @@ export const ScoreView: React.FC<ScoreViewProps> = ({
       cursor.tick,
       cursor.voiceIndex ?? 1,
       activeDuration,
-      activeDots
+      activeDots,
+      cursor.staffId
     );
   }, [layout, score, isInputMode, cursor, activeDuration, activeDots]);
 

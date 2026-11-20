@@ -182,5 +182,10 @@
   "dialog.newScore.pickupLength": "Eksik ölçü süresi",
   "status.errors": "{count} hata",
   "status.warnings": "{count} uyarı",
-  "dialog.removeVoiceConfirm": "Ses nota içeriyor. Silmek istediğinizden emin misiniz?"
+  "dialog.removeVoiceConfirm": "Ses nota içeriyor. Silmek istediğinizden emin misiniz?",
+  "status.staff": "Porte {num}/{total}",
+  "shortcut.inputStaff": "Ğ / Ü: Porte",
+  "dialog.newScore.template": "Şablon",
+  "dialog.newScore.templateSingle": "Tek porte",
+  "dialog.newScore.templatePiano": "Piyano (büyük porte)"
 }

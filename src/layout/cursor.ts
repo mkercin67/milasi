@@ -10,6 +10,7 @@ import { Score } from '../core/model';
 import { ScoreCursor } from '../core/input';
 import { LayoutResult, LayoutSystem } from './types';
 import { findStaff } from '../core/staffLookup';
+import { staffOffsetInSystem } from './systemStaves';
 
 export interface CursorPosition {
   systemIndex: number;
@@ -51,8 +52,9 @@ export function computeCursorPosition(
     systemIndex = 0;
   }
 
-  const y1 = targetSystem.y;
-  const y2 = targetSystem.y + 4;
+  // Multi-staff systems: the caret sits in the staff of the cursor (offset from staff 0).
+  const y1 = targetSystem.y + staffOffsetInSystem(targetSystem, cursor.staffId);
+  const y2 = y1 + 4;
 
   const isFirstMeasureInScore = score.measures[0]?.id === cursor.measureId;
 

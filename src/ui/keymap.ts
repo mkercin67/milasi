@@ -63,6 +63,8 @@ export type UserAction =
   | 'cursor-score-end'
   | 'cursor-prev-measure'
   | 'cursor-next-measure'
+  | 'staff-up'
+  | 'staff-down'
   | { type: 'apply-dynamic'; dynamic: DynamicType }
   | { type: 'toggle-articulation'; articulation: ArticulationType }
   | { type: 'nudge-override'; dx: number; dy: number }
@@ -398,6 +400,13 @@ export function mapKeyEvent(
       return isShift ? 'prev-voice' : 'next-voice';
     }
 
+    // Staff switching on a grand staff (M7b-3a): physical BracketLeft/BracketRight, no modifiers
+    // (Turkish Q keyboard: Ğ / Ü).
+    if (!isShift && !isCmdOrCtrl && !isAlt) {
+      if (e.code === 'BracketLeft') return 'staff-up';
+      if (e.code === 'BracketRight') return 'staff-down';
+    }
+
     if (isShift) {
       if (e.code === 'KeyL') {
         return { type: 'toggle-articulation', articulation: 'marcato' };
@@ -559,6 +568,8 @@ export function getCompleteKeyTable(): KeyTableEntry[] {
     // Input mode shortcuts
     { key: 'Tab', code: 'Tab', modifiers: 'none', mode: 'input', action: 'next-voice' },
     { key: 'Tab', code: 'Tab', modifiers: 'Shift', mode: 'input', action: 'prev-voice' },
+    { key: '[', code: 'BracketLeft', modifiers: 'none', mode: 'input', action: 'staff-up' },
+    { key: ']', code: 'BracketRight', modifiers: 'none', mode: 'input', action: 'staff-down' },
     { key: 'Home', code: 'Home', modifiers: 'none', mode: 'input', action: 'cursor-measure-start' },
     { key: 'End', code: 'End', modifiers: 'none', mode: 'input', action: 'cursor-measure-end' },
     { key: 'Home', code: 'Home', modifiers: 'Ctrl', mode: 'input', action: 'cursor-score-start' },

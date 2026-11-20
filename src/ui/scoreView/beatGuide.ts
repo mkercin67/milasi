@@ -9,7 +9,8 @@
 import { BaseDurationType, Score } from '../../core/model';
 import { durationTicks, measureTicks, PPQ } from '../../core/time';
 import { LayoutResult, LayoutSystem } from '../../layout/types';
-import { firstStaff } from '../../core/staffLookup';
+import { findStaff, firstStaff } from '../../core/staffLookup';
+import { staffOffsetInSystem } from '../../layout/systemStaves';
 
 export interface BeatTickMark {
   beatNumber: number;
@@ -109,7 +110,8 @@ export function computeBeatGuide(
   cursorTick: number,
   activeVoiceIndex: 1 | 2 | 3 | 4,
   activeDuration: BaseDurationType,
-  activeDots: number
+  activeDots: number,
+  staffId?: string
 ): BeatGuideData | null {
   if (!measureId || layout.systems.length === 0) return null;
 
@@ -160,7 +162,9 @@ export function computeBeatGuide(
   const mLength = measureTicks(mDef.timeSig);
 
   // 2. Extract event column anchor points from layout items in this measure
-  const staff = firstStaff(score);
+  const staff = (staffId ? findStaff(score, staffId) : undefined) ?? firstStaff(score);
+  // Multi-staff systems: the guide sits in the staff of the cursor (offset from staff 0).
+  const guideY = targetSystem.y + staffOffsetInSystem(targetSystem, staffId);
   const sm = staff?.measures[measureId];
   const tickToXMap = new Map<number, number>();
 
@@ -227,7 +231,7 @@ export function computeBeatGuide(
   const pendingBand = {
     x: startX,
     width: Math.max(0.4, endX - startX),
-    y: targetSystem.y - 0.5,
+    y: guideY - 0.5,
     height: 5.0,
   };
 
@@ -251,7 +255,7 @@ export function computeBeatGuide(
 
   return {
     systemIndex,
-    sysY: targetSystem.y,
+    sysY: guideY,
     beatMarks,
     pendingBand,
     coincidentLineX,

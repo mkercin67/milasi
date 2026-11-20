@@ -30,7 +30,13 @@ import {
 } from '../../core/clipboard';
 import { EditorMode } from '../keymap';
 import { ScoreCursor } from '../../core/input';
-import { firstStaff } from '../../core/staffLookup';
+import { findStaff, firstStaff } from '../../core/staffLookup';
+
+/** The staff that holds the given event (undefined for no id or an unknown event). */
+function staffOfEvent(score: Score, eventId: string | null | undefined) {
+  if (!eventId) return undefined;
+  return findStaff(score, findEventContext(score, eventId)?.staffId);
+}
 
 export interface SelectedEventInfo {
   eventId: string;
@@ -134,8 +140,6 @@ export function useEditorSelection({
   const extendSelectionDirection = useCallback(
     (direction: 'prev' | 'next') => {
       const curScore = scoreRef.current;
-      const staffId = firstStaff(curScore)?.id;
-      if (!staffId) return;
       const curSel = selectionRef.current;
       const currentEventId =
         curSel.kind === 'range'
@@ -144,6 +148,8 @@ export function useEditorSelection({
           ? curSel.id
           : selectedEventIdRef.current;
       if (!currentEventId) return;
+      const staffId = findEventContext(curScore, currentEventId)?.staffId;
+      if (!staffId) return;
       const nextId = nextEventId(curScore, staffId, currentEventId, direction);
       if (nextId) {
         extendSelectionTo(nextId);
@@ -154,7 +160,11 @@ export function useEditorSelection({
 
   const selectAllInStaff = useCallback(() => {
     const curScore = scoreRef.current;
-    const staff = firstStaff(curScore);
+    const curSel = selectionRef.current;
+    const anchorEventId =
+      curSel.kind === 'range' ? curSel.focusId : curSel.kind === 'event' ? curSel.id : selectedEventIdRef.current;
+    const staff =
+      staffOfEvent(curScore, anchorEventId) ?? findStaff(curScore, cursorRef.current?.staffId) ?? firstStaff(curScore);
     if (!staff) return;
     const allEvents: ScoreEvent[] = [];
     for (const mDef of curScore.measures) {
@@ -183,11 +193,11 @@ export function useEditorSelection({
       setSelection(nextSel);
       setSelectedEventId(null);
     }
-  }, [scoreRef]);
+  }, [scoreRef, cursorRef]);
 
   const selectNext = useCallback(
     (direction: 'prev' | 'next') => {
-      const staffId = firstStaff(score)?.id;
+      const staffId = (staffOfEvent(score, selectedEventId) ?? findStaff(score, cursor?.staffId) ?? firstStaff(score))?.id;
       if (!staffId) return;
       const nextId = nextEventId(score, staffId, selectedEventId, direction);
       if (nextId) {
@@ -195,13 +205,13 @@ export function useEditorSelection({
         setSelection({ kind: 'event', id: nextId });
       }
     },
-    [score, selectedEventId]
+    [score, selectedEventId, cursor?.staffId]
   );
 
   const selectedEventInfo = useMemo<SelectedEventInfo | null>(() => {
     if (!selectedEventId) return null;
 
-    const staff = firstStaff(score);
+    const staff = staffOfEvent(score, selectedEventId);
     if (!staff) return null;
 
     for (let mIdx = 0; mIdx < score.measures.length; mIdx++) {
@@ -338,7 +348,7 @@ export function useEditorSelection({
           }
         }
       } else if (mode === 'input' && cursor) {
-        const sm = firstStaff(score)?.measures[cursor.measureId];
+        const sm = findStaff(score, cursor.staffId)?.measures[cursor.measureId];
         const v = sm?.voices.find((vo) => vo.voiceIndex === cursor.voiceIndex);
         if (v) {
           const lastNote = [...v.events].reverse().find((e) => e.kind === 'note');
@@ -405,7 +415,13 @@ export function useEditorSelection({
     const curEventId = selectedEventIdRef.current;
     const curCursor = cursorRef.current;
 
-    const staff = firstStaff(curScore);
+    // Paste goes to the staff of the cursor (input mode), else the staff of the selection.
+    const staff =
+      (modeRef.current === 'input' ? findStaff(curScore, curCursor?.staffId) : undefined) ??
+      (curSel.kind === 'range' ? staffOfEvent(curScore, curRangeEvents[0]?.id) : undefined) ??
+      staffOfEvent(curScore, curEventId) ??
+      findStaff(curScore, curCursor?.staffId) ??
+      firstStaff(curScore);
     if (!staff) return;
 
     let startMId = curScore.measures[0]?.id;

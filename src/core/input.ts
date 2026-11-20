@@ -756,3 +756,22 @@ export function pitchFromLetter(
     alter,
   };
 }
+
+/**
+ * Moves the cursor to the staff above or below (flat order of all staves of the score),
+ * keeping measure and voice. The tick snaps to the START of the event of that voice sounding at
+ * the current tick in the target staff (never forward); a missing voice keeps the tick (D2).
+ * At the first/last staff the cursor stays where it is (no wrap). Never mutates the score.
+ */
+export function moveCursorToStaff(
+  score: Score,
+  cursor: ScoreCursor,
+  direction: 'up' | 'down'
+): ScoreCursor {
+  const staves = score.parts.flatMap((p) => p.staves);
+  const idx = staves.findIndex((s) => s.id === cursor.staffId);
+  if (idx < 0) return { ...cursor };
+  const target = staves[idx + (direction === 'up' ? -1 : 1)];
+  if (!target) return { ...cursor };
+  return switchToVoice(score, { ...cursor, staffId: target.id }, cursor.voiceIndex);
+}

@@ -13,6 +13,7 @@ import {
   moveCursorToAdjacentMeasure,
   moveCursorToMeasureBoundary,
   moveCursorToScoreBoundary,
+  moveCursorToStaff as moveCursorToStaffCore,
   pitchFromLetter,
   planEnter,
   ScoreCursor,
@@ -357,6 +358,14 @@ export function useEditorInput({
     [cursor, score, applyCursorJump]
   );
 
+  const moveCursorToStaff = useCallback(
+    (direction: 'up' | 'down') => {
+      if (!cursor) return;
+      applyCursorJump(moveCursorToStaffCore(score, cursor, direction));
+    },
+    [cursor, score, applyCursorJump]
+  );
+
   const moveCursorToBoundary = useCallback(
     (boundary: 'start' | 'end') => {
       if (!cursor) return;
@@ -450,6 +459,7 @@ export function useEditorInput({
     moveCursorToBoundary,
     moveCursorToScoreEdge,
     moveCursorToMeasure,
+    moveCursorToStaff,
     cycleVoiceDirection,
     selectVoice,
     setCursorToMeasure,

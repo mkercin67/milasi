@@ -30,7 +30,7 @@ import { useAppVerificationStates } from './app/useAppVerificationStates';
 import { useAppValidation } from './app/useAppValidation';
 import { useAppTestHooks } from './app/useAppTestHooks';
 import { TwoVoiceTipBanner } from './TwoVoiceTipBanner';
-import { firstStaff } from '../core/staffLookup';
+import { findStaff, firstStaff, staffPosition } from '../core/staffLookup';
 
 declare global {
   interface Window {
@@ -87,6 +87,7 @@ const EditorShell: React.FC = () => {
     moveCursorToBoundary,
     moveCursorToScoreEdge,
     moveCursorToMeasure,
+    moveCursorToStaff,
     cycleVoiceDirection,
     selectVoice,
     lastEnteredPitchRef,
@@ -287,6 +288,7 @@ const EditorShell: React.FC = () => {
     moveCursorToBoundary,
     moveCursorToScoreEdge,
     moveCursorToMeasure,
+    moveCursorToStaff,
     cycleVoiceDirection,
     transposeSelection,
     executeCommand,
@@ -344,7 +346,7 @@ const EditorShell: React.FC = () => {
   };
 
   const activeMeasureId = cursor?.measureId ?? score.measures[0]?.id;
-  const activeStaffMeasure = firstStaff(score)?.measures[activeMeasureId];
+  const activeStaffMeasure = (findStaff(score, cursor?.staffId) ?? firstStaff(score))?.measures[activeMeasureId];
   const voicesWithContent = useMemo(() => {
     if (!activeStaffMeasure) return [];
     const res: number[] = [];
@@ -541,6 +543,7 @@ const EditorShell: React.FC = () => {
         errorCount={errorCount}
         warningCount={warningCount}
         voiceIndex={cursor?.voiceIndex ?? 1}
+        staffInfo={staffPosition(score, cursor?.staffId)}
       />
 
       <AppModals

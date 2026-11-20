@@ -10,7 +10,11 @@ import React, { useState } from 'react';
 import { Clef } from '../core/model';
 import { useI18n } from './i18n';
 
+type NewScoreTemplate = 'single' | 'piano';
+
 export interface NewScoreConfig {
+  /** 'single' (default) = one staff with the chosen clef; 'piano' = treble + bass grand staff. */
+  template?: NewScoreTemplate;
   clef: Clef;
   keySig: number;
   timeSig: { num: number; den: number };
@@ -52,6 +56,7 @@ export const NewScoreModal: React.FC<NewScoreModalProps> = ({
 }) => {
   const { t, language } = useI18n();
 
+  const [template, setTemplate] = useState<NewScoreTemplate>('single');
   const [clefSign, setClefSign] = useState<'G' | 'F'>('G');
   const [keySig, setKeySig] = useState<number>(0);
   const [timeSigStr, setTimeSigStr] = useState<string>('4/4');
@@ -80,6 +85,7 @@ export const NewScoreModal: React.FC<NewScoreModalProps> = ({
     };
 
     onCreate({
+      template,
       clef,
       keySig,
       timeSig: { num, den },
@@ -167,8 +173,55 @@ export const NewScoreModal: React.FC<NewScoreModalProps> = ({
         )}
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          {/* Clef selection */}
+          {/* Template */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+            <label style={{ fontSize: '0.875rem', fontWeight: 500, color: '#334155' }}>
+              {t('dialog.newScore.template')}
+            </label>
+            <div style={{ display: 'flex', gap: '0.75rem' }}>
+              {(['single', 'piano'] as const).map((tpl) => (
+                <label
+                  key={tpl}
+                  style={{
+                    flex: 1,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    padding: '0.5rem 0.75rem',
+                    border: `1px solid ${template === tpl ? '#2563eb' : '#cbd5e1'}`,
+                    borderRadius: '6px',
+                    backgroundColor: template === tpl ? '#eff6ff' : '#ffffff',
+                    cursor: 'pointer',
+                    fontSize: '0.875rem',
+                    fontWeight: template === tpl ? 600 : 400,
+                    color: template === tpl ? '#1d4ed8' : '#334155',
+                  }}
+                >
+                  <input
+                    type="radio"
+                    name="template"
+                    data-testid={`template-${tpl}`}
+                    checked={template === tpl}
+                    onChange={() => setTemplate(tpl)}
+                    style={{ accentColor: '#2563eb' }}
+                  />
+                  {tpl === 'single' ? t('dialog.newScore.templateSingle') : t('dialog.newScore.templatePiano')}
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {/* Clef selection (single staff only: the piano template has treble + bass) */}
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '0.4rem',
+              opacity: template === 'piano' ? 0.45 : 1,
+              pointerEvents: template === 'piano' ? 'none' : 'auto',
+            }}
+            aria-disabled={template === 'piano'}
+          >
             <label style={{ fontSize: '0.875rem', fontWeight: 500, color: '#334155' }}>
               {t('dialog.newScore.clef')}
             </label>

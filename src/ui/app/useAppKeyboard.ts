@@ -54,6 +54,7 @@ export interface UseAppKeyboardParams {
   moveCursorToBoundary?: (boundary: 'start' | 'end') => void;
   moveCursorToScoreEdge?: (boundary: 'start' | 'end') => void;
   moveCursorToMeasure?: (direction: 'prev' | 'next') => void;
+  moveCursorToStaff?: (direction: 'up' | 'down') => void;
   cycleVoiceDirection: (direction: 'next' | 'prev') => void;
   transposeSelection: (semitones: number) => void;
   executeCommand: (cmd: Command) => Score;
@@ -125,6 +126,7 @@ export function useAppKeyboard(params: UseAppKeyboardParams) {
     moveCursorToBoundary,
     moveCursorToScoreEdge,
     moveCursorToMeasure,
+    moveCursorToStaff,
     cycleVoiceDirection,
     transposeSelection,
     executeCommand,
@@ -375,6 +377,16 @@ export function useAppKeyboard(params: UseAppKeyboardParams) {
               moveCursorToMeasure?.('next');
             }
             break;
+          case 'staff-up':
+            if (mode === 'input') {
+              moveCursorToStaff?.('up');
+            }
+            break;
+          case 'staff-down':
+            if (mode === 'input') {
+              moveCursorToStaff?.('down');
+            }
+            break;
           case 'select-prev':
             if (mode === 'input') {
               moveCursorDirection('prev');
@@ -567,6 +579,7 @@ export function useAppKeyboard(params: UseAppKeyboardParams) {
     moveCursorToBoundary,
     moveCursorToScoreEdge,
     moveCursorToMeasure,
+    moveCursorToStaff,
     cycleVoiceDirection,
     transposeSelection,
     executeCommand,
