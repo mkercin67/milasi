@@ -500,6 +500,104 @@ exports[`H1 Regression Gallery: Golden Snapshot Tests > golden snapshot matches 
 </svg>"
 `;
 
+exports[`H1 Regression Gallery: Golden Snapshot Tests > golden snapshot matches for case [grand-staff-skyline]: 28. Grand Staff, Skyline Spacing 1`] = `
+"<svg xmlns="http://www.w3.org/2000/svg" viewBox="-24 -3 472 327" width="472px" height="327px" style="color: currentColor; overflow: visible; user-select: none;">
+  <defs>
+    <path id="glyph-brace" d="M0-500C24-463 37-435 37-397C37-330 2-251 2-175C2-121 20-48 61-1C64 3 71-1 69-6C45-45 37-91 37-131C37-212 69-285 69-354C69-404 56-452 16-500C55-547 69-595 69-645C69-714 37-788 37-868C37-909 44-954 68-993C71-999 63-1003 60-999C19-951 2-879 2-824C2-748 37-669 37-602C37-564 24-537 0-500" />
+    <path id="glyph-fClef" d="M252-262C78-262 0-135 0-39C0 41 42 110 123 110C186 110 229 66 229 4C229-60 182-100 133-100C106-100 96-93 83-93C70-93 67-101 67-111C67-151 127-224 229-224C335-224 381-120 381 37C381 140 359 260 297 356C237 449 134 534 10 605C1 610-5 615-5 623C-5 629-1 635 8 635C13 635 19 633 25 630C158 565 286 489 392 375C479 281 531 159 531 28C531-146 425-262 252-262M629-180C598-180 574-156 574-125C574-94 598-70 629-70C660-70 684-94 684-125C684-156 660-180 629-180M630 71C599 71 576 94 576 125C576 156 599 179 630 179C661 179 684 156 684 125C684 94 661 71 630 71" />
+    <path id="glyph-gClef" d="M376-415C374-427 376-428 382-434C398-449 419-470 438-491C522-583 572-702 572-815C572-902 548-988 507-1048C492-1070 466-1098 455-1098C441-1098 410-1072 390-1050C316-968 292-843 292-739C292-681 299-616 306-575C308-563 309-561 297-551C233-498 164-437 112-373C43-287 0-194 0-87C0 87 119 252 364 252C387 252 413 250 433 246C444 244 446 243 448 255C460 322 475 409 475 456C475 604 375 622 316 622C262 622 236 606 236 593C236 586 245 583 268 576C299 567 335 540 335 482C335 427 300 380 239 380C172 380 132 433 132 495C132 560 171 658 322 658C389 658 519 628 519 458C519 401 501 306 490 244C488 232 489 233 503 227C604 187 671 102 671-11C671-139 577-252 430-252C404-252 404-252 401-270M470-943C503-943 530-916 530-861C530-792 497-728 419-650C403-634 379-611 356-591C349-585 345-586 343-599C339-625 337-659 337-691C337-847 409-943 470-943M361-262C364-243 364-244 346-238C258-208 201-129 201-44C201 46 248 110 316 133C324 136 336 139 343 139C351 139 355 134 355 128C355 121 347 118 340 115C298 97 268 54 268 8C268-49 307-92 368-109C384-113 386-112 388-101L438 197C440 208 439 208 424 211C408 214 388 216 368 216C193 216 80 119 80-20C80-79 90-158 173-252C233-319 279-356 326-394C336-402 338-401 340-390M430-103C428-115 429-118 441-117C522-110 589-42 589 46C589 109 551 160 495 188C483 194 481 194 479 182" />
+    <path id="glyph-noteheadBlack" d="M97 125C186 125 295 43 295-42C295-93 255-125 198-125C88-125 0-44 0 42C0 94 43 125 97 125" />
+    <path id="glyph-restWhole" d="M282 109L282 17C282 2 270-9 256-9L26-9C11-9 0 2 0 17L0 109C0 123 11 135 26 135L256 135C270 135 282 123 282 109" />
+    <path id="glyph-timeSig4" d="M362 74L362-140C362-148 361-157 350-157C341-157 336-155 330-148L235-33C231-28 226-22 226-10L226 74L91 74C171 6 331-221 334-232C334-234 335-235 335-237C335-245 328-251 320-251C311-251 270-249 252-249C234-249 189-251 181-251C172-251 158-248 158-232C158-108 60 31 30 73L24 81C24 82 23 83 23 84C21 88 20 92 20 95C20 105 28 112 40 112L226 112L226 175C226 202 204 210 186 210C170 210 163 219 163 229C163 239 167 250 182 250L395 250C405 250 415 243 415 229C415 215 403 209 393 209C383 209 362 203 362 171L362 112L435 112C445 112 450 105 450 93C450 81 446 74 435 74" />
+  </defs>
+  <g data-system-index="0">
+    <line data-id="sys-0-staffline-4" x1="0" y1="151.5" x2="376.59999999999997" y2="151.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="butt" />
+    <line data-id="sys-0-staffline-3" x1="0" y1="141.5" x2="376.59999999999997" y2="141.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="butt" />
+    <line data-id="sys-0-staffline-2" x1="0" y1="131.5" x2="376.59999999999997" y2="131.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="butt" />
+    <line data-id="sys-0-staffline-1" x1="0" y1="121.5" x2="376.59999999999997" y2="121.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="butt" />
+    <line data-id="sys-0-staffline-0" x1="0" y1="111.5" x2="376.59999999999997" y2="111.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="butt" />
+    <text data-id="header-title" x="350" y="32" fill="currentColor" text-anchor="middle" font-family="&quot;Times New Roman&quot;, Times, &quot;Liberation Serif&quot;, serif" font-size="22px" font-weight="bold">Skyline Spacing</text>
+    <line data-id="sys-0-sys-start-barline" x1="0" y1="111.5" x2="0" y2="306.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="butt" />
+    <use data-id="sys-0-sys-brace" href="#glyph-brace" transform="translate(-9, 306.5) scale(0.04, 0.195)" fill="currentColor" />
+    <use data-id="sys-0-clef-0.4" href="#glyph-gClef" transform="translate(4, 141.5) scale(0.04)" fill="currentColor" />
+    <use data-id="sys-0-s1-clef-0.4" href="#glyph-fClef" transform="translate(4, 276.5) scale(0.04)" fill="currentColor" />
+    <use data-id="timesig-num-0" href="#glyph-timeSig4" transform="translate(31.999999999999996, 121.5) scale(0.04)" fill="currentColor" />
+    <use data-id="timesig-den-0" href="#glyph-timeSig4" transform="translate(31.999999999999996, 141.5) scale(0.04)" fill="currentColor" />
+    <use data-id="uuid-normalized" data-event-id="uuid-normalized" href="#glyph-noteheadBlack" transform="translate(61.99999999999999, 196.5) scale(0.04)" fill="currentColor" />
+    <line data-id="uuid-normalized-ledger-0-5" data-event-id="uuid-normalized" x1="57.999999999999986" y1="161.5" x2="77.8" y2="161.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="butt" />
+    <line data-id="uuid-normalized-ledger-0-6" data-event-id="uuid-normalized" x1="57.999999999999986" y1="171.5" x2="77.8" y2="171.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="butt" />
+    <line data-id="uuid-normalized-ledger-0-7" data-event-id="uuid-normalized" x1="57.999999999999986" y1="181.5" x2="77.8" y2="181.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="butt" />
+    <line data-id="uuid-normalized-ledger-0-8" data-event-id="uuid-normalized" x1="57.999999999999986" y1="191.5" x2="77.8" y2="191.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="butt" />
+    <line data-id="uuid-normalized-stem" data-event-id="uuid-normalized" x1="73.79999999999998" y1="194.82" x2="73.79999999999998" y2="161.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
+    <use data-id="uuid-normalized" data-event-id="uuid-normalized" href="#glyph-noteheadBlack" transform="translate(117, 191.5) scale(0.04)" fill="currentColor" />
+    <line data-id="uuid-normalized-ledger-0-5" data-event-id="uuid-normalized" x1="112.99999999999999" y1="161.5" x2="132.79999999999998" y2="161.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="butt" />
+    <line data-id="uuid-normalized-ledger-0-6" data-event-id="uuid-normalized" x1="112.99999999999999" y1="171.5" x2="132.79999999999998" y2="171.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="butt" />
+    <line data-id="uuid-normalized-ledger-0-7" data-event-id="uuid-normalized" x1="112.99999999999999" y1="181.5" x2="132.79999999999998" y2="181.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="butt" />
+    <line data-id="uuid-normalized-ledger-0-8" data-event-id="uuid-normalized" x1="112.99999999999999" y1="191.5" x2="132.79999999999998" y2="191.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="butt" />
+    <line data-id="uuid-normalized-stem" data-event-id="uuid-normalized" x1="128.79999999999998" y1="189.82" x2="128.79999999999998" y2="156.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
+    <use data-id="uuid-normalized" data-event-id="uuid-normalized" href="#glyph-noteheadBlack" transform="translate(172, 196.5) scale(0.04)" fill="currentColor" />
+    <line data-id="uuid-normalized-ledger-0-5" data-event-id="uuid-normalized" x1="168" y1="161.5" x2="187.79999999999998" y2="161.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="butt" />
+    <line data-id="uuid-normalized-ledger-0-6" data-event-id="uuid-normalized" x1="168" y1="171.5" x2="187.79999999999998" y2="171.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="butt" />
+    <line data-id="uuid-normalized-ledger-0-7" data-event-id="uuid-normalized" x1="168" y1="181.5" x2="187.79999999999998" y2="181.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="butt" />
+    <line data-id="uuid-normalized-ledger-0-8" data-event-id="uuid-normalized" x1="168" y1="191.5" x2="187.79999999999998" y2="191.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="butt" />
+    <line data-id="uuid-normalized-stem" data-event-id="uuid-normalized" x1="183.79999999999998" y1="194.82" x2="183.79999999999998" y2="161.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
+    <use data-id="uuid-normalized" data-event-id="uuid-normalized" href="#glyph-noteheadBlack" transform="translate(227, 191.5) scale(0.04)" fill="currentColor" />
+    <line data-id="uuid-normalized-ledger-0-5" data-event-id="uuid-normalized" x1="223" y1="161.5" x2="242.79999999999998" y2="161.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="butt" />
+    <line data-id="uuid-normalized-ledger-0-6" data-event-id="uuid-normalized" x1="223" y1="171.5" x2="242.79999999999998" y2="171.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="butt" />
+    <line data-id="uuid-normalized-ledger-0-7" data-event-id="uuid-normalized" x1="223" y1="181.5" x2="242.79999999999998" y2="181.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="butt" />
+    <line data-id="uuid-normalized-ledger-0-8" data-event-id="uuid-normalized" x1="223" y1="191.5" x2="242.79999999999998" y2="191.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="butt" />
+    <line data-id="uuid-normalized-stem" data-event-id="uuid-normalized" x1="238.79999999999998" y1="189.82" x2="238.79999999999998" y2="156.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
+    <line data-id="barline-uuid-normalized" x1="280" y1="111.5" x2="280" y2="306.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="butt" />
+    <use data-id="s1-timesig-num-0" href="#glyph-timeSig4" transform="translate(31.999999999999996, 276.5) scale(0.04)" fill="currentColor" />
+    <use data-id="s1-timesig-den-0" href="#glyph-timeSig4" transform="translate(31.999999999999996, 296.5) scale(0.04)" fill="currentColor" />
+    <use data-id="uuid-normalized" data-event-id="uuid-normalized" href="#glyph-noteheadBlack" transform="translate(61.99999999999999, 221.5) scale(0.04)" fill="currentColor" />
+    <line data-id="uuid-normalized-ledger-0--1" data-event-id="uuid-normalized" x1="57.999999999999986" y1="256.5" x2="77.8" y2="256.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="butt" />
+    <line data-id="uuid-normalized-ledger-0--2" data-event-id="uuid-normalized" x1="57.999999999999986" y1="246.5" x2="77.8" y2="246.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="butt" />
+    <line data-id="uuid-normalized-ledger-0--3" data-event-id="uuid-normalized" x1="57.999999999999986" y1="236.5" x2="77.8" y2="236.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="butt" />
+    <line data-id="uuid-normalized-ledger-0--4" data-event-id="uuid-normalized" x1="57.999999999999986" y1="226.5" x2="77.8" y2="226.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="butt" />
+    <line data-id="uuid-normalized-stem" data-event-id="uuid-normalized" x1="61.99999999999999" y1="223.17999999999998" x2="61.99999999999999" y2="256.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
+    <use data-id="uuid-normalized" data-event-id="uuid-normalized" href="#glyph-noteheadBlack" transform="translate(117, 226.5) scale(0.04)" fill="currentColor" />
+    <line data-id="uuid-normalized-ledger-0--1" data-event-id="uuid-normalized" x1="112.99999999999999" y1="256.5" x2="132.79999999999998" y2="256.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="butt" />
+    <line data-id="uuid-normalized-ledger-0--2" data-event-id="uuid-normalized" x1="112.99999999999999" y1="246.5" x2="132.79999999999998" y2="246.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="butt" />
+    <line data-id="uuid-normalized-ledger-0--3" data-event-id="uuid-normalized" x1="112.99999999999999" y1="236.5" x2="132.79999999999998" y2="236.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="butt" />
+    <line data-id="uuid-normalized-ledger-0--4" data-event-id="uuid-normalized" x1="112.99999999999999" y1="226.5" x2="132.79999999999998" y2="226.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="butt" />
+    <line data-id="uuid-normalized-stem" data-event-id="uuid-normalized" x1="117" y1="228.17999999999998" x2="117" y2="261.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
+    <use data-id="uuid-normalized" data-event-id="uuid-normalized" href="#glyph-noteheadBlack" transform="translate(172, 221.5) scale(0.04)" fill="currentColor" />
+    <line data-id="uuid-normalized-ledger-0--1" data-event-id="uuid-normalized" x1="168" y1="256.5" x2="187.79999999999998" y2="256.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="butt" />
+    <line data-id="uuid-normalized-ledger-0--2" data-event-id="uuid-normalized" x1="168" y1="246.5" x2="187.79999999999998" y2="246.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="butt" />
+    <line data-id="uuid-normalized-ledger-0--3" data-event-id="uuid-normalized" x1="168" y1="236.5" x2="187.79999999999998" y2="236.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="butt" />
+    <line data-id="uuid-normalized-ledger-0--4" data-event-id="uuid-normalized" x1="168" y1="226.5" x2="187.79999999999998" y2="226.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="butt" />
+    <line data-id="uuid-normalized-stem" data-event-id="uuid-normalized" x1="172" y1="223.17999999999998" x2="172" y2="256.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
+    <use data-id="uuid-normalized" data-event-id="uuid-normalized" href="#glyph-noteheadBlack" transform="translate(227, 216.5) scale(0.04)" fill="currentColor" />
+    <line data-id="uuid-normalized-ledger-0--1" data-event-id="uuid-normalized" x1="223" y1="256.5" x2="242.79999999999998" y2="256.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="butt" />
+    <line data-id="uuid-normalized-ledger-0--2" data-event-id="uuid-normalized" x1="223" y1="246.5" x2="242.79999999999998" y2="246.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="butt" />
+    <line data-id="uuid-normalized-ledger-0--3" data-event-id="uuid-normalized" x1="223" y1="236.5" x2="242.79999999999998" y2="236.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="butt" />
+    <line data-id="uuid-normalized-ledger-0--4" data-event-id="uuid-normalized" x1="223" y1="226.5" x2="242.79999999999998" y2="226.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="butt" />
+    <line data-id="uuid-normalized-ledger-0--5" data-event-id="uuid-normalized" x1="223" y1="216.5" x2="242.79999999999998" y2="216.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="butt" />
+    <line data-id="uuid-normalized-stem" data-event-id="uuid-normalized" x1="227" y1="218.17999999999998" x2="227" y2="251.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
+    <use data-id="uuid-normalized" data-event-id="uuid-normalized" href="#glyph-restWhole" transform="translate(314.6, 121.5) scale(0.04)" fill="currentColor" />
+    <line data-id="barline-uuid-normalized-thin" x1="367.59999999999997" y1="111.5" x2="367.59999999999997" y2="306.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="butt" />
+    <line data-id="barline-uuid-normalized-thick" x1="371.59999999999997" y1="111.5" x2="371.59999999999997" y2="306.5" stroke="currentColor" stroke-width="5" stroke-linecap="butt" />
+    <use data-id="uuid-normalized" data-event-id="uuid-normalized" href="#glyph-restWhole" transform="translate(314.6, 276.5) scale(0.04)" fill="currentColor" />
+    <line data-id="sys-0-s1-staffline-0" x1="0" y1="266.5" x2="376.59999999999997" y2="266.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="butt" />
+    <line data-id="sys-0-s1-staffline-1" x1="0" y1="276.5" x2="376.59999999999997" y2="276.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="butt" />
+    <line data-id="sys-0-s1-staffline-2" x1="0" y1="286.5" x2="376.59999999999997" y2="286.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="butt" />
+    <line data-id="sys-0-s1-staffline-3" x1="0" y1="296.5" x2="376.59999999999997" y2="296.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="butt" />
+    <line data-id="sys-0-s1-staffline-4" x1="0" y1="306.5" x2="376.59999999999997" y2="306.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="butt" />
+    <rect class="event-hit-area" data-event-id="uuid-normalized" x="52.999999999999986" y="156.5" width="29.800000000000004" height="50" fill="transparent" pointer-events="all" style="cursor: pointer;" />
+    <rect class="event-hit-area" data-event-id="uuid-normalized" x="107.99999999999999" y="151.5" width="29.800000000000004" height="50" fill="transparent" pointer-events="all" style="cursor: pointer;" />
+    <rect class="event-hit-area" data-event-id="uuid-normalized" x="163" y="156.5" width="29.79999999999997" height="50" fill="transparent" pointer-events="all" style="cursor: pointer;" />
+    <rect class="event-hit-area" data-event-id="uuid-normalized" x="218" y="151.5" width="29.79999999999997" height="50" fill="transparent" pointer-events="all" style="cursor: pointer;" />
+    <rect class="event-hit-area" data-event-id="uuid-normalized" x="52.999999999999986" y="206.5" width="29.800000000000004" height="55" fill="transparent" pointer-events="all" style="cursor: pointer;" />
+    <rect class="event-hit-area" data-event-id="uuid-normalized" x="107.99999999999999" y="211.5" width="29.800000000000004" height="55" fill="transparent" pointer-events="all" style="cursor: pointer;" />
+    <rect class="event-hit-area" data-event-id="uuid-normalized" x="163" y="206.5" width="29.79999999999997" height="55" fill="transparent" pointer-events="all" style="cursor: pointer;" />
+    <rect class="event-hit-area" data-event-id="uuid-normalized" x="218" y="201.5" width="29.79999999999997" height="60" fill="transparent" pointer-events="all" style="cursor: pointer;" />
+    <rect class="event-hit-area" data-event-id="uuid-normalized" x="309.6" y="106.5" width="22.00000000000003" height="25" fill="transparent" pointer-events="all" style="cursor: pointer;" />
+    <rect class="event-hit-area" data-event-id="uuid-normalized" x="309.6" y="261.5" width="22.00000000000003" height="25" fill="transparent" pointer-events="all" style="cursor: pointer;" />
+  </g>
+</svg>"
+`;
+
 exports[`H1 Regression Gallery: Golden Snapshot Tests > golden snapshot matches for case [header-four-fields]: 22. Header Block: Title, Subtitle, Composer, Arranger 1`] = `
 "<svg xmlns="http://www.w3.org/2000/svg" viewBox="-16 -3 731 206" width="731px" height="206px" style="color: currentColor; overflow: visible; user-select: none;">
   <defs>

@@ -166,5 +166,13 @@
     "codeLocation": "scripts/multi_bench.mjs:--grand",
     "testFile": "scripts/multi_bench.mjs",
     "testName": "captures grand-staff 100 and 200 measure multi-bench results"
+  },
+  {
+    "planItemId": "B13",
+    "description": "Skyline spacing: the gap between staves grows per system where content collides (min 7.0 sp, padding 1.5 sp); items are copied, the layout cache stays untouched.",
+    "codeLocation": "src/layout/skylineSpacing.ts:applySkylineSpacing",
+    "testFile": "tests/layout/skyline_spacing.test.ts",
+    "testName": "K2: colliding low treble and high bass notes grow the gap and no items of the two staves overlap",
+    "status": "DONE"
   }
 ]

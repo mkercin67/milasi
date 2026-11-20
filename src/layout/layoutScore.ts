@@ -6,6 +6,7 @@
  * non-last system justification, and manual visual overrides.
  */
 
+import { applySkylineSpacing } from './skylineSpacing';
 import { Clef, Score } from '../core/model';
 import { getKeySignatureAccidentals } from './keySignature';
 import {
@@ -699,6 +700,9 @@ export function layoutScore(score: Score, options: LayoutOptions = {}): LayoutRe
     generateSystemBeams(systems, systemPlans);
   }
 
+  // Skyline spacing (M7b-4): grow the gap between staves wherever their content needs it.
+  const skylineExtra = multiStaff ? applySkylineSpacing(systems, spanBottom) : 0;
+
   // Dynamic header clearance: guarantee that system 0 musical items start at least 2 staff spaces below header bottom
   if (headerLayout.height > 0 && systems.length > 0) {
     const sys0 = systems[0];
@@ -721,7 +725,7 @@ export function layoutScore(score: Score, options: LayoutOptions = {}): LayoutRe
 
   let memoizedItems: LayoutItem[] | null = null;
   const headerExtra = headerLayout.height > 0 && systems.length > 0 ? systems[0].y - staffMarginTop : 0;
-  const totalHeight = systems.length * sysStep + staffMarginTop + staffMarginBottom + headerExtra;
+  const totalHeight = systems.length * sysStep + staffMarginTop + staffMarginBottom + headerExtra + skylineExtra;
   const maxSysWidth = Math.max(targetWidth, ...systems.map((s) => s.width));
 
   return {

@@ -497,6 +497,23 @@ export function getGalleryCases(): GalleryCase[] {
       },
     },
     {
+      id: 'grand-staff-skyline',
+      title: '28. Grand Staff, Skyline Spacing',
+      description: 'Low treble notes meet high bass notes in measure 1: the gap between the staves grows for the whole system (a system without such notes keeps 7 sp).',
+      fixedSize: true,
+      build: () => {
+        let score = createGrandStaffScore({ title: 'Skyline Spacing', measures: 2 });
+        const lower = score.parts[0].staves[1].id;
+        score = setMeasureEventsViaCommands(score, 0, [
+          qNote('C', 3), qNote('D', 3), qNote('C', 3), qNote('D', 3),
+        ]);
+        score = setMeasureEventsViaCommands(score, 0, [
+          qNote('C', 5), qNote('B', 4), qNote('C', 5), qNote('D', 5),
+        ], 1, lower);
+        return score;
+      },
+    },
+    {
       id: 'multi-voice',
       title: '26. Multi-Voice Polyphony (Pending M7a)',
       description: 'Two independent voices on a single staff (deferred to Milestone 7a).',
