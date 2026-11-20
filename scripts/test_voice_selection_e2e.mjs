@@ -61,11 +61,66 @@ if (!fs.existsSync(outDir)) {
   fs.mkdirSync(outDir, { recursive: true });
 }
 
+const artifactsDir = path.resolve('artifacts');
+if (!fs.existsSync(artifactsDir)) {
+  fs.mkdirSync(artifactsDir, { recursive: true });
+}
+
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 function sha256File(filePath) {
   const buf = fs.readFileSync(filePath);
   return crypto.createHash('sha256').update(buf).digest('hex');
+}
+
+function getPngDimensions(filePath) {
+  const buf = fs.readFileSync(filePath);
+  return {
+    width: buf.readUInt32BE(16),
+    height: buf.readUInt32BE(20),
+  };
+}
+
+async function ensureNoToast(page) {
+  const toast = await page.$('[data-testid="status-toast"]');
+  if (toast) {
+    console.log('Waiting for status-toast to dismiss before screenshot...');
+    await page.waitForSelector('[data-testid="status-toast"]', { state: 'detached', timeout: 7000 });
+    await sleep(150);
+  }
+}
+
+async function saveScreenshot(page, filename) {
+  await ensureNoToast(page);
+  const primaryPath = path.join(outDir, filename);
+  const artifactPath = path.join(artifactsDir, filename);
+  const buf = await page.screenshot();
+  for (let attempt = 0; attempt < 5; attempt++) {
+    try {
+      if (fs.existsSync(primaryPath)) {
+        try { fs.unlinkSync(primaryPath); } catch {}
+      }
+      fs.writeFileSync(primaryPath, buf);
+      break;
+    } catch (err) {
+      if (attempt === 4) throw err;
+      await sleep(200);
+    }
+  }
+  for (let attempt = 0; attempt < 5; attempt++) {
+    try {
+      if (fs.existsSync(artifactPath)) {
+        try { fs.unlinkSync(artifactPath); } catch {}
+      }
+      fs.writeFileSync(artifactPath, buf);
+      break;
+    } catch (err) {
+      if (attempt === 4) throw err;
+      await sleep(200);
+    }
+  }
+  console.log(`Saved screenshot: ${primaryPath} and ${artifactPath}`);
+  return primaryPath;
 }
 
 function findChromePath() {
@@ -138,6 +193,9 @@ async function downloadScoreCheckpoint(page, checkpointName) {
   ]);
   const downloadPath = await download.path();
   const rawContent = fs.readFileSync(downloadPath, 'utf-8');
+  const safeName = checkpointName.replace(/[^a-zA-Z0-9_-]/g, '_');
+  fs.writeFileSync(path.join(artifactsDir, `${safeName}.json`), rawContent, 'utf-8');
+  console.log(`Saved checkpoint score artifact: ${path.join(artifactsDir, `${safeName}.json`)}`);
   const envelope = JSON.parse(rawContent);
   return envelope.score;
 }
@@ -344,10 +402,23 @@ export async function runVoiceSelectionE2E(options = {}, serverUrlOverride) {
     }
     console.log('✓ Status bar correctly displays 8 selected items across measures 1–2.');
 
-    // Screenshot 1: Range selected in voice 2 with status bar visible
-    const screenshot1Path = path.join(outDir, '01_selected.png');
-    await page.screenshot({ path: screenshot1Path });
-    console.log(`Saved screenshot 1: ${screenshot1Path}`);
+    // B2 DOM assertion: shot 1 selected glyphs == 8 with selected colour (#2563eb)
+    const selectedCount = await page.evaluate(() => {
+      const uses = Array.from(document.querySelectorAll('svg use[data-event-id]'));
+      let colored = 0;
+      for (const u of uses) {
+        const fill = window.getComputedStyle(u).fill;
+        if (fill === 'rgb(37, 99, 235)') colored++;
+      }
+      return colored;
+    });
+    console.log(`DOM assertion before Shot 1: selected glyphs with #2563eb = ${selectedCount}`);
+    if (selectedCount !== 8) {
+      throw new Error(`Shot 1 DOM assertion failed: expected 8 selected glyphs with selected color, got ${selectedCount}`);
+    }
+
+    // Screenshot 1: Range selected in voice 2 with status bar visible (taken BEFORE Checkpoint 1 download)
+    const screenshot1Path = await saveScreenshot(page, '01_selected.png');
 
     // 8. Press ArrowUp: transposes all 8 alto notes up one semitone
     console.log('Pressing ArrowUp to transpose all 8 alto notes up one semitone...');
@@ -486,10 +557,33 @@ export async function runVoiceSelectionE2E(options = {}, serverUrlOverride) {
     );
     console.log('✓ Paste render verified in DOM and score.');
 
+    // Ensure no toast is visible (B3)
+    await ensureNoToast(page);
+
+    // B2 DOM assertion: shot 2 voice-2 note glyphs in mm.3-4 == 8 (notehead glyphs)
+    const v2NoteGlyphCountMm34 = await page.evaluate(() => {
+      const s = window.__getScoreForTest();
+      const m2Id = s.measures[2]?.id;
+      const m3Id = s.measures[3]?.id;
+      const staff = s.parts[0]?.staves[0];
+      const v2m2Ids = new Set((staff?.measures[m2Id]?.voices.find((v) => v.voiceIndex === 2)?.events || []).filter((e) => e.kind === 'note').map((e) => e.id));
+      const v2m3Ids = new Set((staff?.measures[m3Id]?.voices.find((v) => v.voiceIndex === 2)?.events || []).filter((e) => e.kind === 'note').map((e) => e.id));
+      const targetIds = new Set([...v2m2Ids, ...v2m3Ids]);
+      const uses = Array.from(document.querySelectorAll('svg use[data-event-id]'));
+      return uses.filter((u) => {
+        if (!targetIds.has(u.getAttribute('data-event-id'))) return false;
+        const href = u.getAttribute('href') || u.getAttribute('xlink:href') || '';
+        return href.includes('notehead');
+      }).length;
+    });
+    console.log(`DOM assertion before Shot 2: voice-2 notehead glyphs in mm.3-4 = ${v2NoteGlyphCountMm34}`);
+    if (v2NoteGlyphCountMm34 !== 8) {
+      throw new Error(`Shot 2 DOM assertion failed: expected 8 voice-2 note glyphs in mm.3-4, got ${v2NoteGlyphCountMm34}`);
+    }
+
     // Screenshot 2: Transposed and pasted into voice 2 of measure 3 (spilling into m.4)
-    const screenshot2Path = path.join(outDir, '02_pasted.png');
-    await page.screenshot({ path: screenshot2Path });
-    console.log(`Saved screenshot 2: ${screenshot2Path}`);
+    // Taken BEFORE Checkpoint 2 download! (B3)
+    const screenshot2Path = await saveScreenshot(page, '02_pasted.png');
 
     // CHECKPOINT 2: Download score via Ctrl+S and assert paste contents + endBarlines
     const cp2Score = await downloadScoreCheckpoint(page, 'Checkpoint 2 (after paste)');
@@ -577,10 +671,32 @@ export async function runVoiceSelectionE2E(options = {}, serverUrlOverride) {
     }, { timeout: 10000 });
     console.log('✓ Delete render verified in DOM and score.');
 
-    // Screenshot 3: Final state after delete
-    const screenshot3Path = path.join(outDir, '03_after_delete.png');
-    await page.screenshot({ path: screenshot3Path });
-    console.log(`Saved screenshot 3: ${screenshot3Path}`);
+    // Ensure no toast is visible (B3)
+    await ensureNoToast(page);
+
+    // B2 DOM assertion: shot 3 voice-2 note glyphs in mm.3-4 == 0
+    const v2NoteGlyphCountAfterDelete = await page.evaluate(() => {
+      const s = window.__getScoreForTest();
+      const m2Id = s.measures[2]?.id;
+      const m3Id = s.measures[3]?.id;
+      const staff = s.parts[0]?.staves[0];
+      const v2m2Ids = new Set((staff?.measures[m2Id]?.voices.find((v) => v.voiceIndex === 2)?.events || []).filter((e) => e.kind === 'note').map((e) => e.id));
+      const v2m3Ids = new Set((staff?.measures[m3Id]?.voices.find((v) => v.voiceIndex === 2)?.events || []).filter((e) => e.kind === 'note').map((e) => e.id));
+      const targetIds = new Set([...v2m2Ids, ...v2m3Ids]);
+      const uses = Array.from(document.querySelectorAll('svg use[data-event-id]'));
+      return uses.filter((u) => {
+        if (!targetIds.has(u.getAttribute('data-event-id'))) return false;
+        const href = u.getAttribute('href') || u.getAttribute('xlink:href') || '';
+        return href.includes('notehead');
+      }).length;
+    });
+    console.log(`DOM assertion before Shot 3: voice-2 note glyphs in mm.3-4 = ${v2NoteGlyphCountAfterDelete}`);
+    if (v2NoteGlyphCountAfterDelete !== 0) {
+      throw new Error(`Shot 3 DOM assertion failed: expected 0 voice-2 note glyphs in mm.3-4, got ${v2NoteGlyphCountAfterDelete}`);
+    }
+
+    // Screenshot 3: Final state after delete (taken BEFORE Checkpoint 3 download)
+    const screenshot3Path = await saveScreenshot(page, '03_after_delete.png');
 
     // CHECKPOINT 3: Download score via Ctrl+S and assert voice 2 holds rests only
     const cp3Score = await downloadScoreCheckpoint(page, 'Checkpoint 3 (after delete)');
@@ -610,7 +726,24 @@ export async function runVoiceSelectionE2E(options = {}, serverUrlOverride) {
     console.log('Checkpoint 3 EndBarlines:', cp3Barlines.join(', '));
     console.log('✓ Checkpoint 3 verified: Voice 2 in mm.3-4 converted to rests, Voice 1 untouched.');
 
-    // 13. Distinct SHA-256 Hashes Assertion
+    // 13. Assert identical viewport and dimensions for all three images (B2)
+    const dim1 = getPngDimensions(screenshot1Path);
+    const dim2 = getPngDimensions(screenshot2Path);
+    const dim3 = getPngDimensions(screenshot3Path);
+    console.log('\n--- SCREENSHOT DIMENSIONS ---');
+    console.log(`01_selected.png:     ${dim1.width}x${dim1.height}`);
+    console.log(`02_pasted.png:       ${dim2.width}x${dim2.height}`);
+    console.log(`03_after_delete.png: ${dim3.width}x${dim3.height}`);
+    if (dim1.width !== dim2.width || dim1.height !== dim2.height ||
+        dim2.width !== dim3.width || dim2.height !== dim3.height) {
+      throw new Error(`Screenshot dimensions must be identical! Got:
+  01: ${dim1.width}x${dim1.height}
+  02: ${dim2.width}x${dim2.height}
+  03: ${dim3.width}x${dim3.height}`);
+    }
+    console.log('✓ All 3 screenshots have strictly identical dimensions.');
+
+    // 14. Distinct SHA-256 Hashes Assertion
     const hash1 = sha256File(screenshot1Path);
     const hash2 = sha256File(screenshot2Path);
     const hash3 = sha256File(screenshot3Path);
