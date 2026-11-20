@@ -25,6 +25,12 @@ export interface ValidationProblem {
   eventId?: Id;
 }
 
+export let validateRunCounter = 0;
+
+export function resetValidateRunCounter(): void {
+  validateRunCounter = 0;
+}
+
 /**
  * Validates a Score against structural, rhythmic, and model integrity rules.
  *
@@ -32,6 +38,7 @@ export interface ValidationProblem {
  * @returns An array of detected validation problems. An empty array means valid.
  */
 export function validateScore(score: Score): ValidationProblem[] {
+  validateRunCounter++;
   const problems: ValidationProblem[] = [];
 
   // Schema version check (1, 2, 3, 4, 5, 6, or 7)

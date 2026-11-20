@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import { Score } from '../core/model';
+import { validateScore } from '../core/validate';
 import { buildSchedule } from './schedule';
 import { AudioEngine, ScheduleResult } from './types';
 
@@ -45,6 +46,8 @@ export class Player {
     return this._calculatePosition();
   }
 
+  private _frameRebuildPending = false;
+
   get schedule(): ScheduleResult {
     if (this._scheduleDirty || !this._schedule) {
       this._schedule = buildSchedule(this._score);
@@ -53,13 +56,34 @@ export class Player {
     return this._schedule;
   }
 
-  setScore(score: Score): void {
+  setScore(score: Score, options?: { live?: boolean }): void {
     this._score = score;
-    if (this._state !== 'idle') {
-      this.stop();
-    }
     this._scheduleDirty = true;
     this._schedule = null;
+
+    if (!options?.live && this._state !== 'idle') {
+      this.stop();
+      return;
+    }
+
+    if (this._state === 'playing') {
+      if (!this._frameRebuildPending) {
+        this._frameRebuildPending = true;
+        const scheduleRebuild = () => {
+          if (this._state === 'playing' && this._scheduleDirty) {
+            this._schedule = buildSchedule(this._score);
+            this._scheduleDirty = false;
+          }
+          this._frameRebuildPending = false;
+        };
+
+        if (typeof requestAnimationFrame !== 'undefined') {
+          requestAnimationFrame(scheduleRebuild);
+        } else {
+          setTimeout(scheduleRebuild, 16);
+        }
+      }
+    }
   }
 
   onPosition(cb: PositionCallback): () => void {
@@ -78,6 +102,7 @@ export class Player {
       return;
     }
 
+    validateScore(this._score);
     await this._engine.ready();
     this._schedule = buildSchedule(this._score, { fromEventId });
     this._scheduleDirty = false;

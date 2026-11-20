@@ -36,6 +36,14 @@ function pitchesMatch(p1: Pitch[], p2: Pitch[]): boolean {
   });
 }
 
+export let scheduleBuildCounter = 0;
+
+export function resetScheduleBuildCounter(): void {
+  scheduleBuildCounter = 0;
+}
+
+const scheduleMemoCache = new WeakMap<Score, ScheduleResult>();
+
 /**
  * Builds a deterministic, sorted schedule of notes from a score.
  * Pure function: no Tone.js or audio engine dependencies.
@@ -44,6 +52,12 @@ export function buildSchedule(
   score: Score,
   options: BuildScheduleOptions = {}
 ): ScheduleResult {
+  const isDefaultOptions = !options.fromEventId;
+  if (isDefaultOptions && scheduleMemoCache.has(score)) {
+    return scheduleMemoCache.get(score)!;
+  }
+
+  scheduleBuildCounter++;
   // 1. Calculate measure start times and per-measure tempo (expanding repeats if present)
   const hasRepeats = score.measures.some((m) => m.repeatStart || m.repeatEnd || m.volta);
   const sequence = hasRepeats
@@ -331,11 +345,15 @@ export function buildSchedule(
     };
   }
 
-  return {
+  const res: ScheduleResult = {
     notes: scheduledNotes,
     totalSeconds: rawTotalSeconds,
     measureStarts,
     eventTimes,
     eventRanges,
   };
+  if (isDefaultOptions) {
+    scheduleMemoCache.set(score, res);
+  }
+  return res;
 }

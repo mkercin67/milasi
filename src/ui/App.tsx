@@ -9,7 +9,6 @@
 import React, { useRef, useState } from 'react';
 import { Pitch, Score } from '../core/model';
 import { ScoreCursor } from '../core/input';
-import { validateScore } from '../core/validate';
 import { clearAutosave, loadAutosave } from '../io/storage';
 import { LayoutResult } from '../layout/types';
 import { PerfSample } from './Diagnostics';
@@ -28,6 +27,7 @@ import { useAppKeyboard } from './app/useAppKeyboard';
 import { useAppModalState } from './app/useAppModalState';
 import { useAppLyrics } from './app/useAppLyrics';
 import { useAppVerificationStates } from './app/useAppVerificationStates';
+import { useAppValidation } from './app/useAppValidation';
 import { useAppTestHooks } from './app/useAppTestHooks';
 
 declare global {
@@ -222,6 +222,28 @@ const EditorShell: React.FC = () => {
     executeCommand,
   });
 
+  // Validation burst management (P2)
+  const {
+    errorCount,
+    warningCount,
+    validateSynchronously,
+  } = useAppValidation(score);
+
+  const handleUndo = React.useCallback(() => {
+    undo();
+    validateSynchronously();
+  }, [undo, validateSynchronously]);
+
+  const handleRedo = React.useCallback(() => {
+    redo();
+    validateSynchronously();
+  }, [redo, validateSynchronously]);
+
+  const handleTogglePlayValidated = React.useCallback(() => {
+    validateSynchronously();
+    handleTogglePlay();
+  }, [validateSynchronously, handleTogglePlay]);
+
   if (typeof window !== 'undefined') {
     const w = window as unknown as { __componentRenders?: Record<string, number> };
     if (!w.__componentRenders) w.__componentRenders = {};
@@ -235,8 +257,8 @@ const EditorShell: React.FC = () => {
     togglePositionMode,
     toggleInputMode,
     exitInputMode,
-    undo,
-    redo,
+    undo: handleUndo,
+    redo: handleRedo,
     selectedEventId,
     selectEvent,
     selectNext,
@@ -358,8 +380,8 @@ const EditorShell: React.FC = () => {
       <Toolbar
         canUndo={canUndo}
         canRedo={canRedo}
-        onUndo={undo}
-        onRedo={redo}
+        onUndo={handleUndo}
+        onRedo={handleRedo}
         canResetOverride={hasSelectedOverride}
         onResetOverride={() => selectedEventId && clearEventOverride(selectedEventId)}
         canResetAllOverrides={hasAnyOverride}
@@ -389,7 +411,7 @@ const EditorShell: React.FC = () => {
         onToggleRest={toggleRestSelected}
         isPlaying={isPlaying}
         isPaused={isPaused}
-        onTogglePlay={handleTogglePlay}
+        onTogglePlay={handleTogglePlayValidated}
         onStop={handleStop}
         tempoBpm={score.measures[0]?.tempo?.bpm ?? 120}
         onChangeTempo={handleChangeTempo}
@@ -474,29 +496,22 @@ const EditorShell: React.FC = () => {
         />
       )}
 
-      {(() => {
-        const problems = validateScore(score);
-        const errorCount = problems.filter((p) => p.severity === 'error').length;
-        const warningCount = problems.filter((p) => p.severity === 'warning').length;
-        return (
-          <StatusBar
-            selection={selectedEventInfo}
-            rangeInfo={rangeInfo}
-            mode={mode}
-            activeDuration={activeDuration}
-            currentMeasureNumber={currentMeasureNumber}
-            rejectedMessage={rejectedError}
-            hasOverride={hasSelectedOverride}
-            override={selectedOverride}
-            hoverPitch={hoverPitch}
-            hoverInfo={hoverInfo}
-            dragStatus={dragStatus}
-            errorCount={errorCount}
-            warningCount={warningCount}
-            voiceIndex={cursor?.voiceIndex ?? 1}
-          />
-        );
-      })()}
+      <StatusBar
+        selection={selectedEventInfo}
+        rangeInfo={rangeInfo}
+        mode={mode}
+        activeDuration={activeDuration}
+        currentMeasureNumber={currentMeasureNumber}
+        rejectedMessage={rejectedError}
+        hasOverride={hasSelectedOverride}
+        override={selectedOverride}
+        hoverPitch={hoverPitch}
+        hoverInfo={hoverInfo}
+        dragStatus={dragStatus}
+        errorCount={errorCount}
+        warningCount={warningCount}
+        voiceIndex={cursor?.voiceIndex ?? 1}
+      />
 
       <AppModals
         score={score}

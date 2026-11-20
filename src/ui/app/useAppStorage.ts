@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Score } from '../../core/model';
 import { deserializeScore, serializeScore } from '../../io/json';
+import { validateScore } from '../../core/validate';
 import { AutosaveRecord, loadAutosave, loadAutosaveHistory, saveAutosave } from '../../io/storage';
 import { useI18n } from '../i18n';
 
@@ -22,6 +23,12 @@ interface StorageTestWindow extends Window {
       close: () => Promise<void>;
     }>;
   }>;
+}
+
+export function prepareScoreSave(score: Score): { problems: ReturnType<typeof validateScore>; envelopeJson: string } {
+  const problems = validateScore(score);
+  const envelopeJson = serializeScore(score, 2, true);
+  return { problems, envelopeJson };
 }
 
 export function useAppStorage({
@@ -106,7 +113,7 @@ export function useAppStorage({
   const handleSave = useCallback(
     async (saveAs = false) => {
       try {
-        const envelopeJson = serializeScore(score, 2, true);
+        const { envelopeJson } = prepareScoreSave(score);
         const cleanTitle = (score.meta.title || 'adsiz').trim().toLowerCase().replace(/[^a-z0-9]/gi, '_');
         const filename = `${cleanTitle}.sfscore`;
 
