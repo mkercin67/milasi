@@ -170,7 +170,7 @@ export const SystemView: React.FC<SystemViewProps> = React.memo(
             data-id={item.id}
             data-event-id={item.eventId}
             href={`#glyph-${item.glyph}`}
-            transform={`translate(${pxX}, ${pxY}) scale(${scale})`}
+            transform={`translate(${pxX}, ${pxY}) scale(${item.scaleY === undefined ? scale : `${scale}, ${scale * item.scaleY}`})`}
             fill="currentColor"
           />
         );
@@ -263,7 +263,7 @@ export const SystemView: React.FC<SystemViewProps> = React.memo(
     for (let i = 0; i < prev.system.items.length; i++) {
       const p = prev.system.items[i];
       const n = next.system.items[i];
-      if (p.id !== n.id || p.x !== n.x || p.y !== n.y || p.glyph !== n.glyph) return false;
+      if (p.id !== n.id || p.x !== n.x || p.y !== n.y || p.glyph !== n.glyph || p.scaleY !== n.scaleY) return false;
     }
     return true;
   }

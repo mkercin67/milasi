@@ -8,6 +8,7 @@ const TRACEABILITY_FILES = [
   path.resolve('docs/design/m7a-3-traceability.json'),
   path.resolve('docs/design/perf-2-traceability.json'),
   path.resolve('docs/design/m7a-4-traceability.json'),
+  path.resolve('docs/design/m7b-traceability.json'),
 ];
 
 function escapeRegex(str) {

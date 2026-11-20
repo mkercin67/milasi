@@ -342,7 +342,7 @@ function renderItemToSvgElement(
       use.setAttribute('data-event-id', item.eventId);
     }
     use.setAttribute('href', `#glyph-${item.glyph}`);
-    use.setAttribute('transform', `translate(${pxX}, ${pxY}) scale(${scale})`);
+    use.setAttribute('transform', `translate(${pxX}, ${pxY}) scale(${item.scaleY === undefined ? scale : `${scale}, ${scale * item.scaleY}`})`);
     use.setAttribute('fill', 'currentColor');
     return use;
   }
@@ -489,7 +489,7 @@ export function renderSvgToString(
           const char = getGlyphChar(item.glyph);
           elementsXml += `    <text data-id="${item.id}"${eventAttr} x="${pxX}" y="${pxY}" class="scoreforge-glyph" font-size="${fontSize}px" fill="currentColor">${char}</text>\n`;
         } else {
-          elementsXml += `    <use data-id="${item.id}"${eventAttr} href="#glyph-${item.glyph}" transform="translate(${pxX}, ${pxY}) scale(${scale})" fill="currentColor" />\n`;
+          elementsXml += `    <use data-id="${item.id}"${eventAttr} href="#glyph-${item.glyph}" transform="translate(${pxX}, ${pxY}) scale(${item.scaleY === undefined ? scale : `${scale}, ${scale * item.scaleY}`})" fill="currentColor" />\n`;
         }
       } else if (item.kind === 'text' && item.text) {
         const anchorAttr = item.textAnchor ? ` text-anchor="${item.textAnchor}"` : '';

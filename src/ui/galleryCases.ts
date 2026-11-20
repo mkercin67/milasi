@@ -6,7 +6,7 @@
  * public score commands.
  */
 
-import { createEmptyScore, createNote, createPitch } from '../core/factory';
+import { createEmptyScore, createGrandStaffScore, createNote, createPitch } from '../core/factory';
 import { Score } from '../core/model';
 import {
   toggleTie,
@@ -474,6 +474,22 @@ export function getGalleryCases(): GalleryCase[] {
             qNote('C', 4), qNote('E', 4), qNote('G', 4), qNote('C', 5),
           ]);
         }
+        return score;
+      },
+    },
+    {
+      id: 'grand-staff-piano',
+      title: '27. Grand Staff (Piano)',
+      description: 'One part, two staves with a brace, aligned columns and through barlines.',
+      build: () => {
+        let score = createGrandStaffScore({ title: 'Grand Staff (Piano)', measures: 2 });
+        const lower = score.parts[0].staves[1].id;
+        score = setMeasureEventsViaCommands(score, 0, [
+          qNote('C', 5), qNote('E', 5), qNote('G', 5), qNote('E', 5),
+        ]);
+        score = setMeasureEventsViaCommands(score, 1, [hNote('C', 5), hNote('G', 4)]);
+        score = setMeasureEventsViaCommands(score, 0, [hNote('C', 3), hNote('G', 2)], 1, lower);
+        score = setMeasureEventsViaCommands(score, 1, [wNote('C', 3)], 1, lower);
         return score;
       },
     },

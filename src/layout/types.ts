@@ -33,6 +33,8 @@ export interface LayoutItem {
   thickness?: number;
   width?: number;
   scale?: number;
+  /** Extra vertical stretch of a glyph (1 = natural). Used by the grand-staff brace. */
+  scaleY?: number;
   hidden?: boolean;
   /** Polygon vertices (clockwise in staff spaces) for 'beam' items. */
   points?: Array<{ x: number; y: number }>;

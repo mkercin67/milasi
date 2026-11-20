@@ -52,6 +52,9 @@ export function clearSystemLayoutCache(): void {
   systemLayoutCache.clear();
 }
 
+/** Left offset (staff spaces) of the grand-staff brace relative to the system start barline. */
+const BRACE_X = -0.9;
+
 export function layoutScore(score: Score, options: LayoutOptions = {}): LayoutResult {
   const targetWidth = options.width ?? options.contentWidth ?? 70;
   const systemSpacing = options.systemSpacing ?? 10;
@@ -71,6 +74,10 @@ export function layoutScore(score: Score, options: LayoutOptions = {}): LayoutRe
   const systemExtra = (staffCount - 1) * staffPitch;
   const spanBottom = systemExtra + 4; // bottom line of the last staff, system-relative
   const sysStep = systemSpacing + 4 + systemExtra;
+  // Group semantics (M7b-1c-ii): a group naming the part decides ('brace' draws it, other kinds draw
+  // none here); a multi-staff part without any group gets the piano brace by default.
+  const braceGroup = score.groups.find((g) => score.parts[0] && g.partIds.includes(score.parts[0].id));
+  const hasBrace = multiStaff && (braceGroup ? braceGroup.bracket === 'brace' : true);
 
   function createClefItems(startX: number, clefToUse: Clef): { items: LayoutItem[]; width: number } {
     const glyph = clefToUse.sign === 'F' ? 'fClef' : 'gClef';
@@ -230,6 +237,18 @@ export function layoutScore(score: Score, options: LayoutOptions = {}): LayoutRe
       y2: multiStaff ? spanBottom : 4,
       thickness: BARLINE_THICKNESS,
     });
+    if (hasBrace) {
+      // The SMuFL brace is 4 sp tall at natural size and rises from its baseline: stretch it to the
+      // full system span and hang it just left of the system start barline.
+      items.push({
+        id: 'sys-brace',
+        kind: 'glyph',
+        glyph: 'brace',
+        x: BRACE_X,
+        y: spanBottom,
+        scaleY: spanBottom / 4,
+      });
+    }
     startX += 0.4;
     const afterBarlineX = startX;
 
@@ -320,7 +339,7 @@ export function layoutScore(score: Score, options: LayoutOptions = {}): LayoutRe
         for (const ch of list) mKeys += `|${ch.cacheKey ?? ch.measureDefId}`;
       }
     }
-    const staffKey = multiStaff ? `_n${staves.map((st) => st.id).join(',')}` : '';
+    const staffKey = multiStaff ? `_n${staves.map((st) => st.id).join(',')}${hasBrace ? 'b' : ''}` : '';
     const sysKey = !hasOverrides
       ? `${sIdx === 0 ? 's0' : 'sx'}_${isLastSystem ? 'last' : 'norm'}_${targetWidth}_${preliminarySys0Y}${staffKey}_${plan.measureIndices[0]}_${mKeys}`
       : null;

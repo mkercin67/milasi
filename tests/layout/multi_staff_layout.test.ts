@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import { describe, expect, it, vi } from 'vitest';
-import { createEmptyScore, createNote, createPitch, newId } from '../../src/core/factory';
+import { createEmptyScore, createGrandStaffScore, createNote, createPitch, newId } from '../../src/core/factory';
 import type { Score, ScoreEvent, Staff } from '../../src/core/model';
 import { layoutScore } from '../../src/layout/layoutScore';
+import { renderSvgToString } from '../../src/render/renderSvg';
 import type { LayoutItem, LayoutSystem } from '../../src/layout/types';
 
 type Step = 'C' | 'D' | 'E' | 'F' | 'G' | 'A' | 'B';
@@ -148,5 +149,42 @@ describe('layoutScore with two staves (M7b-1c)', () => {
     const score = createEmptyScore({ measures: 2 });
     const r = quiet(() => layoutScore(score, { width: 100 }));
     expect(r.systems[0].items.some((i) => i.staffId !== undefined)).toBe(false);
+  });
+
+  it('G9: the grand-staff template gets a brace stretched to the whole system span, left of the start barline', () => {
+    const score = createGrandStaffScore({ measures: 2 });
+    const sys = quiet(() => layoutScore(score, { width: 100 })).systems[0];
+    const brace = sys.items.filter((i) => i.glyph === 'brace');
+    expect(brace).toHaveLength(1);
+    const span = sys.staves[1].y - sys.staves[0].y + 4;
+    expect(brace[0].y).toBeCloseTo(span, 9); // baseline at the bottom line of the last staff
+    expect(brace[0].scaleY! * 4).toBeCloseTo(span, 9); // 4 sp natural height stretched to the span
+    const start = sys.items.find((i) => i.id.endsWith('sys-start-barline'))!;
+    expect(brace[0].x).toBeLessThan(start.x);
+  });
+
+  it('G10: group semantics: bracket "none" draws no brace; a part without a group defaults to a brace', () => {
+    const none = createGrandStaffScore({ measures: 1 });
+    none.groups[0].bracket = 'none';
+    expect(quiet(() => layoutScore(none, { width: 100 })).systems[0].items.some((i) => i.glyph === 'brace')).toBe(false);
+    const bare = createGrandStaffScore({ measures: 1 });
+    bare.groups = [];
+    expect(quiet(() => layoutScore(bare, { width: 100 })).systems[0].items.some((i) => i.glyph === 'brace')).toBe(true);
+  });
+
+  it('G11: a single-staff score never gets a brace, even with a brace group', () => {
+    const score = createEmptyScore({ measures: 1 });
+    score.groups = [{ id: newId(), partIds: [score.parts[0].id], bracket: 'brace', barlineSpan: 'through' }];
+    expect(quiet(() => layoutScore(score, { width: 100 })).systems[0].items.some((i) => i.glyph === 'brace')).toBe(false);
+  });
+
+  it('G12: the renderer stretches the brace vertically (non-uniform scale) and nothing else', () => {
+    const score = createGrandStaffScore({ measures: 1 });
+    const svg = renderSvgToString(quiet(() => layoutScore(score, { width: 100 })), { staffSpacePx: 10 });
+    const braceUse = svg.match(/<use[^>]*href="#glyph-brace"[^>]*>/)![0];
+    const [sx, sy] = braceUse.match(/scale\(([0-9.]+), ([0-9.]+)\)/)!.slice(1).map(Number);
+    expect(sy).toBeGreaterThan(sx * 2);
+    const other = svg.match(/<use[^>]*href="#glyph-gClef"[^>]*>/)![0];
+    expect(other).toMatch(/scale\([0-9.]+\)/);
   });
 });

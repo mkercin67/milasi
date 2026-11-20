@@ -1,0 +1,112 @@
+[
+  {
+    "planItemId": "B2",
+    "description": "Shared column grid: equal ticks have equal x on both staves, equal measure widths.",
+    "codeLocation": "src/layout/columnAlignment.ts:alignStaffColumns",
+    "testFile": "tests/layout/multi_staff_layout.test.ts",
+    "testName": "G3: equal ticks have equal x on both staves (beat 3 of measure 1: treble E5 vs bass G2)",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B2b",
+    "description": "Column union keeps a busy staff and a sparse staff aligned (quarters vs halves).",
+    "codeLocation": "src/layout/columnAlignment.ts:alignStaffColumns",
+    "testFile": "tests/layout/measure_alignment.test.ts",
+    "testName": "T2: quarter notes against a half-note staff: equal ticks share x, equal barline x, equal width",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B3",
+    "description": "Fixed 7.0 sp gap between staves, system height covers both.",
+    "codeLocation": "src/layout/layoutScore.ts:layoutScore",
+    "testFile": "tests/layout/multi_staff_layout.test.ts",
+    "testName": "G1: one system with two staff containers, staff 1 lower by 4 + 7 sp, system height covers both",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B4a",
+    "description": "Barlines are drawn once and span from staff 0 to the last staff.",
+    "codeLocation": "src/layout/layoutScore.ts:layoutScore",
+    "testFile": "tests/layout/multi_staff_layout.test.ts",
+    "testName": "G4: barlines are drawn once, span staff 0 top to the last staff bottom, and none is duplicated per staff",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B4b",
+    "description": "Brace stretched to the system span, left of the start barline.",
+    "codeLocation": "src/layout/layoutScore.ts:computeHeader",
+    "testFile": "tests/layout/multi_staff_layout.test.ts",
+    "testName": "G9: the grand-staff template gets a brace stretched to the whole system span, left of the start barline",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B4c",
+    "description": "Group semantics: bracket none draws no brace; no group defaults to brace for multi-staff part.",
+    "codeLocation": "src/layout/layoutScore.ts:layoutScore",
+    "testFile": "tests/layout/multi_staff_layout.test.ts",
+    "testName": "G10: group semantics: bracket \"none\" draws no brace; a part without a group defaults to a brace",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B4d",
+    "description": "Renderer stretches the brace with a non-uniform scale only.",
+    "codeLocation": "src/render/renderSvg.ts:renderItemToSvgElement",
+    "testFile": "tests/layout/multi_staff_layout.test.ts",
+    "testName": "G12: the renderer stretches the brace vertically (non-uniform scale) and nothing else",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B5",
+    "description": "Layout items carry staffId in multi-staff layouts; single-staff output has none.",
+    "codeLocation": "src/layout/layoutScore.ts:layoutScore",
+    "testFile": "tests/layout/multi_staff_layout.test.ts",
+    "testName": "G2: every staff has 5 staff lines, a clef of its own and event items tagged with its staffId",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B5b",
+    "description": "Single-staff layout is unchanged (no staffId).",
+    "codeLocation": "src/layout/layoutScore.ts:layoutScore",
+    "testFile": "tests/layout/multi_staff_layout.test.ts",
+    "testName": "G8: the single-staff result carries no staffId (unchanged format)",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B6",
+    "description": "findStaff replaces index access.",
+    "codeLocation": "src/core/staffLookup.ts:findStaff",
+    "testFile": "tests/core/staff_lookup.test.ts",
+    "testName": "findStaff returns the staff with that id, also the second one",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B7",
+    "description": "Staff switch keys, keeping measure/tick/voice (M7b-3).",
+    "status": "PLANNED"
+  },
+  {
+    "planItemId": "B8",
+    "description": "Mouse resolves nearest staff by y (M7b-3).",
+    "status": "PLANNED"
+  },
+  {
+    "planItemId": "B9",
+    "description": "New Score template Piano (M7b-3).",
+    "status": "PLANNED"
+  },
+  {
+    "planItemId": "B10",
+    "description": "Playback schedules both staves (M7b-3).",
+    "status": "PLANNED"
+  },
+  {
+    "planItemId": "B11",
+    "description": "Selection and clipboard per staff (M7b-3).",
+    "status": "PLANNED"
+  },
+  {
+    "planItemId": "B12",
+    "description": "Incremental layout cache and p95 gate (M7b-2).",
+    "status": "PLANNED"
+  }
+]

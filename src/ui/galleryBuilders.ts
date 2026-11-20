@@ -6,6 +6,7 @@
 import { createNote, createPitch, createRest } from '../core/factory';
 import { BaseDurationType, NoteEvent, PitchStep, RestEvent, Score } from '../core/model';
 import { insertNote, deleteEvent } from '../core/commands';
+import { findStaff } from '../core/staffLookup';
 
 /**
  * Replaces the events in a measure voice using insertNote and deleteEvent commands.
@@ -14,10 +15,11 @@ export function setMeasureEventsViaCommands(
   score: Score,
   measureIndex: number,
   events: (NoteEvent | RestEvent)[],
-  voiceIndex: 1 | 2 | 3 | 4 = 1
+  voiceIndex: 1 | 2 | 3 | 4 = 1,
+  targetStaffId?: string
 ): Score {
   const partId = score.parts[0].id;
-  const staff = score.parts[0].staves[0];
+  const staff = (targetStaffId ? findStaff(score, targetStaffId) : undefined) ?? score.parts[0].staves[0];
   const staffId = staff.id;
   const measureId = score.measures[measureIndex].id;
   const sm = staff.measures[measureId];

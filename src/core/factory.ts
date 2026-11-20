@@ -276,3 +276,30 @@ export function createEmptyScore(options: CreateEmptyScoreOptions = {}): Score {
 
   return score;
 }
+
+
+/**
+ * Creates an empty piano score: one part, two staves (treble G clef, bass F clef) in a brace group
+ * with through barlines. Every staff has a whole-measure rest in every measure.
+ */
+export function createGrandStaffScore(options: CreateEmptyScoreOptions = {}): Score {
+  const score = createEmptyScore({ ...options, clef: { sign: 'G', line: 2 } });
+  const part = score.parts[0];
+  part.name = 'Piano';
+  const timeSig = options.timeSig ?? { num: 4, den: 4 };
+  const bass: Staff = { id: newId(), clef: { sign: 'F', line: 4 }, measures: {}, slurs: [] };
+  for (const mDef of score.measures) {
+    bass.measures[mDef.id] = {
+      voices: [
+        {
+          id: newId(),
+          voiceIndex: 1,
+          events: [createRest({ baseType: 'whole', duration: measureTicks(timeSig), wholeMeasure: true })],
+        },
+      ],
+    };
+  }
+  part.staves.push(bass);
+  score.groups = [{ id: newId(), partIds: [part.id], bracket: 'brace', barlineSpan: 'through' }];
+  return score;
+}
