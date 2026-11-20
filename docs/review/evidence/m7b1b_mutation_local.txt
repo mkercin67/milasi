@@ -1,0 +1,16 @@
+# M7b-1b local mutation run (Linux VM, tsx + minimal vitest shim; NOT the project's vitest)
+# Date: 2026-11-20T14:14:34Z
+## real code
+15 passed, 0 failed
+## mutation A: monophonic path ignores shifts
+  FAIL layoutSingleMeasure with cross-staff alignment (M7b-1b) > T2: quarter notes against a half-note staff: equal ticks share x, equal barline x, equal width 
+  FAIL layoutSingleMeasure with cross-staff alignment (M7b-1b) > T3: an accidental on one staff pushes the other staff right, noteheads stay aligned 
+  FAIL layoutSingleMeasure with cross-staff alignment (M7b-1b) > T8: the alignment is part of the cache key, so different alignments never share a chunk 
+12 passed, 3 failed
+## mutation B: contentEndX ignored (barline x not unified)
+  FAIL layoutSingleMeasure with cross-staff alignment (M7b-1b) > T2: quarter notes against a half-note staff: equal ticks share x, equal barline x, equal width 
+  FAIL layoutSingleMeasure with cross-staff alignment (M7b-1b) > T6: a staff with only a whole-measure rest is centred and constrains nothing 
+13 passed, 2 failed
+## mutation C: polyphonic path ignores shifts
+  FAIL layoutSingleMeasure with cross-staff alignment (M7b-1b) > T5b: a polyphonic staff that must be pushed right (wide accidental column on the other staff) is shifted 
+14 passed, 1 failed

@@ -65,6 +65,19 @@ export interface MeasureBeamGroupMeta {
   }>;
 }
 
+/**
+ * Cross-staff alignment inputs for ONE staff-measure (Milestone 7b-1b, see columnAlignment.ts).
+ * Without it a measure is laid out exactly as a single-staff measure.
+ */
+export interface MeasureAlignment {
+  /** tick (relative to the measure start, no pickup offset) -> cumulative shift of that column. */
+  shifts: ReadonlyMap<number, number>;
+  /** Shift of a centred whole-measure rest (0 for every other staff). */
+  centeredShift: number;
+  /** x (relative to the measure start) at which the content must end, just before the barline. */
+  contentEndX: number;
+}
+
 export interface MeasureLayoutChunk {
   measureDefId: string;
   items: MeasureItemEntry[];
@@ -72,6 +85,12 @@ export interface MeasureLayoutChunk {
   barlineItemIndex: number;
   beamGroups: MeasureBeamGroupMeta[];
   cacheKey?: string;
+  /** tick (no pickup offset) -> x of the notehead/rest column, relative to the measure start. */
+  columns?: Map<number, number>;
+  /** True when the staff-measure holds only a whole-measure rest (centred, constrains nothing). */
+  centered?: boolean;
+  /** x just before the barline; naturalWidth - contentEndX is the barline tail. */
+  contentEndX?: number;
 }
 
 export function createTimeSigItems(

@@ -24,6 +24,7 @@ import {
   createTimeSigItems,
   LEDGER_EXTENSION,
   LEDGER_THICKNESS,
+  MeasureAlignment,
   MeasureBeamGroupMeta,
   MeasureItemEntry,
   MeasureLayoutChunk,
@@ -49,6 +50,14 @@ export const measureLayoutCacheStats = {
 const measureChunkCache = new WeakMap<StaffMeasure, Map<string, MeasureLayoutChunk>>();
 
 import { layoutMeasureLyrics, LyricLayoutEntry } from './lyricLayout';
+
+function alignmentKey(a: MeasureAlignment): string {
+  const shifts = [...a.shifts]
+    .sort((x, y) => x[0] - y[0])
+    .map(([t, d]) => `${t}:${d.toFixed(4)}`)
+    .join(',');
+  return `${shifts}|${a.centeredShift.toFixed(4)}|${a.contentEndX.toFixed(4)}`;
+}
 
 /**
  * Checks whether a StaffMeasure is polyphonic.
@@ -80,9 +89,12 @@ function layoutPolyphonicEvents(
   relXStart: number,
   tracker: MeasureAccidentalTracker,
   measureItems: MeasureItemEntry[],
-  beamGroupsMeta: MeasureBeamGroupMeta[]
+  beamGroupsMeta: MeasureBeamGroupMeta[],
+  columnsOut: Map<number, number>,
+  alignment?: MeasureAlignment
 ): number {
   let relX = relXStart;
+  let alignShift = 0;
   const fullTicks = (mDef.timeSig.num * 4 * PPQ) / mDef.timeSig.den;
   const pickupOffset =
     mDef.actualTicks && mDef.actualTicks < fullTicks ? fullTicks - mDef.actualTicks : 0;
@@ -192,7 +204,17 @@ function layoutPolyphonicEvents(
     }
 
     const firstEventPadding = colIdx === 0 && hasAccidental ? 1.2 : hasAccidental ? 0.8 : 0;
+    // Cross-staff alignment: push this column right so it lands on the unified column x.
+    const tickKey = curTick - pickupOffset;
+    if (alignment) {
+      const want = alignment.shifts.get(tickKey);
+      if (want !== undefined && want > alignShift) {
+        relX += want - alignShift;
+        alignShift = want;
+      }
+    }
     const colCenterX = relX + 0.8 + firstEventPadding;
+    columnsOut.set(tickKey, colCenterX);
 
     // Check for rests at this tick (Rule RE)
     const restEntries = colEntries.filter((e) => e.event.kind === 'rest');
@@ -571,7 +593,8 @@ export function layoutSingleMeasure(
   clef: Clef,
   isFirstMeasure: boolean,
   isLastMeasure: boolean,
-  prevMDef?: MeasureDef
+  prevMDef?: MeasureDef,
+  alignment?: MeasureAlignment
 ): MeasureLayoutChunk {
   measureLayoutCacheStats.calls++;
 
@@ -604,7 +627,7 @@ export function layoutSingleMeasure(
     ? `${prevMDef.keySig}_${prevMDef.timeSig.num}/${prevMDef.timeSig.den}`
     : 'none';
   const barlineType = mDef.endBarline ?? (isLastMeasure ? 'final' : 'single');
-  const cacheKey = `${mDef.id}_${mDef.keySig}_${mDef.timeSig.num}/${mDef.timeSig.den}_${clef.sign}${clef.line}_${isFirstMeasure}_${isLastMeasure}_${prevKey}_${mDef.actualTicks ?? 'full'}_${barlineType}_${mDef.repeatStart ? 'rs' : ''}_${mDef.repeatEnd ? 're' : ''}_${mDef.volta?.number ?? 'none'}_${eventsHash}`;
+  const cacheKey = `${mDef.id}_${mDef.keySig}_${mDef.timeSig.num}/${mDef.timeSig.den}_${clef.sign}${clef.line}_${isFirstMeasure}_${isLastMeasure}_${prevKey}_${mDef.actualTicks ?? 'full'}_${barlineType}_${mDef.repeatStart ? 'rs' : ''}_${mDef.repeatEnd ? 're' : ''}_${mDef.volta?.number ?? 'none'}_${eventsHash}${alignment ? `_al${alignmentKey(alignment)}` : ''}`;
 
   if (staffMeasure) {
     const existing = measureChunkCache.get(staffMeasure);
@@ -617,6 +640,9 @@ export function layoutSingleMeasure(
   measureLayoutCacheStats.misses++;
 
   const events: ScoreEvent[] = staffMeasure?.voices.find((v) => v.voiceIndex === 1)?.events ?? [];
+  const columns = new Map<number, number>();
+  let alignShift = 0;
+  let tickAcc = 0;
   const tracker = new MeasureAccidentalTracker(mDef.keySig);
   const measureItems: MeasureItemEntry[] = [];
   let relX = 0;
@@ -735,7 +761,9 @@ export function layoutSingleMeasure(
       relX,
       tracker,
       measureItems,
-      beamGroupsMeta
+      beamGroupsMeta,
+      columns,
+      alignment
     );
   } else {
     const lyricsToLayout: LyricLayoutEntry[] = [];
@@ -774,9 +802,23 @@ export function layoutSingleMeasure(
       }
     }
 
+    // Cross-staff alignment (M7b-1b): shift this column onto the unified x, or centre a lone rest.
+    if (alignment) {
+      if (isWholeMeasureRest) {
+        relX += alignment.centeredShift;
+      } else {
+        const want = alignment.shifts.get(tickAcc);
+        if (want !== undefined && want > alignShift) {
+          relX += want - alignShift;
+          alignShift = want;
+        }
+      }
+    }
+
     const eventCenterX = isWholeMeasureRest
       ? relX + eventWidth / 2 - 0.7
       : relX + 0.8 + firstEventAccidentalPadding;
+    if (!isWholeMeasureRest) columns.set(tickAcc, eventCenterX);
 
     if (ev.kind === 'rest') {
       let restGlyph = 'restQuarter';
@@ -1009,11 +1051,16 @@ export function layoutSingleMeasure(
     }
 
       relX += eventWidth + firstEventAccidentalPadding;
+      tickAcc += ev.duration;
     }
 
     // Render lyric text, centered hyphens, and melisma extender lines
     layoutMeasureLyrics(lyricsToLayout, events, notePositions, relX + 0.6, measureItems);
   }
+
+  // Cross-staff alignment: every staff of the measure ends its content at the same x.
+  if (alignment && alignment.contentEndX > relX) relX = alignment.contentEndX;
+  const contentEndX = relX;
 
   // Barline at end of measure
   const barlineX = relX + 0.6;
@@ -1101,6 +1148,13 @@ export function layoutSingleMeasure(
     barlineItemIndex,
     beamGroups: beamGroupsMeta,
     cacheKey,
+    columns,
+    centered:
+      !isPoly &&
+      events.length === 1 &&
+      events[0].kind === 'rest' &&
+      Boolean((events[0] as RestEvent).wholeMeasure),
+    contentEndX,
   };
 
   if (staffMeasure) {
