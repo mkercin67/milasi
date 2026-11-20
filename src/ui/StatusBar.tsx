@@ -6,13 +6,37 @@
 
 import React from 'react';
 import { BaseDurationType, Pitch } from '../core/model';
+import { PPQ } from '../core/time';
 import { formatPitchName, useI18n } from './i18n';
 import { EditorMode } from './keymap';
 import { SelectedEventInfo } from './useEditor';
+import { VOICE_COLORS } from './voiceColors';
 
 export interface HoverInfo {
   pitch: Pitch;
   measureNumber: number;
+}
+
+export function computeBeatPosition(
+  currentTick: number,
+  timeSig?: { num: number; den: number }
+): string {
+  const ts = timeSig ?? { num: 4, den: 4 };
+  let beatVal: number;
+
+  // Compound meters count dotted-quarter pulses (1440 ticks per pulse)
+  if ((ts.num === 6 || ts.num === 9 || ts.num === 12) && ts.den === 8) {
+    beatVal = 1 + currentTick / 1440;
+  } else {
+    const ticksPerBeat = (4 / ts.den) * PPQ;
+    beatVal = 1 + currentTick / ticksPerBeat;
+  }
+
+  // Format integer cleanly or decimal with up to 2 decimal places
+  if (Math.abs(beatVal - Math.round(beatVal)) < 0.001) {
+    return String(Math.round(beatVal));
+  }
+  return String(parseFloat(beatVal.toFixed(2)));
 }
 
 export interface StatusBarProps {
@@ -21,6 +45,8 @@ export interface StatusBarProps {
   mode?: EditorMode;
   activeDuration?: BaseDurationType;
   currentMeasureNumber?: number;
+  currentTick?: number;
+  timeSig?: { num: number; den: number };
   rejectedMessage?: string | null;
   hasOverride?: boolean;
   override?: { dx?: number; dy?: number };
@@ -45,6 +71,8 @@ export const StatusBar: React.FC<StatusBarProps> = ({
   mode = 'select',
   activeDuration = 'quarter',
   currentMeasureNumber = 1,
+  currentTick = 0,
+  timeSig,
   rejectedMessage = null,
   hasOverride = false,
   override,
@@ -53,7 +81,7 @@ export const StatusBar: React.FC<StatusBarProps> = ({
   dragStatus = null,
   errorCount,
   warningCount,
-  voiceIndex,
+  voiceIndex = 1,
 }) => {
   if (typeof window !== 'undefined') {
     const w = window as unknown as { __componentRenders?: Record<string, number> };
@@ -82,7 +110,10 @@ export const StatusBar: React.FC<StatusBarProps> = ({
 
     if (mode === 'input') {
       const durationText = t(`duration.${activeDuration}.note`);
-      const voiceText = t('status.voice', { num: voiceIndex ?? 1 });
+      const beatText = computeBeatPosition(currentTick, timeSig);
+      const voiceText = t('status.voice', { num: voiceIndex });
+      const voiceColor = VOICE_COLORS[voiceIndex] ?? '#1e293b';
+
       let pointerText = '';
       if (hoverInfo) {
         pointerText = ` · ${t('status.pointerInfo', {
@@ -94,13 +125,32 @@ export const StatusBar: React.FC<StatusBarProps> = ({
       }
 
       return (
-        <span style={{ color: '#1d4ed8', fontWeight: 600 }}>
-          {t('status.inputMode', {
-            duration: durationText,
-            measure: currentMeasureNumber,
-          })}
-          {' · '}
-          <span data-testid="status-voice-indicator">{voiceText}</span>
+        <span style={{ color: '#1d4ed8', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
+          <span>
+            {t('status.inputMode', {
+              duration: durationText,
+              measure: currentMeasureNumber,
+              beat: beatText,
+            })}
+          </span>
+          <span>·</span>
+          <span
+            data-testid="status-voice-indicator"
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}
+          >
+            <span
+              data-testid="status-voice-chip"
+              style={{
+                display: 'inline-block',
+                width: '10px',
+                height: '10px',
+                borderRadius: '50%',
+                backgroundColor: voiceColor,
+                border: '1px solid rgba(0,0,0,0.15)',
+              }}
+            />
+            <span>{voiceText}</span>
+          </span>
           {pointerText}
         </span>
       );
@@ -284,7 +334,15 @@ export const StatusBar: React.FC<StatusBarProps> = ({
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', color: '#64748b', fontSize: '0.775rem' }}>
-        {mode === 'position' ? (
+        {mode === 'input' ? (
+          <>
+            <span>{t('shortcut.inputVoice')}</span>
+            <span>•</span>
+            <span>{t('shortcut.inputHome')}</span>
+            <span>•</span>
+            <span>{t('shortcut.inputArrows')}</span>
+          </>
+        ) : mode === 'position' ? (
           <>
             <span>{t('shortcut.positionArrows')}</span>
             <span>•</span>
