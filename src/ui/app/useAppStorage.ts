@@ -13,6 +13,13 @@ export interface UseAppStorageParams {
   resetScore: (newScore: Score) => void;
 }
 
+export interface SaveFileHandle {
+  createWritable: () => Promise<{
+    write: (data: string) => Promise<void>;
+    close: () => Promise<void>;
+  }>;
+}
+
 interface StorageTestWindow extends Window {
   __scoreforge_last_autosave_ms?: number;
   __checkAutosaveForTest?: () => Promise<void>;
@@ -23,6 +30,53 @@ interface StorageTestWindow extends Window {
       close: () => Promise<void>;
     }>;
   }>;
+}
+
+export type SaveFilePicker = (options?: unknown) => Promise<SaveFileHandle>;
+
+export interface NativeSaveResult {
+  status: 'saved' | 'aborted' | 'unavailable';
+  handle: SaveFileHandle | null;
+}
+
+async function writeHandle(handle: SaveFileHandle, data: string): Promise<void> {
+  const writable = await handle.createWritable();
+  await writable.write(data);
+  await writable.close();
+}
+
+/**
+ * "Save As" (saveAs = true) always opens the native file picker.
+ * Plain "Save" silently rewrites the previously chosen file, and opens the picker only the first time.
+ * Without a picker the caller falls back to a download ('unavailable').
+ */
+export async function saveViaNativePicker(
+  picker: SaveFilePicker | undefined,
+  data: string,
+  filename: string,
+  saveAs: boolean,
+  existing: SaveFileHandle | null
+): Promise<NativeSaveResult> {
+  if (!picker) return { status: 'unavailable', handle: existing };
+  if (!saveAs && existing) {
+    try {
+      await writeHandle(existing, data);
+      return { status: 'saved', handle: existing };
+    } catch {
+      existing = null; // handle no longer usable: fall through to the picker
+    }
+  }
+  try {
+    const handle = await picker({
+      suggestedName: filename,
+      types: [{ description: 'MiLaSi Score (*.sfscore)', accept: { 'application/json': ['.sfscore'] } }],
+    });
+    await writeHandle(handle, data);
+    return { status: 'saved', handle };
+  } catch (err: unknown) {
+    if (err instanceof Error && err.name === 'AbortError') return { status: 'aborted', handle: existing };
+    return { status: 'unavailable', handle: existing };
+  }
 }
 
 export function prepareScoreSave(score: Score): { problems: ReturnType<typeof validateScore>; envelopeJson: string } {
@@ -110,6 +164,9 @@ export function useAppStorage({
     return () => window.clearTimeout(timer);
   }, [statusToast]);
 
+  // Handle of the file chosen by "Save As" (or the first native save); plain "Save" rewrites it silently.
+  const fileHandleRef = useRef<SaveFileHandle | null>(null);
+
   const handleSave = useCallback(
     async (saveAs = false) => {
       try {
@@ -118,33 +175,20 @@ export function useAppStorage({
         const filename = `${cleanTitle}.sfscore`;
 
         const testWin = typeof window !== 'undefined' ? (window as unknown as StorageTestWindow) : undefined;
-        const hasNativePicker =
-          !saveAs &&
-          testWin &&
-          'showSaveFilePicker' in testWin &&
-          !window.navigator.webdriver &&
-          !testWin.__disableNativePickerForTest;
-
-        if (hasNativePicker && testWin.showSaveFilePicker) {
-          try {
-            const handle = await testWin.showSaveFilePicker({
-              suggestedName: filename,
-              types: [
-                {
-                  description: 'MiLaSi Score (*.sfscore)',
-                  accept: { 'application/json': ['.sfscore'] },
-                },
-              ],
-            });
-            const writable = await handle.createWritable();
-            await writable.write(envelopeJson);
-            await writable.close();
-            markClean();
-            setStatusToast({ message: t('status.saveSuccess'), type: 'success' });
-            return;
-          } catch (pickerErr: unknown) {
-            if (pickerErr instanceof Error && pickerErr.name === 'AbortError') return;
-          }
+        const nativeAllowed = !!testWin && !window.navigator.webdriver && !testWin.__disableNativePickerForTest;
+        const result = await saveViaNativePicker(
+          nativeAllowed ? testWin?.showSaveFilePicker?.bind(window) : undefined,
+          envelopeJson,
+          filename,
+          saveAs,
+          fileHandleRef.current
+        );
+        fileHandleRef.current = result.handle;
+        if (result.status === 'aborted') return;
+        if (result.status === 'saved') {
+          markClean();
+          setStatusToast({ message: t('status.saveSuccess'), type: 'success' });
+          return;
         }
 
         const blob = new Blob([envelopeJson], { type: 'application/json' });
