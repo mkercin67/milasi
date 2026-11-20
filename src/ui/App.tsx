@@ -6,7 +6,7 @@
  * keyboard interaction, and automated verification states.
  */
 
-import React, { useRef, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import { Pitch, Score } from '../core/model';
 import { ScoreCursor } from '../core/input';
 import { clearAutosave, loadAutosave } from '../io/storage';
@@ -29,6 +29,7 @@ import { useAppLyrics } from './app/useAppLyrics';
 import { useAppVerificationStates } from './app/useAppVerificationStates';
 import { useAppValidation } from './app/useAppValidation';
 import { useAppTestHooks } from './app/useAppTestHooks';
+import { TwoVoiceTipBanner } from './TwoVoiceTipBanner';
 
 declare global {
   interface Window {
@@ -82,7 +83,9 @@ const EditorShell: React.FC = () => {
     exitInputMode,
     setCursorToMeasure,
     moveCursorDirection,
+    moveCursorToBoundary,
     cycleVoiceDirection,
+    selectVoice,
     lastEnteredPitchRef,
     enterPitchAtCursor,
     enterPitchDirect,
@@ -278,6 +281,7 @@ const EditorShell: React.FC = () => {
     applySlur,
     clearNotations,
     moveCursorDirection,
+    moveCursorToBoundary,
     cycleVoiceDirection,
     transposeSelection,
     executeCommand,
@@ -333,6 +337,19 @@ const EditorShell: React.FC = () => {
     previewPlayer.previewPitches(pitches);
     changeEventPitch(eventId, pitches);
   };
+
+  const activeMeasureId = cursor?.measureId ?? score.measures[0]?.id;
+  const activeStaffMeasure = score.parts[0]?.staves[0]?.measures[activeMeasureId];
+  const voicesWithContent = useMemo(() => {
+    if (!activeStaffMeasure) return [];
+    const res: number[] = [];
+    for (const v of activeStaffMeasure.voices) {
+      if (v.events.some((e) => e.kind === 'note')) {
+        res.push(v.voiceIndex);
+      }
+    }
+    return res;
+  }, [activeStaffMeasure]);
 
   return (
     <div
@@ -400,6 +417,9 @@ const EditorShell: React.FC = () => {
         onOpenScoreInfo={modalState.handleOpenScoreInfo}
         mode={mode}
         onChangeMode={setMode}
+        activeVoiceIndex={cursor?.voiceIndex ?? 1}
+        onSelectVoice={selectVoice}
+        voicesWithContent={voicesWithContent}
         activeDuration={activeDuration}
         onChangeDuration={(d) => {
           setActiveDuration(d);
@@ -447,6 +467,8 @@ const EditorShell: React.FC = () => {
         onAutoSolfege={handleAutoSolfege}
       />
 
+      <TwoVoiceTipBanner mode={mode} />
+
       <ErrorBoundary
         score={score}
         historyVersions={historyVersions}
@@ -469,6 +491,7 @@ const EditorShell: React.FC = () => {
           cursor={cursor}
           mode={mode}
           activeDuration={activeDuration}
+          activeDots={activeDots}
           onSelectMeasure={setCursorToMeasure}
           onEnterPitchDirect={handleEnterPitchDirect}
           onApplyOverride={applyEventOverride}
@@ -502,6 +525,8 @@ const EditorShell: React.FC = () => {
         mode={mode}
         activeDuration={activeDuration}
         currentMeasureNumber={currentMeasureNumber}
+        currentTick={cursor?.tick ?? 0}
+        timeSig={score.measures[cursor ? score.measures.findIndex((m) => m.id === cursor.measureId) : 0]?.timeSig}
         rejectedMessage={rejectedError}
         hasOverride={hasSelectedOverride}
         override={selectedOverride}

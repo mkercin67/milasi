@@ -5,6 +5,8 @@ import { TieLayoutItem } from '../../layout/ties';
 import { SlurLayoutItem } from '../../layout/notations';
 import { GhostNoteData } from './types';
 import { getGlyphChar } from '../../render/smufl';
+import { BeatGuideData } from './beatGuide';
+import { VOICE_COLORS } from '../voiceColors';
 
 export interface ScoreSvgLayersProps {
   layout: LayoutResult;
@@ -23,8 +25,10 @@ export interface ScoreSvgLayersProps {
   isPaused?: boolean;
   playhead?: { x: number; y1: number; y2: number; sysIndex: number } | null;
   isInputMode: boolean;
+  activeVoiceIndex?: 1 | 2 | 3 | 4;
   cursorPos?: { x: number; y1: number; y2: number; systemIndex: number } | null;
   cursorLineRef: React.RefObject<SVGLineElement>;
+  beatGuide?: BeatGuideData | null;
   ghostNote: GhostNoteData | null;
   isDraggingState: boolean;
   dragOverlayRef: React.RefObject<SVGGElement>;
@@ -47,8 +51,10 @@ export const ScoreSvgLayers: React.FC<ScoreSvgLayersProps> = React.memo(({
   isPaused = false,
   playhead,
   isInputMode,
+  activeVoiceIndex = 1,
   cursorPos,
   cursorLineRef,
+  beatGuide,
   ghostNote,
   isDraggingState,
   dragOverlayRef,
@@ -58,6 +64,7 @@ export const ScoreSvgLayers: React.FC<ScoreSvgLayersProps> = React.memo(({
     if (!w.__componentRenders) w.__componentRenders = {};
     w.__componentRenders.ScoreSvgLayers = (w.__componentRenders.ScoreSvgLayers || 0) + 1;
   }
+  const voiceColor = VOICE_COLORS[activeVoiceIndex] ?? '#1e293b';
   return (
     <>
       {/* Tinted background band for range selection */}
@@ -234,18 +241,99 @@ export const ScoreSvgLayers: React.FC<ScoreSvgLayersProps> = React.memo(({
         />
       )}
 
-      {/* Persistent cursor overlay inside the SVG */}
-      {isInputMode && cursorPos && (
-        <line
-          ref={cursorLineRef}
-          className="score-input-cursor notranslate"
-          x1={cursorPos.x * staffSpacePx}
-          y1={cursorPos.y1 * staffSpacePx}
-          x2={cursorPos.x * staffSpacePx}
-          y2={cursorPos.y2 * staffSpacePx}
-          stroke="#2563eb"
-          strokeWidth={2}
+      {/* Pending slot band in active voice color (M7a-4 U8b) */}
+      {isInputMode && beatGuide?.pendingBand && (
+        <rect
+          data-testid="pending-slot-band"
+          className="score-pending-band notranslate"
+          x={beatGuide.pendingBand.x * staffSpacePx}
+          y={beatGuide.pendingBand.y * staffSpacePx}
+          width={beatGuide.pendingBand.width * staffSpacePx}
+          height={beatGuide.pendingBand.height * staffSpacePx}
+          fill={voiceColor}
+          opacity={0.15}
+          rx={3}
+          pointerEvents="none"
         />
+      )}
+
+      {/* Coincident event vertical guide line (M7a-4 U8c) */}
+      {isInputMode && beatGuide?.coincidentLineX !== null && beatGuide?.coincidentLineX !== undefined && (
+        <line
+          data-testid="coincident-event-line"
+          className="score-coincident-line notranslate"
+          x1={beatGuide.coincidentLineX * staffSpacePx}
+          y1={(beatGuide.sysY - 0.5) * staffSpacePx}
+          x2={beatGuide.coincidentLineX * staffSpacePx}
+          y2={(beatGuide.sysY + 4.5) * staffSpacePx}
+          stroke={voiceColor}
+          strokeWidth={1.5}
+          strokeDasharray="3 3"
+          opacity={0.5}
+          pointerEvents="none"
+        />
+      )}
+
+      {/* Beat guide tick marks and faint beat numbers (M7a-4 U8a) */}
+      {isInputMode && beatGuide && beatGuide.beatMarks.map((bm) => (
+        <g key={`beat-mark-${bm.beatNumber}`} className="score-beat-guide notranslate" pointerEvents="none">
+          <line
+            x1={bm.x * staffSpacePx}
+            y1={(beatGuide.sysY + 4.3) * staffSpacePx}
+            x2={bm.x * staffSpacePx}
+            y2={(beatGuide.sysY + 4.7) * staffSpacePx}
+            stroke="#94a3b8"
+            strokeWidth={1}
+            opacity={0.7}
+          />
+          <text
+            x={bm.x * staffSpacePx}
+            y={(beatGuide.sysY + 5.5) * staffSpacePx}
+            textAnchor="middle"
+            dominantBaseline="alphabetic"
+            fill="#94a3b8"
+            fontSize={0.8 * staffSpacePx}
+            fontWeight={500}
+            fontFamily="system-ui, sans-serif"
+            opacity={0.75}
+          >
+            {bm.beatNumber}
+          </text>
+        </g>
+      ))}
+
+      {/* Persistent cursor overlay inside the SVG with per-voice color and badge (M7a-4 U7) */}
+      {isInputMode && cursorPos && (
+        <g className="score-input-cursor notranslate">
+          <line
+            ref={cursorLineRef}
+            x1={cursorPos.x * staffSpacePx}
+            y1={cursorPos.y1 * staffSpacePx}
+            x2={cursorPos.x * staffSpacePx}
+            y2={cursorPos.y2 * staffSpacePx}
+            stroke={voiceColor}
+            strokeWidth={2}
+          />
+          <circle
+            cx={cursorPos.x * staffSpacePx}
+            cy={(cursorPos.y1 - 0.75) * staffSpacePx}
+            r={0.55 * staffSpacePx}
+            fill={voiceColor}
+          />
+          <text
+            data-testid="caret-voice-label"
+            x={cursorPos.x * staffSpacePx}
+            y={(cursorPos.y1 - 0.75) * staffSpacePx}
+            textAnchor="middle"
+            dominantBaseline="central"
+            fill="#ffffff"
+            fontSize={0.7 * staffSpacePx}
+            fontWeight="bold"
+            fontFamily="system-ui, sans-serif"
+          >
+            {activeVoiceIndex}
+          </text>
+        </g>
       )}
 
       {/* Semi-transparent ghost note overlay (Input mode only, hidden outside staff or while dragging) */}

@@ -24,6 +24,7 @@ import { SystemPlaceholder } from './scoreView/SystemPlaceholder';
 import { useScoreVirtualization } from './scoreView/useScoreVirtualization';
 import { useScoreInteractions } from './scoreView/useScoreInteractions';
 import { ScoreSvgLayers } from './scoreView/ScoreSvgLayers';
+import { computeBeatGuide } from './scoreView/beatGuide';
 
 export { type ScoreViewProps } from './scoreView/types';
 
@@ -38,6 +39,7 @@ export const ScoreView: React.FC<ScoreViewProps> = ({
   cursor = null,
   mode = 'select',
   activeDuration = 'quarter',
+  activeDots = 0,
   onSelectMeasure,
   onEnterPitchDirect,
   onApplyOverride,
@@ -88,9 +90,10 @@ export const ScoreView: React.FC<ScoreViewProps> = ({
     const result = layoutScore(score, { width: availableSpaces });
     const dt = performance.now() - t0;
     if (typeof window !== 'undefined') {
-      const w = window as unknown as { __layoutTimes?: number[] };
+      const w = window as unknown as { __layoutTimes?: number[]; __layoutRunCounter?: number };
       if (!w.__layoutTimes) w.__layoutTimes = [];
       w.__layoutTimes.push(dt);
+      w.__layoutRunCounter = (w.__layoutRunCounter || 0) + 1;
     }
     return result;
   }, [score, availableSpaces]);
@@ -242,6 +245,19 @@ export const ScoreView: React.FC<ScoreViewProps> = ({
     if (!isInputMode || !cursor) return null;
     return computeCursorPosition(layout, score, cursor);
   }, [layout, score, cursor, isInputMode]);
+
+  const beatGuide = useMemo(() => {
+    if (!isInputMode || !cursor) return null;
+    return computeBeatGuide(
+      layout,
+      score,
+      cursor.measureId,
+      cursor.tick,
+      cursor.voiceIndex ?? 1,
+      activeDuration,
+      activeDots
+    );
+  }, [layout, score, isInputMode, cursor, activeDuration, activeDots]);
 
   useLayoutEffect(() => {
     if (!isInputMode || !cursorPos || !cursorLineRef.current) return;
@@ -547,8 +563,10 @@ export const ScoreView: React.FC<ScoreViewProps> = ({
             isPaused={isPaused}
             playhead={playhead}
             isInputMode={isInputMode}
+            activeVoiceIndex={cursor?.voiceIndex ?? 1}
             cursorPos={cursorPos}
             cursorLineRef={cursorLineRef}
+            beatGuide={beatGuide}
             ghostNote={ghostNote}
             isDraggingState={isDraggingState}
             dragOverlayRef={dragOverlayRef}

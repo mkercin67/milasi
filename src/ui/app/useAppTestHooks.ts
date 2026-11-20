@@ -4,6 +4,7 @@ import { Score } from '../../core/model';
 import { setOverride, Command } from '../../core/commands';
 import { EditorMode } from '../keymap';
 import { buildSampleScore, createBenchmark64Score } from '../Demo';
+import { buildBwv140Reduction } from '../polyphonyBuilders';
 
 function calcPercentile(arr: number[], p: number): number {
   if (arr.length === 0) return 0;
@@ -31,6 +32,7 @@ declare global {
     __resetScoreForTest?: (newScore: Score) => void;
     __buildSampleScore?: () => Score;
     __createBenchmark64Score?: () => Score;
+    __buildBwv140Reduction?: () => Score;
   }
 }
 
@@ -69,6 +71,7 @@ export function useAppTestHooks({
     window.__resetScoreForTest = (newScore: Score) => resetScore(newScore);
     window.__buildSampleScore = () => buildSampleScore('G');
     window.__createBenchmark64Score = () => createBenchmark64Score();
+    window.__buildBwv140Reduction = () => buildBwv140Reduction();
     window.__getEditorStateForTest = () => editorStateRef.current;
     window.__printPerfTable = () => {
       const arr = window.__perf ?? [];
