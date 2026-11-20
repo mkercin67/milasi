@@ -152,26 +152,43 @@ export async function runGrandStaffMouseE2E() {
         );
       });
 
-    // 1. Input mode, half note
+    // Polls the score until the predicate holds (CI machines are slower than local ones).
+    const waitDump = async (pred, label, timeoutMs = 4000) => {
+      const t0 = Date.now();
+      let last = await dump();
+      while (!pred(last)) {
+        if (Date.now() - t0 > timeoutMs) {
+          fs.mkdirSync(path.resolve('artifacts'), { recursive: true });
+          await page.screenshot({ path: path.resolve('artifacts', `mouse_e2e_fail_${label}.png`) });
+          throw new Error(`${label}: condition not met within ${timeoutMs} ms, score: ${JSON.stringify(last)}`);
+        }
+        await sleep(100);
+        last = await dump();
+      }
+      return last;
+    };
+
+    // 1. Input mode, half note. Wait for the mode switch before clicking.
     await page.keyboard.press('KeyN');
+    await page.waitForFunction(() => /Porte 1\/2/.test(document.body.innerText), null, { timeout: 5000 });
+    await page.keyboard.press('Digit6');
     await sleep(200);
-    await page.keyboard.press('Digit4');
-    await sleep(100);
 
     const gClef = await box('svg use[href="#glyph-gClef"]');
     const fClef = await box('svg use[href="#glyph-fClef"]');
-    const clickX = Math.max(gClef.right, fClef.right) + 140;
+    // Click inside measure 1 (the checks below read measure 1): at the whole rest of the treble staff.
+    const restBox = await box('svg use[href^="#glyph-rest"]');
+    const clickX = restBox.x;
 
     // 2. Click entry: treble first, then bass
+    console.log('Click target:', JSON.stringify({ clickX, gY: gClef.y, fY: fClef.y }));
     await page.mouse.move(clickX, gClef.y);
-    await sleep(150);
+    await sleep(200);
+    fs.mkdirSync(path.resolve('artifacts'), { recursive: true });
+    await page.screenshot({ path: path.resolve('artifacts', 'mouse_e2e_00_before_treble_click.png') });
     await page.mouse.click(clickX, gClef.y);
-    await sleep(250);
-    let d = await dump();
+    let d = await waitDump((x) => x[0].some((e) => !e.startsWith('rest')), 'treble_click');
     console.log('After treble click:', JSON.stringify(d));
-    if (d[0].every((e) => e.startsWith('rest'))) {
-      throw new Error(`Treble click did not enter a note in the treble staff: ${JSON.stringify(d)}`);
-    }
     if (!d[1].every((e) => e.startsWith('rest'))) {
       throw new Error(`Treble click leaked into the bass staff: ${JSON.stringify(d)}`);
     }
@@ -180,12 +197,8 @@ export async function runGrandStaffMouseE2E() {
     await sleep(150);
     await page.screenshot({ path: path.join(screenshotsDir, '01_ghost_note_bass.png') });
     await page.mouse.click(clickX, fClef.y);
-    await sleep(250);
-    d = await dump();
+    d = await waitDump((x) => x[1].some((e) => !e.startsWith('rest')), 'bass_click');
     console.log('After bass click:', JSON.stringify(d));
-    if (d[1].every((e) => e.startsWith('rest'))) {
-      throw new Error(`Bass click did not enter a note in the bass staff: ${JSON.stringify(d)}`);
-    }
     const bassPitch = d[1].find((e) => !e.startsWith('rest')).split(':')[0];
     const bassOctave = Number(bassPitch.slice(1));
     if (bassOctave > 4) {
@@ -207,8 +220,7 @@ export async function runGrandStaffMouseE2E() {
     await page.screenshot({ path: path.join(screenshotsDir, '02_bass_note_selected.png') });
 
     await page.keyboard.press('ArrowUp');
-    await sleep(250);
-    let d2 = await dump();
+    let d2 = await waitDump((x) => JSON.stringify(x[1]) !== JSON.stringify(d[1]), 'arrow_up_bass').catch(async () => dump());
     console.log('After ArrowUp on selected bass note:', JSON.stringify(d2));
     if (JSON.stringify(d2[0]) !== JSON.stringify(d[0])) {
       throw new Error(`ArrowUp changed the treble staff: ${JSON.stringify(d2[0])} vs ${JSON.stringify(d[0])}`);
@@ -218,24 +230,20 @@ export async function runGrandStaffMouseE2E() {
     }
 
     await page.keyboard.press('Delete');
-    await sleep(250);
-    let d3 = await dump();
+    let d3 = await waitDump((x) => x[1].every((e) => e.startsWith('rest')), 'delete_bass').catch(async () => dump());
     if (!d3[1].every((e) => e.startsWith('rest'))) throw new Error(`Delete did not clear the bass note: ${JSON.stringify(d3)}`);
     if (d3[0].every((e) => e.startsWith('rest'))) throw new Error('Delete cleared the treble staff');
 
     await page.keyboard.press('ControlOrMeta+KeyZ');
-    await sleep(250);
-    let d4 = await dump();
+    let d4 = await waitDump((x) => x[1].some((e) => !e.startsWith('rest')), 'undo_bass').catch(async () => dump());
     if (d4[1].every((e) => e.startsWith('rest'))) throw new Error('Undo did not restore the bass note');
     await page.keyboard.press('ControlOrMeta+Shift+KeyZ');
-    await sleep(250);
-    let d5 = await dump();
+    let d5 = await waitDump((x) => x[1].every((e) => e.startsWith('rest')), 'redo_bass').catch(async () => dump());
     if (!d5[1].every((e) => e.startsWith('rest'))) throw new Error('Redo did not remove the bass note again');
 
     // 4. Marquee around the treble notehead selects in the treble staff: ArrowUp changes only the treble staff
     await page.keyboard.press('ControlOrMeta+KeyZ');
-    await sleep(250);
-    const before = await dump();
+    const before = await waitDump((x) => x[1].some((e) => !e.startsWith('rest')), 'undo_before_marquee');
     const head = await box('svg use[href="#glyph-noteheadHalf"], svg use[href="#glyph-noteheadBlack"]', 0);
     const topHead = await (async () => {
       let top = null;
@@ -251,8 +259,7 @@ export async function runGrandStaffMouseE2E() {
     await page.mouse.up();
     await sleep(250);
     await page.keyboard.press('ArrowUp');
-    await sleep(250);
-    const after = await dump();
+    const after = await waitDump((x) => JSON.stringify(x[0]) !== JSON.stringify(before[0]), 'marquee_arrow_up').catch(async () => dump());
     console.log('After marquee + ArrowUp:', JSON.stringify(after));
     if (JSON.stringify(after[1]) !== JSON.stringify(before[1])) {
       throw new Error('Marquee in the treble staff changed the bass staff');
