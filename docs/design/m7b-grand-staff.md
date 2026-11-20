@@ -56,7 +56,7 @@
 |---|---|---|
 | **M7b-0** | `findStaff`/`activeStaff`, replace `parts[0].staves[0]` in 24 files, `checkStaffZeroUsage` | Zero behaviour change: all existing tests and gallery snapshots byte-identical |
 | **M7b-1** | Multi-staff layout engine (B2-B5), static grand-staff gallery card built by code, no editing UI | Property tests: same tick => same x on both staves; equal measure widths; through barlines; brace height = system height; single-staff snapshots unchanged |
-| **M7b-2** | Incremental layout cache (B12) | p95 gate above, measured and committed as evidence (R7) |
+| **M7b-2** | Perf gate (B12). Measured first: grand staff 100 measures p95 18.4 ms = single-staff reference, so the new cache was NOT built (grand-200: p95 26.5 ms, worst run 32.8 ms; revisit `alignStaffColumns` caching when 200+ measure grand staves matter) | p95 gate above, measured and committed as evidence (R7): `docs/review/evidence/m7b2_bench_grand_baseline.txt` |
 | **M7b-3** | Editing (B7-B9): template, staff switching, mouse, ghost/caret/beat guide per staff, status bar, playback test | Playwright E2E: right hand and left hand of 2 measures entered by keyboard only, and by mouse; saved file round-trips; **user manual test, keyboard and mouse** |
 | **M7b-4** | Skyline vertical spacing (dynamics, lyrics, ledger lines between staves) | Collision property tests; gallery cards |
 | **M7b-5** | Acceptance | Hand-entered excerpts of public-domain scores: Bach Invention No. 1 mm. 1-8 and Mozart K. 545 mm. 1-8 (source scan cited; nothing copied from CC-licensed editions); user visual review; tag `m7b` |

@@ -106,7 +106,10 @@
   },
   {
     "planItemId": "B12",
-    "description": "Incremental layout cache and p95 gate (M7b-2).",
-    "status": "PLANNED"
+    "description": "Measured gate instead of a new cache: grand staff, 100 measures, keystroke-to-paint p95 18.4 ms (<= 30 ms), equal to the single-staff reference (18.4 ms). Evidence: docs/review/evidence/m7b2_bench_grand_baseline.txt. Incremental cache deferred (grand-200 p95 26.5 ms, worst run 32.8 ms max).",
+    "status": "DONE",
+    "codeLocation": "scripts/multi_bench.mjs:--grand",
+    "testFile": "scripts/multi_bench.mjs",
+    "testName": "captures grand-staff 100 and 200 measure multi-bench results"
   }
 ]
