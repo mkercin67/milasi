@@ -6,6 +6,7 @@
 import { createMeasure, createNote, createRest, newId } from './factory';
 import { BaseDurationType, NoteEvent, Pitch, Score, ScoreEvent, Voice } from './model';
 import { fillMeasureWithRests, measureTicks } from './time';
+import { findStaff, firstStaff } from './staffLookup';
 
 export interface ClipboardPayload {
   app: 'scoreforge-clip';
@@ -137,7 +138,7 @@ export function pasteEvents(
   if (pastedEvents.length === 0) return score;
 
   const nextScore: Score = JSON.parse(JSON.stringify(score));
-  const staff = nextScore.parts[0]?.staves.find((s) => s.id === target.staffId) ?? nextScore.parts[0]?.staves[0];
+  const staff = findStaff(nextScore, target.staffId) ?? firstStaff(nextScore);
   if (!staff) return score;
 
   let startMIdx = nextScore.measures.findIndex((m) => m.id === target.startMeasureId);

@@ -9,6 +9,7 @@
 import { BaseDurationType, Score } from '../../core/model';
 import { durationTicks, measureTicks, PPQ } from '../../core/time';
 import { LayoutResult, LayoutSystem } from '../../layout/types';
+import { firstStaff } from '../../core/staffLookup';
 
 export interface BeatTickMark {
   beatNumber: number;
@@ -159,7 +160,7 @@ export function computeBeatGuide(
   const mLength = measureTicks(mDef.timeSig);
 
   // 2. Extract event column anchor points from layout items in this measure
-  const staff = score.parts[0]?.staves[0];
+  const staff = firstStaff(score);
   const sm = staff?.measures[measureId];
   const tickToXMap = new Map<number, number>();
 

@@ -7,6 +7,7 @@ import { LayoutResult } from './types';
 import { Score } from '../core/model';
 import { measureTicks as timeSigTicks } from '../core/time';
 import type { ScoreCursor } from '../core/input';
+import { firstStaff } from '../core/staffLookup';
 
 /**
  * Checks if a pointer movement exceeds the drag initiation threshold (default 4px).
@@ -144,7 +145,7 @@ export function xToCursor(
   }
 
   // 2. Identify events and ticks in the target measure
-  const staff = effectiveScore.parts[0]?.staves[0];
+  const staff = firstStaff(effectiveScore);
   const sm = staff?.measures[targetMeasure.measureId];
   const voice = sm?.voices.find((v) => v.voiceIndex === 1);
   const mDef = effectiveScore.measures.find((m) => m.id === targetMeasure.measureId);
@@ -252,11 +253,11 @@ export function xToEntryCursor(
   x: number,
   voiceIndex: ScoreCursor['voiceIndex']
 ): (ScoreCursor & { columnX: number | null }) | null {
-  const staffId = score.parts[0]?.staves[0]?.id;
+  const staffId = firstStaff(score)?.id;
   if (!staffId) return null;
   const found = xToCursor(layout, systemIndex, x, score, { allVoices: true });
   if (!found) return null;
-  const sm = score.parts[0].staves[0].measures[found.measureId];
+  const sm = firstStaff(score)!.measures[found.measureId];
   const system = layout.systems[systemIndex];
   const columnX = system ? columnFromAllVoices(system, sm?.voices ?? [], x).columnX : null;
   return { staffId, voiceIndex, measureId: found.measureId, tick: found.tick, columnX };

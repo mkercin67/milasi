@@ -23,6 +23,7 @@ import { findEventLocation } from './types';
 import { renderManualDragFeedback, renderPitchDragFeedback } from './scoreDragFeedback';
 import { useScoreMarquee } from './useScoreMarquee';
 import { useGhostNote } from './useGhostNote';
+import { firstStaff } from '../../core/staffLookup';
 
 export interface UseScoreInteractionsParams {
   score: Score;
@@ -289,7 +290,7 @@ export function useScoreInteractions({
       return;
     }
 
-    const clef = score.parts[0]?.staves[0]?.clef ?? { sign: 'G', line: 2 };
+    const clef = firstStaff(score)?.clef ?? { sign: 'G', line: 2 };
     const originalPitches = isNote ? (loc.event as NoteEvent).pitches : [];
     const startStepPositions = originalPitches.map((p) => pitchToStaffPosition(p, clef));
 
@@ -364,7 +365,7 @@ export function useScoreInteractions({
     const { dragMode, eventId, isNote, isRest, measureId, startStepPositions } = dragStateRef.current;
 
     if (dragMode === 'select' && isNote && startStepPositions.length > 0) {
-      const clef = score.parts[0]?.staves[0]?.clef ?? { sign: 'G', line: 2 };
+      const clef = firstStaff(score)?.clef ?? { sign: 'G', line: 2 };
       const mDef = score.measures.find((m) => m.id === measureId) ?? score.measures[0];
       const keySig = mDef?.keySig ?? 0;
 

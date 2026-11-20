@@ -22,6 +22,7 @@ import {
 import { durationTicks, measureTicks } from '../../core/time';
 import { newId } from '../../core/factory';
 import { Command } from '../../core/commands';
+import { findStaff, firstStaff } from '../../core/staffLookup';
 
 export interface UseEditorInputParams {
   score: Score;
@@ -57,9 +58,9 @@ export function useEditorInput({
       if (nextMode === 'input') {
         setCursor((curr) => {
           if (curr) return curr;
-          const sId = score.parts[0]?.staves[0]?.id;
+          const sId = firstStaff(score)?.id;
           const mId = score.measures[0]?.id;
-          const voice1 = score.parts[0]?.staves[0]?.measures[mId]?.voices.find((v) => v.voiceIndex === 1);
+          const voice1 = firstStaff(score)?.measures[mId]?.voices.find((v) => v.voiceIndex === 1);
           if (sId && mId && voice1) {
             return { staffId: sId, voiceIndex: 1, measureId: mId, tick: 0 };
           }
@@ -83,9 +84,9 @@ export function useEditorInput({
       if (next === 'input') {
         setCursor((curr) => {
           if (curr) return curr;
-          const sId = score.parts[0]?.staves[0]?.id;
+          const sId = firstStaff(score)?.id;
           const mId = score.measures[0]?.id;
-          const voice1 = score.parts[0]?.staves[0]?.measures[mId]?.voices.find((v) => v.voiceIndex === 1);
+          const voice1 = firstStaff(score)?.measures[mId]?.voices.find((v) => v.voiceIndex === 1);
           if (sId && mId && voice1) {
             return { staffId: sId, voiceIndex: 1, measureId: mId, tick: 0 };
           }
@@ -297,7 +298,7 @@ export function useEditorInput({
       setCursor(nextCursor);
       lastEnteredPitchRef.current = getLastNotePitchBeforeCursor(score, nextCursor);
 
-      const staff = score.parts[0]?.staves.find((s) => s.id === nextCursor.staffId);
+      const staff = findStaff(score, nextCursor.staffId);
       const sm = staff?.measures[nextCursor.measureId];
       const voice = sm?.voices.find((v) => v.voiceIndex === nextCursor.voiceIndex);
       if (voice) {
@@ -321,7 +322,7 @@ export function useEditorInput({
       setCursor(nextCursor);
       lastEnteredPitchRef.current = getLastNotePitchBeforeCursor(score, nextCursor);
 
-      const staff = score.parts[0]?.staves.find((s) => s.id === nextCursor.staffId);
+      const staff = findStaff(score, nextCursor.staffId);
       const sm = staff?.measures[nextCursor.measureId];
       const voice = sm?.voices.find((v) => v.voiceIndex === nextCursor.voiceIndex);
       let foundId: string | null = null;
@@ -363,7 +364,7 @@ export function useEditorInput({
       setCursor(nextCursor);
       lastEnteredPitchRef.current = getLastNotePitchBeforeCursor(score, nextCursor);
 
-      const staff = score.parts[0]?.staves.find((s) => s.id === nextCursor.staffId);
+      const staff = findStaff(score, nextCursor.staffId);
       const sm = staff?.measures[nextCursor.measureId];
       const voice = sm?.voices.find((v) => v.voiceIndex === nextCursor.voiceIndex);
       if (voice) {
@@ -389,8 +390,8 @@ export function useEditorInput({
 
   const setCursorToMeasure = useCallback(
     (measureId: string, tick = 0) => {
-      const sId = score.parts[0]?.staves[0]?.id;
-      const staff = score.parts[0]?.staves[0];
+      const sId = firstStaff(score)?.id;
+      const staff = firstStaff(score);
       const sm = staff?.measures[measureId];
       const voice1 = sm?.voices.find((v) => v.voiceIndex === 1);
       if (sId && voice1) {

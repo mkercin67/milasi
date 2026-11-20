@@ -30,6 +30,7 @@ import { useAppVerificationStates } from './app/useAppVerificationStates';
 import { useAppValidation } from './app/useAppValidation';
 import { useAppTestHooks } from './app/useAppTestHooks';
 import { TwoVoiceTipBanner } from './TwoVoiceTipBanner';
+import { firstStaff } from '../core/staffLookup';
 
 declare global {
   interface Window {
@@ -343,7 +344,7 @@ const EditorShell: React.FC = () => {
   };
 
   const activeMeasureId = cursor?.measureId ?? score.measures[0]?.id;
-  const activeStaffMeasure = score.parts[0]?.staves[0]?.measures[activeMeasureId];
+  const activeStaffMeasure = firstStaff(score)?.measures[activeMeasureId];
   const voicesWithContent = useMemo(() => {
     if (!activeStaffMeasure) return [];
     const res: number[] = [];

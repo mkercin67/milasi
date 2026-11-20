@@ -269,7 +269,7 @@ export function createEmptyScore(options: CreateEmptyScoreOptions = {}): Score {
       wholeMeasure: true,
     });
 
-    part.staves[0].measures[mDef.id] = {
+    part.staves[0].measures[mDef.id] = { // staff-zero-ok: factory builds the legacy single-staff score
       voices: [{ id: newId(), voiceIndex: 1, events: [wholeRest] }],
     };
   }

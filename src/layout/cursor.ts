@@ -9,6 +9,7 @@
 import { Score } from '../core/model';
 import { ScoreCursor } from '../core/input';
 import { LayoutResult, LayoutSystem } from './types';
+import { findStaff } from '../core/staffLookup';
 
 export interface CursorPosition {
   systemIndex: number;
@@ -82,7 +83,7 @@ export function computeCursorPosition(
   }
 
   // 2. Identify voice events in the active measure
-  const staff = score.parts[0]?.staves.find((s) => s.id === cursor.staffId);
+  const staff = findStaff(score, cursor.staffId);
   const sm = staff?.measures[cursor.measureId];
   const voice = sm?.voices.find((v) => v.voiceIndex === cursor.voiceIndex);
 

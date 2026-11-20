@@ -30,6 +30,7 @@ import {
 } from '../../core/clipboard';
 import { EditorMode } from '../keymap';
 import { ScoreCursor } from '../../core/input';
+import { firstStaff } from '../../core/staffLookup';
 
 export interface SelectedEventInfo {
   eventId: string;
@@ -133,7 +134,7 @@ export function useEditorSelection({
   const extendSelectionDirection = useCallback(
     (direction: 'prev' | 'next') => {
       const curScore = scoreRef.current;
-      const staffId = curScore.parts[0]?.staves[0]?.id;
+      const staffId = firstStaff(curScore)?.id;
       if (!staffId) return;
       const curSel = selectionRef.current;
       const currentEventId =
@@ -153,7 +154,7 @@ export function useEditorSelection({
 
   const selectAllInStaff = useCallback(() => {
     const curScore = scoreRef.current;
-    const staff = curScore.parts[0]?.staves[0];
+    const staff = firstStaff(curScore);
     if (!staff) return;
     const allEvents: ScoreEvent[] = [];
     for (const mDef of curScore.measures) {
@@ -186,7 +187,7 @@ export function useEditorSelection({
 
   const selectNext = useCallback(
     (direction: 'prev' | 'next') => {
-      const staffId = score.parts[0]?.staves[0]?.id;
+      const staffId = firstStaff(score)?.id;
       if (!staffId) return;
       const nextId = nextEventId(score, staffId, selectedEventId, direction);
       if (nextId) {
@@ -200,7 +201,7 @@ export function useEditorSelection({
   const selectedEventInfo = useMemo<SelectedEventInfo | null>(() => {
     if (!selectedEventId) return null;
 
-    const staff = score.parts[0]?.staves[0];
+    const staff = firstStaff(score);
     if (!staff) return null;
 
     for (let mIdx = 0; mIdx < score.measures.length; mIdx++) {
@@ -337,7 +338,7 @@ export function useEditorSelection({
           }
         }
       } else if (mode === 'input' && cursor) {
-        const sm = score.parts[0]?.staves[0]?.measures[cursor.measureId];
+        const sm = firstStaff(score)?.measures[cursor.measureId];
         const v = sm?.voices.find((vo) => vo.voiceIndex === cursor.voiceIndex);
         if (v) {
           const lastNote = [...v.events].reverse().find((e) => e.kind === 'note');
@@ -404,7 +405,7 @@ export function useEditorSelection({
     const curEventId = selectedEventIdRef.current;
     const curCursor = cursorRef.current;
 
-    const staff = curScore.parts[0]?.staves[0];
+    const staff = firstStaff(curScore);
     if (!staff) return;
 
     let startMId = curScore.measures[0]?.id;

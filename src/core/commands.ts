@@ -48,7 +48,7 @@ export function insertNote(params: InsertNoteParams): Command {
 
         const staff = params.staffId
           ? part.staves.find((s) => s.id === params.staffId)
-          : part.staves[0];
+          : part.staves[0]; // staff-zero-ok: default staff of an explicitly addressed part
         if (!staff) {
           throw new Error(`Staff not found: ${params.staffId ?? 'default'}`);
         }

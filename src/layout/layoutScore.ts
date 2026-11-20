@@ -6,7 +6,7 @@
  * non-last system justification, and manual visual overrides.
  */
 
-import { Clef, Part, Score } from '../core/model';
+import { Clef, Score } from '../core/model';
 import { getKeySignatureAccidentals } from './keySignature';
 import {
   LayoutItem,
@@ -26,6 +26,7 @@ import { computeHeaderLayout } from './headerLayout';
 import { layoutSingleMeasure } from './measureLayout';
 import { applyVisualOverrides } from './overrideLayout';
 import { generateSingleSystemBeams, generateSystemBeams, SystemPlan } from './systemBeams';
+import { firstStaff } from '../core/staffLookup';
 
 export * from './layoutPrimitives';
 export * from './headerLayout';
@@ -52,8 +53,7 @@ export function layoutScore(score: Score, options: LayoutOptions = {}): LayoutRe
   const staffMarginTop = 7.0;
   const staffMarginBottom = 4.0;
 
-  const part: Part | undefined = score.parts[0];
-  const staff = part?.staves[0];
+  const staff = firstStaff(score);
   const clef: Clef = staff?.clef ?? { sign: 'G', line: 2 };
 
   function createClefItems(startX: number, clefToUse: Clef): { items: LayoutItem[]; width: number } {

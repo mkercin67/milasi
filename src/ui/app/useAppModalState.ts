@@ -16,6 +16,7 @@ import { createEmptyScore, createRest } from '../../core/factory';
 import { SelectedEventInfo } from './types';
 import { NewScoreConfig } from '../NewScoreModal';
 import { EditorMode } from '../keymap';
+import { firstStaff } from '../../core/staffLookup';
 
 export interface UseAppModalStateParams {
   score: Score;
@@ -230,7 +231,7 @@ export function useAppModalState({
     if (config.isPickup && config.pickupDurationTicks) {
       fresh.measures[0].actualTicks = config.pickupDurationTicks;
       const m0Id = fresh.measures[0].id;
-      fresh.parts[0].staves[0].measures[m0Id].voices.find((v) => v.voiceIndex === 1)!.events = [
+      firstStaff(fresh)!.measures[m0Id].voices.find((v) => v.voiceIndex === 1)!.events = [
         createRest({
           baseType:
             config.pickupDurationTicks === 480

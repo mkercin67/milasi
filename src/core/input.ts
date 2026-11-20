@@ -21,6 +21,7 @@ import { createMeasure, createNote, createRest, newId } from './factory';
 import { durationTicks, fillMeasureWithRests, measureTicks, PPQ } from './time';
 import { getKeySignatureAlter } from './pitch';
 import { Command } from './commands';
+import { findStaff } from './staffLookup';
 
 export type RestSpanType = BaseDurationType | 'wholeMeasure';
 
@@ -303,7 +304,7 @@ export function enterRest(
  */
 export function getLastNotePitchBeforeCursor(score: Score, cursor: ScoreCursor | null): Pitch | null {
   if (!cursor) return null;
-  const staff = score.parts[0]?.staves.find((s) => s.id === cursor.staffId);
+  const staff = findStaff(score, cursor.staffId);
   if (!staff) return null;
 
   const mIdx = score.measures.findIndex((m) => m.id === cursor.measureId);
