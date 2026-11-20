@@ -563,6 +563,8 @@ const EditorShell: React.FC = () => {
         setScoreComposerInput={modalState.setScoreComposerInput}
         scoreArrangerInput={modalState.scoreArrangerInput}
         setScoreArrangerInput={modalState.setScoreArrangerInput}
+        scoreBeamGroupingInput={modalState.scoreBeamGroupingInput}
+        setScoreBeamGroupingInput={modalState.setScoreBeamGroupingInput}
         handleSaveScoreInfo={modalState.handleSaveScoreInfo}
         isKeySigModalOpen={modalState.isKeySigModalOpen}
         setIsKeySigModalOpen={modalState.setIsKeySigModalOpen}

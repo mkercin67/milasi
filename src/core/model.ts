@@ -20,6 +20,9 @@ export interface StaffGroup {
 }
 
 /** Root score container. */
+/** How eighth-note runs are beamed (M7b-7): per beat (default) or across the half bar in 4/4. */
+export type BeamGroupingMode = 'beat' | 'half-bar';
+
 export interface Score {
   schemaVersion: 1 | 2 | 3 | 4 | 5 | 6 | 7;
   id: Id;
@@ -33,6 +36,8 @@ export interface Score {
   measures: MeasureDef[];
   groups: StaffGroup[];
   overrides: Record<Id, Override>;
+  /** Score-wide engraving settings (optional; absent = defaults). */
+  layoutSettings?: { beamGrouping?: BeamGroupingMode };
 }
 
 /** Supported barline types for measure endings. */

@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import React from 'react';
+import type { BeamGroupingMode } from '../../../core/model';
 import { useI18n } from '../../i18n';
 
 export interface ScoreInfoModalProps {
@@ -13,6 +14,8 @@ export interface ScoreInfoModalProps {
   setComposer: (val: string) => void;
   arranger: string;
   setArranger: (val: string) => void;
+  beamGrouping: BeamGroupingMode;
+  setBeamGrouping: (val: BeamGroupingMode) => void;
   onSave: () => void;
 }
 
@@ -27,6 +30,8 @@ export const ScoreInfoModal: React.FC<ScoreInfoModalProps> = ({
   setComposer,
   arranger,
   setArranger,
+  beamGrouping,
+  setBeamGrouping,
   onSave,
 }) => {
   const { t } = useI18n();
@@ -131,6 +136,26 @@ export const ScoreInfoModal: React.FC<ScoreInfoModalProps> = ({
               outline: 'none',
             }}
           />
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+          <label style={{ fontSize: '0.85rem', color: '#475569', fontWeight: 500 }}>
+            {t('dialog.scoreInfo.beamGrouping')}
+          </label>
+          <select
+            data-testid="select-beam-grouping"
+            value={beamGrouping}
+            onChange={(e) => setBeamGrouping(e.target.value === 'half-bar' ? 'half-bar' : 'beat')}
+            style={{
+              padding: '0.45rem 0.65rem',
+              fontSize: '0.9rem',
+              border: '1px solid #cbd5e1',
+              borderRadius: '6px',
+              backgroundColor: '#ffffff',
+            }}
+          >
+            <option value="beat">{t('dialog.scoreInfo.beamGrouping.beat')}</option>
+            <option value="half-bar">{t('dialog.scoreInfo.beamGrouping.halfBar')}</option>
+          </select>
         </div>
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.6rem', marginTop: '0.5rem' }}>
           <button

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import React from 'react';
-import { BarlineType, Score } from '../../core/model';
+import { BarlineType, BeamGroupingMode, Score } from '../../core/model';
 import { NewScoreConfig, NewScoreModal } from '../NewScoreModal';
 import { Diagnostics, PerfSample } from '../Diagnostics';
 import { ScoreInfoModal } from './modals/ScoreInfoModal';
@@ -37,6 +37,8 @@ export interface AppModalsProps {
   setScoreComposerInput: (val: string) => void;
   scoreArrangerInput: string;
   setScoreArrangerInput: (val: string) => void;
+  scoreBeamGroupingInput: BeamGroupingMode;
+  setScoreBeamGroupingInput: (val: BeamGroupingMode) => void;
   handleSaveScoreInfo: () => void;
   // Key Sig
   isKeySigModalOpen: boolean;
@@ -127,6 +129,8 @@ export const AppModals: React.FC<AppModalsProps> = ({
   setScoreComposerInput,
   scoreArrangerInput,
   setScoreArrangerInput,
+  scoreBeamGroupingInput,
+  setScoreBeamGroupingInput,
   handleSaveScoreInfo,
   isKeySigModalOpen,
   setIsKeySigModalOpen,
@@ -212,6 +216,8 @@ export const AppModals: React.FC<AppModalsProps> = ({
         setComposer={setScoreComposerInput}
         arranger={scoreArrangerInput}
         setArranger={setScoreArrangerInput}
+        beamGrouping={scoreBeamGroupingInput}
+        setBeamGrouping={setScoreBeamGroupingInput}
         onSave={handleSaveScoreInfo}
       />
 

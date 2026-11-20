@@ -4,6 +4,7 @@
  */
 
 import {
+  BeamGroupingMode,
   Clef,
   MeasureDef,
   NoteEvent,
@@ -93,7 +94,8 @@ function layoutPolyphonicEvents(
   beamGroupsMeta: MeasureBeamGroupMeta[],
   columnsOut: Map<number, number>,
   alignment?: MeasureAlignment,
-  idScope?: string
+  idScope?: string,
+  beamGrouping: BeamGroupingMode = 'beat'
 ): number {
   let relX = relXStart;
   let alignShift = 0;
@@ -134,7 +136,7 @@ function layoutPolyphonicEvents(
   for (const voice of staffMeasure.voices) {
     const vIndex = voice.voiceIndex;
     const vEvents = voice.events;
-    const rawGroups = groupBeams(vEvents, mDef.timeSig);
+    const rawGroups = groupBeams(vEvents, mDef.timeSig, beamGrouping);
     const stemDir: StemDirection = vIndex === 1 || vIndex === 3 ? 'up' : 'down';
     const vList = voiceEntriesMap.get(vIndex) ?? [];
 
@@ -600,7 +602,8 @@ export function layoutSingleMeasure(
   isLastMeasure: boolean,
   prevMDef?: MeasureDef,
   alignment?: MeasureAlignment,
-  idScope?: string
+  idScope?: string,
+  beamGrouping: BeamGroupingMode = 'beat'
 ): MeasureLayoutChunk {
   measureLayoutCacheStats.calls++;
 
@@ -633,7 +636,7 @@ export function layoutSingleMeasure(
     ? `${prevMDef.keySig}_${prevMDef.timeSig.num}/${prevMDef.timeSig.den}`
     : 'none';
   const barlineType = mDef.endBarline ?? (isLastMeasure ? 'final' : 'single');
-  const cacheKey = `${mDef.id}_${mDef.keySig}_${mDef.timeSig.num}/${mDef.timeSig.den}_${clef.sign}${clef.line}_${isFirstMeasure}_${isLastMeasure}_${prevKey}_${mDef.actualTicks ?? 'full'}_${barlineType}_${mDef.repeatStart ? 'rs' : ''}_${mDef.repeatEnd ? 're' : ''}_${mDef.volta?.number ?? 'none'}_${eventsHash}${alignment ? `_al${alignmentKey(alignment)}` : ''}${idScope ? `_sc${idScope}` : ''}`;
+  const cacheKey = `${mDef.id}_${mDef.keySig}_${mDef.timeSig.num}/${mDef.timeSig.den}_${clef.sign}${clef.line}_${isFirstMeasure}_${isLastMeasure}_${prevKey}_${mDef.actualTicks ?? 'full'}_${barlineType}_${mDef.repeatStart ? 'rs' : ''}_${mDef.repeatEnd ? 're' : ''}_${mDef.volta?.number ?? 'none'}_${eventsHash}${alignment ? `_al${alignmentKey(alignment)}` : ''}${idScope ? `_sc${idScope}` : ''}${beamGrouping === 'beat' ? '' : `_bg${beamGrouping}`}`;
 
   if (staffMeasure) {
     const existing = measureChunkCache.get(staffMeasure);
@@ -660,7 +663,7 @@ export function layoutSingleMeasure(
   const isPoly = isStaffMeasurePolyphonic(staffMeasure);
   if (!isPoly) {
     // Precompute beam groupings per measure so uniform stem directions and flag omission stay cached per measure
-    const beamGroupsRaw = groupBeams(events, mDef.timeSig);
+    const beamGroupsRaw = groupBeams(events, mDef.timeSig, beamGrouping);
     const noteStepsMap = new Map<string, number[]>();
     const startTickMap = new Map<string, number>();
     const fullTicks = (mDef.timeSig.num * 4 * PPQ) / mDef.timeSig.den;
@@ -771,7 +774,8 @@ export function layoutSingleMeasure(
       beamGroupsMeta,
       columns,
       alignment,
-      idScope
+      idScope,
+      beamGrouping
     );
   } else {
     const lyricsToLayout: LyricLayoutEntry[] = [];

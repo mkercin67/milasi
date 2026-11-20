@@ -58,6 +58,16 @@ export function validateScore(score: Score): ValidationProblem[] {
     });
   }
 
+  // Score-wide layout settings (M7b-7): only known beam grouping modes are accepted.
+  const beamGrouping = score.layoutSettings?.beamGrouping;
+  if (beamGrouping !== undefined && beamGrouping !== 'beat' && beamGrouping !== 'half-bar') {
+    problems.push({
+      code: 'invalid-beam-grouping',
+      message: `Unsupported beamGrouping: ${String(beamGrouping)} (expected 'beat' or 'half-bar')`,
+      severity: 'error',
+    });
+  }
+
   // Schema v7: Check MIDI channel reuse when more than 15 non-percussion parts exist
   if (score.schemaVersion === 7 && Array.isArray(score.parts)) {
     const nonPercParts = score.parts.filter(

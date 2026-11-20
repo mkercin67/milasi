@@ -5,7 +5,7 @@
  * Pure functions operating strictly on core event data and integer ticks (PPQ = 960).
  */
 
-import { BaseDurationType, MeasureDef, ScoreEvent } from '../core/model';
+import { BaseDurationType, BeamGroupingMode, MeasureDef, ScoreEvent } from '../core/model';
 import { PPQ } from '../core/time';
 
 export type TimeSig = MeasureDef['timeSig'];
@@ -64,6 +64,30 @@ function getTupletKey(ev: ScoreEvent): string | null {
 }
 
 /**
+ * Indices (0 or 1) of the two-beat windows of a 4/4 measure that consist of eighth notes only and
+ * are exactly filled by them (ticks [w*2*PPQ, (w+1)*2*PPQ)). Empty for every other meter.
+ */
+function findEighthWindows(voiceEvents: ScoreEvent[], timeSig: TimeSig): Set<number> {
+  const out = new Set<number>();
+  if (timeSig.num !== 4 || timeSig.den !== 4) return out;
+  const windowTicks = 2 * PPQ;
+  const perWindow = new Map<number, { ok: boolean; sum: number; first: number }>();
+  let tick = 0;
+  for (const ev of voiceEvents) {
+    const w = Math.floor(tick / windowTicks);
+    const info = perWindow.get(w) ?? { ok: true, sum: 0, first: tick };
+    if (ev.kind !== 'note' || ev.baseType !== 'eighth' || ev.tuplet) info.ok = false;
+    info.sum += ev.duration;
+    perWindow.set(w, info);
+    tick += ev.duration;
+  }
+  for (const [w, info] of perWindow) {
+    if (info.ok && info.first === w * windowTicks && info.sum === windowTicks) out.add(w);
+  }
+  return out;
+}
+
+/**
  * Computes beam groups for a single voice within a single measure.
  *
  * Rules:
@@ -72,9 +96,18 @@ function getTupletKey(ev: ScoreEvent): string | null {
  * 2. Never crosses a beat boundary (matched strictly by event START TICK).
  * 3. Events of matching tuplet ratio group together; mixing tuplet and non-tuplet breaks.
  * 4. A group requires at least 2 events; isolated beamable notes keep their flags.
+ *
+ * Mode 'half-bar' (4/4 only, M7b-7): a two-beat window whose events are ALL eighth notes
+ * (same non-tuplet key, no rests, covering the window exactly) forms one group; any other window
+ * falls back to the per-beat rule. Groups never cross the half-bar boundary.
  */
-export function groupBeams(voiceEvents: ScoreEvent[], timeSig: TimeSig): BeamGroup[] {
+export function groupBeams(
+  voiceEvents: ScoreEvent[],
+  timeSig: TimeSig,
+  mode: BeamGroupingMode = 'beat'
+): BeamGroup[] {
   const beatTicks = getBeatTicksForTimeSig(timeSig);
+  const mergedWindows = mode === 'half-bar' ? findEighthWindows(voiceEvents, timeSig) : new Set<number>();
   const groups: BeamGroup[] = [];
 
   let currentIds: string[] = [];
@@ -102,7 +135,8 @@ export function groupBeams(voiceEvents: ScoreEvent[], timeSig: TimeSig): BeamGro
       continue;
     }
 
-    const eventBeat = Math.floor(startTick / beatTicks);
+    const rawBeat = Math.floor(startTick / beatTicks);
+    const eventBeat = mergedWindows.has(Math.floor(rawBeat / 2)) ? Math.floor(rawBeat / 2) * 2 : rawBeat;
     const tupletKey = getTupletKey(ev);
 
     if (currentIds.length > 0 && (eventBeat !== currentBeat || tupletKey !== currentTupletKey)) {

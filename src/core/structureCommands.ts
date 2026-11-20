@@ -4,7 +4,7 @@
  */
 
 import { produce } from 'immer';
-import { BarlineType, Id, MeasureDef, Score, VoltaDef } from './model';
+import { BarlineType, BeamGroupingMode, Id, MeasureDef, Score, VoltaDef } from './model';
 import { Command } from './commandTypes';
 import { createMeasure, createRest, newId } from './factory';
 import { measureTicks } from './time';
@@ -28,6 +28,28 @@ export function setScoreMetadata(
         } else {
           draft.meta.title = titleOrMeta;
           draft.meta.composer = composerParam;
+        }
+      });
+    },
+  };
+}
+
+/**
+ * Sets how eighth-note runs are beamed for the whole score (M7b-7).
+ * 'beat' is the default and is stored as an absent field so old files stay byte-identical.
+ */
+export function setBeamGrouping(mode: BeamGroupingMode): Command {
+  return {
+    name: 'setBeamGrouping',
+    apply(score: Score): Score {
+      return produce(score, (draft) => {
+        if (mode === 'beat') {
+          if (draft.layoutSettings) {
+            delete draft.layoutSettings.beamGrouping;
+            if (Object.keys(draft.layoutSettings).length === 0) delete draft.layoutSettings;
+          }
+        } else {
+          draft.layoutSettings = { ...(draft.layoutSettings ?? {}), beamGrouping: mode };
         }
       });
     },

@@ -190,5 +190,29 @@
     "testFile": "tests/core/enter_inside_rest.test.ts",
     "testName": "R1: entering a 16th at tick 720 of a whole-rest measure keeps rests before and after, filling the measure exactly",
     "status": "DONE"
+  },
+  {
+    "planItemId": "B16",
+    "description": "Beam grouping by half bar in 4/4: a two-beat window of eighth notes only becomes one group of 4; windows with rests or shorter values keep the per-beat rule (M7b-7).",
+    "codeLocation": "src/layout/beams.ts:groupBeams",
+    "testFile": "tests/layout/beam_grouping_mode.test.ts",
+    "testName": "G1: 4/4 with eight eighths gives two groups of 4 by half bar and four groups of 2 by beat",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B17",
+    "description": "Score-wide beamGrouping setting: undoable command, optional field (absent = beat), save/load round trip, validation, layout cache key.",
+    "codeLocation": "src/core/structureCommands.ts:setBeamGrouping",
+    "testFile": "tests/core/beam_grouping_setting.test.ts",
+    "testName": "G7: setBeamGrouping is one undo step, redoable, and round-trips through save/load",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B18",
+    "description": "The entering half of a tie across a system break starts right of the system header and has a visible forward length (it used to start at a fixed 6.0 sp and ran backwards).",
+    "codeLocation": "src/layout/ties.ts:layoutTies",
+    "testFile": "tests/layout/tie_system_break.test.ts",
+    "testName": "T1: the entering half-tie of a grand staff starts right of the clef and has a visible length",
+    "status": "DONE"
   }
 ]

@@ -8,7 +8,7 @@
  */
 
 import { NoteEvent, Score } from '../core/model';
-import { NOTEHEAD_WIDTH } from './layoutScore';
+import { getItemWidth, NOTEHEAD_WIDTH } from './layoutScore';
 import { isStaffMeasurePolyphonic } from './measureLayout';
 import { notationOpCounter } from './notations';
 import { LayoutResult } from './types';
@@ -189,9 +189,18 @@ export function layoutTies(
                   d: pathA,
                 });
 
-                // Half-tie 2: enters from left margin to notehead B
-                const x1B = 6.0; // Left margin after clef / armör
+                // Half-tie 2: enters from just right of the system header (clef, key signature)
+                // to notehead B. The start follows the header, not a fixed margin: a fixed 6.0 sp
+                // lay to the RIGHT of the first notehead in systems without a key signature, so the
+                // tie ran backwards and was invisible.
                 const x2B = posB.x - 0.1;
+                const sysB = layout.systems[posB.systemIndex];
+                let headerRight = 0;
+                for (const it of sysB?.items ?? []) {
+                  if (it.eventId || it.kind !== 'glyph' || it.y < 0 || it.x >= posB.x - 0.2) continue;
+                  headerRight = Math.max(headerRight, it.x + getItemWidth(it));
+                }
+                const x1B = Math.min(Math.max(headerRight + 0.2, posB.x - 2.4), x2B - 0.8);
                 const y1B = posB.y + yOffset;
                 const y2B = y1B;
                 const pathB = createCrescentPath(x1B, y1B, x2B, y2B, curveDir);

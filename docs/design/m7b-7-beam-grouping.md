@@ -1,6 +1,6 @@
 # M7b-7 Beam grouping setting (design, for approval)
 
-Status: PROPOSED. Trigger: Bach BWV 772 acceptance (Bach-Gesellschaft groups eighth notes across
+Status: APPROVED (the project owner delegated the two open choices: two-beat window, score-wide setting). Trigger: Bach BWV 772 acceptance (Bach-Gesellschaft groups eighth notes across
 the half bar in 4/4; MiLaSi groups per beat only).
 
 ## Decision
@@ -40,7 +40,7 @@ The measure is cut into two windows of 2 beats (ticks 0-1919 and 1920-3839).
 - G6 cache: toggling the mode on the same score changes the beam item count (no stale chunk).
 - G7 command undo/redo, save/load round trip, `validateScore` rejects `'quarter-bar'`.
 - G8 layout: grouped stems end on the single beam line (no stem gap), skyline unaffected.
-- E2E: Bach m.3 left hand shows two 4-note beams after switching the setting.
+- Browser E2E replaced by G6/G8 plus the manual Bach acceptance (m.3 left hand shows two 4-note beams after switching the setting in Score Information).
 
 ## Out of scope
 Per-measure or per-group manual override, 12/8 and other meters, automatic rule by edition.

@@ -62,6 +62,8 @@ export function layoutScore(score: Score, options: LayoutOptions = {}): LayoutRe
   const staffMarginTop = 7.0;
   const staffMarginBottom = 4.0;
 
+  const beamGrouping = score.layoutSettings?.beamGrouping === 'half-bar' ? 'half-bar' : 'beat';
+
   const staff = firstStaff(score);
   const clef: Clef = staff?.clef ?? { sign: 'G', line: 2 };
 
@@ -143,7 +145,8 @@ export function layoutScore(score: Score, options: LayoutOptions = {}): LayoutRe
         isLastMeasureIn,
         prevMDefIn,
         undefined,
-        scopeOf(k)
+        scopeOf(k),
+        beamGrouping
       )
     );
     const al = alignStaffColumns(
@@ -173,7 +176,8 @@ export function layoutScore(score: Score, options: LayoutOptions = {}): LayoutRe
         isLastMeasureIn,
         prevMDefIn,
         alignment,
-        scopeOf(k)
+        scopeOf(k),
+        beamGrouping
       );
     });
   }
@@ -191,7 +195,17 @@ export function layoutScore(score: Score, options: LayoutOptions = {}): LayoutRe
     }
     const staffMeasure = staff?.measures[mDef.id];
     measureChunks.push(
-      layoutSingleMeasure(staffMeasure, mDef, clef, isFirstMeasure, isLastMeasure, prevMDef)
+      layoutSingleMeasure(
+        staffMeasure,
+        mDef,
+        clef,
+        isFirstMeasure,
+        isLastMeasure,
+        prevMDef,
+        undefined,
+        undefined,
+        beamGrouping
+      )
     );
   }
 

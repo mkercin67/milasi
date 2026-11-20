@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import { useCallback, useState } from 'react';
-import { BarlineType, Score } from '../../core/model';
+import { BarlineType, BeamGroupingMode, Score } from '../../core/model';
 import {
+  setBeamGrouping,
   setEndBarline,
   setKeySignature,
   setPickup,
@@ -43,6 +44,9 @@ export function useAppModalState({
   const [scoreSubtitleInput, setScoreSubtitleInput] = useState<string>(score.meta.subtitle || '');
   const [scoreComposerInput, setScoreComposerInput] = useState<string>(score.meta.composer || '');
   const [scoreArrangerInput, setScoreArrangerInput] = useState<string>(score.meta.arranger || '');
+  const [scoreBeamGroupingInput, setScoreBeamGroupingInput] = useState<BeamGroupingMode>(
+    score.layoutSettings?.beamGrouping ?? 'beat'
+  );
 
   // M6c Modals State
   const [isKeySigModalOpen, setIsKeySigModalOpen] = useState<boolean>(false);
@@ -89,16 +93,34 @@ export function useAppModalState({
         arranger: scoreArrangerInput,
       })
     );
+    if (scoreBeamGroupingInput !== (score.layoutSettings?.beamGrouping ?? 'beat')) {
+      executeCommand(setBeamGrouping(scoreBeamGroupingInput));
+    }
     setIsScoreInfoOpen(false);
-  }, [executeCommand, scoreTitleInput, scoreSubtitleInput, scoreComposerInput, scoreArrangerInput]);
+  }, [
+    executeCommand,
+    score.layoutSettings?.beamGrouping,
+    scoreTitleInput,
+    scoreSubtitleInput,
+    scoreComposerInput,
+    scoreArrangerInput,
+    scoreBeamGroupingInput,
+  ]);
 
   const handleOpenScoreInfo = useCallback(() => {
     setScoreTitleInput(score.meta.title || '');
     setScoreSubtitleInput(score.meta.subtitle || '');
     setScoreComposerInput(score.meta.composer || '');
     setScoreArrangerInput(score.meta.arranger || '');
+    setScoreBeamGroupingInput(score.layoutSettings?.beamGrouping ?? 'beat');
     setIsScoreInfoOpen(true);
-  }, [score.meta.title, score.meta.subtitle, score.meta.composer, score.meta.arranger]);
+  }, [
+    score.meta.title,
+    score.meta.subtitle,
+    score.meta.composer,
+    score.meta.arranger,
+    score.layoutSettings?.beamGrouping,
+  ]);
 
   const handleOpenKeySigModal = useCallback(() => {
     const targetMeasure =
@@ -262,6 +284,8 @@ export function useAppModalState({
     setScoreComposerInput,
     scoreArrangerInput,
     setScoreArrangerInput,
+    scoreBeamGroupingInput,
+    setScoreBeamGroupingInput,
     isKeySigModalOpen,
     setIsKeySigModalOpen,
     keySigInput,
