@@ -91,7 +91,8 @@ function layoutPolyphonicEvents(
   measureItems: MeasureItemEntry[],
   beamGroupsMeta: MeasureBeamGroupMeta[],
   columnsOut: Map<number, number>,
-  alignment?: MeasureAlignment
+  alignment?: MeasureAlignment,
+  idScope?: string
 ): number {
   let relX = relXStart;
   let alignShift = 0;
@@ -137,7 +138,7 @@ function layoutPolyphonicEvents(
 
     for (let gIdx = 0; gIdx < rawGroups.length; gIdx++) {
       const g = rawGroups[gIdx];
-      const beamGroupId = `beam-${mDef.id}-v${vIndex}-${gIdx}`;
+      const beamGroupId = `beam-${mDef.id}${idScope ?? ''}-v${vIndex}-${gIdx}`;
       beamGroupsMeta.push({
         beamGroupId,
         stemDir,
@@ -594,7 +595,8 @@ export function layoutSingleMeasure(
   isFirstMeasure: boolean,
   isLastMeasure: boolean,
   prevMDef?: MeasureDef,
-  alignment?: MeasureAlignment
+  alignment?: MeasureAlignment,
+  idScope?: string
 ): MeasureLayoutChunk {
   measureLayoutCacheStats.calls++;
 
@@ -627,7 +629,7 @@ export function layoutSingleMeasure(
     ? `${prevMDef.keySig}_${prevMDef.timeSig.num}/${prevMDef.timeSig.den}`
     : 'none';
   const barlineType = mDef.endBarline ?? (isLastMeasure ? 'final' : 'single');
-  const cacheKey = `${mDef.id}_${mDef.keySig}_${mDef.timeSig.num}/${mDef.timeSig.den}_${clef.sign}${clef.line}_${isFirstMeasure}_${isLastMeasure}_${prevKey}_${mDef.actualTicks ?? 'full'}_${barlineType}_${mDef.repeatStart ? 'rs' : ''}_${mDef.repeatEnd ? 're' : ''}_${mDef.volta?.number ?? 'none'}_${eventsHash}${alignment ? `_al${alignmentKey(alignment)}` : ''}`;
+  const cacheKey = `${mDef.id}_${mDef.keySig}_${mDef.timeSig.num}/${mDef.timeSig.den}_${clef.sign}${clef.line}_${isFirstMeasure}_${isLastMeasure}_${prevKey}_${mDef.actualTicks ?? 'full'}_${barlineType}_${mDef.repeatStart ? 'rs' : ''}_${mDef.repeatEnd ? 're' : ''}_${mDef.volta?.number ?? 'none'}_${eventsHash}${alignment ? `_al${alignmentKey(alignment)}` : ''}${idScope ? `_sc${idScope}` : ''}`;
 
   if (staffMeasure) {
     const existing = measureChunkCache.get(staffMeasure);
@@ -675,7 +677,7 @@ export function layoutSingleMeasure(
       const g = beamGroupsRaw[gIdx];
       const groupSteps = g.eventIds.map((id) => noteStepsMap.get(id) ?? []);
       const groupStemDir = getBeamGroupStemDirection(groupSteps);
-      const beamGroupId = `beam-${mDef.id}-${gIdx}`;
+      const beamGroupId = `beam-${mDef.id}${idScope ?? ''}-${gIdx}`;
       for (const id of g.eventIds) {
         eventToBeamDir.set(id, groupStemDir);
       }
@@ -763,7 +765,8 @@ export function layoutSingleMeasure(
       measureItems,
       beamGroupsMeta,
       columns,
-      alignment
+      alignment,
+      idScope
     );
   } else {
     const lyricsToLayout: LyricLayoutEntry[] = [];

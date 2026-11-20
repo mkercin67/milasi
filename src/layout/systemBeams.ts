@@ -13,6 +13,10 @@ export interface SystemPlan {
   measureIndices: number[];
   headerWidth: number;
   headerItems: LayoutItem[];
+  /** Multi-staff: the chunks of staves 1..n-1 (aligned with `measures`), for cache keys. */
+  staffChunks?: MeasureLayoutChunk[][];
+  /** Multi-staff: every staff's chunks with that staff's vertical offset, for beam generation. */
+  beamChunks?: Array<{ chunk: MeasureLayoutChunk; yOffset: number; staffId: string }>;
 }
 
 export function generateSingleSystemBeams(sys: LayoutSystem, plan: SystemPlan): void {
@@ -26,7 +30,10 @@ export function generateSingleSystemBeams(sys: LayoutSystem, plan: SystemPlan): 
     }
   }
 
-  for (const chunk of plan.measures) {
+  const entries: Array<{ chunk: MeasureLayoutChunk; yOffset: number; staffId?: string }> =
+    plan.beamChunks ?? plan.measures.map((chunk) => ({ chunk, yOffset: 0 }));
+
+  for (const { chunk, yOffset, staffId } of entries) {
     for (const bg of chunk.beamGroups) {
       const stemInputs: BeamStemInput[] = [];
       const stemItemsToUpdate: Array<{ eventId: string; item: LayoutItem }> = [];
@@ -39,7 +46,7 @@ export function generateSingleSystemBeams(sys: LayoutSystem, plan: SystemPlan): 
         const lowestStep = evMeta.stepPositions[0] ?? 0;
         const highestStep = evMeta.stepPositions[evMeta.stepPositions.length - 1] ?? 0;
         const beamSideStep = bg.stemDir === 'up' ? highestStep : lowestStep;
-        const beamSideNoteY = staffPositionToY(beamSideStep);
+        const beamSideNoteY = staffPositionToY(beamSideStep) + yOffset;
         const naturalStemEndY =
           beamSideNoteY + (bg.stemDir === 'up' ? -STEM_LENGTH : STEM_LENGTH);
 
@@ -67,9 +74,13 @@ export function generateSingleSystemBeams(sys: LayoutSystem, plan: SystemPlan): 
         }
       }
 
+      if (staffId) {
+        for (const beamItem of geom.beamItems) beamItem.staffId = staffId;
+      }
       sys.items.push(...geom.beamItems);
-      if (sys.staves[0] && sys.staves[0].items !== sys.items) {
-        sys.staves[0].items.push(...geom.beamItems);
+      const container = (staffId && sys.staves.find((st) => st.id === staffId)) || sys.staves[0];
+      if (container && container.items !== sys.items) {
+        container.items.push(...geom.beamItems);
       }
     }
   }

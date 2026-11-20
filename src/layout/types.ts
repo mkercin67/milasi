@@ -38,6 +38,8 @@ export interface LayoutItem {
   points?: Array<{ x: number; y: number }>;
   /** Beam level: 1 = primary, 2 = 16th secondary/stub, 3 = 32nd tertiary/stub. */
   level?: number;
+  /** Staff the item belongs to. Set only in multi-staff layouts (Milestone 7b). */
+  staffId?: string;
   /** Beam group identifier attached to beam items (`data-beam-group`). */
   beamGroupId?: string;
   /** Ordered event IDs belonging to this beam item (`data-event-ids`). */
