@@ -18,6 +18,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import http from 'node:http';
 import { spawn, execSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
 
 function killProcessTree(proc) {
@@ -101,9 +102,14 @@ export async function runTwoVoiceKeyboardE2E() {
   if (!isRunning) {
     console.log('No local server found on :5173. Spawning preview server on port 4173...');
     serverUrl = 'http://localhost:4173';
+    // Same pattern as the other E2E scripts: a detached process group on POSIX so
+    // killProcessTree can kill the whole tree, and no piped stdio that keeps the
+    // Node event loop alive after the test has finished.
+    const isWin = process.platform === 'win32';
     devProcess = spawn('npx', ['vite', 'preview', '--port', '4173', '--strictPort'], {
-      shell: true,
-      stdio: 'pipe',
+      shell: isWin,
+      detached: !isWin,
+      stdio: 'ignore',
     });
     await waitForServer(serverUrl, 20000);
     console.log(`Preview server ready at ${serverUrl}`);
@@ -327,6 +333,21 @@ export async function runTwoVoiceKeyboardE2E() {
     console.log('Voice 1 events:', JSON.stringify(v1.events.map((e) => ({ kind: e.kind, dur: e.duration, p: e.pitches?.[0] }))));
     console.log('Voice 2 events:', JSON.stringify(v2.events.map((e) => ({ kind: e.kind, dur: e.duration, p: e.pitches?.[0] }))));
 
+    // Exact assertions: kind, duration, step, octave and alter of every event.
+    const describe = (voice) =>
+      voice.events.map((e) => {
+        const p = e.pitches?.[0];
+        return `${e.kind}:${e.duration}:${p ? `${p.step}${p.octave}:${p.alter ?? 0}` : '-'}`;
+      });
+    const expectV1 = ['note:960:C5:0', 'note:960:D5:0', 'note:960:E5:0', 'note:960:F5:0'];
+    const expectV2 = ['note:960:C4:0', 'note:960:D4:0', 'note:960:E4:0', 'note:960:F4:0'];
+    if (JSON.stringify(describe(v1)) !== JSON.stringify(expectV1)) {
+      throw new Error(`Voice 1 events differ. Expected ${JSON.stringify(expectV1)}, got ${JSON.stringify(describe(v1))}`);
+    }
+    if (JSON.stringify(describe(v2)) !== JSON.stringify(expectV2)) {
+      throw new Error(`Voice 2 events differ. Expected ${JSON.stringify(expectV2)}, got ${JSON.stringify(describe(v2))}`);
+    }
+
     success = true;
     console.log('✓ Playwright E2E Keyboard-Only Two-Voice Entry PASSED successfully!');
   } finally {
@@ -341,9 +362,13 @@ export async function runTwoVoiceKeyboardE2E() {
   }
 }
 
-if (process.argv[1] && path.resolve(process.argv[1]) === path.resolve(new URL(import.meta.url).pathname.replace(/^\/([A-Z]:)/, '$1'))) {
-  runTwoVoiceKeyboardE2E().catch((err) => {
-    console.error('E2E run failed:', err);
-    process.exit(1);
-  });
+if (process.argv[1] && path.resolve(process.argv[1]) === path.resolve(fileURLToPath(import.meta.url))) {
+  // Always exit explicitly: a leftover child process or handle must never keep
+  // the CI step alive until its timeout.
+  runTwoVoiceKeyboardE2E()
+    .then(() => process.exit(0))
+    .catch((err) => {
+      console.error('E2E run failed:', err);
+      process.exit(1);
+    });
 }
