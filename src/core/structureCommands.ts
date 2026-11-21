@@ -7,7 +7,7 @@ import { produce } from 'immer';
 import { BarlineType, BeamGroupingMode, Id, MeasureDef, Score, TimeSigDisplay, VoltaDef } from './model';
 import { Command } from './commandTypes';
 import { createMeasure, createRest, inheritTimeSigDisplay, newId } from './factory';
-import { measureTicks } from './time';
+import { fillMeasureWithRests, measureTicks } from './time';
 
 /**
  * Creates a command that updates the score title, subtitle, composer, and arranger metadata.
@@ -163,6 +163,37 @@ export function setTimeSig(
 }
 
 /**
+ * After a measure changes length (pickup on or off), makes every voice fit again: the rests after the last
+ * note are replaced by rests that fill exactly the new length. Voices whose notes already run past the new
+ * length are left alone, so no note is ever deleted by this.
+ */
+function refitTrailingRests(draft: Score, measureId: Id, newLength: number): void {
+  for (const part of draft.parts) {
+    for (const staff of part.staves) {
+      const sm = staff.measures[measureId];
+      if (!sm) continue;
+      for (const voice of sm.voices) {
+        let contentEnd = 0;
+        let keep = 0;
+        let t = 0;
+        voice.events.forEach((ev, i) => {
+          t += ev.duration;
+          if (ev.kind !== 'rest') {
+            contentEnd = t;
+            keep = i + 1;
+          }
+        });
+        if (contentEnd > newLength) continue;
+        voice.events = [
+          ...voice.events.slice(0, keep),
+          ...fillMeasureWithRests(newLength - contentEnd, () => newId()),
+        ];
+      }
+    }
+  }
+}
+
+/**
  * Marks or unmarks a measure as a pickup / anacrusis measure with custom duration in ticks.
  */
 export function setPickup(measureId: Id, actualTicks: number | null): Command {
@@ -177,6 +208,7 @@ export function setPickup(measureId: Id, actualTicks: number | null): Command {
           } else {
             delete m.actualTicks;
           }
+          refitTrailingRests(draft, m.id, m.actualTicks ?? measureTicks(m.timeSig));
         }
       });
     },

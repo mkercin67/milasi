@@ -117,6 +117,7 @@ export function useEditor(initialScore?: Score) {
     selection: selectionHook.selection,
     rangeEvents: selectionHook.rangeEvents,
     cursor: inputHook.cursor,
+    mode: inputHook.mode,
   });
 
   const resetScore = useCallback((newScore: Score) => {

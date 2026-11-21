@@ -23,6 +23,8 @@ import {
 } from '../../core/commands';
 import { Selection, findEventContext } from '../../core/selection';
 import { ScoreCursor } from '../../core/input';
+import { resolveNotationTarget } from './notationTarget';
+import { EditorMode } from '../keymap';
 import { LayoutResult } from '../../layout/types';
 import { layoutScore } from '../../layout/layoutScore';
 import { clampEventOverrideInLayout } from '../../layout/mouse';
@@ -37,6 +39,8 @@ export interface UseEditorNotationsParams {
   selection: Selection;
   rangeEvents: ScoreEvent[];
   cursor: ScoreCursor | null;
+  /** In input mode, marks apply to the note just entered when nothing is selected. */
+  mode?: EditorMode;
 }
 
 export function useEditorNotations({
@@ -49,29 +53,28 @@ export function useEditorNotations({
   selection,
   rangeEvents,
   cursor,
+  mode,
 }: UseEditorNotationsParams) {
+  const targetSelection = useCallback(
+    (): Selection | null =>
+      resolveNotationTarget(score, selectionRef.current, selectedEventIdRef.current, mode, cursor),
+    [selectionRef, selectedEventIdRef, mode, score, cursor]
+  );
+
   const applyDynamic = useCallback(
     (dyn: DynamicType | null) => {
-      const curSel = selectionRef.current;
-      if (curSel.kind === 'range' || curSel.kind === 'event') {
-        executeCommand(setDynamic(curSel, dyn));
-      } else if (selectedEventIdRef.current) {
-        executeCommand(setDynamic({ kind: 'event', id: selectedEventIdRef.current }, dyn));
-      }
+      const target = targetSelection();
+      if (target) executeCommand(setDynamic(target, dyn));
     },
-    [executeCommand, selectionRef, selectedEventIdRef]
+    [executeCommand, targetSelection]
   );
 
   const applyArticulation = useCallback(
     (art: ArticulationType) => {
-      const curSel = selectionRef.current;
-      if (curSel.kind === 'range' || curSel.kind === 'event') {
-        executeCommand(toggleArticulation(curSel, art));
-      } else if (selectedEventIdRef.current) {
-        executeCommand(toggleArticulation({ kind: 'event', id: selectedEventIdRef.current }, art));
-      }
+      const target = targetSelection();
+      if (target) executeCommand(toggleArticulation(target, art));
     },
-    [executeCommand, selectionRef, selectedEventIdRef]
+    [executeCommand, targetSelection]
   );
 
   const applySlur = useCallback(() => {
@@ -86,13 +89,6 @@ export function useEditorNotations({
       triggerRejectedError('Legato bağı için en az iki nota seçmelisiniz (S)');
     }
   }, [executeCommand, triggerRejectedError, selectionRef]);
-
-  const targetSelection = useCallback((): Selection | null => {
-    const curSel = selectionRef.current;
-    if (curSel.kind === 'range' || curSel.kind === 'event') return curSel;
-    if (selectedEventIdRef.current) return { kind: 'event', id: selectedEventIdRef.current };
-    return null;
-  }, [selectionRef, selectedEventIdRef]);
 
   const applyFermata = useCallback(() => {
     const target = targetSelection();
