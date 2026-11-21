@@ -4,9 +4,9 @@
  */
 
 import { produce } from 'immer';
-import { BarlineType, BeamGroupingMode, Id, MeasureDef, Score, VoltaDef } from './model';
+import { BarlineType, BeamGroupingMode, Id, MeasureDef, Score, TimeSigDisplay, VoltaDef } from './model';
 import { Command } from './commandTypes';
-import { createMeasure, createRest, newId } from './factory';
+import { createMeasure, createRest, inheritTimeSigDisplay, newId } from './factory';
 import { measureTicks } from './time';
 
 /**
@@ -113,7 +113,8 @@ export function setKeySignature(
 export function setTimeSignature(
   fromMeasureId: Id,
   timeSig: { num: number; den: number },
-  scope: 'score' | 'from-here' = 'from-here'
+  scope: 'score' | 'from-here' = 'from-here',
+  display: TimeSigDisplay = 'numeric'
 ): Command {
   return {
     name: 'setTimeSignature',
@@ -123,14 +124,19 @@ export function setTimeSignature(
         const targetIdx = draft.measures.findIndex((m) => m.id === fromMeasureId);
         if (targetIdx === -1) return;
         const newSig = { num: Math.round(timeSig.num), den: Math.round(timeSig.den) };
+        // The symbols only exist for 4/4 (C) and 2/2 (cut); anything else is stored as numeric (= absent).
+        const valid =
+          (display === 'common' && newSig.num === 4 && newSig.den === 4) ||
+          (display === 'cut' && newSig.num === 2 && newSig.den === 2);
+        const apply = (m: MeasureDef) => {
+          m.timeSig = { ...newSig };
+          if (valid) m.timeSigDisplay = display;
+          else delete m.timeSigDisplay;
+        };
         if (scope === 'score') {
-          for (const m of draft.measures) {
-            m.timeSig = { ...newSig };
-          }
+          for (const m of draft.measures) apply(m);
         } else {
-          for (let i = targetIdx; i < draft.measures.length; i++) {
-            draft.measures[i].timeSig = { ...newSig };
-          }
+          for (let i = targetIdx; i < draft.measures.length; i++) apply(draft.measures[i]);
         }
       });
     },
@@ -149,6 +155,7 @@ export function setTimeSig(
         const measure = draft.measures.find((m) => m.id === measureId);
         if (measure) {
           measure.timeSig = { ...timeSig };
+          delete measure.timeSigDisplay; // the symbol belongs to the old signature
         }
       });
     },
@@ -243,7 +250,10 @@ export function insertMeasure(index?: number): Command {
         }
 
         const newEndBarline: BarlineType = hadFinal ? 'final' : 'single';
-        const newMDef = createMeasure(timeSig, keySig, undefined, undefined, newEndBarline);
+        const newMDef = inheritTimeSigDisplay(
+          refMeasure,
+          createMeasure(timeSig, keySig, undefined, undefined, newEndBarline)
+        );
         draft.measures.splice(targetIdx, 0, newMDef);
 
         const mDuration = measureTicks(timeSig);

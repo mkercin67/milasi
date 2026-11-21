@@ -16,7 +16,7 @@ Entered by hand in the application by the project owner; fixture and tests:
 | # | Difference | Decision |
 |---|------------|----------|
 | 1 | No trill sign (mm. 1, 2 and 5 of the entered range) | M7c (ornaments) |
-| 2 | The edition writes the common-time sign, the program writes 4/4 | M7c (time signature symbols) |
+| 2 | The edition writes the common-time sign, the program writes 4/4 | M7c-1 DONE: Zaman dialog, "C — ortak zaman"; the BWV 772 file is the owner's, apply it there |
 | 3 | Beam slopes are flatter than the engraving (clamped to one staff space) | accepted (cosmetic) |
 | 4 | An entry that does not fit the measure (an eighth at the last sixteenth slot) gives no message; the player only sees that nothing happens | backlog: status bar hint "does not fit" |
 | 5 | Rests cannot be deleted, only overwritten with notes (`Delete` turns a note into a rest) | by design; document in the user guide |

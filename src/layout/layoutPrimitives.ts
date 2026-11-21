@@ -3,7 +3,7 @@
  * Core engraving constants, dimension calculations, and measurement structures.
  */
 
-import { BaseDurationType } from '../core/model';
+import { BaseDurationType, TimeSigDisplay } from '../core/model';
 import { LayoutItem, StemDirection } from './types';
 
 // Standard engraving dimensions in staff spaces
@@ -122,10 +122,39 @@ export interface MeasureLayoutChunk {
   contentEndX?: number;
 }
 
+/**
+ * The display actually drawn: the C sign needs 4/4 and the cut sign 2/2, any other combination
+ * (for example a stale 'common' after a manual edit) falls back to digits.
+ */
+export function effectiveTimeSigDisplay(m: {
+  timeSig: { num: number; den: number };
+  timeSigDisplay?: TimeSigDisplay;
+}): TimeSigDisplay {
+  if (m.timeSigDisplay === 'common' && m.timeSig.num === 4 && m.timeSig.den === 4) return 'common';
+  if (m.timeSigDisplay === 'cut' && m.timeSig.num === 2 && m.timeSig.den === 2) return 'cut';
+  return 'numeric';
+}
+
 export function createTimeSigItems(
   startX: number,
-  timeSig: { num: number; den: number }
+  timeSig: { num: number; den: number },
+  display: TimeSigDisplay = 'numeric'
 ): { items: LayoutItem[]; width: number } {
+  if (display !== 'numeric') {
+    // One symbol centred on the middle staff line (y = 2.0).
+    return {
+      items: [
+        {
+          id: 'timesig-symbol',
+          kind: 'glyph',
+          glyph: display === 'common' ? 'timeSigCommon' : 'timeSigCutCommon',
+          x: startX,
+          y: 2.0,
+        },
+      ],
+      width: 1.8 + 0.8,
+    };
+  }
   const items: LayoutItem[] = [];
   const numStr = timeSig.num.toString();
   const denStr = timeSig.den.toString();

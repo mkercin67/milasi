@@ -104,6 +104,26 @@ export function validateScore(score: Score): ValidationProblem[] {
         measureId: mDef.id,
       });
     }
+    if (mDef.timeSigDisplay !== undefined) {
+      if (!['numeric', 'common', 'cut'].includes(mDef.timeSigDisplay)) {
+        problems.push({
+          code: 'invalid-time-sig-display',
+          message: `Measure ${mDef.id} has unsupported timeSigDisplay: ${String(mDef.timeSigDisplay)}`,
+          severity: 'error',
+          measureId: mDef.id,
+        });
+      } else if (
+        (mDef.timeSigDisplay === 'common' && !(mDef.timeSig.num === 4 && mDef.timeSig.den === 4)) ||
+        (mDef.timeSigDisplay === 'cut' && !(mDef.timeSig.num === 2 && mDef.timeSig.den === 2))
+      ) {
+        problems.push({
+          code: 'time-sig-display-mismatch',
+          message: `Measure ${mDef.id}: timeSigDisplay '${mDef.timeSigDisplay}' does not fit ${mDef.timeSig.num}/${mDef.timeSig.den}; digits are drawn`,
+          severity: 'warning',
+          measureId: mDef.id,
+        });
+      }
+    }
     if (mDef.endBarline && !['single', 'double', 'final'].includes(mDef.endBarline)) {
       problems.push({
         code: 'invalid-barline',

@@ -21,9 +21,10 @@ and states the acceptance test of each step. Nothing here changes what M7b accep
 
 | Step | Content | Depends on | Closes gap |
 |---|---|---|---|
-| **M7c-1** | Time-signature symbols: `MeasureDef.timeSigDisplay = 'numeric' \| 'common' \| 'cut'` (SMuFL `timeSigCommon`, `timeSigCutCommon`). UI: choice in the time-signature dialog. Absent field = numeric, old files unchanged. | none | BWV 772 gap 2, K. 545 gap 3 |
-| **M7c-2** | Fermata: `notations.fermata = 'above' \| 'below'` on notes and rests, placed against the staff skyline, ignored by playback (normal metrical playback until M11). Toolbar button and shortcut. | none | v3.2 scope |
-| **M7c-3** | Ornaments, minimal set: trill sign `tr`, mordent, inverted mordent, turn. Stored as an event notation, drawn above the note on the skyline, ignored by playback until M11. Wavy continuation line for a trill over several notes is a later refinement. Grace notes are a **separate decision** (section 6, Q2). | M7c-2 (shared above-staff placement) | BWV 772 gap 1, K. 545 gap 2 |
+| **M7c-1** (DONE) | Time-signature symbols: `MeasureDef.timeSigDisplay = 'numeric' \| 'common' \| 'cut'` (SMuFL `timeSigCommon`, `timeSigCutCommon`). UI: choice in the time-signature dialog. Absent field = numeric, old files unchanged. | none | BWV 772 gap 2, K. 545 gap 3 |
+| **M7c-2** | Fermata (and breath mark, caesura): `notations.fermata = 'above' \| 'below'` on notes and rests, placed against the staff skyline, ignored by playback (normal metrical playback until M11). Toolbar button and shortcut. | none | v3.2 scope |
+| **M7c-3** | Ornaments, minimal set: trill sign `tr`, mordent, inverted mordent, turn. Stored as an event notation, drawn above the note on the skyline, ignored by playback until M11. Wavy continuation line for a trill over several notes is a later refinement. Grace notes follow in M7c-3b. | M7c-2 (shared above-staff placement) | BWV 772 gap 1, K. 545 gap 2 |
+| **M7c-3b** | Grace notes: appoggiatura and acciaccatura (small notehead, slash for acciaccatura, slur to the main note), spacing and playback timing rules, entry by keyboard. Needed by the flute and piano repertoire. | M7c-3 | owner decision Q2 |
 | **M7c-4** | Clef model: C clefs (soprano, mezzo-soprano, alto, tenor, baritone), octave-shift clefs (treble 8vb for tenor), pitch-to-staff-position mapping for all of them, ledger lines, cursor and mouse entry on each clef, new-score and staff clef choice. | none | v3.2 scope |
 | **M7c-5** | Clef changes inside a staff: `Staff.clefChanges[] = { measureId, tick, clef }`. Small clef drawn before the first affected note (before the barline when the change falls on a measure start). Stored pitches are absolute, so playback and transposition are unaffected; only the staff position of notes changes. | M7c-4 | K. 545 gap 1 |
 | **M7c-6** | Ensemble model and layout: add or remove staves and parts, `Score.groups` (bracket, brace, barline span), templates SATB (4 staves), string quartet, voice + piano. Layout generalises from the first part to **all** parts of a system. Part labels with dynamic first-system indent. Through, individual and Mensurstrich barlines. | M7c-4 | v3.2 scope |
@@ -60,20 +61,28 @@ All claims about an edition stay **UNVERIFIED until the owner checks them agains
 - M7c-5: the clef change in K. 545 m. 5 closes the open gap of that entry.
 - Traditional: "Üsküdar'a Gider İken", vocal melody only, for the lyric features (syllables, hyphens, extenders).
 
-## 6. Open decisions for the project owner (musical, not technical)
-- **Q1. Priority within M7c.** The order above follows the editions we already entered. If the coursework of the
-  faculty needs something earlier (for example four-staff SATB for choir or harmony assignments), the order of
-  steps 4 to 7 can change; steps 1 to 3 stay first because they are small.
-- **Q2. Grace notes (appoggiatura, acciaccatura).** Not in the v3.2 text and listed as a non-goal of M7b. They are
-  common in Baroque and in Turkish repertoire. Proposal: treat them as a **separate step M7c-3b** after the minimal
-  ornament set, because they change spacing and playback timing, which trills and mordent signs do not.
-- **Q3. Turkish music needs.** Koma accidentals and makam key signatures are scheduled for M13 and stay there. The
-  owner or the faculty should confirm whether an earlier, simpler form is needed for coursework (for example
-  Turkish note names in the note-name layer, which already exist as solfège).
-- **Q4. Which ornament signs** a first-year harmony or analysis course uses: the minimal set (trill, mordent,
-  inverted mordent, turn) is a proposal and is cheap to extend later.
+## 6. Decisions taken by the project owner (21.11.2026)
+- **Scope: Western art music first.** The goal is a program that covers what Finale and MuseScore cover for students
+  and teaching staff. No school-specific priority exists, so the order of section 3 stands.
+- **Q1 closed:** order unchanged (steps 1 to 3 first, then clefs, then ensembles).
+- **Q2 closed:** grace notes (appoggiatura, acciaccatura) are **in scope** as step **M7c-3b**, after the minimal
+  ornament set. Reason: the reference instruments of the first user are flute and piano, and Baroque and later
+  flute-and-piano literature needs grace notes, trills and breath marks.
+- **Q3 closed:** Turkish repertoire (koma accidentals, makam key signatures, Turkish notation conventions) is a
+  later project phase, scheduled after everything else (M13 and beyond). It is not forgotten: the data model must
+  not make it impossible (pitch `alter` already accepts non-integer values; see `formatPitchName`).
+- **Q4 closed for now:** minimal ornament set (trill, mordent, inverted mordent, turn); extend on request.
+- **Additions that follow from the flute and piano reference:** breath mark and caesura (part of M7c-2 with the
+  fermata, same placement code), ottava lines (8va/15ma, needed for flute and piano high register; tracked in the
+  parity matrix, section 8).
 
 ## 7. What the owner has to verify by eye (per step)
 Each step ends with one screenshot request: the entry or card named in section 5 next to the IMSLP page. Clef
 placement, fermata position, ornament position and bracket and barline shape are judged against that page, not
 against our own rules.
+
+## 8. Parity matrix with MuseScore and Finale
+A separate document, `docs/design/feature-parity.md` (to be written next), will list every notation and editing
+feature a student or teacher of Western music expects, mark which milestone delivers it, and mark gaps that no
+milestone covers yet (for example hairpins, ottava lines, text expressions, rehearsal marks, chord symbols,
+transposing instruments, parts extraction). It is the tool to keep the roadmap honest.

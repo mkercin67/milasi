@@ -17,7 +17,7 @@ import {
   Score,
   ScoreEvent,
 } from './model';
-import { createMeasure, createNote, createRest, newId } from './factory';
+import { createMeasure, createNote, createRest, inheritTimeSigDisplay, newId } from './factory';
 import { durationTicks, fillMeasureWithRests, measureTicks, PPQ } from './time';
 import { getKeySignatureAlter } from './pitch';
 import { Command } from './commands';
@@ -366,7 +366,10 @@ export function appendMeasure(): Command {
         }
 
         const newEndBarline: BarlineType = hadFinal ? 'final' : 'single';
-        const newMDef = createMeasure(timeSig, keySig, undefined, undefined, newEndBarline);
+        const newMDef = inheritTimeSigDisplay(
+          lastMDef,
+          createMeasure(timeSig, keySig, undefined, undefined, newEndBarline)
+        );
         draft.measures.push(newMDef);
 
         const mDuration = measureTicks(timeSig);

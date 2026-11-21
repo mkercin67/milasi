@@ -24,6 +24,7 @@ import {
   applyEventAnchors,
   BARLINE_THICKNESS,
   createTimeSigItems,
+  effectiveTimeSigDisplay,
   LEDGER_EXTENSION,
   LEDGER_THICKNESS,
   MeasureAlignment,
@@ -760,10 +761,10 @@ export function layoutSingleMeasure(
   }
 
   const prevKey = prevMDef
-    ? `${prevMDef.keySig}_${prevMDef.timeSig.num}/${prevMDef.timeSig.den}`
+    ? `${prevMDef.keySig}_${prevMDef.timeSig.num}/${prevMDef.timeSig.den}${effectiveTimeSigDisplay(prevMDef)}`
     : 'none';
   const barlineType = mDef.endBarline ?? (isLastMeasure ? 'final' : 'single');
-  const cacheKey = `${mDef.id}_${mDef.keySig}_${mDef.timeSig.num}/${mDef.timeSig.den}_${clef.sign}${clef.line}_${isFirstMeasure}_${isLastMeasure}_${prevKey}_${mDef.actualTicks ?? 'full'}_${barlineType}_${mDef.repeatStart ? 'rs' : ''}_${mDef.repeatEnd ? 're' : ''}_${mDef.volta?.number ?? 'none'}_${eventsHash}${alignment ? `_al${alignmentKey(alignment)}` : ''}${idScope ? `_sc${idScope}` : ''}${beamGrouping === 'beat' ? '' : `_bg${beamGrouping}`}${noteLabels ? `_nl${noteLabels}` : ''}`;
+  const cacheKey = `${mDef.id}_${mDef.keySig}_${mDef.timeSig.num}/${mDef.timeSig.den}${effectiveTimeSigDisplay(mDef)}_${clef.sign}${clef.line}_${isFirstMeasure}_${isLastMeasure}_${prevKey}_${mDef.actualTicks ?? 'full'}_${barlineType}_${mDef.repeatStart ? 'rs' : ''}_${mDef.repeatEnd ? 're' : ''}_${mDef.volta?.number ?? 'none'}_${eventsHash}${alignment ? `_al${alignmentKey(alignment)}` : ''}${idScope ? `_sc${idScope}` : ''}${beamGrouping === 'beat' ? '' : `_bg${beamGrouping}`}${noteLabels ? `_nl${noteLabels}` : ''}`;
 
   if (staffMeasure) {
     const existing = measureChunkCache.get(staffMeasure);
@@ -860,16 +861,18 @@ export function layoutSingleMeasure(
 
   // Time signature in first measure or mid-score time signature change
   if (isFirstMeasure) {
-    const tsLayout = createTimeSigItems(relX, mDef.timeSig);
+    const tsLayout = createTimeSigItems(relX, mDef.timeSig, effectiveTimeSigDisplay(mDef));
     for (const item of tsLayout.items) {
       measureItems.push({ item });
     }
     relX += tsLayout.width;
   } else if (
     prevMDef &&
-    (prevMDef.timeSig.num !== mDef.timeSig.num || prevMDef.timeSig.den !== mDef.timeSig.den)
+    (prevMDef.timeSig.num !== mDef.timeSig.num ||
+      prevMDef.timeSig.den !== mDef.timeSig.den ||
+      effectiveTimeSigDisplay(prevMDef) !== effectiveTimeSigDisplay(mDef))
   ) {
-    const tsLayout = createTimeSigItems(relX, mDef.timeSig);
+    const tsLayout = createTimeSigItems(relX, mDef.timeSig, effectiveTimeSigDisplay(mDef));
     for (const item of tsLayout.items) {
       measureItems.push({ item });
     }

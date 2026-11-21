@@ -59,7 +59,7 @@ export const TimeSigModal: React.FC<TimeSigModalProps> = ({
           </label>
           <select
             id="timesig-dialog-select"
-            value={['2/4', '3/4', '4/4', '6/8', '2/2', '3/8', '5/4', '7/8'].includes(timeSigStrInput) ? timeSigStrInput : 'custom'}
+            value={['2/4', '3/4', '4/4', '4/4c', '6/8', '2/2', '2/2c', '3/8', '5/4', '7/8'].includes(timeSigStrInput) ? timeSigStrInput : 'custom'}
             onChange={(e) => {
               if (e.target.value !== 'custom') {
                 setTimeSigStrInput(e.target.value);
@@ -75,10 +75,12 @@ export const TimeSigModal: React.FC<TimeSigModalProps> = ({
             }}
           >
             <option value="4/4">4/4</option>
+            <option value="4/4c">{t('dialog.timeSig.common')}</option>
             <option value="3/4">3/4</option>
             <option value="2/4">2/4</option>
             <option value="6/8">6/8</option>
             <option value="2/2">2/2</option>
+            <option value="2/2c">{t('dialog.timeSig.cut')}</option>
             <option value="3/8">3/8</option>
             <option value="5/4">5/4</option>
             <option value="7/8">7/8</option>

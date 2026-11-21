@@ -19,7 +19,7 @@ Only Mozart's pitches and rhythms are taken over, no editorial marks.
 |---|------------|----------|
 | 1 | The edition writes the left hand of mm. 1-4 in the treble clef and changes to the bass clef inside m. 5; the program has no clef change, the left hand is written in the bass clef with ledger lines | M7c (clef changes) |
 | 2 | No trill sign in m. 4; no slurs (mm. 2 and 4) | M7c (ornaments), slurs optional |
-| 3 | Common-time sign written as 4/4 | M7c |
+| 3 | Common-time sign written as 4/4 | M7c-1 DONE (feature); the fixture still uses digits, change at the next re-entry |
 | 4 | Chord noteheads of the voice-split entry differ from the fixture (one event vs two voices) | fixture is the reference |
 
 ## Verified

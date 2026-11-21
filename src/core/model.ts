@@ -53,6 +53,9 @@ export interface VoltaDef {
   openRight?: boolean;
 }
 
+/** How a time signature is drawn: digits (default), the common-time sign C (4/4) or the cut-time sign (2/2). */
+export type TimeSigDisplay = 'numeric' | 'common' | 'cut';
+
 /** Global measure definition shared by all staves across parts. */
 export interface MeasureDef {
   id: Id;
@@ -60,6 +63,8 @@ export interface MeasureDef {
     num: number;
     den: number;
   };
+  /** Display style of the time signature; absent = numeric. 'common' needs 4/4, 'cut' needs 2/2. */
+  timeSigDisplay?: TimeSigDisplay;
   keySig: number; // -7..7 on circle of fifths (0 = C major / A minor)
   tempo?: {
     bpm: number;

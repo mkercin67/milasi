@@ -168,6 +168,8 @@
   "dialog.timeSig.scopeFromHere": "From here onwards",
   "dialog.timeSig.scopeScore": "Entire score",
   "dialog.timeSig.apply": "Apply",
+  "dialog.timeSig.common": "C — common time (4/4)",
+  "dialog.timeSig.cut": "¢ — cut time (2/2)",
   "dialog.tempo.title": "Tempo",
   "dialog.tempo.bpm": "BPM",
   "dialog.tempo.beatUnit": "Beat Unit",

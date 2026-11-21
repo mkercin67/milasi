@@ -123,6 +123,12 @@ export function createPart(nameOrOptions?: string | CreatePartOptions): Part {
   };
 }
 
+/** A measure that follows another one keeps its time-signature display (C stays C when measures are added). */
+export function inheritTimeSigDisplay(from: MeasureDef | undefined, to: MeasureDef): MeasureDef {
+  if (from?.timeSigDisplay) to.timeSigDisplay = from.timeSigDisplay;
+  return to;
+}
+
 /**
  * Creates a global measure definition.
  *

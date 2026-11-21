@@ -142,7 +142,12 @@ export function useAppModalState({
     const targetMeasure =
       score.measures.find((m) => m.id === selectedEventInfo?.measureId) ?? score.measures[0];
     if (targetMeasure) {
-      setTimeSigStrInput(`${targetMeasure.timeSig.num}/${targetMeasure.timeSig.den}`);
+      const { num, den } = targetMeasure.timeSig;
+      // 'c' suffix = draw the symbol (C for 4/4, cut sign for 2/2) instead of digits
+      const symbol =
+        (targetMeasure.timeSigDisplay === 'common' && num === 4 && den === 4) ||
+        (targetMeasure.timeSigDisplay === 'cut' && num === 2 && den === 2);
+      setTimeSigStrInput(`${num}/${den}${symbol ? 'c' : ''}`);
     }
     setIsTimeSigModalOpen(true);
   }, [score.measures, selectedEventInfo?.measureId]);
@@ -151,10 +156,12 @@ export function useAppModalState({
     const targetMeasure =
       score.measures.find((m) => m.id === selectedEventInfo?.measureId) ?? score.measures[0];
     if (targetMeasure) {
-      const parts = timeSigStrInput.split('/').map((s) => parseInt(s, 10));
+      const symbol = timeSigStrInput.endsWith('c');
+      const parts = timeSigStrInput.replace(/c$/, '').split('/').map((s) => parseInt(s, 10));
       if (parts.length === 2 && parts[0] > 0 && parts[1] > 0) {
+        const display = symbol ? (parts[0] === 2 ? 'cut' : 'common') : 'numeric';
         executeCommand(
-          setTimeSignature(targetMeasure.id, { num: parts[0], den: parts[1] }, timeSigScope)
+          setTimeSignature(targetMeasure.id, { num: parts[0], den: parts[1] }, timeSigScope, display)
         );
       }
     }

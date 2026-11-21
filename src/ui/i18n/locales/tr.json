@@ -168,6 +168,8 @@
   "dialog.timeSig.scopeFromHere": "Buradan itibaren",
   "dialog.timeSig.scopeScore": "Tüm eser",
   "dialog.timeSig.apply": "Uygula",
+  "dialog.timeSig.common": "C — ortak zaman (4/4)",
+  "dialog.timeSig.cut": "¢ — alla breve (2/2)",
   "dialog.tempo.title": "Tempo",
   "dialog.tempo.bpm": "BPM",
   "dialog.tempo.beatUnit": "Birim",

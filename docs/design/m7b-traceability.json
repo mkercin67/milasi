@@ -254,5 +254,13 @@
     "testFile": "tests/layout/note_names_layer.test.ts",
     "testName": "N5: lyrics stay on their own line and the command never touches events",
     "status": "DONE"
+  },
+  {
+    "planItemId": "B24",
+    "description": "M7c-1 time-signature symbols: MeasureDef.timeSigDisplay (common for 4/4, cut for 2/2) is drawn as one glyph, kept when measures are added, saved in the file, and validated.",
+    "codeLocation": "src/layout/layoutPrimitives.ts:createTimeSigItems",
+    "testFile": "tests/layout/time_sig_symbols.test.ts",
+    "testName": "T2: 4/4 with display common draws the C sign once and no digits",
+    "status": "DONE"
   }
 ]
