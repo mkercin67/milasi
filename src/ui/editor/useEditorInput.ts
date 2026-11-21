@@ -9,6 +9,9 @@ import {
   enterNote,
   enterRest,
   getLastNotePitchBeforeCursor,
+  findNoteBeforeCursor,
+  chordPitchAbove,
+  topPitch,
   moveCursor,
   moveCursorToAdjacentMeasure,
   moveCursorToMeasureBoundary,
@@ -22,7 +25,7 @@ import {
 } from '../../core/input';
 import { durationTicks, measureTicks } from '../../core/time';
 import { newId } from '../../core/factory';
-import { Command } from '../../core/commands';
+import { Command, changePitch } from '../../core/commands';
 import { findStaff, firstStaff } from '../../core/staffLookup';
 
 export interface UseEditorInputParams {
@@ -181,6 +184,28 @@ export function useEditorInput({
       setCursor(nextCursor);
     },
     [mode, cursor, score, activeDuration, activeDots, triggerRejectedError, executeCommand, setSelectedEventId]
+  );
+
+  /** Shift+letter: adds a pitch above the top pitch of the note just before the cursor (chord entry). */
+  const addChordPitchAtCursor = useCallback(
+    (letter: PitchStep, errorMsg: string, noCursorMsg?: string, onNoteEntered?: (p: Pitch) => void) => {
+      if (mode !== 'input') return;
+      if (!cursor) {
+        triggerRejectedError(noCursorMsg ?? 'İmleç yok, bir ölçüye tıklayın');
+        return;
+      }
+      const target = findNoteBeforeCursor(score, cursor);
+      const mDef = score.measures.find((m) => m.id === cursor.measureId);
+      if (!target || !mDef) {
+        triggerRejectedError(errorMsg);
+        return;
+      }
+      const pitch = chordPitchAbove(topPitch(target.pitches), letter, mDef.keySig);
+      onNoteEntered?.(pitch);
+      executeCommand(changePitch(target.id, [...target.pitches, pitch]));
+      setSelectedEventId(target.id);
+    },
+    [mode, cursor, score, triggerRejectedError, executeCommand, setSelectedEventId]
   );
 
   const enterPitchDirect = useCallback(
@@ -454,6 +479,7 @@ export function useEditorInput({
     cursorRef,
     lastEnteredPitchRef,
     enterPitchAtCursor,
+    addChordPitchAtCursor,
     enterPitchDirect,
     enterRestAtCursor,
     moveCursorDirection,

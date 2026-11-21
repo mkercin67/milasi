@@ -230,5 +230,13 @@
     "testFile": "tests/layout/k545_acceptance.test.ts",
     "testName": "K4: a two-note chord is drawn with two noteheads on the same x, one staff space-multiple apart",
     "status": "DONE"
+  },
+  {
+    "planItemId": "B21",
+    "description": "M7b-8 chord entry: Shift+letter adds the pitch above the top pitch to the note just entered (core helpers plus the Shift+C..B key mapping).",
+    "codeLocation": "src/core/input.ts:chordPitchAbove",
+    "testFile": "tests/core/chord_entry.test.ts",
+    "testName": "C1: the first matching letter strictly above the top pitch (Mozart K. 545 chords)",
+    "status": "DONE"
   }
 ]

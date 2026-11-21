@@ -77,6 +77,12 @@ export interface UseAppKeyboardParams {
     msgNoCursor: string,
     onPreview?: (p: Pitch) => void
   ) => void;
+  addChordPitchAtCursor: (
+    letter: PitchStep,
+    msgDoesNotFit: string,
+    msgNoCursor: string,
+    onPreview?: (p: Pitch) => void
+  ) => void;
   toggleDot: () => void;
   triggerRejectedError: (msg: string) => void;
   setActiveDuration: (duration: ScoreEvent['baseType']) => void;
@@ -137,6 +143,7 @@ export function useAppKeyboard(params: UseAppKeyboardParams) {
     deleteSelection,
     enterRestAtCursor,
     enterPitchAtCursor,
+    addChordPitchAtCursor,
     toggleDot,
     triggerRejectedError,
     setActiveDuration,
@@ -502,6 +509,14 @@ export function useAppKeyboard(params: UseAppKeyboardParams) {
             (p) => previewPlayer.previewPitches([p])
           );
           recordSample(`Key${action.letter}`);
+        } else if (action.type === 'add-chord-pitch') {
+          addChordPitchAtCursor(
+            action.letter as PitchStep,
+            t('error.doesNotFit'),
+            t('error.noCursor'),
+            (p) => previewPlayer.previewPitches([p])
+          );
+          recordSample(`ShiftKey${action.letter}`);
         } else if (action.type === 'set-duration') {
           setActiveDuration(action.baseType);
           setIsRestSelected(false);
@@ -590,6 +605,7 @@ export function useAppKeyboard(params: UseAppKeyboardParams) {
     deleteSelection,
     enterRestAtCursor,
     enterPitchAtCursor,
+    addChordPitchAtCursor,
     toggleDot,
     triggerRejectedError,
     setActiveDuration,

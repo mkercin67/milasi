@@ -242,6 +242,7 @@ export function useEditor(initialScore?: Score) {
     cursorRef: inputHook.cursorRef,
     lastEnteredPitchRef: inputHook.lastEnteredPitchRef,
     enterPitchAtCursor: inputHook.enterPitchAtCursor,
+    addChordPitchAtCursor: inputHook.addChordPitchAtCursor,
     enterPitchDirect: inputHook.enterPitchDirect,
     applyEventOverride: notationsHook.applyEventOverride,
     clearEventOverride: notationsHook.clearEventOverride,

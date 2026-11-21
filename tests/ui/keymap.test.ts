@@ -102,6 +102,16 @@ describe('keymap', () => {
     expect(mapKeyEvent({ code: 'KeyC', altKey: true }, 'input')).toBeNull();
   });
 
+  it('M7b-8: Shift+C..B adds a chord pitch in input mode only; Ctrl/Alt variants stay unmapped', () => {
+    for (const letter of ['C', 'D', 'E', 'F', 'G', 'A', 'B']) {
+      expect(mapKeyEvent({ code: `Key${letter}`, shiftKey: true }, 'input')).toEqual({ type: 'add-chord-pitch', letter });
+    }
+    expect(mapKeyEvent({ code: 'KeyC', shiftKey: true, ctrlKey: true }, 'input')).not.toEqual({ type: 'add-chord-pitch', letter: 'C' });
+    expect(mapKeyEvent({ code: 'KeyC', shiftKey: true }, 'select')).not.toEqual({ type: 'add-chord-pitch', letter: 'C' });
+    // Shift+L stays marcato
+    expect(mapKeyEvent({ code: 'KeyL', shiftKey: true }, 'input')).toEqual({ type: 'toggle-articulation', articulation: 'marcato' });
+  });
+
   it('maps Digit0 to enter-rest in input mode; prompts hint when select/position; Ctrl+Digit0 to reset-override', () => {
     expect(mapKeyEvent({ code: 'Digit0' }, 'input')).toBe('enter-rest');
     expect(mapKeyEvent({ code: 'Digit0' }, 'select')).toBe('show-input-off-hint');

@@ -9,7 +9,7 @@ Only Mozart's pitches and rhythms are taken over, no editorial marks.
 ## Found during entry
 | # | Finding | Decision |
 |---|---------|----------|
-| 1 | No way to build a chord from the keyboard (the model and layout support chords); the owner entered the chords of mm. 5-7 as two voices | M7b-8: Shift+letter adds a pitch to the note left of the cursor (planned); the fixture uses single chord events |
+| 1 | No way to build a chord from the keyboard (the model and layout support chords); the owner entered the chords of mm. 5-7 as two voices | fixed: M7b-8, Shift+letter adds a pitch above the note just entered (`docs/design/m7b-8-chord-entry.md`); the fixture uses single chord events |
 | 2 | Range selection and copy/paste work on a single voice only, so a two-voice measure pastes only one voice | M7a-5 multi-voice selection (backlog) |
 | 3 | The range selection band was always drawn on the first staff | fixed (selection bands per staff, S1-S2) |
 | 4 | Pitch entry picks the octave nearest to the previous note; the Alberti figure C4 G4 E4 G4 needs one `Ctrl+Up` on the G | accepted, see BWV 772 gap 6 |

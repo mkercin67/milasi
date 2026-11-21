@@ -100,6 +100,7 @@ Activated via `KeyN`. Enter pitches, rests, and note durations.
 | `Left` | `ArrowLeft` | `Ctrl` | cursor-prev-measure |
 | `Right` | `ArrowRight` | `Ctrl` | cursor-next-measure |
 | `C..B` | `KeyC..KeyB` | - | enter-pitch |
+| `C..B` | `KeyC..KeyB` | `Shift` | add-chord-pitch |
 | `0` | `Digit0` | - | enter-rest |
 | `B` | `KeyB` | `Ctrl` | insert-measure |
 | `V` | `KeyV` | `Ctrl` | paste |

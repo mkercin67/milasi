@@ -795,3 +795,50 @@ export function moveCursorToStaff(
   if (!target) return { ...cursor };
   return switchToVoice(score, { ...cursor, staffId: target.id }, cursor.voiceIndex);
 }
+
+/**
+ * Finds the note event that sits immediately before the cursor in its voice (the one that was just
+ * entered). Returns null when the previous event is a rest or there is none. Never mutates the score.
+ */
+export function findNoteBeforeCursor(score: Score, cursor: ScoreCursor | null): NoteEvent | null {
+  if (!cursor) return null;
+  const staff = findStaff(score, cursor.staffId);
+  if (!staff) return null;
+  const mIdx = score.measures.findIndex((m) => m.id === cursor.measureId);
+  if (mIdx === -1) return null;
+
+  for (let i = mIdx; i >= 0; i--) {
+    const voice = staff.measures[score.measures[i].id]?.voices.find((v) => v.voiceIndex === cursor.voiceIndex);
+    if (!voice) continue;
+    let t = 0;
+    let last: ScoreEvent | null = null;
+    for (const ev of voice.events) {
+      if (i === mIdx && t >= cursor.tick) break;
+      last = ev;
+      t += ev.duration;
+    }
+    if (last) return last.kind === 'note' ? (last as NoteEvent) : null;
+  }
+  return null;
+}
+
+/**
+ * The pitch with the given letter that lies directly above the top pitch of a chord (strictly higher
+ * in diatonic steps, at most an octave above). The accidental comes from the key signature.
+ */
+export function chordPitchAbove(top: Pitch, letter: string, keySig: number): Pitch {
+  const step = letter.toUpperCase() as PitchStep;
+  const topDiatonic = top.octave * 7 + STEP_DIATONIC[top.step];
+  let octave = top.octave;
+  while (octave * 7 + STEP_DIATONIC[step] <= topDiatonic) octave += 1;
+  return { step, octave, alter: getKeySignatureAlter(step, keySig) };
+}
+
+/** Highest pitch of a list by diatonic position, then by alteration. */
+export function topPitch(pitches: readonly Pitch[]): Pitch {
+  return pitches.reduce((best, p) => {
+    const a = p.octave * 7 + STEP_DIATONIC[p.step];
+    const b = best.octave * 7 + STEP_DIATONIC[best.step];
+    return a > b || (a === b && p.alter > best.alter) ? p : best;
+  });
+}

@@ -69,6 +69,7 @@ export type UserAction =
   | { type: 'toggle-articulation'; articulation: ArticulationType }
   | { type: 'nudge-override'; dx: number; dy: number }
   | { type: 'enter-pitch'; letter: PitchStep }
+  | { type: 'add-chord-pitch'; letter: PitchStep }
   | { type: 'set-duration'; baseType: BaseDurationType }
   | { type: 'legacy-key-hint'; hintKey: 'accent' | 'marcato' | 'tenuto' };
 
@@ -418,6 +419,10 @@ export function mapKeyEvent(
       if (e.code === 'ArrowRight') return 'extend-selection-next';
       if (e.code === 'ArrowUp') return 'cycle-accidental-up';
       if (e.code === 'ArrowDown') return 'cycle-accidental-down';
+      // Chord entry: Shift+C..B adds that pitch above the note just entered (M7b-8)
+      if (PITCH_LETTERS[e.code] && !isCmdOrCtrl && !isAlt) {
+        return { type: 'add-chord-pitch', letter: PITCH_LETTERS[e.code] };
+      }
       return null;
     }
 
@@ -577,6 +582,7 @@ export function getCompleteKeyTable(): KeyTableEntry[] {
     { key: 'Left', code: 'ArrowLeft', modifiers: 'Ctrl', mode: 'input', action: 'cursor-prev-measure' },
     { key: 'Right', code: 'ArrowRight', modifiers: 'Ctrl', mode: 'input', action: 'cursor-next-measure' },
     { key: 'C..B', code: 'KeyC..KeyB', modifiers: 'none', mode: 'input', action: 'enter-pitch' },
+    { key: 'C..B', code: 'KeyC..KeyB', modifiers: 'Shift', mode: 'input', action: 'add-chord-pitch' },
     { key: '0', code: 'Digit0', modifiers: 'none', mode: 'input', action: 'enter-rest' },
     { key: 'B', code: 'KeyB', modifiers: 'Ctrl', mode: 'input', action: 'insert-measure' },
     { key: 'V', code: 'KeyV', modifiers: 'Ctrl', mode: 'input', action: 'paste' },
