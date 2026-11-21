@@ -61,7 +61,7 @@ export function useEditor(initialScore?: Score) {
     errorTimerRef.current = window.setTimeout(() => {
       setRejectedError(null);
       errorTimerRef.current = null;
-    }, 2000);
+    }, 3500);
   }, []);
 
   const markClean = useCallback(() => {

@@ -11,6 +11,7 @@ import {
   getLastNotePitchBeforeCursor,
   findNoteBeforeCursor,
   defaultCursor,
+  fitDetail,
   chordPitchAbove,
   topPitch,
   moveCursor,
@@ -141,7 +142,7 @@ export function useEditorInput({
       });
 
       if (!plan.ok) {
-        triggerRejectedError(errorMsg);
+        triggerRejectedError(errorMsg + fitDetail(score, activeCursor, activeDuration, activeDots));
         return;
       }
 
@@ -221,7 +222,7 @@ export function useEditorInput({
       });
 
       if (!plan.ok) {
-        triggerRejectedError(errorMsg);
+        triggerRejectedError(errorMsg + fitDetail(score, activeCursor, activeDuration, activeDots));
         return;
       }
 
@@ -277,7 +278,7 @@ export function useEditorInput({
       });
 
       if (!plan.ok) {
-        triggerRejectedError(errorMsg);
+        triggerRejectedError(errorMsg + fitDetail(score, activeCursor, activeDuration, activeDots));
         return;
       }
 

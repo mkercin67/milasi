@@ -854,3 +854,26 @@ export function defaultCursor(score: Score): ScoreCursor | null {
   if (staff && measureId && voice1) return { staffId: staff.id, voiceIndex: 1, measureId, tick: 0 };
   return null;
 }
+
+/** A tick span as a reduced fraction of a whole note ("1/8", "3/16"); 0 stays "0". Language neutral. */
+export function formatNoteFraction(ticks: number): string {
+  if (ticks <= 0) return '0';
+  const whole = PPQ * 4;
+  let a = ticks;
+  let b = whole;
+  while (b) [a, b] = [b, a % b];
+  return `${ticks / a}/${whole / a}`;
+}
+
+/**
+ * Detail for the "does not fit" message: the length of the note that was tried and the room left up to
+ * the end of the measure, e.g. " (1/8 > 1/16)". Empty for other rejection reasons or an unknown measure.
+ */
+export function fitDetail(score: Score, cursor: ScoreCursor, baseType: BaseDurationType, dots: number): string {
+  const mDef = score.measures.find((m) => m.id === cursor.measureId);
+  if (!mDef) return '';
+  const wanted = durationTicks(baseType, dots);
+  const left = measureTicks(mDef.timeSig) - cursor.tick;
+  if (wanted <= left) return '';
+  return ` (${formatNoteFraction(wanted)} > ${formatNoteFraction(left)})`;
+}
