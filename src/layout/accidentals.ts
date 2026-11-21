@@ -23,15 +23,16 @@ export class MeasureAccidentalTracker {
    * Determines whether an accidental glyph is required for a pitch and updates state.
    *
    * @param pitch - The pitch to evaluate.
+   * @param force - Print the accidental even when it is not required (courtesy accidental).
    * @returns SMuFL accidental glyph name, or null if no accidental should be drawn.
    */
-  processPitch(pitch: Pitch): string | null {
+  processPitch(pitch: Pitch, force: boolean = false): string | null {
     const pitchKey = `${pitch.step}${pitch.octave}`;
     const activeAlter = this.currentAlter.has(pitchKey)
       ? this.currentAlter.get(pitchKey)!
       : getKeySignatureAlter(pitch.step, this.keySig);
 
-    if (pitch.alter === activeAlter) {
+    if (pitch.alter === activeAlter && !force) {
       return null;
     }
 

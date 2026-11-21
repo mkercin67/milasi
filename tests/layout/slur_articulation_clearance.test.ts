@@ -68,3 +68,22 @@ describe('tenuto placement', () => {
     }
   });
 });
+
+describe('nested slurs', () => {
+  it('N1: of two slurs starting on the same note the longer one lies above the shorter one', () => {
+    const score = build(false);
+    const staff = score.parts[0].staves[0];
+    const evs = Object.values(staff.measures)[0].voices[0].events;
+    staff.slurs = [
+      { id: 'long', startEventId: evs[0].id, endEventId: evs[3].id } as never,
+      { id: 'short', startEventId: evs[0].id, endEventId: evs[1].id } as never,
+    ];
+    const layout = layoutScore(score, { width: 70 });
+    const items = layoutSlurs(score, layout);
+    const long = items.find((i) => i.slurId === 'long')!;
+    const short = items.find((i) => i.slurId === 'short')!;
+    const startY = (d: string): number => Number(d.match(/-?\d+(\.\d+)?/g)![1]);
+    expect(startY(long.d)).toBeLessThan(startY(short.d) - 0.5);
+    expect(apexY(long.d)).toBeLessThan(apexY(short.d));
+  });
+});

@@ -2,12 +2,12 @@
 // M7c-2c: crescendo / diminuendo hairpins (model, toggle command, validation, cleanup, layout).
 import { describe, expect, it } from 'vitest';
 import { createEmptyScore, createNote, createPitch } from '../../src/core/factory';
-import { toggleHairpin } from '../../src/core/notationCommands';
+import { setDynamic, toggleHairpin } from '../../src/core/notationCommands';
 import { deleteEvent } from '../../src/core/commands';
 import { deleteMeasure } from '../../src/core/structureCommands';
 import { validateScore } from '../../src/core/validate';
 import { layoutScore } from '../../src/layout/layoutScore';
-import { layoutHairpins } from '../../src/layout/notations';
+import { layoutDynamics, layoutHairpins } from '../../src/layout/notations';
 import type { Score } from '../../src/core/model';
 import type { Selection } from '../../src/core/selection';
 
@@ -119,5 +119,19 @@ describe('hairpins (M7c-2c)', () => {
     const topOfHairpin = Math.min(...named.filter((_, i) => i % 2 === 1));
     expect(topOfHairpin).toBeGreaterThan(lowestLabel);
     expect(Math.min(...named.filter((_, i) => i % 2 === 1))).toBeGreaterThan(Math.min(...plain.filter((_, i) => i % 2 === 1)));
+  });
+
+  it('H10: with note names shown a dynamic marking is printed below the names', () => {
+    const { score, ids } = setup();
+    const s0 = setDynamic(ids[1], 'p').apply(score);
+    const named: Score = { ...s0, layoutSettings: { ...s0.layoutSettings, showNoteNames: true } };
+    const layout = layoutScore(named, { width: 70, noteNameStyle: 'solfege' });
+    const labels = layout.systems[0].items.filter((it) => it.kind === 'text' && it.y > 4.5);
+    const lowestLabel = Math.max(...labels.map((l) => l.y));
+    const [dyn] = layoutDynamics(named, layout);
+    expect(dyn.y).toBeGreaterThanOrEqual(lowestLabel + 1.5);
+    // without names the dynamic keeps its usual place
+    const plainLayout = layoutScore(s0, { width: 70 });
+    expect(layoutDynamics(s0, plainLayout)[0].y).toBeCloseTo(6.5, 1);
   });
 });

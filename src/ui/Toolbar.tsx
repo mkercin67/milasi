@@ -68,6 +68,7 @@ export interface ToolbarProps {
   onToggleSlur?: () => void;
   onCycleFermata?: () => void;
   onToggleHairpin?: (type: HairpinType) => void;
+  onToggleCourtesyAccidental?: () => void;
   onTogglePhraseMark?: (mark: PhraseMark) => void;
   onClearNotations?: () => void;
   // M6c Structure Modals
@@ -135,6 +136,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
   onToggleSlur,
   onCycleFermata,
   onToggleHairpin,
+  onToggleCourtesyAccidental,
   onTogglePhraseMark,
   onClearNotations,
   onOpenKeySig,
@@ -254,6 +256,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
           onToggleSlur={onToggleSlur}
           onCycleFermata={onCycleFermata}
           onToggleHairpin={onToggleHairpin}
+          onToggleCourtesyAccidental={onToggleCourtesyAccidental}
           onTogglePhraseMark={onTogglePhraseMark}
           onClearNotations={onClearNotations}
           showNoteNames={showNoteNames}

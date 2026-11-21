@@ -189,6 +189,8 @@ export interface NoteEvent extends BaseEvent {
   articulations: string[]; // e.g. 'staccato', 'accent', 'tenuto'
   dynamic?: string; // e.g. 'p', 'mf', 'f'
   lyrics?: LyricSyllable[]; // Syllables by verse (Milestone 6d)
+  /** Print the accidental of every pitch even when the key and the bar do not require it (courtesy / cautionary accidental). */
+  showAccidental?: boolean;
 }
 
 /** Rest event. */

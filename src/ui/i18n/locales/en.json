@@ -23,6 +23,8 @@
   "toolbar.breathTitle": "Breath mark after the selected notes (Shift+H)",
   "toolbar.caesura": "Caesura",
   "toolbar.caesuraTitle": "Caesura after the selected notes",
+  "toolbar.courtesy": "Reminder",
+  "toolbar.courtesyTitle": "Courtesy accidental: print the accidental on the selected notes even when the key and the bar do not require it; press again to remove",
   "toolbar.crescendo": "Cresc.",
   "toolbar.crescendoTitle": "Crescendo hairpin over the selected notes (select at least two); press again to remove",
   "toolbar.diminuendo": "Dim.",

@@ -23,6 +23,8 @@
   "toolbar.breathTitle": "Seçili notalardan sonra nefes işareti (Shift+H)",
   "toolbar.caesura": "Sezür",
   "toolbar.caesuraTitle": "Seçili notalardan sonra sezür işareti",
+  "toolbar.courtesy": "Hatırlatma",
+  "toolbar.courtesyTitle": "Hatırlatma aksidanı: seçili notalarda, donanım ve ölçü gerektirmese de aksidanı yazar; tekrar basınca kaldırır",
   "toolbar.crescendo": "Cresc.",
   "toolbar.crescendoTitle": "Seçili notaların altına açılan çatal (crescendo); en az iki nota seçin, tekrar basınca kaldırır",
   "toolbar.diminuendo": "Dim.",

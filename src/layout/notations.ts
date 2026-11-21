@@ -275,7 +275,10 @@ export function layoutDynamics(
 
               // Default placement below staff (staff lines 0..4, so bottom + 2.5 = 6.5)
               const posX = nh.x + NOTEHEAD_WIDTH / 2 - 0.75 + dx;
-              const posY = nh.staffTop + 6.5 + dy;
+              // Note names or lyrics under the staff push the dynamic below them (no overprinting)
+              const labelY = lowestTextBelowStaff(layout, nh.systemIndex, nh.staffTop, nh.x, nh.x + NOTEHEAD_WIDTH);
+              const baseY = labelY === null ? nh.staffTop + 6.5 : Math.max(nh.staffTop + 6.5, labelY + 1.9);
+              const posY = baseY + dy;
 
               items.push({
                 id: `${ev.id}-dynamic`,
@@ -709,11 +712,32 @@ export function layoutSlurs(
     for (const staff of part.staves) {
       if (!staff.slurs || staff.slurs.length === 0) continue;
 
+      // Nested slurs: of two slurs that start or end on the same event, the longer one is raised
+      // one step above the shorter one so the two arcs never merge into a lens.
+      const slurSpan = (sl: { startEventId: string; endEventId: string }): number => {
+        const a = index.get(sl.startEventId);
+        const b = index.get(sl.endEventId);
+        if (!a || !b) return 0;
+        return a.systemIndex === b.systemIndex ? b.x - a.x : Number.POSITIVE_INFINITY;
+      };
+      const nestLevel = (sl: { id: string; startEventId: string; endEventId: string; placement?: string }): number => {
+        const mine = slurSpan(sl);
+        let level = 0;
+        for (const other of staff.slurs ?? []) {
+          if (other.id === sl.id) continue;
+          if ((other.placement ?? 'auto') !== (sl.placement ?? 'auto')) continue;
+          const shares = other.startEventId === sl.startEventId || other.endEventId === sl.endEventId;
+          if (shares && slurSpan(other) < mine) level++;
+        }
+        return level;
+      };
+
       for (const slur of staff.slurs) {
         if (notationOpCounter.enabled) notationOpCounter.mapLookups += 2;
         const startNh = index.get(slur.startEventId);
         const endNh = index.get(slur.endEventId);
         if (!startNh || !endNh) continue;
+        const nest = nestLevel(slur) * 0.9;
 
         let startVoiceIndex = 1;
         let isPoly = false;
@@ -750,6 +774,10 @@ export function layoutSlurs(
           }
           for (const a of artsOnSide(slur.endEventId, curvature)) {
             endY = curvature === 'below' ? Math.max(endY, a.y + 0.8) : Math.min(endY, a.y - 0.8);
+          }
+          if (nest > 0) {
+            startY += curvature === 'below' ? nest : -nest;
+            endY += curvature === 'below' ? nest : -nest;
           }
 
           // Sample intermediate notes on same system to ensure clearance >= 0.5 spaces

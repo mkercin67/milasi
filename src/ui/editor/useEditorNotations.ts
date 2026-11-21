@@ -22,6 +22,7 @@ import {
   togglePhraseMark,
   toggleSlur,
   toggleHairpin,
+  toggleShowAccidental,
 } from '../../core/commands';
 import { Selection, findEventContext } from '../../core/selection';
 import { ScoreCursor } from '../../core/input';
@@ -107,6 +108,11 @@ export function useEditorNotations({
     },
     [executeCommand, triggerRejectedError, selectionRef]
   );
+
+  const applyCourtesyAccidental = useCallback(() => {
+    const target = targetSelection();
+    if (target) executeCommand(toggleShowAccidental(target));
+  }, [executeCommand, targetSelection]);
 
   const applyFermata = useCallback(() => {
     const target = targetSelection();
@@ -239,6 +245,7 @@ export function useEditorNotations({
     applyArticulation,
     applySlur,
     applyHairpin,
+    applyCourtesyAccidental,
     applyFermata,
     applyPhraseMark,
     clearNotations,

@@ -14,6 +14,7 @@ export interface ToolbarNotationsProps {
   onToggleSlur?: () => void;
   onCycleFermata?: () => void;
   onToggleHairpin?: (type: HairpinType) => void;
+  onToggleCourtesyAccidental?: () => void;
   onTogglePhraseMark?: (mark: PhraseMark) => void;
   onClearNotations?: () => void;
   showNoteNames?: boolean;
@@ -64,6 +65,7 @@ export const ToolbarNotations: React.FC<ToolbarNotationsProps> = ({
   onToggleSlur,
   onCycleFermata,
   onToggleHairpin,
+  onToggleCourtesyAccidental,
   onTogglePhraseMark,
   onClearNotations,
   showNoteNames = false,
@@ -210,6 +212,20 @@ export const ToolbarNotations: React.FC<ToolbarNotationsProps> = ({
       >
         ⌒ {t('notation.slur')}
       </button>
+
+      {/* Courtesy (cautionary) accidental on the selected notes */}
+      {onToggleCourtesyAccidental && (
+        <button
+          type="button"
+          data-testid="btn-courtesy-accidental"
+          onClick={handleButtonClick(onToggleCourtesyAccidental)}
+          onMouseDown={(e) => e.preventDefault()}
+          title={t('toolbar.courtesyTitle')}
+          style={MARK_BUTTON_STYLE}
+        >
+          ♮♯ {t('toolbar.courtesy')}
+        </button>
+      )}
 
       {/* Crescendo / diminuendo hairpins (M7c-2c) */}
       {onToggleHairpin && (

@@ -250,7 +250,7 @@ function layoutPolyphonicEvents(
         for (const p of ne.pitches) {
           const activeAlter = getKeySignatureAlter(p.step, mDef.keySig);
           if (
-            p.alter !== activeAlter &&
+            (p.alter !== activeAlter || ne.showAccidental === true) &&
             Number.isInteger(p.alter) &&
             p.alter >= -2 &&
             p.alter <= 2
@@ -536,7 +536,7 @@ function layoutPolyphonicEvents(
       // Accidentals (Rule RH - PROPOSED)
       for (let pIdx = 0; pIdx < sortedPitches.length; pIdx++) {
         const pitch = sortedPitches[pIdx];
-        const accGlyph = tracker.processPitch(pitch);
+        const accGlyph = tracker.processPitch(pitch, ev.showAccidental === true);
         if (accGlyph) {
           const accY = staffPositionToY(stepPositions[pIdx]);
           const accX = Math.min(noteX, colCenterX) - 1.2;
@@ -733,6 +733,7 @@ export function layoutSingleMeasure(
       const ev = voiceEvents[i];
       eventsHash = (eventsHash * 31 + ev.duration + (ev.kind === 'note' && ev.tiedToNext ? 1 : 0)) | 0;
       if (ev.tuplet) eventsHash = (eventsHash * 31 + ev.tuplet.actual * 17 + ev.tuplet.normal) | 0;
+      if (ev.kind === 'note' && ev.showAccidental) eventsHash = (eventsHash * 31 + 977) | 0;
       if (ev.kind === 'note') {
         for (let j = 0; j < ev.pitches.length; j++) {
           const p = ev.pitches[j];
@@ -945,7 +946,7 @@ export function layoutSingleMeasure(
       const hasAccidental = noteEv.pitches.some((p) => {
         const activeAlter = getKeySignatureAlter(p.step, mDef.keySig);
         return (
-          p.alter !== activeAlter &&
+          (p.alter !== activeAlter || noteEv.showAccidental === true) &&
           Number.isInteger(p.alter) &&
           p.alter >= -2 &&
           p.alter <= 2
@@ -1055,7 +1056,7 @@ export function layoutSingleMeasure(
       // Accidentals
       for (let pIdx = 0; pIdx < sortedPitches.length; pIdx++) {
         const pitch = sortedPitches[pIdx];
-        const accGlyph = tracker.processPitch(pitch);
+        const accGlyph = tracker.processPitch(pitch, ev.showAccidental === true);
         if (accGlyph) {
           const accY = staffPositionToY(stepPositions[pIdx]);
           measureItems.push({

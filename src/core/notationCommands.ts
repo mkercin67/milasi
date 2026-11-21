@@ -196,6 +196,52 @@ function getTargetEventIds(score: Score, target: string | Selection): string[] {
   return [];
 }
 
+/**
+ * Toggles the courtesy accidental of the target notes (M7c): prints the accidental of every pitch even
+ * where the key and the bar do not require it. Removes it when every target note already has it.
+ */
+export function toggleShowAccidental(target: string | Selection): Command {
+  return {
+    name: 'Toggle Courtesy Accidental',
+    apply(score: Score): Score {
+      const ids = new Set(getTargetEventIds(score, target));
+      if (ids.size === 0) return score;
+      let allOn = true;
+      let any = false;
+      for (const part of score.parts) {
+        for (const staff of part.staves) {
+          for (const sm of Object.values(staff.measures)) {
+            for (const v of sm.voices) {
+              for (const ev of v.events) {
+                if (ids.has(ev.id) && ev.kind === 'note') {
+                  any = true;
+                  if (!ev.showAccidental) allOn = false;
+                }
+              }
+            }
+          }
+        }
+      }
+      if (!any) return score;
+      return produce(score, (draft) => {
+        for (const part of draft.parts) {
+          for (const staff of part.staves) {
+            for (const sm of Object.values(staff.measures)) {
+              for (const v of sm.voices) {
+                for (const ev of v.events) {
+                  if (!ids.has(ev.id) || ev.kind !== 'note') continue;
+                  if (allOn) delete ev.showAccidental;
+                  else ev.showAccidental = true;
+                }
+              }
+            }
+          }
+        }
+      });
+    },
+  };
+}
+
 /** Sets or removes dynamic marking on a note or selection. */
 export function setDynamic(target: string | Selection, dynamic: string | null): Command {
   return {

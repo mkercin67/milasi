@@ -133,6 +133,7 @@ const EditorShell: React.FC = () => {
     applySlur,
     applyFermata,
     applyHairpin,
+    applyCourtesyAccidental,
     applyPhraseMark,
     clearNotations,
   } = useEditor();
@@ -477,6 +478,7 @@ const EditorShell: React.FC = () => {
         onToggleSlur={applySlur}
         onCycleFermata={applyFermata}
         onToggleHairpin={applyHairpin}
+        onToggleCourtesyAccidental={applyCourtesyAccidental}
         onTogglePhraseMark={applyPhraseMark}
         onClearNotations={clearNotations}
         onOpenKeySig={modalState.handleOpenKeySigModal}
