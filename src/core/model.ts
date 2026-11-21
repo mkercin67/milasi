@@ -37,7 +37,11 @@ export interface Score {
   groups: StaffGroup[];
   overrides: Record<Id, Override>;
   /** Score-wide engraving settings (optional; absent = defaults). */
-  layoutSettings?: { beamGrouping?: BeamGroupingMode };
+  layoutSettings?: {
+    beamGrouping?: BeamGroupingMode;
+    /** Show a derived note-name line (Do Re Mi or C D E) under each note. Absent = off. */
+    showNoteNames?: boolean;
+  };
 }
 
 /** Supported barline types for measure endings. */

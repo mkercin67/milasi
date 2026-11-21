@@ -246,5 +246,13 @@
     "testFile": "tests/core/multi_voice_selection.test.ts",
     "testName": "V7: copying measure 1 (both voices) and pasting it at the start of measure 2 reproduces both voices",
     "status": "DONE"
+  },
+  {
+    "planItemId": "B23",
+    "description": "Note-name layer: a score setting (showNoteNames) draws derived Do Re Mi / C D E labels under notes, separate from lyrics and never stored on events; lyrics changes invalidate the measure layout cache.",
+    "codeLocation": "src/layout/noteLabels.ts:noteLabel",
+    "testFile": "tests/layout/note_names_layer.test.ts",
+    "testName": "N5: lyrics stay on their own line and the command never touches events",
+    "status": "DONE"
   }
 ]

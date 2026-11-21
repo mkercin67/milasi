@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Score } from '../../core/model';
-import { autoSolfege, pasteLyrics, setLyrics, Command } from '../../core/commands';
+import type { Selection } from '../../core/selection';
+import { clearLyrics, pasteLyrics, setLyrics, setShowNoteNames, Command } from '../../core/commands';
 import { EditorMode, mapKeyEvent } from '../keymap';
 
 export interface UseAppLyricsParams {
@@ -11,6 +12,7 @@ export interface UseAppLyricsParams {
   mode: EditorMode;
   setMode: (mode: EditorMode) => void;
   executeCommand: (cmd: Command) => Score;
+  selection: Selection;
 }
 
 export function useAppLyrics({
@@ -20,6 +22,7 @@ export function useAppLyrics({
   mode,
   setMode,
   executeCommand,
+  selection,
 }: UseAppLyricsParams) {
   // Selected note for lyrics editing (Milestone 6d)
   const selectedNote = useMemo(() => {
@@ -155,15 +158,23 @@ export function useAppLyrics({
     }
   };
 
-  const handleAutoSolfege = useCallback(() => {
-    executeCommand(autoSolfege(score.id));
-  }, [executeCommand, score.id]);
+  // The note-name line is a derived view setting; it never writes or removes lyrics.
+  const showNoteNames = Boolean(score.layoutSettings?.showNoteNames);
+  const handleToggleNoteNames = useCallback(() => {
+    executeCommand(setShowNoteNames(!showNoteNames));
+  }, [executeCommand, showNoteNames]);
+
+  // Clears lyrics of the selected notes, or of the whole score when nothing is selected (undoable).
+  const handleClearLyrics = useCallback(() => {
+    executeCommand(clearLyrics(selection));
+  }, [executeCommand, selection]);
 
   return {
     lyricsInputValue,
     handleLyricsKeyDown,
     handleLyricsChange,
     handleLyricsPaste,
-    handleAutoSolfege,
+    handleToggleNoteNames,
+    handleClearLyrics,
   };
 }

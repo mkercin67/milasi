@@ -450,6 +450,39 @@ export function pasteLyrics(startEventId: Id, text: string, _score?: Score, vers
   };
 }
 
+/**
+ * Removes all lyrics (every verse) from the selected notes, or from the whole score when the
+ * selection is empty. Dynamics, articulations, ties and slurs are left alone.
+ */
+export function clearLyrics(selection: Selection): Command {
+  return {
+    name: 'Clear Lyrics',
+    apply(score: Score): Score {
+      const wholeScore = selection.kind === 'none';
+      const targetIds = new Set(wholeScore ? [] : getTargetEventIds(score, selection));
+      if (!wholeScore && targetIds.size === 0) return score;
+
+      return produce(score, (draft) => {
+        for (const part of draft.parts) {
+          for (const staff of part.staves) {
+            for (const mDef of draft.measures) {
+              const sm = staff.measures[mDef.id];
+              if (!sm) continue;
+              for (const v of sm.voices) {
+                for (const ev of v.events) {
+                  if (ev.kind === 'note' && ev.lyrics && (wholeScore || targetIds.has(ev.id))) {
+                    delete ev.lyrics;
+                  }
+                }
+              }
+            }
+          }
+        }
+      });
+    },
+  };
+}
+
 const SOLFEGE_MAP: Record<string, string> = {
   C: 'Do',
   D: 'Re',

@@ -14,6 +14,7 @@ import React, { useMemo } from 'react';
 import { LayoutItem, LayoutSystem } from '../layout/types';
 import { getGlyphChar } from '../render/smufl';
 import { UNITS_PER_EM } from '../render/glyphPaths.generated';
+import { systemViewPropsEqual } from './scoreView/systemEquality';
 
 export interface SystemViewProps {
   system: LayoutSystem;
@@ -254,17 +255,5 @@ export const SystemView: React.FC<SystemViewProps> = React.memo(
       </g>
     );
   },
-  (prev, next) => {
-    if (prev.staffSpacePx !== next.staffSpacePx) return false;
-    if (prev.useTextFallback !== next.useTextFallback) return false;
-    if (prev.system === next.system) return true;
-    if (prev.system.y !== next.system.y || prev.system.width !== next.system.width) return false;
-    if (prev.system.items.length !== next.system.items.length) return false;
-    for (let i = 0; i < prev.system.items.length; i++) {
-      const p = prev.system.items[i];
-      const n = next.system.items[i];
-      if (p.id !== n.id || p.x !== n.x || p.y !== n.y || p.glyph !== n.glyph || p.scaleY !== n.scaleY) return false;
-    }
-    return true;
-  }
+  systemViewPropsEqual
 );

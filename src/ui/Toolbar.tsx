@@ -74,7 +74,9 @@ export interface ToolbarProps {
   onToggleRepeatStart?: () => void;
   isRepeatEnd?: boolean;
   onToggleRepeatEnd?: () => void;
-  onAutoSolfege?: () => void;
+  showNoteNames?: boolean;
+  onToggleNoteNames?: () => void;
+  onClearLyrics?: () => void;
 }
 
 export const Toolbar: React.FC<ToolbarProps> = ({
@@ -133,7 +135,9 @@ export const Toolbar: React.FC<ToolbarProps> = ({
   onToggleRepeatStart,
   isRepeatEnd = false,
   onToggleRepeatEnd,
-  onAutoSolfege,
+  showNoteNames,
+  onToggleNoteNames,
+  onClearLyrics,
 }) => {
   if (typeof window !== 'undefined') {
     const w = window as unknown as { __componentRenders?: Record<string, number> };
@@ -237,7 +241,9 @@ export const Toolbar: React.FC<ToolbarProps> = ({
           hasSlur={hasSlur}
           onToggleSlur={onToggleSlur}
           onClearNotations={onClearNotations}
-          onAutoSolfege={onAutoSolfege}
+          showNoteNames={showNoteNames}
+          onToggleNoteNames={onToggleNoteNames}
+          onClearLyrics={onClearLyrics}
           handleButtonClick={handleButtonClick}
         />
       </div>

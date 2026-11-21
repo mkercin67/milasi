@@ -81,7 +81,12 @@ export interface LayoutResult {
 }
 
 /** Options configuring layout dimensions and wrapping behavior. */
+/** How the derived note-name line spells a pitch: solfège (Do Re Mi) or letters (C D E). */
+export type NoteLabelStyle = 'solfege' | 'letter';
+
 export interface LayoutOptions {
+  /** Spelling of the note-name line when the score turns it on (default 'solfege'). */
+  noteNameStyle?: NoteLabelStyle;
   /** Target system width in staff spaces before wrapping to next system. */
   width?: number;
   contentWidth?: number;

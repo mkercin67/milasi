@@ -68,6 +68,15 @@ export function validateScore(score: Score): ValidationProblem[] {
     });
   }
 
+  const showNoteNames = score.layoutSettings?.showNoteNames;
+  if (showNoteNames !== undefined && typeof showNoteNames !== 'boolean') {
+    problems.push({
+      code: 'invalid-show-note-names',
+      message: `Unsupported showNoteNames: ${String(showNoteNames)} (expected a boolean)`,
+      severity: 'error',
+    });
+  }
+
   // Schema v7: Check MIDI channel reuse when more than 15 non-percussion parts exist
   if (score.schemaVersion === 7 && Array.isArray(score.parts)) {
     const nonPercParts = score.parts.filter(

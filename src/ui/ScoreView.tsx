@@ -87,7 +87,7 @@ export const ScoreView: React.FC<ScoreViewProps> = ({
 
   const layout = useMemo(() => {
     const t0 = performance.now();
-    const result = layoutScore(score, { width: availableSpaces });
+    const result = layoutScore(score, { width: availableSpaces, noteNameStyle });
     const dt = performance.now() - t0;
     if (typeof window !== 'undefined') {
       const w = window as unknown as { __layoutTimes?: number[]; __layoutRunCounter?: number };
@@ -96,7 +96,7 @@ export const ScoreView: React.FC<ScoreViewProps> = ({
       w.__layoutRunCounter = (w.__layoutRunCounter || 0) + 1;
     }
     return result;
-  }, [score, availableSpaces]);
+  }, [score, availableSpaces, noteNameStyle]);
 
   useEffect(() => {
     onLayoutChange?.(layout);

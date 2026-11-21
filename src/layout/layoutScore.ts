@@ -63,6 +63,9 @@ export function layoutScore(score: Score, options: LayoutOptions = {}): LayoutRe
   const staffMarginBottom = 4.0;
 
   const beamGrouping = score.layoutSettings?.beamGrouping === 'half-bar' ? 'half-bar' : 'beat';
+  const noteLabels = score.layoutSettings?.showNoteNames
+    ? (options.noteNameStyle ?? 'solfege')
+    : undefined;
 
   const staff = firstStaff(score);
   const clef: Clef = staff?.clef ?? { sign: 'G', line: 2 };
@@ -146,7 +149,8 @@ export function layoutScore(score: Score, options: LayoutOptions = {}): LayoutRe
         prevMDefIn,
         undefined,
         scopeOf(k),
-        beamGrouping
+        beamGrouping,
+        noteLabels
       )
     );
     const al = alignStaffColumns(
@@ -177,7 +181,8 @@ export function layoutScore(score: Score, options: LayoutOptions = {}): LayoutRe
         prevMDefIn,
         alignment,
         scopeOf(k),
-        beamGrouping
+        beamGrouping,
+        noteLabels
       );
     });
   }
@@ -204,7 +209,8 @@ export function layoutScore(score: Score, options: LayoutOptions = {}): LayoutRe
         prevMDef,
         undefined,
         undefined,
-        beamGrouping
+        beamGrouping,
+        noteLabels
       )
     );
   }

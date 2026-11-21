@@ -13,7 +13,9 @@ export interface ToolbarNotationsProps {
   hasSlur?: boolean;
   onToggleSlur?: () => void;
   onClearNotations?: () => void;
-  onAutoSolfege?: () => void;
+  showNoteNames?: boolean;
+  onToggleNoteNames?: () => void;
+  onClearLyrics?: () => void;
   handleButtonClick: (cb: () => void) => (e: React.MouseEvent<HTMLButtonElement>) => void;
 }
 
@@ -45,7 +47,9 @@ export const ToolbarNotations: React.FC<ToolbarNotationsProps> = ({
   hasSlur = false,
   onToggleSlur,
   onClearNotations,
-  onAutoSolfege,
+  showNoteNames = false,
+  onToggleNoteNames,
+  onClearLyrics,
   handleButtonClick,
 }) => {
   const { t } = useI18n();
@@ -208,30 +212,55 @@ export const ToolbarNotations: React.FC<ToolbarNotationsProps> = ({
           cursor: 'pointer',
         }}
       >
-        ✕ Temizle
+        ✕ {t('toolbar.clearNotationsShort')}
       </button>
 
-      {onAutoSolfege && (
+      {onToggleNoteNames && (
         <button
           type="button"
-          data-testid="btn-auto-solfege"
-          onClick={handleButtonClick(onAutoSolfege)}
+          data-testid="btn-note-names"
+          aria-pressed={showNoteNames}
+          onClick={handleButtonClick(onToggleNoteNames)}
           onMouseDown={(e) => e.preventDefault()}
-          title="Notanın perdesine göre Türkçe solfej hecesi ekler"
+          title={t('toolbar.noteNamesTitle')}
           style={{
             display: 'inline-flex',
             alignItems: 'center',
             padding: '0.2rem 0.5rem',
             fontSize: '0.75rem',
             fontWeight: 600,
-            backgroundColor: '#f0fdf4',
+            backgroundColor: showNoteNames ? '#bbf7d0' : '#f0fdf4',
             color: '#15803d',
-            border: '1px solid #bbf7d0',
+            border: showNoteNames ? '1px solid #15803d' : '1px solid #bbf7d0',
             borderRadius: '4px',
             cursor: 'pointer',
           }}
         >
-          ♪ {t('toolbar.autoSolfege')}
+          ♪ {t('toolbar.noteNames')}
+        </button>
+      )}
+
+      {onClearLyrics && (
+        <button
+          type="button"
+          data-testid="btn-clear-lyrics"
+          onClick={handleButtonClick(onClearLyrics)}
+          onMouseDown={(e) => e.preventDefault()}
+          title={t('toolbar.clearLyricsTitle')}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            padding: '0.2rem 0.4rem',
+            fontSize: '0.75rem',
+            fontWeight: 500,
+            backgroundColor: 'transparent',
+            color: '#64748b',
+            border: '1px solid #e2e8f0',
+            borderRadius: '4px',
+            cursor: 'pointer',
+          }}
+        >
+          ✕ {t('toolbar.clearLyrics')}
         </button>
       )}
     </div>

@@ -37,7 +37,7 @@ This document lists known constraints and architectural trade-offs in the curren
 
 ## 7. Repeats, Voltas & Lyrics (Milestone 6d)
 - **Status:** Implemented in Milestone 6d (Schema Version 6).
-- **Details:** Supports repeat start (`repeatStart`), repeat end (`repeatEnd`), combined barlines (`repeatRightLeft`), volta brackets (`volta: { number }`), syllable-level lyrics (`lyrics: LyricSyllable[]`), Turkish solfège automation (`autoSolfege`), and lyrics input mode (`KeyU`).
+- **Details:** Supports repeat start (`repeatStart`), repeat end (`repeatEnd`), combined barlines (`repeatRightLeft`), volta brackets (`volta: { number }`), syllable-level lyrics (`lyrics: LyricSyllable[]`), a derived note-name line (`layoutSettings.showNoteNames`, Do Re Mi or C D E, separate from lyrics; see `docs/design/note-name-layer.md`), and lyrics input mode (`KeyU`).
 - **Scope Limits:** Nested repeats without matching delimiters trigger validation errors (`nested-repeat`). Multiple lyric verses (verse > 1) and complex melisma curves are deferred to Phase 2.
 
 

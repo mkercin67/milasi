@@ -36,7 +36,7 @@ import {
   THICK_BARLINE_THICKNESS,
 } from './layoutPrimitives';
 import { getLedgerLineYs, getStemDirection, pitchToStaffPosition, staffPositionToY } from './pitch';
-import { StemDirection } from './types';
+import { LayoutItem, NoteLabelStyle, StemDirection } from './types';
 
 export const measureLayoutCacheStats = {
   calls: 0,
@@ -52,6 +52,29 @@ export const measureLayoutCacheStats = {
 const measureChunkCache = new WeakMap<StaffMeasure, Map<string, MeasureLayoutChunk>>();
 
 import { layoutMeasureLyrics, LyricLayoutEntry } from './lyricLayout';
+import { labelWidth, noteLabel } from './noteLabels';
+
+/** Baseline (staff spaces, staff top line = 0) of the derived note-name line under a staff. */
+const NOTE_LABEL_Y = 6.0;
+/** Distance between stacked note-name lines (several voices in one column). */
+const NOTE_LABEL_STEP = 1.2;
+
+/**
+ * Baseline of the note-name line for one measure: the usual position, or lower when stems, beams,
+ * noteheads or ledger lines of this measure hang below it (e.g. stem-down beamed notes in a bass staff).
+ */
+function noteLabelBaseline(measureItems: MeasureItemEntry[]): number {
+  let lowest = -Infinity;
+  for (const { item } of measureItems) {
+    if (item.id.startsWith('note-name-')) continue;
+    if (item.kind === 'line') {
+      lowest = Math.max(lowest, item.y, item.y2 ?? item.y);
+    } else if (item.kind === 'glyph' && item.glyph?.startsWith('notehead')) {
+      lowest = Math.max(lowest, item.y + 0.6);
+    }
+  }
+  return Math.max(NOTE_LABEL_Y, lowest + 1.5);
+}
 
 function alignmentKey(a: MeasureAlignment): string {
   const shifts = [...a.shifts]
@@ -95,11 +118,13 @@ function layoutPolyphonicEvents(
   columnsOut: Map<number, number>,
   alignment?: MeasureAlignment,
   idScope?: string,
-  beamGrouping: BeamGroupingMode = 'beat'
+  beamGrouping: BeamGroupingMode = 'beat',
+  noteLabels?: NoteLabelStyle
 ): number {
   let relX = relXStart;
   let alignShift = 0;
   const eventAnchors = new Map<string, number>();
+  const polyLabels: Array<{ item: LayoutItem; k: number }> = [];
   const fullTicks = (mDef.timeSig.num * 4 * PPQ) / mDef.timeSig.den;
   const pickupOffset =
     mDef.actualTicks && mDef.actualTicks < fullTicks ? fullTicks - mDef.actualTicks : 0;
@@ -185,9 +210,19 @@ function layoutPolyphonicEvents(
     const nextTick = uniqueStartTicks[colIdx + 1] ?? measureEndTick;
     const colDuration = nextTick - curTick;
     const durationFactor = colDuration / PPQ;
-    const colWidth = Math.max(3.5 + durationFactor * 2.0, 3.5);
-
     const colEntries = allEntries.filter((e) => e.startTick === curTick);
+    // Note-name line (derived): one label per voice that has a note in this column, stacked by voice.
+    const colLabels: Array<{ ev: NoteEvent; text: string }> = [];
+    if (noteLabels) {
+      const sorted = [...colEntries].sort((a, b) => a.voiceIndex - b.voiceIndex);
+      for (const e of sorted) {
+        if (e.event.kind === 'note' && e.event.pitches.length > 0) {
+          colLabels.push({ ev: e.event, text: noteLabel(e.event.pitches, noteLabels) });
+        }
+      }
+    }
+    const widestLabel = colLabels.reduce((w, l) => Math.max(w, labelWidth(l.text)), 0);
+    const colWidth = Math.max(3.5 + durationFactor * 2.0, 3.5, widestLabel > 0 ? widestLabel + 1.2 : 0);
 
     // Check accidentals in this column (Rule RH)
     let hasAccidental = false;
@@ -221,6 +256,21 @@ function layoutPolyphonicEvents(
     const colCenterX = relX + 0.8 + firstEventPadding;
     columnsOut.set(tickKey, colCenterX);
     for (const e of colEntries) eventAnchors.set(e.event.id, colCenterX);
+    colLabels.forEach((l, k) => {
+      const labelItem: LayoutItem = {
+        id: `note-name-${l.ev.id}`,
+        eventId: l.ev.id,
+        kind: 'text',
+        text: l.text,
+        x: colCenterX + NOTEHEAD_WIDTH / 2,
+        y: NOTE_LABEL_Y + k * NOTE_LABEL_STEP,
+        textAnchor: 'middle',
+        fontSize: 1.0,
+        fontFamily: '"Times New Roman", Times, "Liberation Serif", serif',
+      };
+      measureItems.push({ item: labelItem });
+      polyLabels.push({ item: labelItem, k });
+    });
 
     // Check for rests at this tick (Rule RE)
     const restEntries = colEntries.filter((e) => e.event.kind === 'rest');
@@ -587,6 +637,10 @@ function layoutPolyphonicEvents(
   }
 
   applyEventAnchors(measureItems, eventAnchors);
+  if (polyLabels.length > 0) {
+    const base = noteLabelBaseline(measureItems);
+    for (const { item, k } of polyLabels) item.y = base + k * NOTE_LABEL_STEP;
+  }
   return relX;
 }
 
@@ -603,7 +657,8 @@ export function layoutSingleMeasure(
   prevMDef?: MeasureDef,
   alignment?: MeasureAlignment,
   idScope?: string,
-  beamGrouping: BeamGroupingMode = 'beat'
+  beamGrouping: BeamGroupingMode = 'beat',
+  noteLabels?: NoteLabelStyle
 ): MeasureLayoutChunk {
   measureLayoutCacheStats.calls++;
 
@@ -648,7 +703,7 @@ export function layoutSingleMeasure(
     ? `${prevMDef.keySig}_${prevMDef.timeSig.num}/${prevMDef.timeSig.den}`
     : 'none';
   const barlineType = mDef.endBarline ?? (isLastMeasure ? 'final' : 'single');
-  const cacheKey = `${mDef.id}_${mDef.keySig}_${mDef.timeSig.num}/${mDef.timeSig.den}_${clef.sign}${clef.line}_${isFirstMeasure}_${isLastMeasure}_${prevKey}_${mDef.actualTicks ?? 'full'}_${barlineType}_${mDef.repeatStart ? 'rs' : ''}_${mDef.repeatEnd ? 're' : ''}_${mDef.volta?.number ?? 'none'}_${eventsHash}${alignment ? `_al${alignmentKey(alignment)}` : ''}${idScope ? `_sc${idScope}` : ''}${beamGrouping === 'beat' ? '' : `_bg${beamGrouping}`}`;
+  const cacheKey = `${mDef.id}_${mDef.keySig}_${mDef.timeSig.num}/${mDef.timeSig.den}_${clef.sign}${clef.line}_${isFirstMeasure}_${isLastMeasure}_${prevKey}_${mDef.actualTicks ?? 'full'}_${barlineType}_${mDef.repeatStart ? 'rs' : ''}_${mDef.repeatEnd ? 're' : ''}_${mDef.volta?.number ?? 'none'}_${eventsHash}${alignment ? `_al${alignmentKey(alignment)}` : ''}${idScope ? `_sc${idScope}` : ''}${beamGrouping === 'beat' ? '' : `_bg${beamGrouping}`}${noteLabels ? `_nl${noteLabels}` : ''}`;
 
   if (staffMeasure) {
     const existing = measureChunkCache.get(staffMeasure);
@@ -787,10 +842,12 @@ export function layoutSingleMeasure(
       columns,
       alignment,
       idScope,
-      beamGrouping
+      beamGrouping,
+      noteLabels
     );
   } else {
     const lyricsToLayout: LyricLayoutEntry[] = [];
+    const nameItems: LayoutItem[] = [];
     const notePositions: Array<{ evId: string; noteheadRightX: number; lyricX: number }> = [];
 
     // Process events
@@ -805,9 +862,18 @@ export function layoutSingleMeasure(
         estLyricWidth = v1.text.length * 0.72;
       }
     }
+    const nameText =
+      noteLabels && ev.kind === 'note' && ev.pitches.length > 0
+        ? noteLabel(ev.pitches, noteLabels)
+        : '';
+    const estNameWidth = nameText ? labelWidth(nameText) : 0;
     const eventWidth = isWholeMeasureRest
       ? 8.0
-      : Math.max(3.5 + durationFactor * 2.0, estLyricWidth > 0 ? estLyricWidth + 1.8 : 0);
+      : Math.max(
+          3.5 + durationFactor * 2.0,
+          estLyricWidth > 0 ? estLyricWidth + 1.8 : 0,
+          estNameWidth > 0 ? estNameWidth + 1.2 : 0
+        );
 
     let firstEventAccidentalPadding = 0;
     if (eIdx === 0 && ev.kind === 'note') {
@@ -1057,6 +1123,22 @@ export function layoutSingleMeasure(
         lyricX: eventLyricX,
       });
 
+      if (nameText) {
+        const labelItem: LayoutItem = {
+          id: `note-name-${ev.id}`,
+          eventId: ev.id,
+          kind: 'text',
+          text: nameText,
+          x: eventLyricX,
+          y: NOTE_LABEL_Y,
+          textAnchor: 'middle',
+          fontSize: 1.0,
+          fontFamily: '"Times New Roman", Times, "Liberation Serif", serif',
+        };
+        measureItems.push({ item: labelItem });
+        nameItems.push(labelItem);
+      }
+
       if (ev.kind === 'note' && (ev as NoteEvent).lyrics && (ev as NoteEvent).lyrics!.length > 0) {
         const verse1 = (ev as NoteEvent).lyrics!.find((l) => l.verse === 1);
         if (verse1 && verse1.text) {
@@ -1084,6 +1166,13 @@ export function layoutSingleMeasure(
     // Stems, dots, flags, accidentals and ledger lines keep a fixed offset from their column
     // when the system is justified (see applyEventAnchors).
     applyEventAnchors(measureItems, eventAnchors);
+
+    // Note-name line sits below everything of this measure; lyrics (verse 1) move below it.
+    if (nameItems.length > 0) {
+      const base = noteLabelBaseline(measureItems);
+      for (const it of nameItems) it.y = base;
+      for (const l of lyricsToLayout) l.lyricY = Math.max(l.lyricY, base + NOTE_LABEL_STEP + 0.2);
+    }
 
     // Render lyric text, centered hyphens, and melisma extender lines
     layoutMeasureLyrics(lyricsToLayout, events, notePositions, relX + 0.6, measureItems);

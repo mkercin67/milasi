@@ -57,6 +57,28 @@ export function setBeamGrouping(mode: BeamGroupingMode): Command {
 }
 
 /**
+ * Turns the derived note-name line (Do Re Mi / C D E under each note) on or off for the score.
+ * Off is stored as an absent field so old files stay byte-identical. Lyrics are never touched.
+ */
+export function setShowNoteNames(show: boolean): Command {
+  return {
+    name: 'setShowNoteNames',
+    apply(score: Score): Score {
+      return produce(score, (draft) => {
+        if (!show) {
+          if (draft.layoutSettings) {
+            delete draft.layoutSettings.showNoteNames;
+            if (Object.keys(draft.layoutSettings).length === 0) delete draft.layoutSettings;
+          }
+        } else {
+          draft.layoutSettings = { ...(draft.layoutSettings ?? {}), showNoteNames: true };
+        }
+      });
+    },
+  };
+}
+
+/**
  * Changes key signature on a specific measure onwards ('from-here') or across the entire score ('score').
  */
 export function setKeySignature(

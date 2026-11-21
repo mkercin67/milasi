@@ -221,7 +221,8 @@ const EditorShell: React.FC = () => {
     handleLyricsKeyDown,
     handleLyricsChange,
     handleLyricsPaste,
-    handleAutoSolfege,
+    handleToggleNoteNames,
+    handleClearLyrics,
   } = useAppLyrics({
     score,
     selectedEventId,
@@ -229,6 +230,7 @@ const EditorShell: React.FC = () => {
     mode,
     setMode,
     executeCommand,
+    selection,
   });
 
   // Validation burst management (P2)
@@ -475,7 +477,9 @@ const EditorShell: React.FC = () => {
           (score.measures.find((m) => m.id === selectedEventInfo?.measureId) ?? score.measures[0])?.repeatEnd
         )}
         onToggleRepeatEnd={modalState.handleToggleRepeatEnd}
-        onAutoSolfege={handleAutoSolfege}
+        showNoteNames={Boolean(score.layoutSettings?.showNoteNames)}
+        onToggleNoteNames={handleToggleNoteNames}
+        onClearLyrics={handleClearLyrics}
       />
 
       <TwoVoiceTipBanner mode={mode} />
