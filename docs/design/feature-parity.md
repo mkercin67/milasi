@@ -32,6 +32,7 @@ motivated the row, so priorities follow use, not feature lists.
 | Staccato, tenuto, accent, marcato | DONE | all |
 | Dynamics pp to ff, sfz, fp | DONE | all |
 | Hairpins (crescendo, diminuendo) | GAP | Barge BWV 1030 (expected), all editions |
+| Slur clears articulations on its side (staccato dots sit between the heads and the slur) | DONE (same-system slurs; cross-system slurs unchanged) | Barge BWV 1030 m. 3 (four staccato eighths under one slur) |
 | Text expressions ("cresc.", "dolce", "espr.") | GAP | Barge BWV 1030 (expected) |
 | Tempo text and BPM | DONE (basic); styled text M10 | BWV 1030 "Andante" |
 | Fermata, breath mark, caesura | DONE (M7c-2) | chorales, wind parts |

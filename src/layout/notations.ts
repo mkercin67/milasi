@@ -499,8 +499,9 @@ export function layoutArticulations(
 
                 let targetY = placeAbove ? nh.minY - currentOffset : nh.maxY + currentOffset;
 
-                // Avoid landing directly on staff lines (integer Y between 0 and 4)
-                if (art === 'staccato' && targetY >= -0.2 && targetY <= 4.2) {
+                // Avoid landing directly on staff lines (integer Y between 0 and 4): dots and tenuto
+                // dashes sit in the spaces, never on a line.
+                if ((art === 'staccato' || art === 'tenuto') && targetY >= -0.2 && targetY <= 4.2) {
                   const distFromInt = Math.abs(targetY - Math.round(targetY));
                   if (distFromInt < 0.25) {
                     targetY = placeAbove ? Math.round(targetY) - 0.5 : Math.round(targetY) + 0.5;
@@ -581,10 +582,20 @@ function createSlurCubicPath(
 export function layoutSlurs(
   score: Score,
   layout: LayoutResult,
-  noteheadIndex?: Map<string, NoteheadInfo>
+  noteheadIndex?: Map<string, NoteheadInfo>,
+  articulationItems?: LayoutItem[]
 ): SlurLayoutItem[] {
   const result: SlurLayoutItem[] = [];
   const index = noteheadIndex ?? buildNoteheadIndex(layout);
+  // A slur passes OUTSIDE the articulations on its own side (staccato dots, tenuto, accents sit
+  // between the notehead and the slur, as in engraved editions).
+  const artItems = (articulationItems ?? layoutArticulations(score, layout, index)).filter(
+    (it) => it.kind === 'glyph' && typeof it.glyph === 'string' && it.glyph.startsWith('artic')
+  );
+  const artsOnSide = (eventId: string, side: 'above' | 'below'): LayoutItem[] =>
+    artItems.filter(
+      (it) => it.eventId === eventId && it.glyph !== undefined && it.glyph.endsWith(side === 'above' ? 'Above' : 'Below')
+    );
 
   for (const part of score.parts) {
     for (const staff of part.staves) {
@@ -624,8 +635,14 @@ export function layoutSlurs(
 
           const startX = startNh.x + NOTEHEAD_WIDTH;
           const endX = endNh.x;
-          const startY = curvature === 'below' ? startNh.maxY + 0.5 : startNh.minY - 0.5;
-          const endY = curvature === 'below' ? endNh.maxY + 0.5 : endNh.minY - 0.5;
+          let startY = curvature === 'below' ? startNh.maxY + 0.5 : startNh.minY - 0.5;
+          let endY = curvature === 'below' ? endNh.maxY + 0.5 : endNh.minY - 0.5;
+          for (const a of artsOnSide(slur.startEventId, curvature)) {
+            startY = curvature === 'below' ? Math.max(startY, a.y + 0.8) : Math.min(startY, a.y - 0.8);
+          }
+          for (const a of artsOnSide(slur.endEventId, curvature)) {
+            endY = curvature === 'below' ? Math.max(endY, a.y + 0.8) : Math.min(endY, a.y - 0.8);
+          }
 
           // Sample intermediate notes on same system to ensure clearance >= 0.5 spaces
           let maxIntermediateDist = 1.2;
@@ -645,6 +662,19 @@ export function layoutSlurs(
                   maxIntermediateDist = Math.max(maxIntermediateDist, neededDist);
                 }
               }
+            }
+          }
+
+          // Articulations of the notes in between (their x lies inside the slur span)
+          for (const a of artItems) {
+            if (a.systemIndex !== sysIdx || a.eventId === slur.startEventId || a.eventId === slur.endEventId) continue;
+            if (a.x <= startX - 1.2 || a.x >= endX) continue;
+            const g = a.glyph ?? '';
+            if (!g.endsWith(curvature === 'above' ? 'Above' : 'Below')) continue;
+            if (curvature === 'below') {
+              maxIntermediateDist = Math.max(maxIntermediateDist, a.y - Math.min(startY, endY) + 0.8);
+            } else {
+              maxIntermediateDist = Math.max(maxIntermediateDist, Math.max(startY, endY) - a.y + 0.8);
             }
           }
 

@@ -178,9 +178,14 @@ export const ScoreView: React.FC<ScoreViewProps> = ({
     return layoutTies(score, layout, noteheadIndex);
   }, [score, layout, noteheadIndex]);
 
+  const articulationItems = useMemo(
+    () => layoutArticulations(score, layout, noteheadIndex),
+    [score, layout, noteheadIndex]
+  );
+
   const slurs = useMemo(() => {
-    return layoutSlurs(score, layout, noteheadIndex);
-  }, [score, layout, noteheadIndex]);
+    return layoutSlurs(score, layout, noteheadIndex, articulationItems);
+  }, [score, layout, noteheadIndex, articulationItems]);
 
   const dynamics = useMemo(() => {
     return layoutDynamics(score, layout, noteheadIndex);
@@ -188,11 +193,11 @@ export const ScoreView: React.FC<ScoreViewProps> = ({
 
   const articulations = useMemo(() => {
     return [
-      ...layoutArticulations(score, layout, noteheadIndex),
+      ...articulationItems,
       ...layoutFermatas(score, layout, noteheadIndex),
       ...layoutTuplets(score, layout, noteheadIndex),
     ];
-  }, [score, layout, noteheadIndex]);
+  }, [score, layout, noteheadIndex, articulationItems]);
 
   const visibleTies = useMemo(() => {
     return ties.filter((t) => visibleSystemIndices.has(t.systemIndex));
