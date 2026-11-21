@@ -279,6 +279,32 @@ export function validateScore(score: Score): ValidationProblem[] {
           for (const ev of voice.events) {
             voiceTicks += ev.duration;
 
+            // Fermata and breath mark / caesura (M7c-2): known values only, on notes and rests
+            if (ev.fermata !== undefined && ev.fermata !== 'above' && ev.fermata !== 'below') {
+              problems.push({
+                code: 'invalid-fermata',
+                message: `Event ${ev.id} has unsupported fermata: ${String(ev.fermata)}`,
+                severity: 'error',
+                partId: part.id,
+                staffId: staff.id,
+                measureId,
+                voiceId: voice.id,
+                eventId: ev.id,
+              });
+            }
+            if (ev.phraseMark !== undefined && ev.phraseMark !== 'breath' && ev.phraseMark !== 'caesura') {
+              problems.push({
+                code: 'invalid-phrase-mark',
+                message: `Event ${ev.id} has unsupported phraseMark: ${String(ev.phraseMark)}`,
+                severity: 'error',
+                partId: part.id,
+                staffId: staff.id,
+                measureId,
+                voiceId: voice.id,
+                eventId: ev.id,
+              });
+            }
+
             // Note event pitch validation
             if (ev.kind === 'note') {
               // Dynamic validation (Milestone 6b)

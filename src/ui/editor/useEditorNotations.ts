@@ -4,6 +4,7 @@ import {
   ArticulationType,
   DynamicType,
   Score,
+  PhraseMark,
   ScoreEvent,
 } from '../../core/model';
 import {
@@ -13,9 +14,11 @@ import {
   clearSelectionNotations,
   deleteMeasure,
   insertMeasure,
+  cycleFermata,
   setDynamic,
   setOverride,
   toggleArticulation,
+  togglePhraseMark,
   toggleSlur,
 } from '../../core/commands';
 import { Selection, findEventContext } from '../../core/selection';
@@ -83,6 +86,26 @@ export function useEditorNotations({
       triggerRejectedError('Legato bağı için en az iki nota seçmelisiniz (S)');
     }
   }, [executeCommand, triggerRejectedError, selectionRef]);
+
+  const targetSelection = useCallback((): Selection | null => {
+    const curSel = selectionRef.current;
+    if (curSel.kind === 'range' || curSel.kind === 'event') return curSel;
+    if (selectedEventIdRef.current) return { kind: 'event', id: selectedEventIdRef.current };
+    return null;
+  }, [selectionRef, selectedEventIdRef]);
+
+  const applyFermata = useCallback(() => {
+    const target = targetSelection();
+    if (target) executeCommand(cycleFermata(target));
+  }, [executeCommand, targetSelection]);
+
+  const applyPhraseMark = useCallback(
+    (mark: PhraseMark) => {
+      const target = targetSelection();
+      if (target) executeCommand(togglePhraseMark(target, mark));
+    },
+    [executeCommand, targetSelection]
+  );
 
   const clearNotations = useCallback(() => {
     const curSel = selectionRef.current;
@@ -201,6 +224,8 @@ export function useEditorNotations({
     applyDynamic,
     applyArticulation,
     applySlur,
+    applyFermata,
+    applyPhraseMark,
     clearNotations,
     applyEventOverride,
     clearEventOverride,

@@ -398,3 +398,12 @@ describe('keymap', () => {
     }
   });
 });
+
+describe('M7c-2 fermata keys', () => {
+  it('H cycles the fermata and Shift+H toggles the breath mark in select, position and input modes', () => {
+    for (const mode of ['select', 'position', 'input'] as const) {
+      expect(mapKeyEvent({ code: 'KeyH' }, mode)).toBe('cycle-fermata');
+      expect(mapKeyEvent({ code: 'KeyH', shiftKey: true }, mode)).toBe('toggle-breath-mark');
+    }
+  });
+});

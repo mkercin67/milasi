@@ -48,6 +48,8 @@ Activated via `KeyV` or `Escape`. Primary mode for navigation, transposition, de
 | `K` | `KeyK` | - | toggle-articulation: tenuto |
 | `L` | `KeyL` | - | toggle-articulation: accent |
 | `L` | `KeyL` | `Shift` | toggle-articulation: marcato |
+| `H` | `KeyH` | - | cycle-fermata |
+| `H` | `KeyH` | `Shift` | toggle-breath-mark |
 | `1` | `Digit1` | `Shift` | apply-dynamic: pp |
 | `2` | `Digit2` | `Shift` | apply-dynamic: p |
 | `3` | `Digit3` | `Shift` | apply-dynamic: mp |
@@ -112,6 +114,8 @@ Activated via `KeyN`. Enter pitches, rests, and note durations.
 | `K` | `KeyK` | - | toggle-articulation: tenuto |
 | `L` | `KeyL` | - | toggle-articulation: accent |
 | `L` | `KeyL` | `Shift` | toggle-articulation: marcato |
+| `H` | `KeyH` | - | cycle-fermata |
+| `H` | `KeyH` | `Shift` | toggle-breath-mark |
 | `2` | `Digit2` | - | set-duration: 32nd |
 | `3` | `Digit3` | - | set-duration: 16th |
 | `4` | `Digit4` | - | set-duration: eighth |
@@ -155,6 +159,8 @@ Activated via `KeyP`. Fine engraving layout nudging (`dx` / `dy`).
 | `K` | `KeyK` | - | toggle-articulation: tenuto |
 | `L` | `KeyL` | - | toggle-articulation: accent |
 | `L` | `KeyL` | `Shift` | toggle-articulation: marcato |
+| `H` | `KeyH` | - | cycle-fermata |
+| `H` | `KeyH` | `Shift` | toggle-breath-mark |
 | `1` | `Digit1` | `Shift` | apply-dynamic: pp |
 | `2` | `Digit2` | `Shift` | apply-dynamic: p |
 | `3` | `Digit3` | `Shift` | apply-dynamic: mp |
@@ -185,6 +191,7 @@ Activated via `KeyU`. Syllable entry and melisma extender input aligned to noteh
 
 - **Tie (Bağ):** `KeyT` (Select and Position modes)
 - **Slur (Legato bağı):** `KeyS` (Select and Position modes)
+- **Fermata:** `KeyH` cycles none, above, below (all modes); **Breath mark:** `Shift+KeyH`
 - **Articulations:**
   - Staccato: `KeyJ`
   - Tenuto: `KeyK`

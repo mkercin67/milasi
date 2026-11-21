@@ -14,7 +14,13 @@
 import React, { useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import { layoutScore } from '../layout/layoutScore';
 import { layoutTies } from '../layout/ties';
-import { buildNoteheadIndex, layoutArticulations, layoutDynamics, layoutSlurs } from '../layout/notations';
+import {
+  buildNoteheadIndex,
+  layoutArticulations,
+  layoutDynamics,
+  layoutFermatas,
+  layoutSlurs,
+} from '../layout/notations';
 import { getGlyphPath, UNITS_PER_EM } from '../render/glyphPaths.generated';
 import { SystemView } from './SystemView';
 import { useI18n } from './i18n';
@@ -180,7 +186,10 @@ export const ScoreView: React.FC<ScoreViewProps> = ({
   }, [score, layout, noteheadIndex]);
 
   const articulations = useMemo(() => {
-    return layoutArticulations(score, layout, noteheadIndex);
+    return [
+      ...layoutArticulations(score, layout, noteheadIndex),
+      ...layoutFermatas(score, layout, noteheadIndex),
+    ];
   }, [score, layout, noteheadIndex]);
 
   const visibleTies = useMemo(() => {
@@ -228,6 +237,11 @@ export const ScoreView: React.FC<ScoreViewProps> = ({
     set.add('articAccentBelow');
     set.add('articMarcatoAbove');
     set.add('articMarcatoBelow');
+    // M7c-2 fermata and phrase marks
+    set.add('fermataAbove');
+    set.add('fermataBelow');
+    set.add('breathMarkComma');
+    set.add('caesura');
     // Optimization: scan only visible systems instead of all 50 systems across 200 measures
     for (const sIdx of visibleSystemIndices) {
       const sys = layout.systems[sIdx];

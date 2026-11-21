@@ -1,6 +1,6 @@
 # M7c-2: Fermata, breath mark, caesura
 
-Status: PROPOSED (needs the project owner's approval before code).
+Status: IMPLEMENTED (owner approved the plan). Differences from the proposal: the commands are `cycleFermata` (none, above, below) and `togglePhraseMark`; keys are `H` (fermata) and `Shift+H` (breath mark), because `F` is a pitch letter in input mode; the caesura has a toolbar button only. Fermata above/below and phrase-mark offsets are first-proposal values and stay UNVERIFIED until compared with a public-domain edition.
 Part of `docs/design/m7c-plan.md`. Placement rules below are standard engraving practice as described in the
 engraving literature (Gould, *Behind Bars*; Ross, *The Art of Music Engraving*); the exact distances are a first
 proposal and are **UNVERIFIED until the owner compares the result with a public-domain score**.

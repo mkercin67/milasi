@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import React from 'react';
-import { ArticulationType, DynamicType } from '../../core/model';
+import { ArticulationType, DynamicType, PhraseMark } from '../../core/model';
 import { useI18n } from '../i18n';
 
 export interface ToolbarNotationsProps {
@@ -12,6 +12,8 @@ export interface ToolbarNotationsProps {
   onToggleTie?: () => void;
   hasSlur?: boolean;
   onToggleSlur?: () => void;
+  onCycleFermata?: () => void;
+  onTogglePhraseMark?: (mark: PhraseMark) => void;
   onClearNotations?: () => void;
   showNoteNames?: boolean;
   onToggleNoteNames?: () => void;
@@ -37,6 +39,19 @@ const ARTICULATIONS: { type: ArticulationType; label: string; symbol: string; sh
   { type: 'marcato', label: 'Markato', symbol: '^', shortcut: 'Shift+L' },
 ];
 
+const MARK_BUTTON_STYLE: React.CSSProperties = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  padding: '0.2rem 0.5rem',
+  fontSize: '0.8rem',
+  fontWeight: 600,
+  backgroundColor: 'transparent',
+  color: '#334155',
+  border: '1px solid transparent',
+  borderRadius: '4px',
+  cursor: 'pointer',
+};
+
 export const ToolbarNotations: React.FC<ToolbarNotationsProps> = ({
   activeDynamic = null,
   onSelectDynamic,
@@ -46,6 +61,8 @@ export const ToolbarNotations: React.FC<ToolbarNotationsProps> = ({
   onToggleTie,
   hasSlur = false,
   onToggleSlur,
+  onCycleFermata,
+  onTogglePhraseMark,
   onClearNotations,
   showNoteNames = false,
   onToggleNoteNames,
@@ -191,6 +208,44 @@ export const ToolbarNotations: React.FC<ToolbarNotationsProps> = ({
       >
         ⌒ {t('notation.slur')}
       </button>
+
+      {/* Fermata, breath mark and caesura (M7c-2) */}
+      {onCycleFermata && (
+        <button
+          type="button"
+          data-testid="btn-fermata"
+          onClick={handleButtonClick(onCycleFermata)}
+          onMouseDown={(e) => e.preventDefault()}
+          title={t('toolbar.fermataTitle')}
+          style={MARK_BUTTON_STYLE}
+        >
+          𝄐 {t('toolbar.fermata')}
+        </button>
+      )}
+      {onTogglePhraseMark && (
+        <>
+          <button
+            type="button"
+            data-testid="btn-breath-mark"
+            onClick={handleButtonClick(() => onTogglePhraseMark('breath'))}
+            onMouseDown={(e) => e.preventDefault()}
+            title={t('toolbar.breathTitle')}
+            style={MARK_BUTTON_STYLE}
+          >
+            ’ {t('toolbar.breath')}
+          </button>
+          <button
+            type="button"
+            data-testid="btn-caesura"
+            onClick={handleButtonClick(() => onTogglePhraseMark('caesura'))}
+            onMouseDown={(e) => e.preventDefault()}
+            title={t('toolbar.caesuraTitle')}
+            style={MARK_BUTTON_STYLE}
+          >
+            ‖ {t('toolbar.caesura')}
+          </button>
+        </>
+      )}
 
       {/* Clear Notations button */}
       <button
