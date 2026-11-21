@@ -10,6 +10,7 @@ import {
   enterRest,
   getLastNotePitchBeforeCursor,
   findNoteBeforeCursor,
+  defaultCursor,
   chordPitchAbove,
   topPitch,
   moveCursor,
@@ -62,13 +63,7 @@ export function useEditorInput({
       if (nextMode === 'input') {
         setCursor((curr) => {
           if (curr) return curr;
-          const sId = firstStaff(score)?.id;
-          const mId = score.measures[0]?.id;
-          const voice1 = firstStaff(score)?.measures[mId]?.voices.find((v) => v.voiceIndex === 1);
-          if (sId && mId && voice1) {
-            return { staffId: sId, voiceIndex: 1, measureId: mId, tick: 0 };
-          }
-          return null;
+          return defaultCursor(score);
         });
       }
     },
@@ -88,13 +83,7 @@ export function useEditorInput({
       if (next === 'input') {
         setCursor((curr) => {
           if (curr) return curr;
-          const sId = firstStaff(score)?.id;
-          const mId = score.measures[0]?.id;
-          const voice1 = firstStaff(score)?.measures[mId]?.voices.find((v) => v.voiceIndex === 1);
-          if (sId && mId && voice1) {
-            return { staffId: sId, voiceIndex: 1, measureId: mId, tick: 0 };
-          }
-          return null;
+          return defaultCursor(score);
         });
       }
       return next;

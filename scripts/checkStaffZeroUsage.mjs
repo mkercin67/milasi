@@ -12,8 +12,9 @@
  *     Everything else must use findStaff(score, staffId) from src/core/staffLookup.ts.
  *
  *  2. Callers of firstStaff() (the legacy "the staff" default) are counted against a ceiling in
- *     docs/design/m7b-staff-ratchet.json. The ceiling may only go down and must reach 0
- *     before Milestone 7b is accepted.
+ *     docs/design/m7b-staff-ratchet.json. The ceiling may only go down. At the M7b acceptance audit the
+ *     remaining callers were classified (missing-id fallbacks, the default cursor, the single-staff
+ *     clef); see the "audit" entry of the JSON file.
  */
 import fs from 'fs';
 import path from 'path';

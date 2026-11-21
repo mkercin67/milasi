@@ -14,10 +14,13 @@ This document lists known constraints and architectural trade-offs in the curren
 - **Impact:** Sound is functional for pitch/duration auditioning, but lacks acoustic instrument realism.
 - **Roadmap:** SoundFont / General MIDI sample-based synthesis engine planned for Phase 2.
 
-## 3. Single Staff per System in Phase 1
-- **Status:** Phase 1 Design Scope.
-- **Details:** Currently, scores support a single staff (treble or bass clef) per system.
-- **Roadmap:** Grand Staff (piano) and multi-part orchestral systems are scheduled for Phase 2.
+## 3. Grand Staff (Milestone 7b) and its Open Differences
+- **Status:** Implemented in Milestone 7b (accepted with Bach BWV 772 mm. 1-7 and Mozart K. 545 mm. 1-7; see `docs/review/m7b-5-bwv772-gaps.md` and `docs/review/m7b-5-k545-gaps.md`). One part with several staves forms one system (brace, barlines through the staves, cross-staff column alignment). Multi-part systems and part/group handling remain M7c.
+- **Chord entry:** `Shift+C..B` adds a pitch above the note just entered (M7b-8). Chords can only be built upwards; a single pitch of a chord cannot be removed yet.
+- **Not yet supported (M7c):** clef changes inside a staff (the Peters edition of K. 545 writes the left hand in the treble clef and changes clef in m. 5), the common-time sign, trills and other ornaments, C clefs, fermatas.
+- **Selection and clipboard:** a range selection and copy/paste work on one voice of one staff; a two-voice measure pastes only the selected voice (M7a-5 design, backlog).
+- **Entry ergonomics:** the octave of a typed pitch is the one nearest to the previous note, so leaps of a fifth or more need `Ctrl+Up/Down`; an entry that does not fit the measure shows no explanatory message; rests cannot be deleted, only overwritten with notes.
+- **Engraving:** beam slopes are flatter than in printed editions (accepted).
 
 ## 4. Web Audio Autoplay User Gesture Requirement
 - **Status:** Browser Security Standard.

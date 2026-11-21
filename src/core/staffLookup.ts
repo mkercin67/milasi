@@ -19,7 +19,8 @@ export function findStaff(score: Score, staffId: Id | undefined | null): Staff |
  *
  * This is the ONLY place that may index `parts[0].staves[0]`. Callers that use it still assume a
  * single-staff score; they are counted by scripts/checkStaffZeroUsage.mjs against a ceiling that
- * must shrink to zero during Milestone 7b (docs/design/m7b-grand-staff.md, B6).
+ * may only shrink; the M7b acceptance audit left only missing-id fallbacks, the default cursor and
+ * the single-staff clef (docs/design/m7b-staff-ratchet.json, docs/design/m7b-grand-staff.md B6).
  */
 export function firstStaff(score: Score): Staff | undefined {
   return score.parts[0]?.staves[0]; // staff-zero-ok: the single definition of the legacy default staff

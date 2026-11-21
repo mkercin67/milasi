@@ -12,13 +12,12 @@ import { Score } from '../core/model';
 import { ScoreCursor } from '../core/input';
 import { EditorMode } from './keymap';
 import { eventExists } from '../core/selection';
-import { getLastNotePitchBeforeCursor, snapCursor } from '../core/input';
+import { defaultCursor, getLastNotePitchBeforeCursor, snapCursor } from '../core/input';
 import { createEmptyScore } from '../core/factory';
 import { buildSampleScore, createBenchmark64Score } from './Demo';
 import { useEditorSelection } from './editor/useEditorSelection';
 import { useEditorInput } from './editor/useEditorInput';
 import { useEditorNotations } from './editor/useEditorNotations';
-import { firstStaff } from '../core/staffLookup';
 
 export { type SelectedEventInfo } from './editor/useEditorSelection';
 
@@ -88,15 +87,7 @@ export function useEditor(initialScore?: Score) {
     return nextScore;
   }, []);
 
-  const initialCursor = (() => {
-    const sId = firstStaff(historyRef.current.score)?.id;
-    const mId = historyRef.current.score.measures[0]?.id;
-    const voice1 = firstStaff(historyRef.current.score)?.measures[mId]?.voices.find((v) => v.voiceIndex === 1);
-    if (sId && mId && voice1) {
-      return { staffId: sId, voiceIndex: 1 as const, measureId: mId, tick: 0 };
-    }
-    return null;
-  })();
+  const initialCursor = defaultCursor(historyRef.current.score);
 
   const inputHook = useEditorInput({
     score,
@@ -136,14 +127,7 @@ export function useEditor(initialScore?: Score) {
     selectionHook.setSelectedEventId(null);
     inputHook.lastEnteredPitchRef.current = null;
 
-    const sId = firstStaff(newScore)?.id;
-    const mId = newScore.measures[0]?.id;
-    const voice1 = firstStaff(newScore)?.measures[mId]?.voices.find((v) => v.voiceIndex === 1);
-    if (sId && mId && voice1) {
-      inputHook.setCursor({ staffId: sId, voiceIndex: 1 as const, measureId: mId, tick: 0 });
-    } else {
-      inputHook.setCursor(null);
-    }
+    inputHook.setCursor(defaultCursor(newScore));
     cursorHistoryRef.current = { past: [], future: [] };
   }, [selectionHook, inputHook]);
 

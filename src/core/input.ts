@@ -21,7 +21,7 @@ import { createMeasure, createNote, createRest, newId } from './factory';
 import { durationTicks, fillMeasureWithRests, measureTicks, PPQ } from './time';
 import { getKeySignatureAlter } from './pitch';
 import { Command } from './commands';
-import { findStaff } from './staffLookup';
+import { findStaff, firstStaff } from './staffLookup';
 
 export type RestSpanType = BaseDurationType | 'wholeMeasure';
 
@@ -841,4 +841,16 @@ export function topPitch(pitches: readonly Pitch[]): Pitch {
     const b = best.octave * 7 + STEP_DIATONIC[best.step];
     return a > b || (a === b && p.alter > best.alter) ? p : best;
   });
+}
+
+/**
+ * The cursor a fresh editor starts with: the first staff, voice 1, start of the first measure. The single
+ * place where "the first staff" is the intended default (not a fallback for a missing staff id).
+ */
+export function defaultCursor(score: Score): ScoreCursor | null {
+  const staff = firstStaff(score);
+  const measureId = score.measures[0]?.id;
+  const voice1 = measureId ? staff?.measures[measureId]?.voices.find((v) => v.voiceIndex === 1) : undefined;
+  if (staff && measureId && voice1) return { staffId: staff.id, voiceIndex: 1, measureId, tick: 0 };
+  return null;
 }

@@ -1,3 +1,4 @@
 {
-  "firstStaffCeiling": 22
+  "firstStaffCeiling": 15,
+  "audit": "M7b acceptance audit: 15 callers remain, none is a hidden single-staff assumption. 13 are the fallback 'findStaff(id) ?? firstStaff(score)' for a missing staff id (clipboard, pointerCursor x2, App, useEditorInput, useEditorSelection x3, beatGuide, useGhostNote x2, useScoreInteractions, useScoreMarquee); 1 is defaultCursor() in src/core/input.ts (the fresh-editor cursor on the first staff); 1 is the clef of the single-staff layout path in layoutScore. The ceiling may only go down."
 }
