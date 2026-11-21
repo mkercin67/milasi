@@ -214,9 +214,12 @@ describe('Full Pipeline Layout Cost & Scaling Complexity (Rule R6 Compliant)', (
     const min400 = Math.min(...legacy400);
     const legacyRatio = min400 / min200;
 
-    console.log(`Legacy Unindexed Best-of-${runs}: min400=${min400.toFixed(3)}ms, min200=${min200.toFixed(3)}ms, ratio=${legacyRatio.toFixed(2)}x (fails <= 3.0x bound)`);
+    console.log(`Legacy Unindexed Best-of-${runs}: min400=${min400.toFixed(3)}ms, min200=${min200.toFixed(3)}ms, ratio=${legacyRatio.toFixed(2)}x (reported, not gated per R6)`);
 
-    // Legacy unindexed scan has ratio > 3.0x due to quadratic O(N^2) complexity
-    expect(legacyRatio).toBeGreaterThan(3.0);
+    // R6: wall-clock ratios are informational only (CI #59 measured 2.75x on a noisy runner and failed
+    // a 3.0x timing gate). The quadratic behaviour of the legacy scan is gated deterministically by the
+    // operation-count test above ("Legacy Unindexed Operations"), which does not depend on machine load.
+    expect(min200).toBeGreaterThan(0);
+    expect(min400).toBeGreaterThan(0);
   });
 });
