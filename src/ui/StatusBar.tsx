@@ -276,6 +276,19 @@ export const StatusBar: React.FC<StatusBarProps> = ({
     return null;
   };
 
+  const hintKeys: string[] =
+    mode === 'input'
+      ? [
+          'shortcut.inputVoice',
+          ...(staffInfo && staffInfo.total > 1 ? ['shortcut.inputStaff'] : []),
+          'shortcut.inputHome',
+          'shortcut.inputArrows',
+          'shortcut.inputScore',
+        ]
+      : mode === 'position'
+        ? ['shortcut.positionArrows', 'shortcut.positionTab', 'shortcut.positionReset']
+        : ['shortcut.transpose', 'shortcut.delete', 'shortcut.navigate'];
+
   const badgeColors = MODE_COLORS[mode];
 
   return (
@@ -285,6 +298,9 @@ export const StatusBar: React.FC<StatusBarProps> = ({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
+        flexWrap: 'wrap',
+        columnGap: '1rem',
+        rowGap: '0.2rem',
         padding: '0.45rem 1.25rem',
         backgroundColor: '#f8fafc',
         borderTop: '1px solid #e2e8f0',
@@ -294,7 +310,7 @@ export const StatusBar: React.FC<StatusBarProps> = ({
         boxSizing: 'border-box',
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+      <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '0.2rem 0.75rem' }}>
         <span
           data-status-mode={mode}
           style={{
@@ -341,43 +357,28 @@ export const StatusBar: React.FC<StatusBarProps> = ({
             {t('status.warnings', { count: warningCount })}
           </span>
         )}
-        {renderStatusContent()}
+        <span style={{ whiteSpace: 'nowrap' }}>{renderStatusContent()}</span>
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', color: '#64748b', fontSize: '0.775rem' }}>
-        {mode === 'input' ? (
-          <>
-            <span>{t('shortcut.inputVoice')}</span>
-            <span>•</span>
-            {staffInfo && staffInfo.total > 1 && (
-              <>
-                <span>{t('shortcut.inputStaff')}</span>
-                <span>•</span>
-              </>
-            )}
-            <span>{t('shortcut.inputHome')}</span>
-            <span>•</span>
-            <span>{t('shortcut.inputArrows')}</span>
-            <span>•</span>
-            <span>{t('shortcut.inputScore')}</span>
-          </>
-        ) : mode === 'position' ? (
-          <>
-            <span>{t('shortcut.positionArrows')}</span>
-            <span>•</span>
-            <span>{t('shortcut.positionTab')}</span>
-            <span>•</span>
-            <span>{t('shortcut.positionReset')}</span>
-          </>
-        ) : (
-          <>
-            <span>{t('shortcut.transpose')}</span>
-            <span>•</span>
-            <span>{t('shortcut.delete')}</span>
-            <span>•</span>
-            <span>{t('shortcut.navigate')}</span>
-          </>
-        )}
+      <div
+        data-testid="status-shortcut-hints"
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          justifyContent: 'flex-end',
+          marginLeft: 'auto',
+          gap: '0.2rem 1rem',
+          color: '#64748b',
+          fontSize: '0.775rem',
+        }}
+      >
+        {hintKeys.map((key) => (
+          // Each hint stays in one piece; the bar wraps between hints, never inside one.
+          <span key={key} style={{ whiteSpace: 'nowrap' }}>
+            {t(key)}
+          </span>
+        ))}
       </div>
     </footer>
   );

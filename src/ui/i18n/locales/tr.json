@@ -76,7 +76,7 @@
   "shortcut.inputVoice": "Tab: Ses",
   "shortcut.inputHome": "Home: Ölçü başı",
   "shortcut.inputArrows": "Oklar: Gezinme",
-  "shortcut.inputScore": "Ctrl+Home/Ctrl+Oklar: Parça başı / ölçü ölçü",
+  "shortcut.inputScore": "Ctrl+Home/Ctrl+Oklar: Parça başı / Ölçü atla",
   "tip.twoVoice": "Birden fazla ses için Tab. Aynı vuruşa ikinci ses: Ctrl+Home (parça başı) veya Home (ölçü başı), sonra Tab.",
   "tip.dismiss": "Anladım",
   "toolbar.voice": "Ses {num}",

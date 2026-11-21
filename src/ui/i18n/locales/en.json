@@ -76,7 +76,7 @@
   "shortcut.inputVoice": "Tab: Voice",
   "shortcut.inputHome": "Home: Measure start",
   "shortcut.inputArrows": "Arrows: Move cursor",
-  "shortcut.inputScore": "Ctrl+Home/Ctrl+Arrows: Score start / measure by measure",
+  "shortcut.inputScore": "Ctrl+Home/Ctrl+Arrows: Score start / Skip measure",
   "tip.twoVoice": "For multiple voices use Tab. For a second voice on the same beat: Ctrl+Home (score start) or Home (measure start), then Tab.",
   "tip.dismiss": "Got it",
   "toolbar.voice": "Voice {num}",
