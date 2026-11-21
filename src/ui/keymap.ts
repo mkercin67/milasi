@@ -21,6 +21,7 @@ export type UserAction =
   | 'extend-selection-prev'
   | 'extend-selection-next'
   | 'select-all'
+  | 'select-measure-voices'
   | 'copy'
   | 'cut'
   | 'paste'
@@ -365,6 +366,7 @@ export function mapKeyEvent(
     }
 
     // Unmodified keys in select mode
+    if (e.code === 'KeyM') return 'select-measure-voices';
     if (e.code === 'KeyS') return 'toggle-slur';
     if (e.code === 'KeyT') return 'toggle-tie';
     if (e.code === 'KeyX') return 'reset-accidental';
@@ -528,6 +530,7 @@ export function getCompleteKeyTable(): KeyTableEntry[] {
 
     // Select mode editing
     { key: 'A', code: 'KeyA', modifiers: 'Ctrl', mode: 'select', action: 'select-all' },
+    { key: 'M', code: 'KeyM', modifiers: 'none', mode: 'select', action: 'select-measure-voices' },
     { key: 'C', code: 'KeyC', modifiers: 'Ctrl', mode: 'select', action: 'copy' },
     { key: 'X', code: 'KeyX', modifiers: 'Ctrl', mode: 'select', action: 'cut' },
     { key: 'V', code: 'KeyV', modifiers: 'Ctrl', mode: 'select', action: 'paste' },

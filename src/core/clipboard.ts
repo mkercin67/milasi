@@ -7,6 +7,8 @@ import { createMeasure, createNote, createRest, newId } from './factory';
 import { BaseDurationType, NoteEvent, Pitch, Score, ScoreEvent, Voice } from './model';
 import { fillMeasureWithRests, measureTicks } from './time';
 import { findStaff, firstStaff } from './staffLookup';
+import type { RangeSelection } from './selection';
+import { voicesInRange } from './selection';
 
 export interface ClipboardPayload {
   app: 'scoreforge-clip';
@@ -50,6 +52,89 @@ export function deserializeClipboard(json: string): ScoreEvent[] | null {
     // Malformed JSON
   }
   return null;
+}
+
+/** One voice of a multi-voice clipboard (M7a-5). Leading rests carry the offset of a voice that starts later. */
+export interface ClipboardVoice {
+  voiceIndex: 1 | 2 | 3 | 4;
+  events: ScoreEvent[];
+}
+
+export interface ClipboardPayloadV2 {
+  app: 'scoreforge-clip';
+  version: 2;
+  voices: ClipboardVoice[];
+}
+
+let memoryVoices: ClipboardVoice[] | null = null;
+
+/** Remembers the last multi-voice copy (null when the last copy was a single-voice copy). */
+export function setMemoryClipboardVoices(voices: ClipboardVoice[] | null): void {
+  memoryVoices = voices ? JSON.parse(JSON.stringify(voices)) : null;
+}
+
+export function getMemoryClipboardVoices(): ClipboardVoice[] | null {
+  return memoryVoices ? JSON.parse(JSON.stringify(memoryVoices)) : null;
+}
+
+export function serializeClipboardVoices(voices: ClipboardVoice[]): string {
+  const payload: ClipboardPayloadV2 = { app: 'scoreforge-clip', version: 2, voices };
+  return JSON.stringify(payload);
+}
+
+/** Reads a version 2 payload; anything else (including the version 1 single-voice format) gives null. */
+export function deserializeClipboardVoices(json: string): ClipboardVoice[] | null {
+  try {
+    const parsed = JSON.parse(json);
+    if (
+      parsed &&
+      typeof parsed === 'object' &&
+      parsed.app === 'scoreforge-clip' &&
+      parsed.version === 2 &&
+      Array.isArray(parsed.voices) &&
+      parsed.voices.every(
+        (v: ClipboardVoice) => v && [1, 2, 3, 4].includes(v.voiceIndex) && Array.isArray(v.events)
+      )
+    ) {
+      return parsed.voices as ClipboardVoice[];
+    }
+  } catch {
+    // Malformed JSON
+  }
+  return null;
+}
+
+/**
+ * Builds the clipboard voices of a range selection. A voice whose first event starts after the start of the
+ * span gets leading rests, so every voice pastes with the right offset.
+ */
+export function clipboardVoicesFromRange(score: Score, range: RangeSelection): ClipboardVoice[] {
+  return voicesInRange(score, range).map((v) => {
+    const lead: ScoreEvent[] = [];
+    for (const unit of decomposeStandardUnits(v.leadTicks)) {
+      lead.push(createRest({ baseType: ticksToBaseType(unit) }));
+    }
+    return { voiceIndex: v.voiceIndex, events: [...lead, ...v.events] };
+  });
+}
+
+/**
+ * Pastes every voice of a multi-voice clipboard at the target position, each into its own voice index.
+ * `placedEventIds` receives the first and last placed event id of the lowest voice (for the new selection).
+ */
+export function pasteVoices(
+  score: Score,
+  target: { staffId: string; startMeasureId: string; startOffsetTicks: number },
+  voices: ClipboardVoice[],
+  placedEventIds?: string[]
+): Score {
+  let next = score;
+  voices.forEach((v, i) => {
+    const placed: string[] = [];
+    next = pasteEvents(next, { ...target, voiceIndex: v.voiceIndex }, v.events, placed);
+    if (i === 0 && placedEventIds) placedEventIds.push(...placed);
+  });
+  return next;
 }
 
 const STANDARD_UNITS: number[] = [3840, 1920, 960, 480, 240, 120];

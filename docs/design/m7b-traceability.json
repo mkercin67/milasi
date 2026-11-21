@@ -238,5 +238,13 @@
     "testFile": "tests/core/chord_entry.test.ts",
     "testName": "C1: the first matching letter strictly above the top pitch (Mozart K. 545 chords)",
     "status": "DONE"
+  },
+  {
+    "planItemId": "B22",
+    "description": "M7a-5 multi-voice selection: a range with allVoices covers every voice inside the tick span, copy/paste carries all voices (clipboard version 2) and delete acts on all of them.",
+    "codeLocation": "src/core/selection.ts:eventsInRange",
+    "testFile": "tests/core/multi_voice_selection.test.ts",
+    "testName": "V7: copying measure 1 (both voices) and pasting it at the start of measure 2 reproduces both voices",
+    "status": "DONE"
   }
 ]

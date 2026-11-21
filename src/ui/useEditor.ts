@@ -252,6 +252,7 @@ export function useEditor(initialScore?: Score) {
     extendSelectionTo: selectionHook.extendSelectionTo,
     extendSelectionDirection: selectionHook.extendSelectionDirection,
     selectAllInStaff: selectionHook.selectAllInStaff,
+    selectMeasureAllVoices: selectionHook.selectMeasureAllVoices,
     deleteSelection: selectionHook.deleteSelection,
     transposeSelection: selectionHook.transposeSelection,
     toggleTieSelection: selectionHook.toggleTieSelection,

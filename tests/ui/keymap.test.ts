@@ -112,6 +112,11 @@ describe('keymap', () => {
     expect(mapKeyEvent({ code: 'KeyL', shiftKey: true }, 'input')).toEqual({ type: 'toggle-articulation', articulation: 'marcato' });
   });
 
+  it('M7a-5: plain M selects all voices of the measure in select mode only', () => {
+    expect(mapKeyEvent({ code: 'KeyM' }, 'select')).toBe('select-measure-voices');
+    expect(mapKeyEvent({ code: 'KeyM' }, 'input')).toBeNull();
+  });
+
   it('maps Digit0 to enter-rest in input mode; prompts hint when select/position; Ctrl+Digit0 to reset-override', () => {
     expect(mapKeyEvent({ code: 'Digit0' }, 'input')).toBe('enter-rest');
     expect(mapKeyEvent({ code: 'Digit0' }, 'select')).toBe('show-input-off-hint');

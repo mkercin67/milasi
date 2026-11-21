@@ -19,14 +19,22 @@ import {
   extendSelection,
   findEventContext,
   getRangeMeasureSpan,
+  measureAllVoicesRange,
   nextEventId,
 } from '../../core/selection';
 import {
+  ClipboardVoice,
+  clipboardVoicesFromRange,
   deserializeClipboard,
+  deserializeClipboardVoices,
   getMemoryClipboard,
+  getMemoryClipboardVoices,
   pasteEvents,
+  pasteVoices,
   serializeClipboard,
+  serializeClipboardVoices,
   setMemoryClipboard,
+  setMemoryClipboardVoices,
 } from '../../core/clipboard';
 import { EditorMode } from '../keymap';
 import { ScoreCursor } from '../../core/input';
@@ -109,7 +117,7 @@ export function useEditorSelection({
   }, [scoreRef]);
 
   const extendSelectionTo = useCallback(
-    (targetEventId: string) => {
+    (targetEventId: string, forceAllVoices = false) => {
       const curScore = scoreRef.current;
       const baseSel: Selection =
         selectionRef.current.kind !== 'none'
@@ -117,7 +125,8 @@ export function useEditorSelection({
           : selectedEventIdRef.current
           ? { kind: 'event', id: selectedEventIdRef.current }
           : { kind: 'none' };
-      const nextSel = extendSelection(curScore, baseSel, targetEventId);
+      let nextSel = extendSelection(curScore, baseSel, targetEventId);
+      if (forceAllVoices && nextSel.kind === 'range') nextSel = { ...nextSel, allVoices: true };
       selectionRef.current = nextSel;
       if (nextSel.kind === 'event') {
         selectedEventIdRef.current = nextSel.id;
@@ -138,7 +147,7 @@ export function useEditorSelection({
   );
 
   const extendSelectionDirection = useCallback(
-    (direction: 'prev' | 'next') => {
+    (direction: 'prev' | 'next', allVoices = false) => {
       const curScore = scoreRef.current;
       const curSel = selectionRef.current;
       const currentEventId =
@@ -152,11 +161,31 @@ export function useEditorSelection({
       if (!staffId) return;
       const nextId = nextEventId(curScore, staffId, currentEventId, direction);
       if (nextId) {
-        extendSelectionTo(nextId);
+        extendSelectionTo(nextId, allVoices);
       }
     },
     [extendSelectionTo, scoreRef]
   );
+
+  /** Ctrl+Shift+A (M7a-5): selects every voice of the measure of the selection, else of the cursor. */
+  const selectMeasureAllVoices = useCallback(() => {
+    const curScore = scoreRef.current;
+    const curSel = selectionRef.current;
+    const anchorEventId =
+      curSel.kind === 'range' ? curSel.focusId : curSel.kind === 'event' ? curSel.id : selectedEventIdRef.current;
+    const ctx = anchorEventId ? findEventContext(curScore, anchorEventId) : null;
+    const staffId = ctx?.staffId ?? cursorRef.current?.staffId;
+    const measureId = ctx?.measureId ?? cursorRef.current?.measureId;
+    if (!staffId || !measureId) return;
+    const range = measureAllVoicesRange(curScore, staffId, measureId);
+    if (!range) return;
+    const nextSel: Selection = { ...range, kind: 'range' };
+    selectionRef.current = nextSel;
+    selectedEventIdRef.current = null;
+    rangeEventsRef.current = eventsInRange(curScore, nextSel);
+    setSelection(nextSel);
+    setSelectedEventId(null);
+  }, [scoreRef, cursorRef]);
 
   const selectAllInStaff = useCallback(() => {
     const curScore = scoreRef.current;
@@ -376,18 +405,29 @@ export function useEditorSelection({
   const copySelection = useCallback(() => {
     let evs: ScoreEvent[] = [];
     const curSel = selectionRef.current;
+    if (curSel.kind === 'range' && curSel.allVoices) {
+      const voices = clipboardVoicesFromRange(scoreRef.current, curSel);
+      if (voices.length > 0) {
+        setMemoryClipboardVoices(voices);
+        if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+          navigator.clipboard.writeText(serializeClipboardVoices(voices)).catch(() => {});
+        }
+      }
+      return;
+    }
     if (curSel.kind === 'range') {
       evs = rangeEventsRef.current;
     } else if (selectedEventInfoRef.current) {
       evs = [selectedEventInfoRef.current.event];
     }
     if (evs.length > 0) {
+      setMemoryClipboardVoices(null);
       setMemoryClipboard(evs);
       if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
         navigator.clipboard.writeText(serializeClipboard(evs)).catch(() => {});
       }
     }
-  }, []);
+  }, [scoreRef]);
 
   const cutSelection = useCallback(() => {
     copySelection();
@@ -396,18 +436,23 @@ export function useEditorSelection({
 
   const pasteClipboard = useCallback(async () => {
     let eventsToPaste = getMemoryClipboard();
+    let voicesToPaste: ClipboardVoice[] | null = getMemoryClipboardVoices();
     if (typeof navigator !== 'undefined' && navigator.clipboard?.readText) {
       try {
         const text = await navigator.clipboard.readText();
+        const voices = deserializeClipboardVoices(text);
         const deserialized = deserializeClipboard(text);
-        if (deserialized && deserialized.length > 0) {
+        if (voices && voices.length > 0) {
+          voicesToPaste = voices;
+        } else if (deserialized && deserialized.length > 0) {
           eventsToPaste = deserialized;
+          voicesToPaste = null;
         }
       } catch {
         // Fallback to in-memory clipboard
       }
     }
-    if (eventsToPaste.length === 0) return;
+    if (!voicesToPaste && eventsToPaste.length === 0) return;
 
     const curScore = scoreRef.current;
     const curSel = selectionRef.current;
@@ -477,7 +522,24 @@ export function useEditorSelection({
       startOffset = curCursor.tick;
     }
 
-    if (startMId) {
+    if (startMId && voicesToPaste) {
+      const voices = voicesToPaste;
+      const placedIds: string[] = [];
+      executeCommand({
+        name: 'Paste Voices',
+        apply: (s) =>
+          pasteVoices(s, { staffId: staff.id, startMeasureId: startMId, startOffsetTicks: startOffset }, voices, placedIds),
+      });
+      if (placedIds.length > 0) {
+        setRangeSelection({
+          staffId: staff.id,
+          voiceIndex: voices[0].voiceIndex,
+          anchorId: placedIds[0],
+          focusId: placedIds[placedIds.length - 1],
+          allVoices: true,
+        });
+      }
+    } else if (startMId) {
       const placedIds: string[] = [];
       executeCommand({
         name: 'Paste Events',
@@ -535,6 +597,7 @@ export function useEditorSelection({
     setRangeSelection,
     extendSelectionTo,
     extendSelectionDirection,
+    selectMeasureAllVoices,
     selectAllInStaff,
     selectNext,
     deleteSelection,

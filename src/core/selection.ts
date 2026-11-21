@@ -4,6 +4,7 @@
  */
 
 import { Score, ScoreEvent } from './model';
+import { measureTicks } from './time';
 
 export type Selection =
   | { kind: 'none' }
@@ -14,6 +15,8 @@ export type Selection =
       voiceIndex: 1 | 2 | 3 | 4;
       anchorId: string;
       focusId: string;
+      /** M7a-5: the range covers every voice of the staff inside the tick span of the anchor..focus events. */
+      allVoices?: boolean;
     };
 
 export interface RangeSelection {
@@ -22,6 +25,7 @@ export interface RangeSelection {
   voiceIndex: 1 | 2 | 3 | 4;
   anchorId: string;
   focusId: string;
+  allVoices?: boolean;
 }
 
 /**
@@ -93,10 +97,93 @@ export function getOrderedVoiceEvents(
   return result;
 }
 
+interface TimedEvent {
+  event: ScoreEvent;
+  voiceIndex: 1 | 2 | 3 | 4;
+  startTick: number;
+  endTick: number;
+}
+
+/** Every event of a staff (all voices) with absolute start/end ticks counted from the first measure. */
+function timedStaffEvents(score: Score, staffId: string): TimedEvent[] {
+  const result: TimedEvent[] = [];
+  for (const part of score.parts) {
+    for (const staff of part.staves) {
+      if (staff.id !== staffId) continue;
+      let measureStart = 0;
+      for (const mDef of score.measures) {
+        const staffMeasure = staff.measures[mDef.id];
+        if (staffMeasure) {
+          for (const voice of staffMeasure.voices) {
+            let t = measureStart;
+            for (const ev of voice.events) {
+              result.push({ event: ev, voiceIndex: voice.voiceIndex, startTick: t, endTick: t + ev.duration });
+              t += ev.duration;
+            }
+          }
+        }
+        measureStart += measureTicks(mDef.timeSig);
+      }
+    }
+  }
+  return result;
+}
+
+/**
+ * Splits the events of a range into voices (ascending voice index, reading order inside a voice).
+ * `leadTicks` is the distance between the start of the range span and the first event of that voice.
+ */
+export function voicesInRange(
+  score: Score,
+  range: RangeSelection
+): Array<{ voiceIndex: 1 | 2 | 3 | 4; events: ScoreEvent[]; leadTicks: number }> {
+  const events = eventsInRange(score, range);
+  if (events.length === 0) return [];
+  const timed = timedStaffEvents(score, range.staffId);
+  const byId = new Map(timed.map((t) => [t.event.id, t]));
+  const ids = new Set(events.map((e) => e.id));
+  const selected = timed.filter((t) => ids.has(t.event.id));
+  const spanStart = Math.min(...selected.map((t) => t.startTick));
+  const voices = new Map<number, TimedEvent[]>();
+  for (const t of selected) {
+    const list = voices.get(t.voiceIndex);
+    if (list) list.push(t);
+    else voices.set(t.voiceIndex, [t]);
+  }
+  return [...voices.keys()]
+    .sort((a, b) => a - b)
+    .map((vi) => {
+      const list = (voices.get(vi) ?? []).sort((a, b) => a.startTick - b.startTick);
+      return {
+        voiceIndex: vi as 1 | 2 | 3 | 4,
+        events: list.map((t) => byId.get(t.event.id)!.event),
+        leadTicks: list[0].startTick - spanStart,
+      };
+    });
+}
+
 /**
  * Returns all events in the specified range in reading order.
+ * With `allVoices` the range covers every voice of the staff whose events START inside the tick span of
+ * the anchor..focus events of the range voice (events are ordered by start tick, then voice).
  */
 export function eventsInRange(
+  score: Score,
+  range: RangeSelection
+): ScoreEvent[] {
+  const single = singleVoiceEventsInRange(score, range);
+  if (!range.allVoices || single.length === 0) return single;
+  const timed = timedStaffEvents(score, range.staffId);
+  const first = timed.find((t) => t.event.id === single[0].id);
+  const last = timed.find((t) => t.event.id === single[single.length - 1].id);
+  if (!first || !last) return single;
+  return timed
+    .filter((t) => t.startTick >= first.startTick && t.startTick < last.endTick)
+    .sort((a, b) => a.startTick - b.startTick || a.voiceIndex - b.voiceIndex)
+    .map((t) => t.event);
+}
+
+function singleVoiceEventsInRange(
   score: Score,
   range: RangeSelection
 ): ScoreEvent[] {
@@ -174,10 +261,37 @@ export function extendSelection(
       voiceIndex: anchorCtx.voiceIndex,
       anchorId: current.anchorId,
       focusId: targetEventId,
+      ...(current.allVoices ? { allVoices: true } : {}),
     };
   }
 
   return current;
+}
+
+/**
+ * A range that selects every voice of one measure of a staff (M7a-5, Ctrl+Shift+A). The base voice is the
+ * lowest voice that has events in the measure. Returns null when the measure has no events.
+ */
+export function measureAllVoicesRange(score: Score, staffId: string, measureId: string): RangeSelection | null {
+  for (const part of score.parts) {
+    for (const staff of part.staves) {
+      if (staff.id !== staffId) continue;
+      const voices = [...(staff.measures[measureId]?.voices ?? [])]
+        .filter((v) => v.events.length > 0)
+        .sort((a, b) => a.voiceIndex - b.voiceIndex);
+      if (voices.length === 0) return null;
+      const base = voices[0];
+      return {
+        kind: 'range',
+        staffId,
+        voiceIndex: base.voiceIndex,
+        anchorId: base.events[0].id,
+        focusId: base.events[base.events.length - 1].id,
+        allVoices: true,
+      };
+    }
+  }
+  return null;
 }
 
 /**

@@ -36,6 +36,7 @@ Activated via `KeyV` or `Escape`. Primary mode for navigation, transposition, de
 |-----|---------------|-----------|--------|
 | `Esc` | `Escape` | - | clear-selection |
 | `A` | `KeyA` | `Ctrl` | select-all |
+| `M` | `KeyM` | - | select-measure-voices |
 | `C` | `KeyC` | `Ctrl` | copy |
 | `X` | `KeyX` | `Ctrl` | cut |
 | `V` | `KeyV` | `Ctrl` | paste |

@@ -1,6 +1,6 @@
 # M7a-5: Multi-voice selection, copy and paste
 
-Status: PROPOSED (decision needed from the project owner, section 4).
+Status: IMPLEMENTED (option A chosen by the project owner).
 
 ## 1. Problem
 A range selection belongs to one voice of one staff (`Selection.range = { staffId, voiceIndex, anchorId, focusId }`).
@@ -28,13 +28,21 @@ transpose or delete it) becomes impossible without a filter, so it breaks existi
 staff for the measure(s) of the current selection or cursor. Smallest change, solves the K. 545 case, does not cover a partial
 span across voices.
 
-## 4. Recommendation and open decision
-Recommend **A with a measure-level entry point**: `allVoices` range, set by `Ctrl+Shift+A` ("select all voices of this measure")
-and by extending with `Alt+Shift+Arrow`; copy/cut/paste/delete act on every voice in the span; transpose and notations stay
-per-voice for the focused voice only (documented). The owner decides between A, B and C (or A later after C).
+## 4. Decision and as-built behaviour (option A)
+- Select mode: plain **`M`** selects every voice of the measure of the selection (or of the cursor). `Shift+Left/Right` then
+  extends the range across measures and keeps the `allVoices` flag. (The proposed `Ctrl+Shift+A` is Chrome's tab search and Alt
+  shortcuts are disabled project-wide, hence a plain key.)
+- The range covers every voice of the staff whose events START inside the tick span of the anchor..focus events of the base
+  voice; events are ordered by start tick, then voice.
+- Everything that works on the selected events (delete/convert to rest, transpose, articulations, tie) acts on all of them,
+  because the commands go through `eventsInRange`. Copy, cut and paste carry every voice.
+- Paste writes each voice into the same voice index of the target staff, starting at the cursor/selection start; a missing
+  voice is created; a voice that starts later than the span gets leading rests so its offset is kept (those rests overwrite the
+  target in that gap). The pasted region becomes an `allVoices` selection.
+- Single-voice selections and the version 1 clipboard format are unchanged.
 
 ## 5. Clipboard format (for A and C)
-`{ version: 2, ticks: <span length>, voices: [{ voiceIndex, events: ScoreEvent[] }] }`. A payload that is a bare array is read
+`{ app: 'scoreforge-clip', version: 2, voices: [{ voiceIndex, events: ScoreEvent[] }] }` (leading rests carry the offset). A payload that is a bare array is read
 as `version 1` (one voice, the old format). Paste at a cursor: each voice goes to the same `voiceIndex` of the target staff,
 starting at the cursor tick; a voice missing in the target measure is created; events that do not fit are split with ties
 exactly as `pasteEvents` does today.

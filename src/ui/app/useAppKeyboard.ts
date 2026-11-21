@@ -39,6 +39,7 @@ export interface UseAppKeyboardParams {
   selectedRange: { anchorId: string; focusId: string } | null;
   selection: { kind: 'none' | 'event' | 'range' };
   selectAllInStaff: () => void;
+  selectMeasureAllVoices: () => void;
   copySelection: () => void;
   cutSelection: () => void;
   pasteClipboard: () => void;
@@ -117,6 +118,7 @@ export function useAppKeyboard(params: UseAppKeyboardParams) {
     selectedRange,
     selection,
     selectAllInStaff,
+    selectMeasureAllVoices,
     copySelection,
     cutSelection,
     pasteClipboard,
@@ -306,6 +308,9 @@ export function useAppKeyboard(params: UseAppKeyboardParams) {
             break;
           case 'select-all':
             selectAllInStaff();
+            break;
+          case 'select-measure-voices':
+            selectMeasureAllVoices();
             break;
           case 'copy':
             copySelection();
@@ -579,6 +584,7 @@ export function useAppKeyboard(params: UseAppKeyboardParams) {
     selectedRange,
     selection,
     selectAllInStaff,
+    selectMeasureAllVoices,
     copySelection,
     cutSelection,
     pasteClipboard,
