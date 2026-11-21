@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import React from 'react';
-import { ArticulationType, DynamicType, PhraseMark } from '../../core/model';
+import { ArticulationType, DynamicType, HairpinType, PhraseMark } from '../../core/model';
 import { useI18n } from '../i18n';
 
 export interface ToolbarNotationsProps {
@@ -13,6 +13,7 @@ export interface ToolbarNotationsProps {
   hasSlur?: boolean;
   onToggleSlur?: () => void;
   onCycleFermata?: () => void;
+  onToggleHairpin?: (type: HairpinType) => void;
   onTogglePhraseMark?: (mark: PhraseMark) => void;
   onClearNotations?: () => void;
   showNoteNames?: boolean;
@@ -62,6 +63,7 @@ export const ToolbarNotations: React.FC<ToolbarNotationsProps> = ({
   hasSlur = false,
   onToggleSlur,
   onCycleFermata,
+  onToggleHairpin,
   onTogglePhraseMark,
   onClearNotations,
   showNoteNames = false,
@@ -208,6 +210,32 @@ export const ToolbarNotations: React.FC<ToolbarNotationsProps> = ({
       >
         ⌒ {t('notation.slur')}
       </button>
+
+      {/* Crescendo / diminuendo hairpins (M7c-2c) */}
+      {onToggleHairpin && (
+        <>
+          <button
+            type="button"
+            data-testid="btn-crescendo"
+            onClick={handleButtonClick(() => onToggleHairpin('crescendo'))}
+            onMouseDown={(e) => e.preventDefault()}
+            title={t('toolbar.crescendoTitle')}
+            style={MARK_BUTTON_STYLE}
+          >
+            &lt; {t('toolbar.crescendo')}
+          </button>
+          <button
+            type="button"
+            data-testid="btn-diminuendo"
+            onClick={handleButtonClick(() => onToggleHairpin('diminuendo'))}
+            onMouseDown={(e) => e.preventDefault()}
+            title={t('toolbar.diminuendoTitle')}
+            style={MARK_BUTTON_STYLE}
+          >
+            &gt; {t('toolbar.diminuendo')}
+          </button>
+        </>
+      )}
 
       {/* Fermata, breath mark and caesura (M7c-2) */}
       {onCycleFermata && (

@@ -271,6 +271,7 @@ export function useEditor(initialScore?: Score) {
     applyArticulation: notationsHook.applyArticulation,
     applySlur: notationsHook.applySlur,
     applyFermata: notationsHook.applyFermata,
+    applyHairpin: notationsHook.applyHairpin,
     applyPhraseMark: notationsHook.applyPhraseMark,
     clearNotations: notationsHook.clearNotations,
     scoreRef,

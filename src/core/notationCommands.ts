@@ -4,7 +4,7 @@
  */
 
 import { produce } from 'immer';
-import { FermataPlacement, Id, NoteEvent, Pitch, PhraseMark, Score } from './model';
+import { FermataPlacement, HairpinType, Id, NoteEvent, Pitch, PhraseMark, Score } from './model';
 import { Command } from './commandTypes';
 import { newId } from './factory';
 import { eventsInRange, Selection } from './selection';
@@ -304,6 +304,41 @@ export function toggleSlur(selection: Selection): Command {
               }
               return;
             }
+          }
+        }
+      });
+    },
+  };
+}
+
+/**
+ * Toggles a hairpin over the range selection (M7c-2c): none -> this type; same type again removes it;
+ * the other type switches it. Needs a range of at least two events.
+ */
+export function toggleHairpin(selection: Selection, type: HairpinType): Command {
+  return {
+    name: type === 'crescendo' ? 'Toggle Crescendo' : 'Toggle Diminuendo',
+    apply(score: Score): Score {
+      if (selection.kind !== 'range') return score;
+      const targetEvents = eventsInRange(score, selection);
+      if (targetEvents.length < 2) return score;
+      const firstId = targetEvents[0].id;
+      const lastId = targetEvents[targetEvents.length - 1].id;
+
+      return produce(score, (draft) => {
+        for (const part of draft.parts) {
+          for (const staff of part.staves) {
+            if (staff.id !== selection.staffId) continue;
+            if (!staff.hairpins) staff.hairpins = [];
+            const existing = staff.hairpins.findIndex((h) => h.startEventId === firstId && h.endEventId === lastId);
+            if (existing >= 0) {
+              if (staff.hairpins[existing].type === type) staff.hairpins.splice(existing, 1);
+              else staff.hairpins[existing].type = type;
+            } else {
+              staff.hairpins.push({ id: newId(), type, startEventId: firstId, endEventId: lastId });
+            }
+            if (staff.hairpins.length === 0) delete staff.hairpins;
+            return;
           }
         }
       });

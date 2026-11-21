@@ -20,6 +20,7 @@ import {
   layoutDynamics,
   layoutFermatas,
   layoutSlurs,
+  layoutHairpins,
   layoutTuplets,
 } from '../layout/notations';
 import { getGlyphPath, UNITS_PER_EM } from '../render/glyphPaths.generated';
@@ -184,7 +185,10 @@ export const ScoreView: React.FC<ScoreViewProps> = ({
   );
 
   const slurs = useMemo(() => {
-    return layoutSlurs(score, layout, noteheadIndex, articulationItems);
+    return [
+      ...layoutSlurs(score, layout, noteheadIndex, articulationItems),
+      ...layoutHairpins(score, layout, noteheadIndex),
+    ];
   }, [score, layout, noteheadIndex, articulationItems]);
 
   const dynamics = useMemo(() => {

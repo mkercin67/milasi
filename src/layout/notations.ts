@@ -576,6 +576,114 @@ function createSlurCubicPath(
   return `M ${pX1} ${pY1} C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${pX2} ${pY2} C ${cp2x} ${inCp2y}, ${cp1x} ${inCp1y}, ${pX1} ${pY1} Z`;
 }
 
+/** Open width of a hairpin at its wide end, in staff spaces. */
+const HAIRPIN_OPENING = 1.2;
+/** Thickness of each hairpin line, in staff spaces. */
+const HAIRPIN_LINE = 0.13;
+
+/** Two thin filled strips forming a hairpin segment between x1 (width w1) and x2 (width w2). */
+function hairpinSegmentPath(x1: number, w1: number, x2: number, w2: number, y: number): string {
+  const f = (n: number): string => String(Number(n.toFixed(2)));
+  const t = HAIRPIN_LINE / 2;
+  const strip = (ya: number, yb: number): string =>
+    `M ${f(x1)} ${f(ya - t)} L ${f(x2)} ${f(yb - t)} L ${f(x2)} ${f(yb + t)} L ${f(x1)} ${f(ya + t)} Z`;
+  return `${strip(y - w1 / 2, y - w2 / 2)} ${strip(y + w1 / 2, y + w2 / 2)}`;
+}
+
+/**
+ * Baseline of the lowest text (note names, lyrics) under the staff between x1 and x2, or null when the
+ * strip is free. A hairpin is moved below such text.
+ */
+function lowestTextBelowStaff(
+  layout: LayoutResult,
+  systemIndex: number,
+  staffTop: number,
+  x1: number,
+  x2: number
+): number | null {
+  const sys = layout.systems[systemIndex];
+  if (!sys) return null;
+  let lowest: number | null = null;
+  for (const it of sys.items) {
+    if (it.kind !== 'text' || it.hidden) continue;
+    if (it.x < x1 - 1.0 || it.x > x2 + 1.0) continue;
+    if (it.y < staffTop + 4.5 || it.y > staffTop + 14) continue;
+    lowest = lowest === null ? it.y : Math.max(lowest, it.y);
+  }
+  return lowest;
+}
+
+/**
+ * Computes crescendo / diminuendo hairpins (M7c-2c). They sit below the staff on the dynamics line
+ * and are returned in the slur item shape so the existing overlay drawing handles them.
+ * A hairpin that crosses a system break is split; the opening continues across the break.
+ */
+export function layoutHairpins(
+  score: Score,
+  layout: LayoutResult,
+  noteheadIndex?: Map<string, NoteheadInfo>
+): SlurLayoutItem[] {
+  const result: SlurLayoutItem[] = [];
+  const index = noteheadIndex ?? buildNoteheadIndex(layout);
+
+  for (const part of score.parts) {
+    for (const staff of part.staves) {
+      if (!staff.hairpins || staff.hairpins.length === 0) continue;
+      for (const h of staff.hairpins) {
+        const a = index.get(h.startEventId);
+        const b = index.get(h.endEventId);
+        if (!a || !b) continue;
+        const cresc = h.type === 'crescendo';
+        const startX = a.x;
+        const endX = b.x + NOTEHEAD_WIDTH;
+
+        if (a.systemIndex === b.systemIndex) {
+          const text = lowestTextBelowStaff(layout, a.systemIndex, a.staffTop, startX, endX);
+          const y = Math.max(
+            a.staffTop + 6.0,
+            a.bottomY + 2.0,
+            b.bottomY + 2.0,
+            text === null ? 0 : text + 1.2
+          );
+          const d = hairpinSegmentPath(
+            startX,
+            cresc ? 0 : HAIRPIN_OPENING,
+            endX,
+            cresc ? HAIRPIN_OPENING : 0,
+            y
+          );
+          result.push({ id: `hairpin-${h.id}`, slurId: h.id, systemIndex: a.systemIndex, d });
+        } else {
+          const sysA = layout.systems[a.systemIndex];
+          const exitX = (sysA?.width ?? 70) - 1.0;
+          const enterX = 4.0;
+          const l1 = Math.max(0.1, exitX - startX);
+          const l2 = Math.max(0.1, endX - enterX);
+          const frac = l1 / (l1 + l2);
+          const wMid = cresc ? HAIRPIN_OPENING * frac : HAIRPIN_OPENING * (1 - frac);
+          const textA = lowestTextBelowStaff(layout, a.systemIndex, a.staffTop, startX, exitX);
+          const textB = lowestTextBelowStaff(layout, b.systemIndex, b.staffTop, enterX, endX);
+          const yA = Math.max(a.staffTop + 6.0, a.bottomY + 2.0, textA === null ? 0 : textA + 1.2);
+          const yB = Math.max(b.staffTop + 6.0, b.bottomY + 2.0, textB === null ? 0 : textB + 1.2);
+          result.push({
+            id: `hairpin-${h.id}-part1`,
+            slurId: h.id,
+            systemIndex: a.systemIndex,
+            d: hairpinSegmentPath(startX, cresc ? 0 : HAIRPIN_OPENING, exitX, wMid, yA),
+          });
+          result.push({
+            id: `hairpin-${h.id}-part2`,
+            slurId: h.id,
+            systemIndex: b.systemIndex,
+            d: hairpinSegmentPath(enterX, wMid, endX, cresc ? HAIRPIN_OPENING : 0, yB),
+          });
+        }
+      }
+    }
+  }
+  return result;
+}
+
 /**
  * Computes SVG slur paths for all slurs defined on the staff.
  */

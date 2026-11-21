@@ -562,6 +562,44 @@ export function validateScore(score: Score): ValidationProblem[] {
         }
       }
 
+      // Hairpin validation (M7c-2c): both ends exist and the start precedes the end
+      if (staff.hairpins && staff.hairpins.length > 0) {
+        const hOrder = new Map<Id, number>();
+        let hn = 0;
+        for (const mDef of score.measures) {
+          const sm = staff.measures[mDef.id];
+          if (!sm) continue;
+          for (const v of sm.voices) for (const ev of v.events) hOrder.set(ev.id, hn++);
+        }
+        for (const h of staff.hairpins) {
+          const a = hOrder.get(h.startEventId);
+          const b = hOrder.get(h.endEventId);
+          if (h.type !== 'crescendo' && h.type !== 'diminuendo') {
+            problems.push({
+              code: 'invalid-hairpin',
+              message: `Hairpin ${h.id} has unsupported type: ${String(h.type)}`,
+              severity: 'error',
+              staffId: staff.id,
+            });
+          }
+          if (a === undefined || b === undefined) {
+            problems.push({
+              code: 'hairpin-missing-event',
+              message: `Hairpin ${h.id} references a missing start or end event`,
+              severity: 'error',
+              staffId: staff.id,
+            });
+          } else if (a >= b) {
+            problems.push({
+              code: 'hairpin-invalid-order',
+              message: `Hairpin ${h.id} start event must precede its end event`,
+              severity: 'error',
+              staffId: staff.id,
+            });
+          }
+        }
+      }
+
       // Slur validation (Milestone 6b + 7 intra-voice)
       if (staff.slurs && staff.slurs.length > 0) {
         // Build chronological order map and voice index map of event IDs on this staff

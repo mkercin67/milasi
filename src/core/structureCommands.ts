@@ -339,6 +339,9 @@ export function deleteMeasure(index: number): Command {
               if (staff.slurs) {
                 staff.slurs = staff.slurs.filter((sl) => !gone.has(sl.startEventId) && !gone.has(sl.endEventId));
               }
+              if (staff.hairpins) {
+                staff.hairpins = staff.hairpins.filter((h) => !gone.has(h.startEventId) && !gone.has(h.endEventId));
+              }
               for (const id of gone) delete draft.overrides[id];
             }
             delete staff.measures[deletedDef.id];

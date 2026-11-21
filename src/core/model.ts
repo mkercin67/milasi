@@ -105,6 +105,15 @@ export interface Slur {
   placement?: 'above' | 'below';
 }
 
+/** A crescendo or diminuendo hairpin spanning from one event to a later one in the same staff (M7c-2c). */
+export type HairpinType = 'crescendo' | 'diminuendo';
+export interface Hairpin {
+  id: Id;
+  type: HairpinType;
+  startEventId: Id;
+  endEventId: Id;
+}
+
 /** Allowed dynamic markings (Milestone 6b). */
 export type DynamicType = 'pp' | 'p' | 'mp' | 'mf' | 'f' | 'ff' | 'sfz' | 'fp';
 export const ALLOWED_DYNAMICS: ReadonlySet<string> = new Set([
@@ -123,6 +132,7 @@ export interface Staff {
   clef: Clef;
   measures: Record<Id, StaffMeasure>; // Keyed by MeasureDef.id
   slurs?: Slur[];
+  hairpins?: Hairpin[];
 }
 
 /** Staff contents within a specific measure, containing one or more voices. */

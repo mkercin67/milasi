@@ -136,6 +136,11 @@ export function deleteEvent(eventId: Id): Command {
                       (s) => s.startEventId !== eventId && s.endEventId !== eventId
                     );
                   }
+                  if (staff.hairpins) {
+                    staff.hairpins = staff.hairpins.filter(
+                      (h) => h.startEventId !== eventId && h.endEventId !== eventId
+                    );
+                  }
                   break;
                 }
               }
@@ -360,6 +365,11 @@ export function convertToRest(eventId: Id): Command {
                         (s) => s.startEventId !== eventId && s.endEventId !== eventId
                       );
                     }
+                    if (staff.hairpins) {
+                      staff.hairpins = staff.hairpins.filter(
+                        (h) => h.startEventId !== eventId && h.endEventId !== eventId
+                      );
+                    }
                   }
                   return;
                 }
@@ -464,6 +474,11 @@ export function deleteRange(range: RangeSelection): Command {
                 (s) => !targetIds.has(s.startEventId) && !targetIds.has(s.endEventId)
               );
             }
+            if (staff.hairpins) {
+              staff.hairpins = staff.hairpins.filter(
+                (h) => !targetIds.has(h.startEventId) && !targetIds.has(h.endEventId)
+              );
+            }
             for (const mDef of draft.measures) {
               const staffMeasure = staff.measures[mDef.id];
               if (!staffMeasure) continue;
@@ -522,6 +537,11 @@ export function transposeRange(range: RangeSelection, semitones: number): Comman
             if (staff.slurs) {
               staff.slurs = staff.slurs.filter(
                 (s) => !targetIds.has(s.startEventId) && !targetIds.has(s.endEventId)
+              );
+            }
+            if (staff.hairpins) {
+              staff.hairpins = staff.hairpins.filter(
+                (h) => !targetIds.has(h.startEventId) && !targetIds.has(h.endEventId)
               );
             }
             for (const mDef of draft.measures) {

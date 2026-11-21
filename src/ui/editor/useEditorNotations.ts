@@ -3,6 +3,7 @@ import { useCallback } from 'react';
 import {
   ArticulationType,
   DynamicType,
+  HairpinType,
   Score,
   PhraseMark,
   ScoreEvent,
@@ -20,6 +21,7 @@ import {
   toggleArticulation,
   togglePhraseMark,
   toggleSlur,
+  toggleHairpin,
 } from '../../core/commands';
 import { Selection, findEventContext } from '../../core/selection';
 import { ScoreCursor } from '../../core/input';
@@ -89,6 +91,22 @@ export function useEditorNotations({
       triggerRejectedError('Legato bağı için en az iki nota seçmelisiniz (S)');
     }
   }, [executeCommand, triggerRejectedError, selectionRef]);
+
+  const applyHairpin = useCallback(
+    (type: HairpinType) => {
+      const curSel = selectionRef.current;
+      if (curSel.kind === 'range') {
+        try {
+          executeCommand(toggleHairpin(curSel, type));
+        } catch {
+          triggerRejectedError('Çatal eklenemedi');
+        }
+      } else {
+        triggerRejectedError('Çatal için en az iki nota seçmelisiniz');
+      }
+    },
+    [executeCommand, triggerRejectedError, selectionRef]
+  );
 
   const applyFermata = useCallback(() => {
     const target = targetSelection();
@@ -220,6 +238,7 @@ export function useEditorNotations({
     applyDynamic,
     applyArticulation,
     applySlur,
+    applyHairpin,
     applyFermata,
     applyPhraseMark,
     clearNotations,

@@ -132,6 +132,7 @@ const EditorShell: React.FC = () => {
     applyArticulation,
     applySlur,
     applyFermata,
+    applyHairpin,
     applyPhraseMark,
     clearNotations,
   } = useEditor();
@@ -475,6 +476,7 @@ const EditorShell: React.FC = () => {
         hasSlur={selectedEventInfo?.hasSlur}
         onToggleSlur={applySlur}
         onCycleFermata={applyFermata}
+        onToggleHairpin={applyHairpin}
         onTogglePhraseMark={applyPhraseMark}
         onClearNotations={clearNotations}
         onOpenKeySig={modalState.handleOpenKeySigModal}

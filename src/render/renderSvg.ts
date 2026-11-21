@@ -12,7 +12,7 @@
 
 import { LayoutItem, LayoutResult, LayoutSystem } from '../layout/types';
 import { computeLayoutBoundingBox } from '../layout/boundingBox';
-import { layoutArticulations, layoutDynamics, layoutSlurs } from '../layout/notations';
+import { layoutArticulations, layoutDynamics, layoutHairpins, layoutSlurs } from '../layout/notations';
 import { layoutTies } from '../layout/ties';
 import { Score } from '../core/model';
 import { getGlyphChar } from './smufl';
@@ -189,7 +189,7 @@ export function renderSvg(
 
   const score = options.score ?? layout.score;
   const ties = score ? layoutTies(score, layout) : [];
-  const slurs = score ? layoutSlurs(score, layout) : [];
+  const slurs = score ? [...layoutSlurs(score, layout), ...layoutHairpins(score, layout)] : [];
   const dynamics = score ? layoutDynamics(score, layout) : [];
   const articulations = score ? layoutArticulations(score, layout) : [];
 
@@ -516,7 +516,7 @@ export function renderSvgToString(
 
   const score = options.score ?? layout.score;
   const ties = score ? layoutTies(score, layout) : [];
-  const slurs = score ? layoutSlurs(score, layout) : [];
+  const slurs = score ? [...layoutSlurs(score, layout), ...layoutHairpins(score, layout)] : [];
   const dynamics = score ? layoutDynamics(score, layout) : [];
   const articulations = score ? layoutArticulations(score, layout) : [];
 

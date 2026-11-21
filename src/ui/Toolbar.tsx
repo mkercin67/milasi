@@ -5,7 +5,7 @@
  */
 
 import React from 'react';
-import { ArticulationType, BaseDurationType, DynamicType, PhraseMark } from '../core/model';
+import { ArticulationType, BaseDurationType, DynamicType, HairpinType, PhraseMark } from '../core/model';
 import { EditorMode } from './keymap';
 import { ToolbarFileHistory } from './toolbar/ToolbarFileHistory';
 import { ToolbarPlayback } from './toolbar/ToolbarPlayback';
@@ -67,6 +67,7 @@ export interface ToolbarProps {
   hasSlur?: boolean;
   onToggleSlur?: () => void;
   onCycleFermata?: () => void;
+  onToggleHairpin?: (type: HairpinType) => void;
   onTogglePhraseMark?: (mark: PhraseMark) => void;
   onClearNotations?: () => void;
   // M6c Structure Modals
@@ -133,6 +134,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
   hasSlur = false,
   onToggleSlur,
   onCycleFermata,
+  onToggleHairpin,
   onTogglePhraseMark,
   onClearNotations,
   onOpenKeySig,
@@ -251,6 +253,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
           hasSlur={hasSlur}
           onToggleSlur={onToggleSlur}
           onCycleFermata={onCycleFermata}
+          onToggleHairpin={onToggleHairpin}
           onTogglePhraseMark={onTogglePhraseMark}
           onClearNotations={onClearNotations}
           showNoteNames={showNoteNames}
