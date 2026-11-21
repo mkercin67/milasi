@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 /** Save vs Save As semantics of the native file picker path. */
 import { describe, expect, it, vi } from 'vitest';
-import { saveViaNativePicker, type SaveFileHandle } from '../../src/ui/app/useAppStorage';
+import { handleForScore, saveViaNativePicker, type SaveFileHandle } from '../../src/ui/app/useAppStorage';
 
 function makeHandle() {
   const write = vi.fn(async () => undefined);
@@ -46,5 +46,13 @@ describe('Save / Save As', () => {
     expect(r).toEqual({ status: 'aborted', handle: old.handle });
     const u = await saveViaNativePicker(undefined, 'Z', 'a', false, null);
     expect(u.status).toBe('unavailable');
+  });
+
+  it('S5: a remembered file belongs to its score; another score (New/Open) gets no handle', () => {
+    const h = makeHandle();
+    const remembered = { scoreId: 'score-A', handle: h.handle };
+    expect(handleForScore(remembered, 'score-A')).toBe(h.handle);
+    expect(handleForScore(remembered, 'score-B')).toBe(null);
+    expect(handleForScore(null, 'score-A')).toBe(null);
   });
 });

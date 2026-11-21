@@ -45,6 +45,23 @@ async function writeHandle(handle: SaveFileHandle, data: string): Promise<void> 
   await writable.close();
 }
 
+/** A remembered save target together with the score it belongs to. */
+export interface RememberedSaveFile {
+  scoreId: string;
+  handle: SaveFileHandle;
+}
+
+/**
+ * The remembered file may only be rewritten by the score it was chosen for. After "New", "Open" or
+ * a restore the score has another id, so Save opens the picker instead of overwriting the old file.
+ */
+export function handleForScore(
+  remembered: RememberedSaveFile | null,
+  scoreId: string
+): SaveFileHandle | null {
+  return remembered && remembered.scoreId === scoreId ? remembered.handle : null;
+}
+
 /**
  * "Save As" (saveAs = true) always opens the native file picker.
  * Plain "Save" silently rewrites the previously chosen file, and opens the picker only the first time.
@@ -165,7 +182,7 @@ export function useAppStorage({
   }, [statusToast]);
 
   // Handle of the file chosen by "Save As" (or the first native save); plain "Save" rewrites it silently.
-  const fileHandleRef = useRef<SaveFileHandle | null>(null);
+  const fileHandleRef = useRef<RememberedSaveFile | null>(null);
 
   const handleSave = useCallback(
     async (saveAs = false) => {
@@ -181,9 +198,9 @@ export function useAppStorage({
           envelopeJson,
           filename,
           saveAs,
-          fileHandleRef.current
+          handleForScore(fileHandleRef.current, score.id)
         );
-        fileHandleRef.current = result.handle;
+        fileHandleRef.current = result.handle ? { scoreId: score.id, handle: result.handle } : null;
         if (result.status === 'aborted') return;
         if (result.status === 'saved') {
           markClean();

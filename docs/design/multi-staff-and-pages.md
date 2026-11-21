@@ -596,5 +596,5 @@ export interface PageDef {
 2. **Lyric Vertical Clearance:** Minimum vertical clearance between lyric syllable baselines and the top skyline of the next staff down is **strictly $2.5\text{ sp}$**.
 3. **Staff Switching Keymap:** Navigating between staves is permanently assigned to physical `BracketLeft` (staff above) and `BracketRight` (staff below).
 4. **Deferred to Milestone 13+:** Visual page-turn hints on rests are non-binding suggestions and deferred to M13+.
-5. **Backlog — Solfege Option "es" on Rests:** In the `Hecele (Solfej)` command, add an option to insert the syllable `'es'` under rest events.
-6. **Backlog — Stacked Syllables for Chords:** In the `Hecele (Solfej)` command, support multiple vertically stacked syllables for chord pitches (e.g. two pitches create two lyric lines aligned with the chord notes).
+5. **Closed (obsolete) — Solfege "es" on rests:** the `Hecele (Solfej)` command no longer exists. Solfège is now a derived note-name layer (`docs/design/note-name-layer.md`); rests carry no label. Revisit only if a rest label is requested.
+6. **Closed — Stacked syllables for chords:** done by the note-name layer, which lists chord tones bottom to top (`Do/Mi/Sol`) on one line. A true vertical stack stays an optional later refinement.
