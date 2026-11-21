@@ -342,7 +342,7 @@ export const SessionRestoreConfirm: React.FC<SessionRestoreConfirmProps> = ({
                     justifyContent: 'space-between',
                     padding: '6px 8px',
                     borderRadius: '4px',
-                    backgroundColor: idx === 0 ? '#f0fdf4' : '#ffffff',
+                    backgroundColor: String(v.savedAt) === String(restoreData.savedAt) || new Date(v.savedAt).getTime() === restoreData.savedAt ? '#dcfce7' : '#ffffff',
                     borderBottom: idx < historyVersions.length - 1 ? '1px solid #f1f5f9' : 'none',
                     fontSize: '0.825rem',
                   }}
@@ -380,7 +380,7 @@ export const SessionRestoreConfirm: React.FC<SessionRestoreConfirmProps> = ({
                         cursor: 'pointer',
                       }}
                     >
-                      Seç
+                      {new Date(v.savedAt).getTime() === restoreData.savedAt ? 'Seçili ✓' : 'Seç'}
                     </button>
                   )}
                 </div>

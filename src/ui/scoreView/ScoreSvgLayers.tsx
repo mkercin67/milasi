@@ -7,6 +7,7 @@ import { GhostNoteData } from './types';
 import { getGlyphChar } from '../../render/smufl';
 import { BeatGuideData } from './beatGuide';
 import { VOICE_COLORS } from '../voiceColors';
+import { computeSelectionBands } from './selectionBands';
 
 export interface ScoreSvgLayersProps {
   layout: LayoutResult;
@@ -68,21 +69,18 @@ export const ScoreSvgLayers: React.FC<ScoreSvgLayersProps> = React.memo(({
   return (
     <>
       {/* Tinted background band for range selection */}
-      {selectedEventIds && selectedEventIds.size > 0 && layout.systems.map((sys) => {
-        if (!visibleSystemIndices.has(sys.index)) return null;
-        const sysItems = sys.items.filter((it) => it.eventId && selectedEventIds.has(it.eventId));
-        if (sysItems.length === 0) return null;
-        const minX = Math.min(...sysItems.map((it) => it.x)) - 0.4;
-        const maxX = Math.max(...sysItems.map((it) => (it.x2 ?? it.x) + 1.2)) + 0.4;
-        const pxX = minX * staffSpacePx;
-        const pxY = (sys.y - 1.5) * staffSpacePx;
-        const widthPx = Math.max(10, (maxX - minX) * staffSpacePx);
+      {selectedEventIds && selectedEventIds.size > 0 && computeSelectionBands(layout, selectedEventIds, visibleSystemIndices).map((band) => {
+        const sys = layout.systems[band.systemIndex];
+        const pxX = band.minX * staffSpacePx;
+        const pxY = (sys.y + band.staffOffset - 1.5) * staffSpacePx;
+        const widthPx = Math.max(10, (band.maxX - band.minX) * staffSpacePx);
         const heightPx = 7 * staffSpacePx;
         return (
           <rect
-            key={`range-band-sys-${sys.index}`}
+            key={`range-band-sys-${band.systemIndex}-staff-${band.staffIndex}`}
             className="score-range-band notranslate"
             data-testid="range-selection-band"
+            data-staff-index={band.staffIndex}
             x={pxX}
             y={pxY}
             width={widthPx}
