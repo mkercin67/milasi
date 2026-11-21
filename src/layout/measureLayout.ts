@@ -626,6 +626,18 @@ export function layoutSingleMeasure(
               ((p.alter ?? 0) + 2) * 100) |
             0;
         }
+        // Lyrics are laid out inside the measure chunk, so they must be part of the cache key.
+        // Without this, adding/removing syllables kept a stale cached layout until a reload.
+        const lyr = ev.lyrics;
+        if (lyr) {
+          for (let j = 0; j < lyr.length; j++) {
+            eventsHash = (eventsHash * 31 + lyr[j].verse) | 0;
+            const txt = lyr[j].text;
+            for (let k = 0; k < txt.length; k++) {
+              eventsHash = (eventsHash * 31 + txt.charCodeAt(k)) | 0;
+            }
+          }
+        }
       } else {
         eventsHash = (eventsHash * 31 + 7) | 0;
       }
