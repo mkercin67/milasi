@@ -30,7 +30,26 @@ interface NoteheadInfo {
   minY: number;
   maxY: number;
   stemDirection: StemDirection;
+  /** y of the top line of the staff the event sits on (system-relative; 0 for the first staff). */
+  staffTop: number;
+  /** Vertical extent of the event: noteheads, stem and ledger lines (rests: the rest glyph). */
+  topY: number;
+  bottomY: number;
+  /** Right edge of the event (notehead or rest plus augmentation dots). */
+  rightX: number;
+  /** True when the entry describes a rest (no notehead). */
+  isRest?: boolean;
 }
+
+/** Glyph extents (staff spaces, relative to the glyph origin) of rests, measured from Bravura. */
+const REST_EXTENT: Record<string, { top: number; bottom: number; width: number }> = {
+  restWhole: { top: 0, bottom: 0.55, width: 1.13 },
+  restHalf: { top: -0.6, bottom: 0, width: 1.13 },
+  restQuarter: { top: -1.5, bottom: 1.5, width: 1.08 },
+  rest8th: { top: -0.7, bottom: 1.0, width: 1.0 },
+  rest16th: { top: -0.72, bottom: 2.0, width: 1.28 },
+  rest32nd: { top: -1.0, bottom: 3.0, width: 1.5 },
+};
 
 const DYNAMIC_GLYPHS: Record<string, string> = {
   pp: 'dynamicPP',
@@ -71,6 +90,18 @@ export const notationOpCounter: NotationOpCounter = {
 export function buildNoteheadIndex(layout: LayoutResult): Map<string, NoteheadInfo> {
   const map = new Map<string, NoteheadInfo>();
   const firstLineDir = new Map<string, StemDirection>();
+  // Stems, ledger lines and dots may be visited before or after the notehead of their event.
+  const extra = new Map<string, { top: number; bottom: number; right: number }>();
+  const grow = (id: string, top: number, bottom: number, right: number) => {
+    const e = extra.get(id);
+    if (e) {
+      e.top = Math.min(e.top, top);
+      e.bottom = Math.max(e.bottom, bottom);
+      e.right = Math.max(e.right, right);
+    } else {
+      extra.set(id, { top, bottom, right });
+    }
+  };
 
   const systems = layout.systems;
   const sysCount = systems.length;
@@ -80,6 +111,12 @@ export function buildNoteheadIndex(layout: LayoutResult): Map<string, NoteheadIn
     const items = sys.items;
     if (!items) continue;
     const len = items.length;
+    const [baseStaff] = sys.staves ?? [];
+    const staffTopOf = (staffId?: string): number => {
+      if (!staffId || !baseStaff) return 0;
+      const found = sys.staves.find((st) => st.id === staffId);
+      return found ? found.y - baseStaff.y : 0;
+    };
 
     for (let i = 0; i < len; i++) {
       if (notationOpCounter.enabled) notationOpCounter.itemVisits++;
@@ -99,12 +136,38 @@ export function buildNoteheadIndex(layout: LayoutResult): Map<string, NoteheadIn
             minY: it.y,
             maxY: it.y,
             stemDirection: dir ?? (it.y >= 2.0 ? 'up' : 'down'),
+            staffTop: staffTopOf(it.staffId),
+            topY: it.y - 0.5,
+            bottomY: it.y + 0.5,
+            rightX: it.x + NOTEHEAD_WIDTH,
           });
         } else {
           if (it.y < entry.minY) entry.minY = it.y;
           if (it.y > entry.maxY) entry.maxY = it.y;
         }
+        grow(evId, it.y - 0.5, it.y + 0.5, it.x + NOTEHEAD_WIDTH);
+      } else if (it.kind === 'glyph' && it.glyph && REST_EXTENT[it.glyph]) {
+        const r = REST_EXTENT[it.glyph];
+        if (!map.has(evId)) {
+          map.set(evId, {
+            eventId: evId,
+            systemIndex: sysIdx,
+            x: it.x,
+            y: it.y,
+            minY: it.y,
+            maxY: it.y,
+            stemDirection: 'up',
+            staffTop: staffTopOf(it.staffId),
+            topY: it.y + r.top,
+            bottomY: it.y + r.bottom,
+            rightX: it.x + r.width,
+            isRest: true,
+          });
+        }
+      } else if (it.kind === 'glyph' && it.glyph === 'augmentationDot') {
+        grow(evId, it.y - 0.2, it.y + 0.2, it.x + 0.4);
       } else if (it.kind === 'line') {
+        grow(evId, Math.min(it.y, it.y2 ?? it.y), Math.max(it.y, it.y2 ?? it.y), it.x2 ?? it.x);
         if (!firstLineDir.has(evId)) {
           const dir: StemDirection = it.y2 !== undefined && it.y2 < it.y ? 'up' : 'down';
           firstLineDir.set(evId, dir);
@@ -115,6 +178,13 @@ export function buildNoteheadIndex(layout: LayoutResult): Map<string, NoteheadIn
         }
       }
     }
+  }
+  for (const [id, e] of extra) {
+    const entry = map.get(id);
+    if (!entry) continue;
+    entry.topY = Math.min(entry.topY, e.top);
+    entry.bottomY = Math.max(entry.bottomY, e.bottom);
+    entry.rightX = Math.max(entry.rightX, e.right);
   }
   return map;
 }
@@ -154,6 +224,10 @@ export function getNoteheadInfo(
         minY,
         maxY,
         stemDirection,
+        staffTop: 0,
+        topY: minY - 0.5,
+        bottomY: maxY + 0.5,
+        rightX: firstNh.x + NOTEHEAD_WIDTH,
       };
     }
   }
@@ -198,7 +272,7 @@ export function layoutDynamics(
 
               // Default placement below staff (staff lines 0..4, so bottom + 2.5 = 6.5)
               const posX = nh.x + NOTEHEAD_WIDTH / 2 - 0.75 + dx;
-              const posY = 6.5 + dy;
+              const posY = nh.staffTop + 6.5 + dy;
 
               items.push({
                 id: `${ev.id}-dynamic`,
@@ -217,6 +291,72 @@ export function layoutDynamics(
     }
   }
 
+  return items;
+}
+
+/** Fermata glyph is 2.43 sp wide (Bravura 608 units at 250 units per space). */
+const FERMATA_WIDTH = 2.43;
+/** Distance between an event (or the staff) and a fermata or phrase mark, in staff spaces. */
+const FERMATA_GAP = 1.0;
+const PHRASE_MARK_GAP = 0.9;
+const PHRASE_MARK_Y = -0.5;
+
+/**
+ * Computes layout items for fermatas, breath marks and caesuras (M7c-2).
+ * Fermatas sit outside the staff and clear of stems; breath marks and caesuras sit above the staff, right of the event.
+ */
+export function layoutFermatas(
+  score: Score,
+  layout: LayoutResult,
+  noteheadIndex?: Map<string, NoteheadInfo>
+): LayoutItem[] {
+  const items: LayoutItem[] = [];
+  const index = noteheadIndex ?? buildNoteheadIndex(layout);
+  for (const part of score.parts) {
+    for (const staff of part.staves) {
+      for (const mDef of score.measures) {
+        const sm = staff.measures[mDef.id];
+        if (!sm) continue;
+        for (const v of sm.voices) {
+          for (const ev of v.events) {
+            if (ev.kind !== 'note' && ev.kind !== 'rest') continue;
+            if (!ev.fermata && !ev.phraseMark) continue;
+            const nh = index.get(ev.id);
+            if (!nh) continue;
+            if (ev.fermata) {
+              const centre = nh.x + (nh.rightX - nh.x) / 2;
+              const above = ev.fermata === 'above';
+              const y = above
+                ? Math.min(nh.staffTop - FERMATA_GAP, nh.topY - FERMATA_GAP)
+                : Math.max(nh.staffTop + 4 + FERMATA_GAP, nh.bottomY + FERMATA_GAP);
+              items.push({
+                id: `${ev.id}-fermata`,
+                eventId: ev.id,
+                systemIndex: nh.systemIndex,
+                kind: 'glyph',
+                glyph: above ? 'fermataAbove' : 'fermataBelow',
+                type: 'fermata',
+                x: Number((centre - FERMATA_WIDTH / 2).toFixed(2)),
+                y: Number(y.toFixed(2)),
+              });
+            }
+            if (ev.phraseMark) {
+              items.push({
+                id: `${ev.id}-phrase`,
+                eventId: ev.id,
+                systemIndex: nh.systemIndex,
+                kind: 'glyph',
+                glyph: ev.phraseMark === 'breath' ? 'breathMarkComma' : 'caesura',
+                type: ev.phraseMark,
+                x: Number((nh.rightX + PHRASE_MARK_GAP).toFixed(2)),
+                y: Number((nh.staffTop + PHRASE_MARK_Y).toFixed(2)),
+              });
+            }
+          }
+        }
+      }
+    }
+  }
   return items;
 }
 

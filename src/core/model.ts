@@ -143,9 +143,19 @@ export type ScoreEvent = NoteEvent | RestEvent;
 /** Supported fundamental duration types. */
 export type BaseDurationType = 'whole' | 'half' | 'quarter' | 'eighth' | '16th' | '32nd';
 
+/** Fermata placement relative to the event. */
+export type FermataPlacement = 'above' | 'below';
+
+/** Mark drawn after an event: breath mark (comma) or caesura. */
+export type PhraseMark = 'breath' | 'caesura';
+
 /** Base attributes shared by notes and rests. */
 export interface BaseEvent {
   id: Id;
+  /** Fermata on this event (M7c-2); drawn above or below, ignored by playback. */
+  fermata?: FermataPlacement;
+  /** Breath mark or caesura drawn after this event (M7c-2); ignored by playback. */
+  phraseMark?: PhraseMark;
   duration: number; // Duration in ticks, scaled by dots and tuplets
   baseType: BaseDurationType;
   dots: number;

@@ -29,6 +29,8 @@ export type UserAction =
   | 'delete-measure'
   | 'toggle-tie'
   | 'toggle-slur'
+  | 'cycle-fermata'
+  | 'toggle-breath-mark'
   | 'toggle-lyrics-mode'
   | 'lyrics-next-note'
   | 'lyrics-prev-note'
@@ -289,6 +291,11 @@ export function mapKeyEvent(
     return 'toggle-dot';
   }
 
+  // Fermata (H) and breath mark (Shift+H): same in select, position and input modes (M7c-2)
+  if (e.code === 'KeyH' && !isAlt) {
+    return isShift ? 'toggle-breath-mark' : 'cycle-fermata';
+  }
+
   // POSITION MODE
   if (mode === 'position') {
     // Arrow nudging: 0.25 normal, 1.0 with Shift
@@ -542,6 +549,8 @@ export function getCompleteKeyTable(): KeyTableEntry[] {
     { key: 'K', code: 'KeyK', modifiers: 'none', mode: 'select', action: 'toggle-articulation: tenuto' },
     { key: 'L', code: 'KeyL', modifiers: 'none', mode: 'select', action: 'toggle-articulation: accent' },
     { key: 'L', code: 'KeyL', modifiers: 'Shift', mode: 'select', action: 'toggle-articulation: marcato' },
+    { key: 'H', code: 'KeyH', modifiers: 'none', mode: 'select', action: 'cycle-fermata' },
+    { key: 'H', code: 'KeyH', modifiers: 'Shift', mode: 'select', action: 'toggle-breath-mark' },
 
     // Position mode shortcuts
     { key: 'Left', code: 'ArrowLeft', modifiers: 'none', mode: 'position', action: 'nudge dx: -0.25' },
@@ -561,6 +570,8 @@ export function getCompleteKeyTable(): KeyTableEntry[] {
     { key: 'K', code: 'KeyK', modifiers: 'none', mode: 'position', action: 'toggle-articulation: tenuto' },
     { key: 'L', code: 'KeyL', modifiers: 'none', mode: 'position', action: 'toggle-articulation: accent' },
     { key: 'L', code: 'KeyL', modifiers: 'Shift', mode: 'position', action: 'toggle-articulation: marcato' },
+    { key: 'H', code: 'KeyH', modifiers: 'none', mode: 'position', action: 'cycle-fermata' },
+    { key: 'H', code: 'KeyH', modifiers: 'Shift', mode: 'position', action: 'toggle-breath-mark' },
 
     // Dynamics across Select, Position, and Input modes
     ...(['select', 'position', 'input'] as const).flatMap((m) =>
@@ -596,6 +607,8 @@ export function getCompleteKeyTable(): KeyTableEntry[] {
     { key: 'K', code: 'KeyK', modifiers: 'none', mode: 'input', action: 'toggle-articulation: tenuto' },
     { key: 'L', code: 'KeyL', modifiers: 'none', mode: 'input', action: 'toggle-articulation: accent' },
     { key: 'L', code: 'KeyL', modifiers: 'Shift', mode: 'input', action: 'toggle-articulation: marcato' },
+    { key: 'H', code: 'KeyH', modifiers: 'none', mode: 'input', action: 'cycle-fermata' },
+    { key: 'H', code: 'KeyH', modifiers: 'Shift', mode: 'input', action: 'toggle-breath-mark' },
 
     // Duration Digits (Select & Input)
     { key: '2', code: 'Digit2', modifiers: 'none', mode: 'select', action: 'set-duration: 32nd' },

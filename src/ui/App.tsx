@@ -129,6 +129,8 @@ const EditorShell: React.FC = () => {
     applyDynamic,
     applyArticulation,
     applySlur,
+    applyFermata,
+    applyPhraseMark,
     clearNotations,
   } = useEditor();
 
@@ -288,6 +290,8 @@ const EditorShell: React.FC = () => {
     resetAccidentalSelection,
     toggleTieSelection,
     applySlur,
+    applyFermata,
+    applyPhraseMark,
     clearNotations,
     moveCursorDirection,
     moveCursorToBoundary,
@@ -464,6 +468,8 @@ const EditorShell: React.FC = () => {
         onToggleTie={toggleTieSelection}
         hasSlur={selectedEventInfo?.hasSlur}
         onToggleSlur={applySlur}
+        onCycleFermata={applyFermata}
+        onTogglePhraseMark={applyPhraseMark}
         onClearNotations={clearNotations}
         onOpenKeySig={modalState.handleOpenKeySigModal}
         onOpenTimeSig={modalState.handleOpenTimeSigModal}

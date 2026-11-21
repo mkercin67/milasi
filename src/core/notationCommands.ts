@@ -4,7 +4,7 @@
  */
 
 import { produce } from 'immer';
-import { Id, NoteEvent, Pitch, Score } from './model';
+import { FermataPlacement, Id, NoteEvent, Pitch, PhraseMark, Score } from './model';
 import { Command } from './commandTypes';
 import { newId } from './factory';
 import { eventsInRange, Selection } from './selection';
@@ -303,6 +303,111 @@ export function toggleSlur(selection: Selection): Command {
                 });
               }
               return;
+            }
+          }
+        }
+      });
+    },
+  };
+}
+
+/** Next state of the fermata cycle: none, above, below, none. */
+function nextFermata(current: FermataPlacement | undefined): FermataPlacement | undefined {
+  if (current === undefined) return 'above';
+  if (current === 'above') return 'below';
+  return undefined;
+}
+
+/**
+ * Cycles the fermata of the selected notes and rests: none, above, below, none (M7c-2).
+ * The next state is taken from the first selected event, so a mixed selection ends up uniform.
+ */
+export function cycleFermata(target: string | Selection): Command {
+  return {
+    name: 'Cycle Fermata',
+    apply(score: Score): Score {
+      const targetIds = getTargetEventIds(score, target);
+      if (targetIds.length === 0) return score;
+      const idSet = new Set(targetIds);
+
+      let next: FermataPlacement | undefined;
+      let decided = false;
+      for (const part of score.parts) {
+        for (const staff of part.staves) {
+          for (const sm of Object.values(staff.measures)) {
+            for (const v of sm.voices) {
+              for (const ev of v.events) {
+                if (!decided && idSet.has(ev.id)) {
+                  next = nextFermata(ev.fermata);
+                  decided = true;
+                }
+              }
+            }
+          }
+        }
+      }
+      if (!decided) return score;
+
+      return produce(score, (draft) => {
+        for (const part of draft.parts) {
+          for (const staff of part.staves) {
+            for (const sm of Object.values(staff.measures)) {
+              for (const v of sm.voices) {
+                for (const ev of v.events) {
+                  if (!idSet.has(ev.id)) continue;
+                  if (next) ev.fermata = next;
+                  else delete ev.fermata;
+                }
+              }
+            }
+          }
+        }
+      });
+    },
+  };
+}
+
+/**
+ * Sets a breath mark or caesura after the selected events, or removes it when every selected
+ * event already carries that mark (M7c-2).
+ */
+export function togglePhraseMark(target: string | Selection, mark: PhraseMark): Command {
+  return {
+    name: `Toggle ${mark}`,
+    apply(score: Score): Score {
+      const targetIds = getTargetEventIds(score, target);
+      if (targetIds.length === 0) return score;
+      const idSet = new Set(targetIds);
+
+      let found = 0;
+      let carrying = 0;
+      for (const part of score.parts) {
+        for (const staff of part.staves) {
+          for (const sm of Object.values(staff.measures)) {
+            for (const v of sm.voices) {
+              for (const ev of v.events) {
+                if (!idSet.has(ev.id)) continue;
+                found++;
+                if (ev.phraseMark === mark) carrying++;
+              }
+            }
+          }
+        }
+      }
+      if (found === 0) return score;
+      const remove = carrying === found;
+
+      return produce(score, (draft) => {
+        for (const part of draft.parts) {
+          for (const staff of part.staves) {
+            for (const sm of Object.values(staff.measures)) {
+              for (const v of sm.voices) {
+                for (const ev of v.events) {
+                  if (!idSet.has(ev.id)) continue;
+                  if (remove) delete ev.phraseMark;
+                  else ev.phraseMark = mark;
+                }
+              }
             }
           }
         }

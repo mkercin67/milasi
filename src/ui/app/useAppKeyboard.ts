@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import { useEffect } from 'react';
-import { ArticulationType, DynamicType, Pitch, PitchStep, Score, ScoreEvent } from '../../core/model';
+import { ArticulationType, DynamicType, PhraseMark, Pitch, PitchStep, Score, ScoreEvent } from '../../core/model';
 import { Command, convertToRest, transposeEvent } from '../../core/commands';
 import { Player, PreviewPlayer } from '../../playback';
 import { EditorMode, mapKeyEvent } from '../keymap';
@@ -50,6 +50,8 @@ export interface UseAppKeyboardParams {
   resetAccidentalSelection: () => void;
   toggleTieSelection: () => void;
   applySlur: () => void;
+  applyFermata: () => void;
+  applyPhraseMark: (mark: PhraseMark) => void;
   clearNotations: () => void;
   moveCursorDirection: (direction: 'prev' | 'next') => void;
   moveCursorToBoundary?: (boundary: 'start' | 'end') => void;
@@ -129,6 +131,8 @@ export function useAppKeyboard(params: UseAppKeyboardParams) {
     resetAccidentalSelection,
     toggleTieSelection,
     applySlur,
+    applyFermata,
+    applyPhraseMark,
     clearNotations,
     moveCursorDirection,
     moveCursorToBoundary,
@@ -354,6 +358,12 @@ export function useAppKeyboard(params: UseAppKeyboardParams) {
           case 'toggle-slur':
             applySlur();
             recordSample('Shift+S');
+            break;
+          case 'cycle-fermata':
+            applyFermata();
+            break;
+          case 'toggle-breath-mark':
+            applyPhraseMark('breath');
             break;
           case 'clear-notations':
             clearNotations();
@@ -595,6 +605,8 @@ export function useAppKeyboard(params: UseAppKeyboardParams) {
     resetAccidentalSelection,
     toggleTieSelection,
     applySlur,
+    applyFermata,
+    applyPhraseMark,
     clearNotations,
     moveCursorDirection,
     moveCursorToBoundary,

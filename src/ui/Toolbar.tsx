@@ -5,7 +5,7 @@
  */
 
 import React from 'react';
-import { ArticulationType, BaseDurationType, DynamicType } from '../core/model';
+import { ArticulationType, BaseDurationType, DynamicType, PhraseMark } from '../core/model';
 import { EditorMode } from './keymap';
 import { ToolbarFileHistory } from './toolbar/ToolbarFileHistory';
 import { ToolbarPlayback } from './toolbar/ToolbarPlayback';
@@ -64,6 +64,8 @@ export interface ToolbarProps {
   onToggleTie?: () => void;
   hasSlur?: boolean;
   onToggleSlur?: () => void;
+  onCycleFermata?: () => void;
+  onTogglePhraseMark?: (mark: PhraseMark) => void;
   onClearNotations?: () => void;
   // M6c Structure Modals
   onOpenKeySig?: () => void;
@@ -126,6 +128,8 @@ export const Toolbar: React.FC<ToolbarProps> = ({
   onToggleTie,
   hasSlur = false,
   onToggleSlur,
+  onCycleFermata,
+  onTogglePhraseMark,
   onClearNotations,
   onOpenKeySig,
   onOpenTimeSig,
@@ -240,6 +244,8 @@ export const Toolbar: React.FC<ToolbarProps> = ({
           onToggleTie={onToggleTie}
           hasSlur={hasSlur}
           onToggleSlur={onToggleSlur}
+          onCycleFermata={onCycleFermata}
+          onTogglePhraseMark={onTogglePhraseMark}
           onClearNotations={onClearNotations}
           showNoteNames={showNoteNames}
           onToggleNoteNames={onToggleNoteNames}

@@ -267,6 +267,8 @@ export function useEditor(initialScore?: Score) {
     applyDynamic: notationsHook.applyDynamic,
     applyArticulation: notationsHook.applyArticulation,
     applySlur: notationsHook.applySlur,
+    applyFermata: notationsHook.applyFermata,
+    applyPhraseMark: notationsHook.applyPhraseMark,
     clearNotations: notationsHook.clearNotations,
     scoreRef,
     editorStateRef,

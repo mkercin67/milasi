@@ -262,5 +262,13 @@
     "testFile": "tests/layout/time_sig_symbols.test.ts",
     "testName": "T2: 4/4 with display common draws the C sign once and no digits",
     "status": "DONE"
+  },
+  {
+    "planItemId": "B25",
+    "description": "M7c-2 fermata, breath mark and caesura: optional event fields, drawn by the notation layer outside the staff clear of stems, on notes and rests, on every staff of a grand staff, ignored by playback; H and Shift+H shortcuts, toolbar buttons. Also fixes dynamics on the lower staff.",
+    "codeLocation": "src/layout/notations.ts:layoutFermatas",
+    "testFile": "tests/layout/fermata_marks.test.ts",
+    "testName": "F3: second press puts the fermata below the staff, never inside it",
+    "status": "DONE"
   }
 ]

@@ -103,6 +103,7 @@ Activated via \`KeyU\`. Syllable entry and melisma extender input aligned to not
 
 - **Tie (Bağ):** \`KeyT\` (Select and Position modes)
 - **Slur (Legato bağı):** \`KeyS\` (Select and Position modes)
+- **Fermata:** \`KeyH\` cycles none, above, below (all modes); **Breath mark:** \`Shift+KeyH\`
 - **Articulations:**
   - Staccato: \`KeyJ\`
   - Tenuto: \`KeyK\`
