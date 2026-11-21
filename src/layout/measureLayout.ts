@@ -125,6 +125,11 @@ function layoutPolyphonicEvents(
   let alignShift = 0;
   const eventAnchors = new Map<string, number>();
   const polyLabels: Array<{ item: LayoutItem; k: number }> = [];
+  // Verse-1 lyrics per voice (drawn on their own line per voice, stacked in voice order).
+  const polyLyrics = new Map<
+    number,
+    { entries: LyricLayoutEntry[]; positions: Array<{ evId: string; noteheadRightX: number }> }
+  >();
   const fullTicks = (mDef.timeSig.num * 4 * PPQ) / mDef.timeSig.den;
   const pickupOffset =
     mDef.actualTicks && mDef.actualTicks < fullTicks ? fullTicks - mDef.actualTicks : 0;
@@ -222,7 +227,19 @@ function layoutPolyphonicEvents(
       }
     }
     const widestLabel = colLabels.reduce((w, l) => Math.max(w, labelWidth(l.text)), 0);
-    const colWidth = Math.max(3.5 + durationFactor * 2.0, 3.5, widestLabel > 0 ? widestLabel + 1.2 : 0);
+    let widestLyric = 0;
+    for (const e of colEntries) {
+      if (e.event.kind === 'note') {
+        const v1 = e.event.lyrics?.find((l) => l.verse === 1);
+        if (v1 && v1.text) widestLyric = Math.max(widestLyric, v1.text.length * 0.72);
+      }
+    }
+    const colWidth = Math.max(
+      3.5 + durationFactor * 2.0,
+      3.5,
+      widestLabel > 0 ? widestLabel + 1.2 : 0,
+      widestLyric > 0 ? widestLyric + 1.8 : 0
+    );
 
     // Check accidentals in this column (Rule RH)
     let hasAccidental = false;
@@ -256,6 +273,28 @@ function layoutPolyphonicEvents(
     const colCenterX = relX + 0.8 + firstEventPadding;
     columnsOut.set(tickKey, colCenterX);
     for (const e of colEntries) eventAnchors.set(e.event.id, colCenterX);
+    for (const e of [...colEntries].sort((a, b) => a.voiceIndex - b.voiceIndex)) {
+      if (e.event.kind !== 'note') continue;
+      const v1 = e.event.lyrics?.find((l) => l.verse === 1);
+      if (!v1 || !v1.text) continue;
+      const voiceEvents = staffMeasure.voices.find((v) => v.voiceIndex === e.voiceIndex)?.events ?? [];
+      const raw = v1.text;
+      let bucket = polyLyrics.get(e.voiceIndex);
+      if (!bucket) {
+        bucket = { entries: [], positions: [] };
+        polyLyrics.set(e.voiceIndex, bucket);
+      }
+      bucket.entries.push({
+        ev: e.event,
+        eIdx: voiceEvents.indexOf(e.event),
+        lyricX: colCenterX + NOTEHEAD_WIDTH / 2,
+        lyricY: 6.8,
+        displayText: raw.replace(/[-_]+$/, ''),
+        hasHyphen: raw.endsWith('-'),
+        hasExtender: raw.endsWith('_') || raw === '_',
+      });
+      bucket.positions.push({ evId: e.event.id, noteheadRightX: colCenterX + NOTEHEAD_WIDTH });
+    }
     colLabels.forEach((l, k) => {
       const labelItem: LayoutItem = {
         id: `note-name-${l.ev.id}`,
@@ -637,9 +676,30 @@ function layoutPolyphonicEvents(
   }
 
   applyEventAnchors(measureItems, eventAnchors);
+  let lyricBase = 6.8;
   if (polyLabels.length > 0) {
     const base = noteLabelBaseline(measureItems);
-    for (const { item, k } of polyLabels) item.y = base + k * NOTE_LABEL_STEP;
+    let stack = 0;
+    for (const { item, k } of polyLabels) {
+      item.y = base + k * NOTE_LABEL_STEP;
+      stack = Math.max(stack, k + 1);
+    }
+    lyricBase = base + stack * NOTE_LABEL_STEP + 0.2;
+  }
+  // Lyrics: one line per voice that has verse-1 text, below the note names, in voice order.
+  let lyricLine = 0;
+  for (const vIdx of [...polyLyrics.keys()].sort((a, b) => a - b)) {
+    const bucket = polyLyrics.get(vIdx)!;
+    const voiceEvents = staffMeasure.voices.find((v) => v.voiceIndex === vIdx)?.events ?? [];
+    for (const entry of bucket.entries) entry.lyricY = lyricBase + lyricLine * NOTE_LABEL_STEP;
+    layoutMeasureLyrics(
+      bucket.entries,
+      voiceEvents,
+      bucket.positions,
+      relX + 0.6,
+      measureItems
+    );
+    lyricLine++;
   }
   return relX;
 }
