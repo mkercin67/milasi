@@ -115,6 +115,7 @@ Activated via `KeyN`. Enter pitches, rests, and note durations.
 | `L` | `KeyL` | - | toggle-articulation: accent |
 | `L` | `KeyL` | `Shift` | toggle-articulation: marcato |
 | `H` | `KeyH` | - | cycle-fermata |
+| `Q` | `KeyQ` | - | toggle-triplet |
 | `H` | `KeyH` | `Shift` | toggle-breath-mark |
 | `2` | `Digit2` | - | set-duration: 32nd |
 | `3` | `Digit3` | - | set-duration: 16th |
@@ -192,6 +193,7 @@ Activated via `KeyU`. Syllable entry and melisma extender input aligned to noteh
 - **Tie (Bağ):** `KeyT` (Select and Position modes)
 - **Slur (Legato bağı):** `KeyS` (Select and Position modes)
 - **Fermata:** `KeyH` cycles none, above, below (all modes); **Breath mark:** `Shift+KeyH`
+- **Triplet entry (input mode):** `KeyQ` toggles; the next entry makes three notes in the time of two
 - **Articulations:**
   - Staccato: `KeyJ`
   - Tenuto: `KeyK`

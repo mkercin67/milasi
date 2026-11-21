@@ -8,7 +8,7 @@
 
 import { ALLOWED_ARTICULATIONS, ALLOWED_DYNAMICS, Id, MeasureDef, NoteEvent, Pitch, Score } from './model';
 import { isPercussionInstrument } from './instruments';
-import { measureTicks } from './time';
+import { durationTicks, measureTicks } from './time';
 
 /** Severity level of a validation problem. */
 export type ProblemSeverity = 'error' | 'warning';
@@ -23,6 +23,69 @@ export interface ValidationProblem {
   measureId?: Id;
   voiceId?: Id;
   eventId?: Id;
+}
+
+/**
+ * Tuplet rules (M7c-2b): a sane ratio, a duration that matches value and ratio, and complete groups.
+ * A run of events with the same ratio and value must be a multiple of `actual` events long.
+ */
+function tupletProblems(
+  voice: { id: Id; events: Array<{ id: Id; duration: number; baseType: string; dots: number; tuplet?: { actual: number; normal: number } }> },
+  partId: Id,
+  staffId: Id,
+  measureId: Id
+): ValidationProblem[] {
+  const out: ValidationProblem[] = [];
+  const base = { partId, staffId, measureId, voiceId: voice.id };
+  let runKey = '';
+  let runLen = 0;
+  let runActual = 0;
+  let runLastId: Id = '';
+  const closeRun = () => {
+    if (runLen > 0 && runLen % runActual !== 0) {
+      out.push({
+        code: 'incomplete-tuplet',
+        message: `A tuplet group of ${runActual} is incomplete (${runLen} events)`,
+        severity: 'warning',
+        ...base,
+        eventId: runLastId,
+      });
+    }
+    runKey = '';
+    runLen = 0;
+  };
+  for (const ev of voice.events) {
+    const tp = ev.tuplet;
+    if (!tp) {
+      closeRun();
+      continue;
+    }
+    const sane =
+      Number.isInteger(tp.actual) && Number.isInteger(tp.normal) && tp.actual >= 2 && tp.normal >= 1 && tp.actual !== tp.normal;
+    if (!sane) {
+      out.push({ code: 'invalid-tuplet', message: `Event ${ev.id} has an invalid tuplet ratio`, severity: 'error', ...base, eventId: ev.id });
+      closeRun();
+      continue;
+    }
+    const expected = durationTicks(ev.baseType as never, ev.dots, tp);
+    if (expected !== ev.duration) {
+      out.push({
+        code: 'tuplet-duration-mismatch',
+        message: `Event ${ev.id} lasts ${ev.duration} ticks, a ${tp.actual}:${tp.normal} tuplet ${ev.baseType} lasts ${expected}`,
+        severity: 'error',
+        ...base,
+        eventId: ev.id,
+      });
+    }
+    const key = `${tp.actual}:${tp.normal}:${ev.baseType}:${ev.dots}`;
+    if (key !== runKey) closeRun();
+    runKey = key;
+    runActual = tp.actual;
+    runLen++;
+    runLastId = ev.id;
+  }
+  closeRun();
+  return out;
 }
 
 export let validateRunCounter = 0;
@@ -275,6 +338,7 @@ export function validateScore(score: Score): ValidationProblem[] {
 
         for (const voice of staffMeasure.voices) {
           let voiceTicks = 0;
+          problems.push(...tupletProblems(voice, part.id, staff.id, measureId));
 
           for (const ev of voice.events) {
             voiceTicks += ev.duration;

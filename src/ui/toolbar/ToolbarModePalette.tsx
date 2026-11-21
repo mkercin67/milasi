@@ -11,6 +11,8 @@ export interface ToolbarModePaletteProps {
   onChangeDuration: (d: BaseDurationType) => void;
   activeDots: number;
   onToggleDot: () => void;
+  activeTriplet?: boolean;
+  onToggleTriplet?: () => void;
   isRestSelected: boolean;
   onToggleRest: () => void;
   handleButtonClick: (cb: () => void) => (e: React.MouseEvent<HTMLButtonElement>) => void;
@@ -39,6 +41,8 @@ export const ToolbarModePalette: React.FC<ToolbarModePaletteProps> = ({
   onChangeDuration,
   activeDots,
   onToggleDot,
+  activeTriplet = false,
+  onToggleTriplet,
   isRestSelected,
   onToggleRest,
   handleButtonClick,
@@ -160,6 +164,36 @@ export const ToolbarModePalette: React.FC<ToolbarModePaletteProps> = ({
         >
           •
         </button>
+
+        {/* Triplet toggle (M7c-2b): the next entry makes three notes in the time of two */}
+        {onToggleTriplet && (
+          <button
+            type="button"
+            data-testid="btn-triplet"
+            aria-pressed={activeTriplet}
+            onClick={handleButtonClick(onToggleTriplet)}
+            onMouseDown={(e) => e.preventDefault()}
+            title={t('palette.triplet')}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: '30px',
+              height: '30px',
+              fontSize: '1.05rem',
+              fontStyle: 'italic',
+              lineHeight: 1,
+              backgroundColor: activeTriplet ? '#dbeafe' : 'transparent',
+              color: activeTriplet ? '#1d4ed8' : '#334155',
+              border: activeTriplet ? '1px solid #93c5fd' : '1px solid transparent',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontWeight: 700,
+            }}
+          >
+            3
+          </button>
+        )}
 
         {/* Rest toggle button */}
         <button

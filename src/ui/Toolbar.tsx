@@ -36,6 +36,8 @@ export interface ToolbarProps {
   onChangeDuration: (d: BaseDurationType) => void;
   activeDots: number;
   onToggleDot: () => void;
+  activeTriplet?: boolean;
+  onToggleTriplet?: () => void;
   isRestSelected: boolean;
   onToggleRest: () => void;
   // Multi-voice selector (M7a-4)
@@ -103,6 +105,8 @@ export const Toolbar: React.FC<ToolbarProps> = ({
   onChangeDuration,
   activeDots,
   onToggleDot,
+  activeTriplet = false,
+  onToggleTriplet,
   isRestSelected,
   onToggleRest,
   activeVoiceIndex = 1,
@@ -222,6 +226,8 @@ export const Toolbar: React.FC<ToolbarProps> = ({
           onChangeDuration={onChangeDuration}
           activeDots={activeDots}
           onToggleDot={onToggleDot}
+          activeTriplet={activeTriplet}
+          onToggleTriplet={onToggleTriplet}
           isRestSelected={isRestSelected}
           onToggleRest={onToggleRest}
           handleButtonClick={handleButtonClick}

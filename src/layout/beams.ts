@@ -142,6 +142,10 @@ export function groupBeams(
     if (currentIds.length > 0 && (eventBeat !== currentBeat || tupletKey !== currentTupletKey)) {
       flushGroup();
     }
+    // A tuplet group is one beam group of `actual` notes (two sixteenth triplets in a beat are two groups)
+    if (ev.tuplet && currentIds.length >= ev.tuplet.actual) {
+      flushGroup();
+    }
 
     if (currentIds.length === 0) {
       currentBeat = eventBeat;

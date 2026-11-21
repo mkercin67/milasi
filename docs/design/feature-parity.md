@@ -10,7 +10,7 @@ motivated the row, so priorities follow use, not feature lists.
 | Feature | Status | Needed by |
 |---|---|---|
 | Notes, rests, dots, ties, chords, beams, beam grouping | DONE | all |
-| Tuplets (triplets and others) | PARTIAL: `tuplet` field exists in the model; check entry, display and brackets before relying on it | Barge BWV 1030 (expected), student exercises |
+| Tuplets: triplet entry, number, beaming | DONE v1 (M7c-2b); bracket, other ratios and unequal groups are GAPs | Barge BWV 1030 m. 2 |
 | Grace notes (appoggiatura, acciaccatura) | PLANNED M7c-3b | Baroque flute and keyboard |
 | Pickup (anacrusis) measure | DONE | BWV 1030 |
 | Multi-measure rests | GAP | orchestral parts, flute parts |

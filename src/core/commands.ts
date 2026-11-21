@@ -105,7 +105,20 @@ export function deleteEvent(eventId: Id): Command {
               for (const voice of staffMeasure.voices) {
                 const idx = voice.events.findIndex((ev: ScoreEvent) => ev.id === eventId);
                 if (idx !== -1) {
-                  voice.events.splice(idx, 1);
+                  const target = voice.events[idx];
+                  if (target.tuplet) {
+                    // Tuplet slot: replace by a rest of the same slot instead of removing it,
+                    // otherwise the group would lose a member and the measure would be short.
+                    voice.events[idx] = createRest({
+                      baseType: target.baseType,
+                      duration: target.duration,
+                      dots: target.dots,
+                      tuplet: target.tuplet,
+                    });
+                    delete draft.overrides[target.id];
+                  } else {
+                    voice.events.splice(idx, 1);
+                  }
                   deleted = true;
 
                   if (voice.events.length === 0) {
@@ -462,6 +475,9 @@ export function deleteRange(range: RangeSelection): Command {
                       baseType: ev.baseType,
                       duration: ev.duration,
                       dots: ev.dots,
+                      // Keep the tuplet ratio so a deleted triplet slot stays a triplet rest
+                      // (the group remains complete and the measure total stays correct).
+                      tuplet: ev.tuplet,
                     });
                     delete draft.overrides[ev.id];
                   }

@@ -168,8 +168,11 @@ export function buildNoteheadIndex(layout: LayoutResult): Map<string, NoteheadIn
         grow(evId, it.y - 0.2, it.y + 0.2, it.x + 0.4);
       } else if (it.kind === 'line') {
         grow(evId, Math.min(it.y, it.y2 ?? it.y), Math.max(it.y, it.y2 ?? it.y), it.x2 ?? it.x);
-        if (!firstLineDir.has(evId)) {
-          const dir: StemDirection = it.y2 !== undefined && it.y2 < it.y ? 'up' : 'down';
+        // Only a vertical line is a stem. A horizontal one is a ledger line (it used to be read as "stem down",
+        // which misplaced marks of notes with ledger lines, for example middle C).
+        const isStem = it.y2 !== undefined && Math.abs(it.y2 - it.y) > 0.01;
+        if (isStem && !firstLineDir.has(evId)) {
+          const dir: StemDirection = (it.y2 as number) < it.y ? 'up' : 'down';
           firstLineDir.set(evId, dir);
           const entry = map.get(evId);
           if (entry) {
@@ -351,6 +354,86 @@ export function layoutFermatas(
                 x: Number((nh.rightX + PHRASE_MARK_GAP).toFixed(2)),
                 y: Number((nh.staffTop + PHRASE_MARK_Y).toFixed(2)),
               });
+            }
+          }
+        }
+      }
+    }
+  }
+  return items;
+}
+
+/** Tuplet number glyphs are 1.2 sp wide and 1.5 sp tall above their baseline (measured from Bravura). */
+const TUPLET_NUMBER_WIDTH = 1.2;
+const TUPLET_NUMBER_HEIGHT = 1.5;
+const TUPLET_GAP = 0.6;
+
+/**
+ * Computes the number of each tuplet group (M7c-2b): the "3" of a triplet, centred over the group on the
+ * stem side (above stems that point up, below stems that point down). A group is `actual` consecutive events
+ * with the same ratio and value; the groups are complete by construction (see `planEnter`).
+ * v1 draws the number only; a bracket for unbeamed groups is a documented gap.
+ */
+export function layoutTuplets(
+  score: Score,
+  layout: LayoutResult,
+  noteheadIndex?: Map<string, NoteheadInfo>
+): LayoutItem[] {
+  const items: LayoutItem[] = [];
+  const index = noteheadIndex ?? buildNoteheadIndex(layout);
+  for (const part of score.parts) {
+    for (const staff of part.staves) {
+      for (const mDef of score.measures) {
+        const sm = staff.measures[mDef.id];
+        if (!sm) continue;
+        for (const v of sm.voices) {
+          let run: Array<{ id: string; kind: string }> = [];
+          let runKey = '';
+          let runActual = 0;
+          const flush = () => {
+            run = [];
+            runKey = '';
+          };
+          const emit = () => {
+            const infos = run.map((r) => index.get(r.id));
+            if (infos.some((i) => !i)) return;
+            const first = infos[0]!;
+            const last = infos[infos.length - 1]!;
+            const firstNote = run.findIndex((r) => r.kind === 'note');
+            const dir = firstNote >= 0 ? infos[firstNote]!.stemDirection : 'up';
+            const above = dir === 'up';
+            const centre = (first.x + last.rightX) / 2;
+            const top = Math.min(...infos.map((i) => i!.topY));
+            const bottom = Math.max(...infos.map((i) => i!.bottomY));
+            const y = above ? top - TUPLET_GAP : bottom + TUPLET_GAP + TUPLET_NUMBER_HEIGHT;
+            const glyph = `tuplet${runActual}`;
+            items.push({
+              id: `${run[0].id}-tuplet`,
+              eventId: run[0].id,
+              systemIndex: first.systemIndex,
+              kind: 'glyph',
+              glyph,
+              type: 'tuplet',
+              x: Number((centre - TUPLET_NUMBER_WIDTH / 2).toFixed(2)),
+              y: Number(y.toFixed(2)),
+            });
+          };
+          for (const ev of v.events) {
+            const tp = ev.tuplet;
+            if (!tp || tp.actual < 2 || tp.actual > 9) {
+              flush();
+              continue;
+            }
+            const key = `${tp.actual}:${tp.normal}:${ev.baseType}:${ev.dots}`;
+            if (key !== runKey) {
+              flush();
+              runKey = key;
+              runActual = tp.actual;
+            }
+            run.push({ id: ev.id, kind: ev.kind });
+            if (run.length === runActual) {
+              emit();
+              flush();
             }
           }
         }

@@ -94,6 +94,7 @@
   "palette.duration.half": "Half (6)",
   "palette.duration.whole": "Whole (7)",
   "palette.dot": "Augmentation dot (.)",
+  "palette.triplet": "Triplet: the next entry makes three notes in the time of two (Q)",
   "palette.rest": "Rest (0)",
   "dialog.newScore.title": "New Score",
   "dialog.newScore.clef": "Clef",

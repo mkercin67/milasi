@@ -94,6 +94,7 @@
   "palette.duration.half": "İkilik (6)",
   "palette.duration.whole": "Birlik (7)",
   "palette.dot": "Nokta (.)",
+  "palette.triplet": "Üçlü: sonraki giriş iki notanın süresine üç nota yazar (Q)",
   "palette.rest": "Es (0)",
   "dialog.newScore.title": "Yeni Eser",
   "dialog.newScore.clef": "Anahtar",

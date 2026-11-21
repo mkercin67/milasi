@@ -30,6 +30,9 @@ import { newId } from '../../core/factory';
 import { Command, changePitch } from '../../core/commands';
 import { findStaff, firstStaff } from '../../core/staffLookup';
 
+/** Triplet entry: three notes in the time of two (M7c-2b). */
+const TRIPLET = { actual: 3, normal: 2 } as const;
+
 export interface UseEditorInputParams {
   score: Score;
   initialCursor: ScoreCursor | null;
@@ -51,6 +54,8 @@ export function useEditorInput({
   const [activeDuration, setActiveDuration] = useState<BaseDurationType>('quarter');
   const [activeDots, setActiveDots] = useState<number>(0);
   const [isRestSelected, setIsRestSelected] = useState<boolean>(false);
+  const [activeTriplet, setActiveTriplet] = useState<boolean>(false);
+  const activeTuplet = activeTriplet ? TRIPLET : undefined;
 
   const [cursor, setCursor] = useState<ScoreCursor | null>(initialCursor);
   const cursorRef = useRef<ScoreCursor | null>(cursor);
@@ -103,6 +108,10 @@ export function useEditorInput({
     setActiveDots((prev) => (prev > 0 ? 0 : 1));
   }, []);
 
+  const toggleTriplet = useCallback(() => {
+    setActiveTriplet((prev) => !prev);
+  }, []);
+
   const toggleRestSelected = useCallback(() => {
     setIsRestSelected((prev) => !prev);
   }, []);
@@ -137,6 +146,7 @@ export function useEditorInput({
         kind: 'note',
         baseType: activeDuration,
         dots: activeDots,
+        tuplet: activeTuplet,
         pitch,
         eventId,
       });
@@ -148,7 +158,7 @@ export function useEditorInput({
 
       onNoteEntered?.(pitch);
 
-      const duration = durationTicks(activeDuration, activeDots);
+      const duration = durationTicks(activeDuration, activeDots, activeTuplet);
       const mIdx = score.measures.findIndex((m) => m.id === activeCursor.measureId);
       const mLength = measureTicks(mDef.timeSig);
       const isLastMeasure = mIdx === score.measures.length - 1;
@@ -162,6 +172,7 @@ export function useEditorInput({
         enterNote(activeCursor, {
           baseType: activeDuration,
           dots: activeDots,
+          tuplet: activeTuplet,
           pitch,
           eventId,
         })
@@ -173,7 +184,7 @@ export function useEditorInput({
       const nextCursor = advanceCursor(nextScore, activeCursor, duration);
       setCursor(nextCursor);
     },
-    [mode, cursor, score, activeDuration, activeDots, triggerRejectedError, executeCommand, setSelectedEventId]
+    [mode, cursor, score, activeDuration, activeDots, activeTuplet, triggerRejectedError, executeCommand, setSelectedEventId]
   );
 
   /** Shift+letter: adds a pitch above the top pitch of the note just before the cursor (chord entry). */
@@ -217,6 +228,7 @@ export function useEditorInput({
         kind: 'note',
         baseType: activeDuration,
         dots: activeDots,
+        tuplet: activeTuplet,
         pitch,
         eventId,
       });
@@ -226,7 +238,7 @@ export function useEditorInput({
         return;
       }
 
-      const duration = durationTicks(activeDuration, activeDots);
+      const duration = durationTicks(activeDuration, activeDots, activeTuplet);
       const mIdx = score.measures.findIndex((m) => m.id === activeCursor.measureId);
       const mLength = measureTicks(mDef.timeSig);
       const isLastMeasure = mIdx === score.measures.length - 1;
@@ -240,6 +252,7 @@ export function useEditorInput({
         enterNote(activeCursor, {
           baseType: activeDuration,
           dots: activeDots,
+          tuplet: activeTuplet,
           pitch,
           eventId,
         })
@@ -251,7 +264,7 @@ export function useEditorInput({
       const nextCursor = advanceCursor(nextScore, activeCursor, duration);
       setCursor(nextCursor);
     },
-    [mode, cursor, score, activeDuration, activeDots, triggerRejectedError, executeCommand, setSelectedEventId]
+    [mode, cursor, score, activeDuration, activeDots, activeTuplet, triggerRejectedError, executeCommand, setSelectedEventId]
   );
 
   const enterRestAtCursor = useCallback(
@@ -274,6 +287,7 @@ export function useEditorInput({
         kind: 'rest',
         baseType: activeDuration,
         dots: activeDots,
+        tuplet: activeTuplet,
         eventId,
       });
 
@@ -282,7 +296,7 @@ export function useEditorInput({
         return;
       }
 
-      const duration = durationTicks(activeDuration, activeDots);
+      const duration = durationTicks(activeDuration, activeDots, activeTuplet);
       const mIdx = score.measures.findIndex((m) => m.id === activeCursor.measureId);
       const mLength = measureTicks(mDef.timeSig);
       const isLastMeasure = mIdx === score.measures.length - 1;
@@ -296,6 +310,7 @@ export function useEditorInput({
         enterRest(activeCursor, {
           baseType: activeDuration,
           dots: activeDots,
+          tuplet: activeTuplet,
           eventId,
         })
       );
@@ -305,7 +320,7 @@ export function useEditorInput({
       const nextCursor = advanceCursor(nextScore, activeCursor, duration);
       setCursor(nextCursor);
     },
-    [mode, cursor, score, activeDuration, activeDots, triggerRejectedError, executeCommand, setSelectedEventId]
+    [mode, cursor, score, activeDuration, activeDots, activeTuplet, triggerRejectedError, executeCommand, setSelectedEventId]
   );
 
   const moveCursorDirection = useCallback(
@@ -461,6 +476,8 @@ export function useEditorInput({
     activeDots,
     setActiveDots,
     toggleDot,
+    activeTriplet,
+    toggleTriplet,
     isRestSelected,
     setIsRestSelected,
     toggleRestSelected,

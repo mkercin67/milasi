@@ -30,6 +30,7 @@ export type UserAction =
   | 'toggle-tie'
   | 'toggle-slur'
   | 'cycle-fermata'
+  | 'toggle-triplet'
   | 'toggle-breath-mark'
   | 'toggle-lyrics-mode'
   | 'lyrics-next-note'
@@ -436,6 +437,7 @@ export function mapKeyEvent(
     }
 
     // Input mode notation keys: Tie (T), Slur (S), Natural (X), Articulations (J, K, L)
+    if (e.code === 'KeyQ') return 'toggle-triplet';
     if (e.code === 'KeyT') return 'toggle-tie';
     if (e.code === 'KeyS') return 'toggle-slur';
     if (e.code === 'KeyX') return 'reset-accidental';
@@ -608,6 +610,7 @@ export function getCompleteKeyTable(): KeyTableEntry[] {
     { key: 'L', code: 'KeyL', modifiers: 'none', mode: 'input', action: 'toggle-articulation: accent' },
     { key: 'L', code: 'KeyL', modifiers: 'Shift', mode: 'input', action: 'toggle-articulation: marcato' },
     { key: 'H', code: 'KeyH', modifiers: 'none', mode: 'input', action: 'cycle-fermata' },
+    { key: 'Q', code: 'KeyQ', modifiers: 'none', mode: 'input', action: 'toggle-triplet' },
     { key: 'H', code: 'KeyH', modifiers: 'Shift', mode: 'input', action: 'toggle-breath-mark' },
 
     // Duration Digits (Select & Input)

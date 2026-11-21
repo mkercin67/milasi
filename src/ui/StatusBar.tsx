@@ -54,6 +54,8 @@ export interface StatusBarProps {
   hoverInfo?: HoverInfo | null;
   dragStatus?: string | null;
   errorCount?: number;
+  /** Messages of the validation errors, shown as a tooltip on the error badge. */
+  errorMessages?: string[];
   warningCount?: number;
   voiceIndex?: 1 | 2 | 3 | 4;
   /** Position of the cursor's staff inside its part; shown only when the part has several staves. */
@@ -82,6 +84,7 @@ export const StatusBar: React.FC<StatusBarProps> = ({
   hoverInfo = null,
   dragStatus = null,
   errorCount,
+  errorMessages,
   warningCount,
   voiceIndex = 1,
   staffInfo = null,
@@ -328,6 +331,7 @@ export const StatusBar: React.FC<StatusBarProps> = ({
         {errorCount !== undefined && errorCount > 0 && (
           <span
             data-testid="status-error-count"
+            title={errorMessages && errorMessages.length > 0 ? errorMessages.join('\n') : undefined}
             style={{
               padding: '0.12rem 0.5rem',
               fontSize: '0.75rem',

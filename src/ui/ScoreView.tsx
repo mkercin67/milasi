@@ -20,6 +20,7 @@ import {
   layoutDynamics,
   layoutFermatas,
   layoutSlurs,
+  layoutTuplets,
 } from '../layout/notations';
 import { getGlyphPath, UNITS_PER_EM } from '../render/glyphPaths.generated';
 import { SystemView } from './SystemView';
@@ -189,6 +190,7 @@ export const ScoreView: React.FC<ScoreViewProps> = ({
     return [
       ...layoutArticulations(score, layout, noteheadIndex),
       ...layoutFermatas(score, layout, noteheadIndex),
+      ...layoutTuplets(score, layout, noteheadIndex),
     ];
   }, [score, layout, noteheadIndex]);
 
@@ -242,6 +244,8 @@ export const ScoreView: React.FC<ScoreViewProps> = ({
     set.add('fermataBelow');
     set.add('breathMarkComma');
     set.add('caesura');
+    // M7c-2b tuplet numbers
+    for (let n = 2; n <= 9; n++) set.add(`tuplet${n}`);
     // Optimization: scan only visible systems instead of all 50 systems across 200 measures
     for (const sIdx of visibleSystemIndices) {
       const sys = layout.systems[sIdx];

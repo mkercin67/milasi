@@ -270,5 +270,21 @@
     "testFile": "tests/layout/fermata_marks.test.ts",
     "testName": "F3: second press puts the fermata below the staff, never inside it",
     "status": "DONE"
+  },
+  {
+    "planItemId": "B26",
+    "description": "M7c-2b tuplet entry: a triplet entry creates a complete group (entered event plus sibling rests), later entries replace single slots, groups must fit the (pickup) measure, plain notes cannot overwrite a tuplet slot; validation of ratio, duration and group completeness.",
+    "codeLocation": "src/core/input.ts:planEnter",
+    "testFile": "tests/core/tuplet_entry.test.ts",
+    "testName": "TU3: the opening bar of Barge BWV 1030 fills exactly 3840 ticks with two triplet groups",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B27",
+    "description": "M7c-2b tuplet drawing: one number per group on the stem side, one beam per group of three (two groups in a beat are two beams), no numbers without tuplets.",
+    "codeLocation": "src/layout/notations.ts:layoutTuplets",
+    "testFile": "tests/layout/tuplet_layout.test.ts",
+    "testName": "L3: two groups in a row give two numbers, not one",
+    "status": "DONE"
   }
 ]

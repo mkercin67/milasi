@@ -104,6 +104,7 @@ Activated via \`KeyU\`. Syllable entry and melisma extender input aligned to not
 - **Tie (Bağ):** \`KeyT\` (Select and Position modes)
 - **Slur (Legato bağı):** \`KeyS\` (Select and Position modes)
 - **Fermata:** \`KeyH\` cycles none, above, below (all modes); **Breath mark:** \`Shift+KeyH\`
+- **Triplet entry (input mode):** \`KeyQ\` toggles; the next entry makes three notes in the time of two
 - **Articulations:**
   - Staccato: \`KeyJ\`
   - Tenuto: \`KeyK\`

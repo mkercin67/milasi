@@ -40,4 +40,4 @@ This document lists known constraints and architectural trade-offs in the curren
 - **Details:** Supports repeat start (`repeatStart`), repeat end (`repeatEnd`), combined barlines (`repeatRightLeft`), volta brackets (`volta: { number }`), syllable-level lyrics (`lyrics: LyricSyllable[]`), a derived note-name line (`layoutSettings.showNoteNames`, Do Re Mi or C D E, separate from lyrics; see `docs/design/note-name-layer.md`), and lyrics input mode (`KeyU`).
 - **Scope Limits:** Nested repeats without matching delimiters trigger validation errors (`nested-repeat`). Multiple lyric verses (verse > 1) and complex melisma curves are deferred to Phase 2.
 
-
+- **Tuplets (M7c-2b, v1):** Only 3:2 can be entered from the UI (toolbar "3" or `Q` in input mode). A tuplet number is drawn, but no bracket for unbeamed groups. Unequal groups, nested tuplets, in-place duration change of a tuplet slot, and mouse-entry/clipboard behaviour with tuplets are not yet verified. See `docs/design/m7c-2b-tuplets.md`.

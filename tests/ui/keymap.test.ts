@@ -407,3 +407,10 @@ describe('M7c-2 fermata keys', () => {
     }
   });
 });
+
+describe('M7c-2b triplet key', () => {
+  it('Q toggles triplet entry in input mode only', () => {
+    expect(mapKeyEvent({ code: 'KeyQ' }, 'input')).toBe('toggle-triplet');
+    expect(mapKeyEvent({ code: 'KeyQ' }, 'select')).toBeNull();
+  });
+});

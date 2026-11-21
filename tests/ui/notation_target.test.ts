@@ -44,6 +44,14 @@ describe('resolveNotationTarget', () => {
     expect(resolveNotationTarget(score, { kind: 'none' }, a.id, 'input', cursor)).toEqual({ kind: 'event', id: a.id });
   });
 
+  it('G6: a stale selection (event no longer in the score) falls back to the note before the cursor', () => {
+    const { score, b, cursor } = setup();
+    expect(resolveNotationTarget(score, { kind: 'event', id: 'gone' }, 'gone', 'input', cursor)).toEqual({
+      kind: 'event',
+      id: b.id,
+    });
+  });
+
   it('G5: cursor at the start of the score: nothing was entered, no target', () => {
     const { score, cursor } = setup();
     expect(resolveNotationTarget(score, { kind: 'none' }, null, 'input', { ...cursor, tick: 0 })).toBeNull();

@@ -732,6 +732,7 @@ export function layoutSingleMeasure(
     for (let i = 0; i < voiceEvents.length; i++) {
       const ev = voiceEvents[i];
       eventsHash = (eventsHash * 31 + ev.duration + (ev.kind === 'note' && ev.tiedToNext ? 1 : 0)) | 0;
+      if (ev.tuplet) eventsHash = (eventsHash * 31 + ev.tuplet.actual * 17 + ev.tuplet.normal) | 0;
       if (ev.kind === 'note') {
         for (let j = 0; j < ev.pitches.length; j++) {
           const p = ev.pitches[j];

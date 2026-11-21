@@ -93,6 +93,12 @@ export interface InputNoteSpec {
   dots?: number;
   pitch?: Pitch;
   eventId?: Id;
+  /**
+   * Tuplet entry (M7c-2b). The first entry creates a COMPLETE group: the entered event plus `actual - 1`
+   * rests of the same value, so a measure never holds half a tuplet. Entering on a rest or note of the same
+   * tuplet value replaces just that slot.
+   */
+  tuplet?: { actual: number; normal: number };
 }
 
 export type PlanResult =
@@ -103,6 +109,10 @@ export type PlanResult =
       removedIds: string[];
       /** Rests that keep the part of a split rest BEFORE the cursor (cursor inside a rest, M7b-6). */
       leadingRests: RestEvent[];
+      /** Tuplet slots after the entered event (empty unless a new tuplet group is created). */
+      groupRests: RestEvent[];
+      /** Ticks taken from the cursor: one event, or a whole new tuplet group. */
+      spanTicks: number;
       mLength: number;
     }
   | {
@@ -126,13 +136,11 @@ export function planEnter(
     return { ok: false, reason: 'doesNotFit' };
   }
 
-  const mLength = measureTicks(mDef.timeSig);
+  // A pickup (actualTicks) is shorter than the time signature: entry must respect it.
+  const mLength = measureLengthTicks(mDef);
   const dots = spec.dots ?? 0;
-  const newDuration = durationTicks(spec.baseType, dots);
-
-  if (cursor.tick + newDuration > mLength) {
-    return { ok: false, reason: 'doesNotFit' };
-  }
+  const tuplet = spec.tuplet;
+  const unitTicks = durationTicks(spec.baseType, dots, tuplet);
 
   const part = score.parts.find((p) =>
     p.staves.some((s) => s.id === cursor.staffId)
@@ -144,6 +152,31 @@ export function planEnter(
   // If voice does not exist yet in this measure, simulate initial rests via addVoice semantics
   const events = voice ? voice.events : fillMeasureWithRests(mLength, () => newId());
 
+  // Tuplet entry on a slot of the same tuplet value replaces only that slot; anywhere else it creates a group.
+  let replacesSlot = false;
+  if (tuplet) {
+    let t0 = 0;
+    for (const ev of events) {
+      if (
+        t0 === cursor.tick &&
+        ev.tuplet &&
+        ev.tuplet.actual === tuplet.actual &&
+        ev.tuplet.normal === tuplet.normal &&
+        ev.baseType === spec.baseType &&
+        ev.dots === dots
+      ) {
+        replacesSlot = true;
+      }
+      t0 += ev.duration;
+    }
+  }
+  const groupSize = tuplet && !replacesSlot ? tuplet.actual : 1;
+  const newDuration = unitTicks * groupSize;
+
+  if (cursor.tick + newDuration > mLength) {
+    return { ok: false, reason: 'doesNotFit' };
+  }
+
   // Check for tuplet collision
   let t = 0;
   for (const ev of events) {
@@ -153,7 +186,7 @@ export function planEnter(
 
     // Overlaps with [cursor.tick, cursor.tick + newDuration)
     if (evEnd > cursor.tick && evStart < cursor.tick + newDuration) {
-      if (ev.tuplet) {
+      if (ev.tuplet && !(replacesSlot && evStart === cursor.tick)) {
         return { ok: false, reason: 'tuplet' };
       }
     }
@@ -207,12 +240,19 @@ export function planEnter(
           baseType: spec.baseType,
           dots,
           pitches: spec.pitch ? [{ ...spec.pitch }] : [],
+          tuplet,
         })
       : createRest({
           id: spec.eventId,
           baseType: spec.baseType,
           dots,
+          tuplet,
         });
+
+  const groupRests: RestEvent[] = [];
+  for (let i = 1; i < groupSize; i++) {
+    groupRests.push(createRest({ baseType: spec.baseType, dots, tuplet }));
+  }
 
   return {
     ok: true,
@@ -220,6 +260,8 @@ export function planEnter(
     remainderRests,
     removedIds,
     leadingRests,
+    groupRests,
+    spanTicks: newDuration,
     mLength,
   };
 }
@@ -253,7 +295,7 @@ export function enterEventCommand(cursor: ScoreCursor, spec: InputNoteSpec): Com
             // voiceIndex; gaps are allowed (voices 1 and 3 without 2).
             const mDef = draft.measures.find((m) => m.id === cursor.measureId);
             const mLength = mDef?.actualTicks ?? (mDef ? measureTicks(mDef.timeSig) : 3840);
-            const eventDuration = plan.newEvent.duration;
+            const eventDuration = plan.spanTicks;
             const leadingRests = cursor.tick > 0 ? fillMeasureWithRests(cursor.tick, () => newId()) : [];
             const trailingSpan = mLength - (cursor.tick + eventDuration);
             const trailingRests = trailingSpan > 0 ? fillMeasureWithRests(trailingSpan, () => newId()) : [];
@@ -261,7 +303,7 @@ export function enterEventCommand(cursor: ScoreCursor, spec: InputNoteSpec): Com
             voice = {
               id: newId(),
               voiceIndex: cursor.voiceIndex,
-              events: [...leadingRests, plan.newEvent, ...trailingRests],
+              events: [...leadingRests, plan.newEvent, ...plan.groupRests, ...trailingRests],
             };
             sm.voices.push(voice);
             sm.voices.sort((a, b) => a.voiceIndex - b.voiceIndex);
@@ -281,7 +323,14 @@ export function enterEventCommand(cursor: ScoreCursor, spec: InputNoteSpec): Com
           }
 
           // Insert leading rests (split rest), the new event, then the remainder rests
-          keptEvents.splice(insertionPoint, 0, ...plan.leadingRests, plan.newEvent, ...plan.remainderRests);
+          keptEvents.splice(
+            insertionPoint,
+            0,
+            ...plan.leadingRests,
+            plan.newEvent,
+            ...plan.groupRests,
+            ...plan.remainderRests
+          );
           voice.events = keptEvents;
 
           // Clean overrides for removed events

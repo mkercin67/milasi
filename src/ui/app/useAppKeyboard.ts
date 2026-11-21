@@ -87,6 +87,7 @@ export interface UseAppKeyboardParams {
     onPreview?: (p: Pitch) => void
   ) => void;
   toggleDot: () => void;
+  toggleTriplet: () => void;
   triggerRejectedError: (msg: string) => void;
   setActiveDuration: (duration: ScoreEvent['baseType']) => void;
   setIsRestSelected: (val: boolean) => void;
@@ -151,6 +152,7 @@ export function useAppKeyboard(params: UseAppKeyboardParams) {
     enterPitchAtCursor,
     addChordPitchAtCursor,
     toggleDot,
+    toggleTriplet,
     triggerRejectedError,
     setActiveDuration,
     setIsRestSelected,
@@ -358,6 +360,9 @@ export function useAppKeyboard(params: UseAppKeyboardParams) {
           case 'toggle-slur':
             applySlur();
             recordSample('Shift+S');
+            break;
+          case 'toggle-triplet':
+            toggleTriplet();
             break;
           case 'cycle-fermata':
             applyFermata();
@@ -625,6 +630,7 @@ export function useAppKeyboard(params: UseAppKeyboardParams) {
     enterPitchAtCursor,
     addChordPitchAtCursor,
     toggleDot,
+    toggleTriplet,
     triggerRejectedError,
     setActiveDuration,
     setIsRestSelected,

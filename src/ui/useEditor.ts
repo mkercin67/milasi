@@ -215,6 +215,8 @@ export function useEditor(initialScore?: Score) {
     activeDots: inputHook.activeDots,
     setActiveDots: inputHook.setActiveDots,
     toggleDot: inputHook.toggleDot,
+    activeTriplet: inputHook.activeTriplet,
+    toggleTriplet: inputHook.toggleTriplet,
     isRestSelected: inputHook.isRestSelected,
     setIsRestSelected: inputHook.setIsRestSelected,
     toggleRestSelected: inputHook.toggleRestSelected,

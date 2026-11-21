@@ -74,6 +74,8 @@ const EditorShell: React.FC = () => {
     activeDots,
     setActiveDots,
     toggleDot,
+    activeTriplet,
+    toggleTriplet,
     isRestSelected,
     setIsRestSelected,
     toggleRestSelected,
@@ -237,6 +239,7 @@ const EditorShell: React.FC = () => {
 
   // Validation burst management (P2)
   const {
+    validationProblems,
     errorCount,
     warningCount,
     validateSynchronously,
@@ -311,6 +314,7 @@ const EditorShell: React.FC = () => {
     enterPitchAtCursor,
     addChordPitchAtCursor,
     toggleDot,
+    toggleTriplet,
     triggerRejectedError,
     setActiveDuration,
     setIsRestSelected,
@@ -444,6 +448,8 @@ const EditorShell: React.FC = () => {
         }}
         activeDots={activeDots}
         onToggleDot={toggleDot}
+        activeTriplet={activeTriplet}
+        onToggleTriplet={toggleTriplet}
         isRestSelected={isRestSelected}
         onToggleRest={toggleRestSelected}
         isPlaying={isPlaying}
@@ -555,6 +561,7 @@ const EditorShell: React.FC = () => {
         hoverInfo={hoverInfo}
         dragStatus={dragStatus}
         errorCount={errorCount}
+        errorMessages={validationProblems.filter((p) => p.severity === 'error').map((p) => p.message)}
         warningCount={warningCount}
         voiceIndex={cursor?.voiceIndex ?? 1}
         staffInfo={staffPosition(score, cursor?.staffId)}

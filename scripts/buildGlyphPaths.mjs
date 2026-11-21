@@ -35,6 +35,7 @@ const whitelist = new Set([
   'timeSig0', 'timeSig1', 'timeSig2', 'timeSig3', 'timeSig4', 'timeSig5', 'timeSig6', 'timeSig7', 'timeSig8', 'timeSig9',
   'timeSigCommon', 'timeSigCutCommon',
   'fermataAbove', 'fermataBelow', 'breathMarkComma', 'caesura',
+  'tuplet2', 'tuplet3', 'tuplet4', 'tuplet5', 'tuplet6', 'tuplet7', 'tuplet8', 'tuplet9',
   'accidentalSharp', 'accidentalFlat', 'accidentalNatural', 'accidentalDoubleSharp', 'accidentalDoubleFlat',
   'noteheadBlack', 'noteheadHalf', 'noteheadWhole',
   'flag8thUp', 'flag8thDown', 'flag16thUp', 'flag16thDown', 'flag32ndUp', 'flag32ndDown',

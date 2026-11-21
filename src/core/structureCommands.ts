@@ -329,6 +329,18 @@ export function deleteMeasure(index: number): Command {
 
         for (const part of draft.parts) {
           for (const staff of part.staves) {
+            // Events of the deleted measure: slurs tied to them and per-event overrides go too,
+            // otherwise validation reports slurs that reference a missing end event.
+            const gone = new Set<string>();
+            for (const v of staff.measures[deletedDef.id]?.voices ?? []) {
+              for (const ev of v.events) gone.add(ev.id);
+            }
+            if (gone.size > 0) {
+              if (staff.slurs) {
+                staff.slurs = staff.slurs.filter((sl) => !gone.has(sl.startEventId) && !gone.has(sl.endEventId));
+              }
+              for (const id of gone) delete draft.overrides[id];
+            }
             delete staff.measures[deletedDef.id];
           }
         }
