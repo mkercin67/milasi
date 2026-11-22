@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import React from 'react';
-import { ArticulationType, DynamicType, HairpinType, PhraseMark } from '../../core/model';
+import { ArticulationType, DynamicType, HairpinType, OrnamentType, PhraseMark } from '../../core/model';
 import { useI18n } from '../i18n';
 
 export interface ToolbarNotationsProps {
@@ -16,6 +16,7 @@ export interface ToolbarNotationsProps {
   onToggleHairpin?: (type: HairpinType) => void;
   onToggleCourtesyAccidental?: () => void;
   onTogglePhraseMark?: (mark: PhraseMark) => void;
+  onToggleOrnament?: (ornament: OrnamentType) => void;
   onClearNotations?: () => void;
   showNoteNames?: boolean;
   onToggleNoteNames?: () => void;
@@ -39,6 +40,13 @@ const ARTICULATIONS: { type: ArticulationType; label: string; symbol: string; sh
   { type: 'tenuto', label: 'Tenuto', symbol: '—', shortcut: 'K' },
   { type: 'accent', label: 'Aksan', symbol: '>', shortcut: 'L' },
   { type: 'marcato', label: 'Markato', symbol: '^', shortcut: 'Shift+L' },
+];
+
+const ORNAMENT_BUTTONS: { type: OrnamentType; symbol: string; key: 'trill' | 'mordent' | 'invertedMordent' | 'turn' }[] = [
+  { type: 'trill', symbol: '𝆖', key: 'trill' },
+  { type: 'mordent', symbol: '', key: 'mordent' },
+  { type: 'invertedMordent', symbol: '', key: 'invertedMordent' },
+  { type: 'turn', symbol: '𝆗', key: 'turn' },
 ];
 
 const MARK_BUTTON_STYLE: React.CSSProperties = {
@@ -67,6 +75,7 @@ export const ToolbarNotations: React.FC<ToolbarNotationsProps> = ({
   onToggleHairpin,
   onToggleCourtesyAccidental,
   onTogglePhraseMark,
+  onToggleOrnament,
   onClearNotations,
   showNoteNames = false,
   onToggleNoteNames,
@@ -290,6 +299,23 @@ export const ToolbarNotations: React.FC<ToolbarNotationsProps> = ({
           </button>
         </>
       )}
+
+      {/* Ornaments (M7c-3) */}
+      {onToggleOrnament &&
+        ORNAMENT_BUTTONS.map((o) => (
+          <button
+            key={o.type}
+            type="button"
+            data-testid={`btn-ornament-${o.type}`}
+            onClick={handleButtonClick(() => onToggleOrnament(o.type))}
+            onMouseDown={(e) => e.preventDefault()}
+            title={t(`toolbar.ornament.${o.key}Title`)}
+            style={MARK_BUTTON_STYLE}
+          >
+            {o.symbol ? `${o.symbol} ` : ''}
+            {t(`toolbar.ornament.${o.key}`)}
+          </button>
+        ))}
 
       {/* Clear Notations button */}
       <button

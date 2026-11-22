@@ -19,6 +19,7 @@ import {
   layoutArticulations,
   layoutDynamics,
   layoutFermatas,
+  layoutOrnaments,
   layoutSlurs,
   layoutHairpins,
   layoutTuplets,
@@ -198,6 +199,7 @@ export const ScoreView: React.FC<ScoreViewProps> = ({
   const articulations = useMemo(() => {
     return [
       ...articulationItems,
+      ...layoutOrnaments(score, layout, noteheadIndex, articulationItems),
       ...layoutFermatas(score, layout, noteheadIndex),
       ...layoutTuplets(score, layout, noteheadIndex),
     ];
@@ -253,6 +255,11 @@ export const ScoreView: React.FC<ScoreViewProps> = ({
     set.add('fermataBelow');
     set.add('breathMarkComma');
     set.add('caesura');
+    // M7c-3 ornaments
+    set.add('ornamentTrill');
+    set.add('ornamentMordent');
+    set.add('ornamentShortTrill');
+    set.add('ornamentTurn');
     // M7c-2b tuplet numbers
     for (let n = 2; n <= 9; n++) set.add(`tuplet${n}`);
     // Optimization: scan only visible systems instead of all 50 systems across 200 measures

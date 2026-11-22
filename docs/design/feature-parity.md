@@ -37,7 +37,7 @@ motivated the row, so priorities follow use, not feature lists.
 | Text expressions ("cresc.", "dolce", "espr.") | GAP | Barge BWV 1030 (expected) |
 | Tempo text and BPM | DONE (basic); styled text M10 | BWV 1030 "Andante" |
 | Fermata, breath mark, caesura | DONE (M7c-2) | chorales, wind parts |
-| Ornaments: trill, mordent, inverted mordent, turn | PLANNED M7c-3 | BWV 772, K. 545 |
+| Ornaments: trill, mordent, inverted mordent, turn | DONE v1 (M7c-3): sign above the note, toolbar only, ignored by playback (M11) | Barge BWV 1030 m. 10, BWV 772, K. 545 |
 | Trill extension line, arpeggio, glissando | GAP | keyboard and string repertoire |
 | Ottava lines (8va, 8vb) | GAP | flute, piano high register |
 | Pedal markings | PLANNED M12 | piano |

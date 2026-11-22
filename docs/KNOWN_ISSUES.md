@@ -41,3 +41,4 @@ This document lists known constraints and architectural trade-offs in the curren
 - **Scope Limits:** Nested repeats without matching delimiters trigger validation errors (`nested-repeat`). Multiple lyric verses (verse > 1) and complex melisma curves are deferred to Phase 2.
 
 - **Tuplets (M7c-2b, v1):** Only 3:2 can be entered from the UI (toolbar "3" or `Q` in input mode). A tuplet number is drawn, but no bracket for unbeamed groups. Unequal groups, nested tuplets, in-place duration change of a tuplet slot, and mouse-entry/clipboard behaviour with tuplets are not yet verified. See `docs/design/m7c-2b-tuplets.md`.
+- **Ornaments (M7c-3, v1):** one ornament per note, drawn above the note; toolbar buttons only (no keyboard shortcut yet); no wavy continuation line for a trill over several notes, no accidental above or below the sign, playback ignores ornaments (M11). "Notasyonu temizle" does not remove ornaments yet. See `docs/design/m7c-3-ornaments.md`.

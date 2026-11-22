@@ -5,6 +5,7 @@ import {
   DynamicType,
   HairpinType,
   Score,
+  OrnamentType,
   PhraseMark,
   ScoreEvent,
 } from '../../core/model';
@@ -20,6 +21,7 @@ import {
   setOverride,
   toggleArticulation,
   togglePhraseMark,
+  toggleOrnament,
   toggleSlur,
   toggleHairpin,
   toggleShowAccidental,
@@ -118,6 +120,14 @@ export function useEditorNotations({
     const target = targetSelection();
     if (target) executeCommand(cycleFermata(target));
   }, [executeCommand, targetSelection]);
+
+  const applyOrnament = useCallback(
+    (ornament: OrnamentType) => {
+      const target = targetSelection();
+      if (target) executeCommand(toggleOrnament(target, ornament));
+    },
+    [executeCommand, targetSelection]
+  );
 
   const applyPhraseMark = useCallback(
     (mark: PhraseMark) => {
@@ -247,6 +257,7 @@ export function useEditorNotations({
     applyHairpin,
     applyCourtesyAccidental,
     applyFermata,
+    applyOrnament,
     applyPhraseMark,
     clearNotations,
     applyEventOverride,

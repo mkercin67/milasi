@@ -4,7 +4,7 @@
  */
 
 import { produce } from 'immer';
-import { FermataPlacement, HairpinType, Id, NoteEvent, Pitch, PhraseMark, Score } from './model';
+import { FermataPlacement, HairpinType, Id, NoteEvent, OrnamentType, Pitch, PhraseMark, Score } from './model';
 import { Command } from './commandTypes';
 import { newId } from './factory';
 import { eventsInRange, Selection } from './selection';
@@ -438,6 +438,52 @@ export function cycleFermata(target: string | Selection): Command {
                   if (!idSet.has(ev.id)) continue;
                   if (next) ev.fermata = next;
                   else delete ev.fermata;
+                }
+              }
+            }
+          }
+        }
+      });
+    },
+  };
+}
+
+/**
+ * Sets an ornament on the selected notes (M7c-3). Applying the ornament that every selected note already
+ * carries removes it; otherwise it is set (replacing a different one). Rests are skipped.
+ */
+export function toggleOrnament(target: string | Selection, ornament: OrnamentType): Command {
+  return {
+    name: `Toggle ${ornament}`,
+    apply(score: Score): Score {
+      const ids = new Set(getTargetEventIds(score, target));
+      if (ids.size === 0) return score;
+      let found = 0;
+      let carrying = 0;
+      for (const part of score.parts) {
+        for (const staff of part.staves) {
+          for (const sm of Object.values(staff.measures)) {
+            for (const v of sm.voices) {
+              for (const ev of v.events) {
+                if (!ids.has(ev.id) || ev.kind !== 'note') continue;
+                found++;
+                if (ev.ornament === ornament) carrying++;
+              }
+            }
+          }
+        }
+      }
+      if (found === 0) return score;
+      const remove = carrying === found;
+      return produce(score, (draft) => {
+        for (const part of draft.parts) {
+          for (const staff of part.staves) {
+            for (const sm of Object.values(staff.measures)) {
+              for (const v of sm.voices) {
+                for (const ev of v.events) {
+                  if (!ids.has(ev.id) || ev.kind !== 'note') continue;
+                  if (remove) delete ev.ornament;
+                  else ev.ornament = ornament;
                 }
               }
             }

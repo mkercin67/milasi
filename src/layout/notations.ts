@@ -10,7 +10,7 @@
  *   half-slurs across system breaks.
  */
 
-import { Score } from '../core/model';
+import { OrnamentType, Score } from '../core/model';
 import { NOTEHEAD_WIDTH } from './layoutScore';
 import { isStaffMeasurePolyphonic } from './measureLayout';
 import { LayoutItem, LayoutResult, StemDirection } from './types';
@@ -300,6 +300,69 @@ export function layoutDynamics(
   return items;
 }
 
+/** Ornament glyph sizes in staff spaces, measured from Bravura (width, height above the baseline). */
+const ORNAMENT_SIZE: Record<OrnamentType, { w: number; h: number; glyph: string }> = {
+  trill: { w: 2.09, h: 1.56, glyph: 'ornamentTrill' },
+  mordent: { w: 2.92, h: 1.28, glyph: 'ornamentMordent' },
+  invertedMordent: { w: 2.9, h: 0.98, glyph: 'ornamentShortTrill' },
+  turn: { w: 1.84, h: 0.87, glyph: 'ornamentTurn' },
+};
+const ORNAMENT_GAP = 1.0;
+/** Height of an above-the-note articulation glyph used to clear it (accent and marcato are the tallest). */
+const ORNAMENT_ARTIC_CLEARANCE = 1.3;
+
+/**
+ * Computes layout items for ornaments (M7c-3): the sign sits above the note, centred on the notehead,
+ * outside the staff and clear of the stem and of articulations that are drawn above the note.
+ * `articulationItems` is optional; without it the sign only clears the stem and the staff.
+ */
+export function layoutOrnaments(
+  score: Score,
+  layout: LayoutResult,
+  noteheadIndex?: Map<string, NoteheadInfo>,
+  articulationItems?: LayoutItem[]
+): LayoutItem[] {
+  const items: LayoutItem[] = [];
+  const index = noteheadIndex ?? buildNoteheadIndex(layout);
+  const articTopByEvent = new Map<string, number>();
+  for (const a of articulationItems ?? []) {
+    if (!a.eventId || !a.glyph || !a.glyph.endsWith('Above') || a.y === undefined) continue;
+    const prev = articTopByEvent.get(a.eventId);
+    if (prev === undefined || a.y < prev) articTopByEvent.set(a.eventId, a.y);
+  }
+  for (const part of score.parts) {
+    for (const staff of part.staves) {
+      for (const mDef of score.measures) {
+        const sm = staff.measures[mDef.id];
+        if (!sm) continue;
+        for (const v of sm.voices) {
+          for (const ev of v.events) {
+            if (ev.kind !== 'note' || !ev.ornament) continue;
+            const nh = index.get(ev.id);
+            if (!nh) continue;
+            const size = ORNAMENT_SIZE[ev.ornament];
+            const centre = nh.x + (nh.rightX - nh.x) / 2;
+            let y = Math.min(nh.staffTop - ORNAMENT_GAP, nh.topY - ORNAMENT_GAP);
+            const articY = articTopByEvent.get(ev.id);
+            if (articY !== undefined) y = Math.min(y, articY - ORNAMENT_ARTIC_CLEARANCE);
+            items.push({
+              id: `${ev.id}-ornament`,
+              eventId: ev.id,
+              systemIndex: nh.systemIndex,
+              kind: 'glyph',
+              glyph: size.glyph,
+              type: ev.ornament,
+              x: Number((centre - size.w / 2).toFixed(2)),
+              y: Number(y.toFixed(2)),
+            });
+          }
+        }
+      }
+    }
+  }
+  return items;
+}
+
 /** Fermata glyph is 2.43 sp wide (Bravura 608 units at 250 units per space). */
 const FERMATA_WIDTH = 2.43;
 /** Distance between an event (or the staff) and a fermata or phrase mark, in staff spaces. */
@@ -332,8 +395,10 @@ export function layoutFermatas(
             if (ev.fermata) {
               const centre = nh.x + (nh.rightX - nh.x) / 2;
               const above = ev.fermata === 'above';
+              // An ornament on the same note takes the place next to it; the fermata sits above the ornament.
+              const ornamentLift = ev.kind === 'note' && ev.ornament ? ORNAMENT_SIZE[ev.ornament].h + 0.4 : 0;
               const y = above
-                ? Math.min(nh.staffTop - FERMATA_GAP, nh.topY - FERMATA_GAP)
+                ? Math.min(nh.staffTop - FERMATA_GAP, nh.topY - FERMATA_GAP) - ornamentLift
                 : Math.max(nh.staffTop + 4 + FERMATA_GAP, nh.bottomY + FERMATA_GAP);
               items.push({
                 id: `${ev.id}-fermata`,

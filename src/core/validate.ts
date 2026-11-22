@@ -369,6 +369,25 @@ export function validateScore(score: Score): ValidationProblem[] {
               });
             }
 
+            // Ornament (M7c-3): known values only, notes only
+            const orn = (ev as { ornament?: unknown }).ornament;
+            if (
+              orn !== undefined &&
+              (ev.kind !== 'note' ||
+                (orn !== 'trill' && orn !== 'mordent' && orn !== 'invertedMordent' && orn !== 'turn'))
+            ) {
+              problems.push({
+                code: 'invalid-ornament',
+                message: `Event ${ev.id} has unsupported ornament: ${String(orn)}`,
+                severity: 'error',
+                partId: part.id,
+                staffId: staff.id,
+                measureId,
+                voiceId: voice.id,
+                eventId: ev.id,
+              });
+            }
+
             // Note event pitch validation
             if (ev.kind === 'note') {
               // Dynamic validation (Milestone 6b)

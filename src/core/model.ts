@@ -158,6 +158,9 @@ export type BaseDurationType = 'whole' | 'half' | 'quarter' | 'eighth' | '16th' 
 /** Fermata placement relative to the event. */
 export type FermataPlacement = 'above' | 'below';
 
+/** Ornament signs (M7c-3): trill, mordent (lower), inverted mordent (upper, short trill), turn. Ignored by playback. */
+export type OrnamentType = 'trill' | 'mordent' | 'invertedMordent' | 'turn';
+
 /** Mark drawn after an event: breath mark (comma) or caesura. */
 export type PhraseMark = 'breath' | 'caesura';
 
@@ -191,6 +194,8 @@ export interface NoteEvent extends BaseEvent {
   articulations: string[]; // e.g. 'staccato', 'accent', 'tenuto'
   dynamic?: string; // e.g. 'p', 'mf', 'f'
   lyrics?: LyricSyllable[]; // Syllables by verse (Milestone 6d)
+  /** Ornament sign drawn above this note (M7c-3); ignored by playback. */
+  ornament?: OrnamentType;
   /** Print the accidental of every pitch even when the key and the bar do not require it (courtesy / cautionary accidental). */
   showAccidental?: boolean;
 }

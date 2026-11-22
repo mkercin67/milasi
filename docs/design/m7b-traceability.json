@@ -302,5 +302,37 @@
     "testFile": "tests/core/hairpin.test.ts",
     "testName": "H7: layout draws a crescendo under the staff, narrow at the start and wider at the end",
     "status": "DONE"
+  },
+  {
+    "planItemId": "B30",
+    "description": "M7c-3 ornament toggle: sets, same ornament removes, another replaces; rests are skipped.",
+    "codeLocation": "src/core/notationCommands.ts:toggleOrnament",
+    "testFile": "tests/core/ornament.test.ts",
+    "testName": "O1: toggle sets, the same ornament removes, another replaces",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B31",
+    "description": "M7c-3 ornament validation: unknown values and ornaments on rests are errors.",
+    "codeLocation": "src/core/validate.ts:validateScore",
+    "testFile": "tests/core/ornament.test.ts",
+    "testName": "O4: validation accepts the four values and rejects unknown values and ornaments on rests",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B32",
+    "description": "M7c-3 ornament drawing: SMuFL glyph above the staff and the note.",
+    "codeLocation": "src/layout/notations.ts:layoutOrnaments",
+    "testFile": "tests/core/ornament.test.ts",
+    "testName": "O5: each ornament is drawn with its SMuFL glyph above the staff and the note",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B33",
+    "description": "M7c-3 a fermata above on the same note sits above the ornament.",
+    "codeLocation": "src/layout/notations.ts:layoutFermatas",
+    "testFile": "tests/core/ornament.test.ts",
+    "testName": "O6: a fermata above on the same note sits above the ornament",
+    "status": "DONE"
   }
 ]
