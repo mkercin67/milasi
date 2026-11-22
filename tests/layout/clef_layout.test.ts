@@ -71,6 +71,11 @@ describe('M7c-4 clef layout (part 2)', () => {
     expect(getKeySignatureAccidentals(1, { sign: 'C', line: 3 })[0].y).toBe(0.5); // alto F#: top space
   });
 
+  it('CL13: tenor clef, three flats: Bb in the third space, Eb on the top line, Ab on the middle line (checked against a printed cello part)', () => {
+    const ys = getKeySignatureAccidentals(-3, { sign: 'C', line: 4 }).map((a) => a.y);
+    expect(ys).toEqual([1.5, 0, 2]);
+  });
+
   it('CL9: a note lands on the right line for each clef and gets ledger lines outside the staff', () => {
     expect(pitchToStaffPosition(createPitch('C', 4, 0), { sign: 'C', line: 3 })).toBe(4); // middle line
     expect(pitchToStaffPosition(createPitch('A', 3, 0), { sign: 'C', line: 4 })).toBe(4);

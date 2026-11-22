@@ -550,5 +550,13 @@
     "testFile": "tests/core/clef.test.ts",
     "testName": "CL12: setStaffClef changes only the clef; pitches stay; an illegal clef is ignored",
     "status": "DONE"
+  },
+  {
+    "planItemId": "B61",
+    "description": "M7c-4: tenor clef with three flats places Bb, Eb, Ab as printed (verified against a printed cello part).",
+    "codeLocation": "src/layout/keySignature.ts:tablesFor",
+    "testFile": "tests/layout/clef_layout.test.ts",
+    "testName": "CL13: tenor clef, three flats: Bb in the third space, Eb on the top line, Ab on the middle line (checked against a printed cello part)",
+    "status": "DONE"
   }
 ]
