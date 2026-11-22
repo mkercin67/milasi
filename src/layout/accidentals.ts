@@ -14,6 +14,8 @@ import { getKeySignatureAlter } from './keySignature';
 export class MeasureAccidentalTracker {
   private keySig: number;
   private currentAlter: Map<string, number> = new Map();
+  /** True when the last processPitch call printed an accidental only because it was forced. */
+  lastWasCourtesy = false;
 
   constructor(keySig: number = 0) {
     this.keySig = keySig;
@@ -27,6 +29,7 @@ export class MeasureAccidentalTracker {
    * @returns SMuFL accidental glyph name, or null if no accidental should be drawn.
    */
   processPitch(pitch: Pitch, force: boolean = false): string | null {
+    this.lastWasCourtesy = false;
     const pitchKey = `${pitch.step}${pitch.octave}`;
     const activeAlter = this.currentAlter.has(pitchKey)
       ? this.currentAlter.get(pitchKey)!
@@ -44,6 +47,7 @@ export class MeasureAccidentalTracker {
       return null;
     }
 
+    this.lastWasCourtesy = force && pitch.alter === activeAlter;
     this.currentAlter.set(pitchKey, pitch.alter);
 
     switch (pitch.alter) {

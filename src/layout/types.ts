@@ -36,6 +36,8 @@ export interface LayoutItem {
   /** Extra vertical stretch of a glyph (1 = natural). Used by the grand-staff brace. */
   scaleY?: number;
   hidden?: boolean;
+  /** Accidental printed only as a reminder (courtesy). The editor view draws it in a soft grey; exports keep it black. */
+  courtesy?: boolean;
   /** Polygon vertices (clockwise in staff spaces) for 'beam' items. */
   points?: Array<{ x: number; y: number }>;
   /** Beam level: 1 = primary, 2 = 16th secondary/stub, 3 = 32nd tertiary/stub. */

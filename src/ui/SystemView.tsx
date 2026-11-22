@@ -16,6 +16,9 @@ import { getGlyphChar } from '../render/smufl';
 import { UNITS_PER_EM } from '../render/glyphPaths.generated';
 import { systemViewPropsEqual } from './scoreView/systemEquality';
 
+/** Editor-view colour of courtesy accidentals (exports draw them black). */
+const COURTESY_COLOR = '#9ca3af';
+
 export interface SystemViewProps {
   system: LayoutSystem;
   staffSpacePx: number;
@@ -172,7 +175,7 @@ export const SystemView: React.FC<SystemViewProps> = React.memo(
             data-event-id={item.eventId}
             href={`#glyph-${item.glyph}`}
             transform={`translate(${pxX}, ${pxY}) scale(${item.scaleY === undefined ? scale : `${scale}, ${scale * item.scaleY}`})`}
-            fill="currentColor"
+            fill={item.courtesy ? COURTESY_COLOR : 'currentColor'}
           />
         );
       }

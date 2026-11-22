@@ -51,4 +51,26 @@ describe('courtesy accidentals', () => {
     const s = toggleShowAccidental(d.id).apply(score);
     expect(accGlyphs(s)).toEqual(['accidentalNatural']);
   });
+
+  it('A5: a courtesy accidental is flagged for the editor view, a required one is not', () => {
+    const { score, id } = cSharpInD();
+    const s = toggleShowAccidental(id).apply(score);
+    const accs = layoutScore(s, { width: 70 }).systems[0].items.filter(
+      (it) => it.kind === 'glyph' && (it.glyph ?? '').startsWith('accidental') && it.eventId
+    );
+    expect(accs).toHaveLength(1);
+    expect(accs[0].courtesy).toBe(true);
+
+    // a sharp that the key does not give is required, not courtesy
+    const f = createEmptyScore({ numMeasures: 1 });
+    const mid = f.measures[0].id;
+    f.parts[0].staves[0].measures[mid].voices[0].events = [
+      createNote({ pitches: [createPitch('F', 4, 1)], baseType: 'whole' }),
+    ];
+    const req = layoutScore(f, { width: 70 }).systems[0].items.filter(
+      (it) => it.kind === 'glyph' && (it.glyph ?? '') === 'accidentalSharp' && it.eventId
+    );
+    expect(req).toHaveLength(1);
+    expect(req[0].courtesy).toBeUndefined();
+  });
 });

@@ -548,6 +548,7 @@ function layoutPolyphonicEvents(
               glyph: accGlyph,
               x: accX,
               y: accY,
+              ...(tracker.lastWasCourtesy ? { courtesy: true } : {}),
             },
           });
         }
@@ -1067,6 +1068,7 @@ export function layoutSingleMeasure(
               glyph: accGlyph,
               x: eventCenterX - 1.2,
               y: accY,
+              ...(tracker.lastWasCourtesy ? { courtesy: true } : {}),
             },
           });
         }
