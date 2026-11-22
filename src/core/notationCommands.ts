@@ -4,7 +4,18 @@
  */
 
 import { produce } from 'immer';
-import { FermataPlacement, HairpinType, Id, NoteEvent, OrnamentType, Pitch, PhraseMark, Score } from './model';
+import {
+  FermataPlacement,
+  GraceNote,
+  HairpinType,
+  Id,
+  MAX_GRACE_NOTES,
+  NoteEvent,
+  OrnamentType,
+  Pitch,
+  PhraseMark,
+  Score,
+} from './model';
 import { Command } from './commandTypes';
 import { newId } from './factory';
 import { eventsInRange, Selection } from './selection';
@@ -443,6 +454,77 @@ export function cycleFermata(target: string | Selection): Command {
             }
           }
         }
+      });
+    },
+  };
+}
+
+/** Finds a note event by id in the draft or the score and returns it (undefined for rests and unknown ids). */
+function findNote<T extends Score>(score: T, eventId: string): NoteEvent | undefined {
+  for (const part of score.parts) {
+    for (const staff of part.staves) {
+      for (const sm of Object.values(staff.measures)) {
+        for (const v of sm.voices) {
+          for (const ev of v.events) {
+            if (ev.id === eventId) return ev.kind === 'note' ? ev : undefined;
+          }
+        }
+      }
+    }
+  }
+  return undefined;
+}
+
+/**
+ * Adds a grace note before the main note (M7c-3b), at the end of its grace list or at `index`.
+ * Refuses (returns the score unchanged) on a rest, an unknown id, or when MAX_GRACE_NOTES is reached.
+ */
+export function addGraceNote(eventId: string, grace: GraceNote, index?: number): Command {
+  return {
+    name: 'Add Grace Note',
+    apply(score: Score): Score {
+      const note = findNote(score, eventId);
+      if (!note || (note.graces?.length ?? 0) >= MAX_GRACE_NOTES) return score;
+      return produce(score, (draft) => {
+        const target = findNote(draft, eventId);
+        if (!target) return;
+        const list = target.graces ?? (target.graces = []);
+        const at = index === undefined ? list.length : Math.max(0, Math.min(index, list.length));
+        list.splice(at, 0, { kind: grace.kind, pitch: { ...grace.pitch }, baseType: grace.baseType });
+      });
+    },
+  };
+}
+
+/** Removes the grace note at `index` (default: the last one) from the main note (M7c-3b). */
+export function removeGraceNote(eventId: string, index?: number): Command {
+  return {
+    name: 'Remove Grace Note',
+    apply(score: Score): Score {
+      const note = findNote(score, eventId);
+      const count = note?.graces?.length ?? 0;
+      if (!note || count === 0) return score;
+      const at = index === undefined ? count - 1 : index;
+      if (at < 0 || at >= count) return score;
+      return produce(score, (draft) => {
+        const target = findNote(draft, eventId);
+        if (!target?.graces) return;
+        target.graces.splice(at, 1);
+        if (target.graces.length === 0) delete target.graces;
+      });
+    },
+  };
+}
+
+/** Removes all grace notes of the main note (M7c-3b). */
+export function clearGraceNotes(eventId: string): Command {
+  return {
+    name: 'Clear Grace Notes',
+    apply(score: Score): Score {
+      if (!findNote(score, eventId)?.graces) return score;
+      return produce(score, (draft) => {
+        const target = findNote(draft, eventId);
+        if (target) delete target.graces;
       });
     },
   };

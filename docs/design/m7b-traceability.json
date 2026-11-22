@@ -334,5 +334,45 @@
     "testFile": "tests/core/ornament.test.ts",
     "testName": "O6: a fermata above on the same note sits above the ornament",
     "status": "DONE"
+  },
+  {
+    "planItemId": "B34",
+    "description": "M7c-3b grace notes: add, insert, remove and clear on the main note.",
+    "codeLocation": "src/core/notationCommands.ts:addGraceNote",
+    "testFile": "tests/core/grace_notes.test.ts",
+    "testName": "GN1: add appends in order, an index inserts, remove takes the last or the given one, clear drops all",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B35",
+    "description": "M7c-3b grace notes have no duration: the bar stays valid.",
+    "codeLocation": "src/core/validate.ts:validateScore",
+    "testFile": "tests/core/grace_notes.test.ts",
+    "testName": "GN5: grace notes take no time: the bar stays valid with graces on every note",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B36",
+    "description": "M7c-3b grace notes validation: kind, duration, count, pitch, notes only.",
+    "codeLocation": "src/core/validate.ts:validateScore",
+    "testFile": "tests/core/grace_notes.test.ts",
+    "testName": "GN6: validation rejects unknown kind, unsupported duration, more than four, bad pitch and graces on a rest",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B37",
+    "description": "M7c-3b grace notes are transposed with their main note and respect MIDI bounds.",
+    "codeLocation": "src/core/commands.ts:transposeRange",
+    "testFile": "tests/core/grace_notes.test.ts",
+    "testName": "GN7: transposing a range moves the grace notes with their main note and respects the MIDI bounds",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B38",
+    "description": "M7c-3b copy and paste carry grace notes and ornaments.",
+    "codeLocation": "src/core/clipboard.ts:pasteEvents",
+    "testFile": "tests/core/grace_notes.test.ts",
+    "testName": "GN9: copy and paste carry the grace notes (deep copy) and the ornament",
+    "status": "DONE"
   }
 ]

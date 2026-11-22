@@ -161,6 +161,25 @@ export type FermataPlacement = 'above' | 'below';
 /** Ornament signs (M7c-3): trill, mordent (lower), inverted mordent (upper, short trill), turn. Ignored by playback. */
 export type OrnamentType = 'trill' | 'mordent' | 'invertedMordent' | 'turn';
 
+/** Kind of a grace note (M7c-3b): slashed acciaccatura or plain appoggiatura. */
+export type GraceKind = 'acciaccatura' | 'appoggiatura';
+
+/** Durations allowed for grace notes. */
+export type GraceBaseType = 'eighth' | '16th' | '32nd';
+
+/** Maximum number of grace notes before one main note. */
+export const MAX_GRACE_NOTES = 4;
+
+/**
+ * A grace note (M7c-3b). It belongs to the main note that follows it and has no duration in the bar,
+ * so measure sums, tuplets and cursors are not affected. Identified by its index in `NoteEvent.graces`.
+ */
+export interface GraceNote {
+  kind: GraceKind;
+  pitch: Pitch;
+  baseType: GraceBaseType;
+}
+
 /** Mark drawn after an event: breath mark (comma) or caesura. */
 export type PhraseMark = 'breath' | 'caesura';
 
@@ -196,6 +215,8 @@ export interface NoteEvent extends BaseEvent {
   lyrics?: LyricSyllable[]; // Syllables by verse (Milestone 6d)
   /** Ornament sign drawn above this note (M7c-3); ignored by playback. */
   ornament?: OrnamentType;
+  /** Grace notes played before this note (M7c-3b), in written order; at most MAX_GRACE_NOTES. */
+  graces?: GraceNote[];
   /** Print the accidental of every pitch even when the key and the bar do not require it (courtesy / cautionary accidental). */
   showAccidental?: boolean;
 }

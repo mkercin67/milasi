@@ -297,6 +297,15 @@ export function pasteEvents(
         if (split.tieToNext) {
           (newEv as NoteEvent).tiedToNext = true;
         }
+        // Event-level marks travel with the first slice of the copied note (M7c-3 / M7c-3b)
+        if (sIdx === 0) {
+          const ne = newEv as NoteEvent;
+          if (origEv.ornament) ne.ornament = origEv.ornament;
+          if (origEv.graces?.length) ne.graces = origEv.graces.map((g) => ({ ...g, pitch: { ...g.pitch } }));
+          if (origEv.fermata) ne.fermata = origEv.fermata;
+          if (origEv.phraseMark) ne.phraseMark = origEv.phraseMark;
+          if (origEv.showAccidental) ne.showAccidental = true;
+        }
       } else {
         newEv = createRest({
           baseType: bType,

@@ -518,7 +518,7 @@ export function transposeRange(range: RangeSelection, semitones: number): Comman
 
       // Verify bounds first: refuse if ANY pitch leaves MIDI 21..108
       for (const note of noteEvents) {
-        for (const p of note.pitches) {
+        for (const p of [...note.pitches, ...(note.graces ?? []).map((g) => g.pitch)]) {
           const targetMidi = getPitchMidi(p) + semitones;
           if (targetMidi < 21 || targetMidi > 108) {
             throw new Error(`Transpose would exceed MIDI bounds (21..108): ${targetMidi}`);
@@ -557,6 +557,13 @@ export function transposeRange(range: RangeSelection, semitones: number): Comman
                       }
                       return current;
                     });
+                    for (const g of ev.graces ?? []) {
+                      let current = g.pitch;
+                      for (let s = 0; s < steps; s++) {
+                        current = transposeSemitone(current, direction);
+                      }
+                      g.pitch = current;
+                    }
                   }
                 }
               }

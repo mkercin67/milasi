@@ -6,7 +6,16 @@
  * such as verifying voice durations against measure time signatures.
  */
 
-import { ALLOWED_ARTICULATIONS, ALLOWED_DYNAMICS, Id, MeasureDef, NoteEvent, Pitch, Score } from './model';
+import {
+  ALLOWED_ARTICULATIONS,
+  ALLOWED_DYNAMICS,
+  Id,
+  MAX_GRACE_NOTES,
+  MeasureDef,
+  NoteEvent,
+  Pitch,
+  Score,
+} from './model';
 import { isPercussionInstrument } from './instruments';
 import { durationTicks, measureTicks } from './time';
 
@@ -386,6 +395,46 @@ export function validateScore(score: Score): ValidationProblem[] {
                 voiceId: voice.id,
                 eventId: ev.id,
               });
+            }
+
+            // Grace notes (M7c-3b): notes only, at most MAX_GRACE_NOTES, known kind and duration, valid pitch
+            const graces = (ev as { graces?: unknown }).graces;
+            if (graces !== undefined) {
+              let graceProblem: string | null = null;
+              if (ev.kind !== 'note') graceProblem = 'grace notes are only allowed on notes';
+              else if (!Array.isArray(graces)) graceProblem = 'graces is not a list';
+              else if (graces.length > MAX_GRACE_NOTES) graceProblem = `more than ${MAX_GRACE_NOTES} grace notes`;
+              else {
+                for (const g of graces as Array<Record<string, unknown>>) {
+                  const p = g?.pitch as { step?: unknown; octave?: unknown; alter?: unknown } | undefined;
+                  if (g?.kind !== 'acciaccatura' && g?.kind !== 'appoggiatura') graceProblem = `unknown kind ${String(g?.kind)}`;
+                  else if (g.baseType !== 'eighth' && g.baseType !== '16th' && g.baseType !== '32nd')
+                    graceProblem = `unsupported duration ${String(g.baseType)}`;
+                  else if (
+                    !p ||
+                    typeof p.step !== 'string' ||
+                    !'CDEFGAB'.includes(p.step) ||
+                    p.step.length !== 1 ||
+                    typeof p.octave !== 'number' ||
+                    typeof p.alter !== 'number' ||
+                    !Number.isFinite(p.alter)
+                  )
+                    graceProblem = 'invalid pitch';
+                  if (graceProblem) break;
+                }
+              }
+              if (graceProblem) {
+                problems.push({
+                  code: 'invalid-grace-note',
+                  message: `Event ${ev.id} has invalid grace notes: ${graceProblem}`,
+                  severity: 'error',
+                  partId: part.id,
+                  staffId: staff.id,
+                  measureId,
+                  voiceId: voice.id,
+                  eventId: ev.id,
+                });
+              }
             }
 
             // Note event pitch validation
