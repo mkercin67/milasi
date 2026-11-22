@@ -558,5 +558,13 @@
     "testFile": "tests/layout/clef_layout.test.ts",
     "testName": "CL13: tenor clef, three flats: Bb in the third space, Eb on the top line, Ab on the middle line (checked against a printed cello part)",
     "status": "DONE"
+  },
+  {
+    "planItemId": "B62",
+    "description": "M7c-4: alto clef with four sharps places F#, C#, G#, D# as printed (verified against a printed viola part).",
+    "codeLocation": "src/layout/keySignature.ts:tablesFor",
+    "testFile": "tests/layout/clef_layout.test.ts",
+    "testName": "CL14: alto clef, four sharps: F# in the top space, C# on the middle line, G# on the top line, D# in the second space from the top (checked against a printed viola part)",
+    "status": "DONE"
   }
 ]

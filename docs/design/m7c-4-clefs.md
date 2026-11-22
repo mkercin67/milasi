@@ -1,6 +1,6 @@
 # M7c-4: Clef model (C clefs, octave clefs, staff clef choice)
 
-Status: IMPLEMENTED v1, parts 1 to 4 (model and formula, layout, command and dialog, gallery cards 29 to 31). NOT CLOSED: tenor three flats VERIFIED (owner's excerpt, cello part, bar 18, test CL13); tenor sharps look consistent in one old print (low resolution); alto has only a one-flat example so far. Alto sharps and further alto flats stay UNVERIFIED.
+Status: IMPLEMENTED v1, parts 1 to 4 (model and formula, layout, command and dialog, gallery cards 29 to 31). NOT CLOSED: tenor three flats VERIFIED twice (cello part, bars 18 and 154, test CL13); alto four sharps VERIFIED (viola part, test CL14; first four sharps only); alto one flat looks right. Tenor sharps (one low-resolution old print only), alto sharps 5 to 7 and alto flats 2 to 7 stay UNVERIFIED.
 Part of `docs/design/m7c-plan.md` (step M7c-4, no dependencies). Clef conventions follow the engraving literature
 (Gould, *Behind Bars*, chapter on clefs and key signatures; Ross). Key signature placement on C clefs is
 **UNVERIFIED until the owner compares it with a public-domain viola or tenor part** (see section 5).

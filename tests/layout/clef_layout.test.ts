@@ -76,6 +76,11 @@ describe('M7c-4 clef layout (part 2)', () => {
     expect(ys).toEqual([1.5, 0, 2]);
   });
 
+  it('CL14: alto clef, four sharps: F# in the top space, C# on the middle line, G# on the top line, D# in the second space from the top (checked against a printed viola part)', () => {
+    const ys = getKeySignatureAccidentals(4, { sign: 'C', line: 3 }).map((a) => a.y);
+    expect(ys).toEqual([0.5, 2, 0, 1.5]);
+  });
+
   it('CL9: a note lands on the right line for each clef and gets ledger lines outside the staff', () => {
     expect(pitchToStaffPosition(createPitch('C', 4, 0), { sign: 'C', line: 3 })).toBe(4); // middle line
     expect(pitchToStaffPosition(createPitch('A', 3, 0), { sign: 'C', line: 4 })).toBe(4);
