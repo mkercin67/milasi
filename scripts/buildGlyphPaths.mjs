@@ -32,6 +32,7 @@ console.log(`Bravura loaded: unitsPerEm = ${font.unitsPerEm}, total font glyphs 
 // Whitelist for dynamically formatted or runtime-referenced glyphs
 const whitelist = new Set([
   'gClef', 'fClef', 'cClef',
+  'gClef8vb', 'gClef8va', 'fClef8vb', 'fClef8va',
   'timeSig0', 'timeSig1', 'timeSig2', 'timeSig3', 'timeSig4', 'timeSig5', 'timeSig6', 'timeSig7', 'timeSig8', 'timeSig9',
   'timeSigCommon', 'timeSigCutCommon',
   'fermataAbove', 'fermataBelow', 'breathMarkComma', 'caesura',

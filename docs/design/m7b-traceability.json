@@ -494,5 +494,45 @@
     "testFile": "tests/core/clef.test.ts",
     "testName": "CL4: validation reports illegal clefs",
     "status": "DONE"
+  },
+  {
+    "planItemId": "B54",
+    "description": "M7c-4: the clef glyph sits on its own staff line for G, F and C clefs.",
+    "codeLocation": "src/layout/layoutScore.ts:createClefItems",
+    "testFile": "tests/layout/clef_layout.test.ts",
+    "testName": "CL5: the clef glyph sits on its own staff line",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B55",
+    "description": "M7c-4: octave clefs use the SMuFL octave glyphs.",
+    "codeLocation": "src/layout/layoutScore.ts:clefGlyphName",
+    "testFile": "tests/layout/clef_layout.test.ts",
+    "testName": "CL6: octave clefs use the SMuFL octave glyphs",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B56",
+    "description": "M7c-4: key signature positions per clef (treble/bass unchanged, octave clefs equal base clef).",
+    "codeLocation": "src/layout/keySignature.ts:tablesFor",
+    "testFile": "tests/layout/clef_layout.test.ts",
+    "testName": "CL7: treble and bass key signatures keep their positions; octave clefs equal the base clef",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B57",
+    "description": "M7c-4: alto and tenor key signatures stay near the staff (C-clef tables UNVERIFIED against print).",
+    "codeLocation": "src/layout/keySignature.ts:tablesFor",
+    "testFile": "tests/layout/clef_layout.test.ts",
+    "testName": "CL8: alto and tenor key signatures stay inside the staff area (UNVERIFIED against print, shape only)",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B58",
+    "description": "M7c-4: a note on a C clef lands at the clef-specific height; ledger lines are position based.",
+    "codeLocation": "src/layout/pitch.ts:pitchToStaffPosition",
+    "testFile": "tests/layout/clef_layout.test.ts",
+    "testName": "CL10: a score with a changed clef lays out the note at the clef-specific height",
+    "status": "DONE"
   }
 ]

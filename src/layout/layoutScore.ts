@@ -48,6 +48,15 @@ interface CachedSystemLayout {
 const MAX_SYSTEM_CACHE = 1000;
 const systemLayoutCache = new Map<string, CachedSystemLayout>();
 
+/** SMuFL glyph of a clef, including the octave clefs. */
+function clefGlyphName(clef: Clef): string {
+  if (clef.sign === 'C') return 'cClef';
+  const base = clef.sign === 'F' ? 'fClef' : 'gClef';
+  if (clef.octaveShift === -1) return `${base}8vb`;
+  if (clef.octaveShift === 1) return `${base}8va`;
+  return base;
+}
+
 /** Clears the system layout memoization cache (for tests or hard resets). */
 export function clearSystemLayoutCache(): void {
   systemLayoutCache.clear();
@@ -86,8 +95,9 @@ export function layoutScore(score: Score, options: LayoutOptions = {}): LayoutRe
   const hasBrace = multiStaff && (braceGroup ? braceGroup.bracket === 'brace' : true);
 
   function createClefItems(startX: number, clefToUse: Clef): { items: LayoutItem[]; width: number } {
-    const glyph = clefToUse.sign === 'F' ? 'fClef' : 'gClef';
-    const y = clefToUse.sign === 'F' ? 1.0 : 3.0;
+    const glyph = clefGlyphName(clefToUse);
+    // The clef sign sits on its own staff line (1 = bottom line, y = 4 - (line - 1))
+    const y = 4 - (clefToUse.line - 1);
     return {
       items: [
         {
