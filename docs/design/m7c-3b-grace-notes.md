@@ -1,6 +1,6 @@
 # M7c-3b: Grace notes (appoggiatura, acciaccatura)
 
-Status: IN PROGRESS (owner approved). Part 1 (model, validation, commands, transpose, clipboard) and part 2 (layout) are implemented. Differences from the proposal: a grace note has no `id` (it is addressed by its index in `graces`); the clipboard did not carry event-level marks before, so `pasteEvents` now carries graces, ornament, fermata, breath mark/caesura and the courtesy flag on the first slice of a copied note.
+Status: IN PROGRESS (owner approved). Part 1 (model, validation, commands, transpose, clipboard) part 2 (layout) and part 3 (editing) are implemented. Differences from the proposal: a grace note has no `id` (it is addressed by its index in `graces`); the clipboard did not carry event-level marks before, so `pasteEvents` now carries graces, ornament, fermata, breath mark/caesura and the courtesy flag on the first slice of a copied note.
 Part of `docs/design/m7c-plan.md` (owner decision Q2: in scope). Engraving rules follow the literature (Gould,
 *Behind Bars*, chapter on ornaments; Ross, *The Art of Music Engraving*). Sizes and distances are a first proposal and
 stay **UNVERIFIED until the owner compares the result with a public-domain edition** (BWV 772 and flute literature).
@@ -60,6 +60,15 @@ Grace notes cannot be selected one by one in v1. They are edited through their m
 - A command layer works without the keyboard: `addGraceNote(eventId, graceNote, index?)`,
   `removeGraceNote(eventId, graceId)`, `clearGraceNotes(eventId)`. All through `eventsInRange`-free single-event commands, undoable.
 - Clipboard: carried by the event. "Notasyonu temizle" also clears graces (documented in the button tooltip).
+
+### 4a. As built (part 3)
+- Entry is a small modal state (`useEditorGrace`, key logic in `graceEntry.ts`), not a new keymap mode: while it is on,
+  the letter keys, Shift+Up/Down, Backspace/Delete and Escape are taken by grace entry before the normal keymap; every
+  other key keeps its meaning. Because it is not in the keymap, these keys are **not** listed in `docs/SHORTCUTS.md`;
+  they are described in the button tooltips. Folding them into the keymap is a later cleanup.
+- Buttons: "Acciaccatura", "Appoggiatura" (toggle the mode for the selected note) and "Süsleri sil".
+- The mode ends when the selection changes. A grace note takes the current input duration when it is an eighth, 16th or
+  32nd, otherwise a 16th. Shift+Up/Down changes the accidental of the last grace note (-2..+2).
 
 ## 5. Playback (decision D4)
 Metrical positions of all normal notes stay exactly as written. A grace group takes its time from the **main note**:

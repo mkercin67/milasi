@@ -18,6 +18,7 @@ import { buildSampleScore, createBenchmark64Score } from './Demo';
 import { useEditorSelection } from './editor/useEditorSelection';
 import { useEditorInput } from './editor/useEditorInput';
 import { useEditorNotations } from './editor/useEditorNotations';
+import { useEditorGrace } from './editor/useEditorGrace';
 
 export { type SelectedEventInfo } from './editor/useEditorSelection';
 
@@ -105,6 +106,14 @@ export function useEditor(initialScore?: Score) {
     cursor: inputHook.cursor,
     cursorRef: inputHook.cursorRef,
     mode: inputHook.mode,
+  });
+
+  const graceHook = useEditorGrace({
+    score,
+    executeCommand,
+    triggerRejectedError,
+    selectedEventId: selectionHook.selectedEventId,
+    activeDuration: inputHook.activeDuration,
   });
 
   const notationsHook = useEditorNotations({
@@ -275,6 +284,10 @@ export function useEditor(initialScore?: Score) {
     applyCourtesyAccidental: notationsHook.applyCourtesyAccidental,
     applyPhraseMark: notationsHook.applyPhraseMark,
     applyOrnament: notationsHook.applyOrnament,
+    graceEntry: graceHook.graceEntry,
+    toggleGraceEntry: graceHook.toggleGraceEntry,
+    clearGraces: graceHook.clearGraces,
+    handleGraceKey: graceHook.handleGraceKey,
     clearNotations: notationsHook.clearNotations,
     scoreRef,
     editorStateRef,

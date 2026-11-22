@@ -171,6 +171,32 @@ const PITCH_LETTERS: Record<string, PitchStep> = {
   KeyB: 'B',
 };
 
+/** What a key press means while grace note entry is on (M7c-3b). */
+export type GraceKeyIntent =
+  | { type: 'letter'; step: PitchStep }
+  | { type: 'remove' }
+  | { type: 'exit' }
+  | { type: 'raise' }
+  | { type: 'lower' };
+
+/**
+ * Maps a key press to a grace note entry intent: C D E F G A B add a grace note, Shift+Up / Shift+Down move the last
+ * one by a semitone, Backspace / Delete remove it, Escape leaves the mode. Modified keys (Ctrl, Cmd, Alt) and
+ * Shift+letter are not grace keys. Everything else returns null and keeps its normal meaning.
+ */
+export function mapGraceKey(e: KeyEventLike): GraceKeyIntent | null {
+  if (e.ctrlKey || e.metaKey || e.altKey) return null;
+  if (e.code === 'Escape') return { type: 'exit' };
+  if (e.code === 'Backspace' || e.code === 'Delete') return { type: 'remove' };
+  if (e.shiftKey) {
+    if (e.code === 'ArrowUp') return { type: 'raise' };
+    if (e.code === 'ArrowDown') return { type: 'lower' };
+    return null;
+  }
+  const step = PITCH_LETTERS[e.code];
+  return step ? { type: 'letter', step } : null;
+}
+
 /**
  * Maps a physical keyboard event to a high-level editor action according to the active mode.
  *

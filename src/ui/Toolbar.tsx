@@ -9,6 +9,7 @@ import {
   ArticulationType,
   BaseDurationType,
   DynamicType,
+  GraceKind,
   HairpinType,
   OrnamentType,
   PhraseMark,
@@ -78,6 +79,9 @@ export interface ToolbarProps {
   onToggleCourtesyAccidental?: () => void;
   onTogglePhraseMark?: (mark: PhraseMark) => void;
   onToggleOrnament?: (ornament: OrnamentType) => void;
+  graceEntry?: GraceKind | null;
+  onToggleGraceEntry?: (kind: GraceKind) => void;
+  onClearGraces?: () => void;
   onClearNotations?: () => void;
   // M6c Structure Modals
   onOpenKeySig?: () => void;
@@ -147,6 +151,9 @@ export const Toolbar: React.FC<ToolbarProps> = ({
   onToggleCourtesyAccidental,
   onTogglePhraseMark,
   onToggleOrnament,
+  graceEntry,
+  onToggleGraceEntry,
+  onClearGraces,
   onClearNotations,
   onOpenKeySig,
   onOpenTimeSig,
@@ -268,6 +275,9 @@ export const Toolbar: React.FC<ToolbarProps> = ({
           onToggleCourtesyAccidental={onToggleCourtesyAccidental}
           onTogglePhraseMark={onTogglePhraseMark}
           onToggleOrnament={onToggleOrnament}
+          graceEntry={graceEntry}
+          onToggleGraceEntry={onToggleGraceEntry}
+          onClearGraces={onClearGraces}
           onClearNotations={onClearNotations}
           showNoteNames={showNoteNames}
           onToggleNoteNames={onToggleNoteNames}

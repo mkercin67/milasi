@@ -52,6 +52,8 @@ export interface UseAppKeyboardParams {
   applySlur: () => void;
   applyFermata: () => void;
   applyPhraseMark: (mark: PhraseMark) => void;
+  /** Grace note entry (M7c-3b): returns true when the key was used. */
+  handleGraceKey?: (e: KeyboardEvent) => boolean;
   clearNotations: () => void;
   moveCursorDirection: (direction: 'prev' | 'next') => void;
   moveCursorToBoundary?: (boundary: 'start' | 'end') => void;
@@ -134,6 +136,7 @@ export function useAppKeyboard(params: UseAppKeyboardParams) {
     applySlur,
     applyFermata,
     applyPhraseMark,
+    handleGraceKey,
     clearNotations,
     moveCursorDirection,
     moveCursorToBoundary,
@@ -180,6 +183,12 @@ export function useAppKeyboard(params: UseAppKeyboardParams) {
       // If a button or select is focused, release focus so it never swallows shortcuts
       if (e.target instanceof HTMLButtonElement || e.target instanceof HTMLSelectElement) {
         (e.target as HTMLElement).blur();
+      }
+
+      // Grace note entry takes the letter keys, Shift+Up/Down, Backspace and Escape while it is on (M7c-3b)
+      if (handleGraceKey?.(e)) {
+        e.preventDefault();
+        return;
       }
 
       const isPlaying = player.state === 'playing' || player.state === 'paused';
@@ -612,6 +621,7 @@ export function useAppKeyboard(params: UseAppKeyboardParams) {
     applySlur,
     applyFermata,
     applyPhraseMark,
+    handleGraceKey,
     clearNotations,
     moveCursorDirection,
     moveCursorToBoundary,

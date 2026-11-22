@@ -516,6 +516,21 @@ export function removeGraceNote(eventId: string, index?: number): Command {
   };
 }
 
+/** Replaces the pitch of the grace note at `index` (M7c-3b), for example to raise it by a semitone. */
+export function setGracePitch(eventId: string, index: number, pitch: Pitch): Command {
+  return {
+    name: 'Set Grace Pitch',
+    apply(score: Score): Score {
+      const note = findNote(score, eventId);
+      if (!note?.graces?.[index]) return score;
+      return produce(score, (draft) => {
+        const target = findNote(draft, eventId);
+        if (target?.graces?.[index]) target.graces[index].pitch = { ...pitch };
+      });
+    },
+  };
+}
+
 /** Removes all grace notes of the main note (M7c-3b). */
 export function clearGraceNotes(eventId: string): Command {
   return {

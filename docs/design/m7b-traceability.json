@@ -422,5 +422,29 @@
     "testFile": "tests/layout/grace_layout.test.ts",
     "testName": "GL10: a slur runs from the first grace note to the main note, one per group",
     "status": "DONE"
+  },
+  {
+    "planItemId": "B45",
+    "description": "M7c-3b grace entry: a letter adds a grace note in the nearest octave with the key signature accidental.",
+    "codeLocation": "src/ui/editor/graceEntry.ts:graceKeyResult",
+    "testFile": "tests/ui/grace_entry.test.ts",
+    "testName": "GE1: a letter adds a grace note of the chosen kind, in the octave nearest to the main note",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B46",
+    "description": "M7c-3b grace entry: Shift+Up/Down move the last grace note by a semitone.",
+    "codeLocation": "src/ui/editor/graceEntry.ts:graceKeyResult",
+    "testFile": "tests/ui/grace_entry.test.ts",
+    "testName": "GE4: Shift+Up and Shift+Down move the last grace note by a semitone, within two accidentals",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B47",
+    "description": "M7c-3b grace entry: Backspace removes, limit of four, Escape leaves, other keys pass through.",
+    "codeLocation": "src/ui/editor/graceEntry.ts:graceKeyResult",
+    "testFile": "tests/ui/grace_entry.test.ts",
+    "testName": "GE7: Escape leaves the mode; other keys, modified keys, Shift+letter and an off mode are ignored",
+    "status": "DONE"
   }
 ]

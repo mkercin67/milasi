@@ -136,6 +136,10 @@ const EditorShell: React.FC = () => {
     applyCourtesyAccidental,
     applyPhraseMark,
     applyOrnament,
+    graceEntry,
+    toggleGraceEntry,
+    clearGraces,
+    handleGraceKey,
     clearNotations,
   } = useEditor();
 
@@ -298,6 +302,7 @@ const EditorShell: React.FC = () => {
     applySlur,
     applyFermata,
     applyPhraseMark,
+    handleGraceKey,
     clearNotations,
     moveCursorDirection,
     moveCursorToBoundary,
@@ -482,6 +487,9 @@ const EditorShell: React.FC = () => {
         onToggleCourtesyAccidental={applyCourtesyAccidental}
         onTogglePhraseMark={applyPhraseMark}
         onToggleOrnament={applyOrnament}
+        graceEntry={graceEntry}
+        onToggleGraceEntry={toggleGraceEntry}
+        onClearGraces={clearGraces}
         onClearNotations={clearNotations}
         onOpenKeySig={modalState.handleOpenKeySigModal}
         onOpenTimeSig={modalState.handleOpenTimeSigModal}

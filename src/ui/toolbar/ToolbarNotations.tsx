@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import React from 'react';
-import { ArticulationType, DynamicType, HairpinType, OrnamentType, PhraseMark } from '../../core/model';
+import { ArticulationType, DynamicType, GraceKind, HairpinType, OrnamentType, PhraseMark } from '../../core/model';
 import { useI18n } from '../i18n';
 
 export interface ToolbarNotationsProps {
@@ -17,6 +17,9 @@ export interface ToolbarNotationsProps {
   onToggleCourtesyAccidental?: () => void;
   onTogglePhraseMark?: (mark: PhraseMark) => void;
   onToggleOrnament?: (ornament: OrnamentType) => void;
+  graceEntry?: GraceKind | null;
+  onToggleGraceEntry?: (kind: GraceKind) => void;
+  onClearGraces?: () => void;
   onClearNotations?: () => void;
   showNoteNames?: boolean;
   onToggleNoteNames?: () => void;
@@ -76,6 +79,9 @@ export const ToolbarNotations: React.FC<ToolbarNotationsProps> = ({
   onToggleCourtesyAccidental,
   onTogglePhraseMark,
   onToggleOrnament,
+  graceEntry = null,
+  onToggleGraceEntry,
+  onClearGraces,
   onClearNotations,
   showNoteNames = false,
   onToggleNoteNames,
@@ -316,6 +322,40 @@ export const ToolbarNotations: React.FC<ToolbarNotationsProps> = ({
             {t(`toolbar.ornament.${o.key}`)}
           </button>
         ))}
+
+      {/* Grace notes (M7c-3b): entry mode for the selected main note */}
+      {onToggleGraceEntry &&
+        (['acciaccatura', 'appoggiatura'] as const).map((kind) => (
+          <button
+            key={kind}
+            type="button"
+            data-testid={`btn-grace-${kind}`}
+            aria-pressed={graceEntry === kind}
+            onClick={handleButtonClick(() => onToggleGraceEntry(kind))}
+            onMouseDown={(e) => e.preventDefault()}
+            title={t(`toolbar.grace.${kind}Title`)}
+            style={{
+              ...MARK_BUTTON_STYLE,
+              ...(graceEntry === kind
+                ? { backgroundColor: '#dbeafe', borderColor: '#3b82f6', color: '#1d4ed8' }
+                : {}),
+            }}
+          >
+            {t(`toolbar.grace.${kind}`)}
+          </button>
+        ))}
+      {onClearGraces && (
+        <button
+          type="button"
+          data-testid="btn-grace-clear"
+          onClick={handleButtonClick(onClearGraces)}
+          onMouseDown={(e) => e.preventDefault()}
+          title={t('toolbar.grace.clearTitle')}
+          style={MARK_BUTTON_STYLE}
+        >
+          {t('toolbar.grace.clear')}
+        </button>
+      )}
 
       {/* Clear Notations button */}
       <button
