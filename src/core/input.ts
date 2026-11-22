@@ -20,6 +20,7 @@ import {
 import { createMeasure, createNote, createRest, inheritTimeSigDisplay, newId } from './factory';
 import { durationTicks, fillMeasureWithRests, measureTicks, PPQ } from './time';
 import { getKeySignatureAlter } from './pitch';
+import { clefMiddleLinePitch } from './clef';
 import { Command } from './commands';
 import { findStaff, firstStaff } from './staffLookup';
 
@@ -786,7 +787,7 @@ const STEP_DIATONIC: Record<PitchStep, number> = {
  * Calculates octave-nearest pitch from a keyboard letter name according to Western music rules.
  *
  * Chooses the octave with the minimum diatonic distance (-3..+3 steps) from the reference pitch.
- * In treble clef, null starts at B4; in bass clef, null starts at D3.
+ * With no previous pitch the reference is the note on the middle line of the clef (B4 treble, D3 bass, C4 alto, A3 tenor).
  * Accidental is automatically looked up from the current key signature.
  */
 export function pitchFromLetter(
@@ -796,11 +797,8 @@ export function pitchFromLetter(
   keySig: number
 ): Pitch {
   const step = letter.toUpperCase() as PitchStep;
-  const ref =
-    previousPitch ??
-    (clef.sign === 'F'
-      ? { step: 'D', octave: 3, alter: 0 }
-      : { step: 'B', octave: 4, alter: 0 });
+  // First note of a staff: start from the note on the middle line of the clef (B4 treble, D3 bass, C4 alto)
+  const ref = previousPitch ?? clefMiddleLinePitch(clef);
 
   const refDiatonic = ref.octave * 7 + STEP_DIATONIC[ref.step];
 

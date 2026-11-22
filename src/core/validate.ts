@@ -16,6 +16,7 @@ import {
   Pitch,
   Score,
 } from './model';
+import { isValidClef } from './clef';
 import { isPercussionInstrument } from './instruments';
 import { durationTicks, measureTicks } from './time';
 
@@ -248,6 +249,16 @@ export function validateScore(score: Score): ValidationProblem[] {
   // Validate parts, staves, measures, and voices
   for (const part of score.parts) {
     for (const staff of part.staves) {
+      // Legacy (pre-v7) files may lack a clef; only a present clef is checked
+      if (staff.clef && !isValidClef(staff.clef)) {
+        problems.push({
+          code: 'invalid-clef',
+          message: `Staff ${staff.id} has an invalid clef (${staff.clef.sign} on line ${staff.clef.line})`,
+          severity: 'error',
+          partId: part.id,
+          staffId: staff.id,
+        });
+      }
       // Schema v7: Every MeasureDef must exist on every staff
       if (score.schemaVersion === 7) {
         for (const mDef of score.measures) {

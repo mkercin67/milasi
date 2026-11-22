@@ -5,6 +5,7 @@
  * Implements diatonic position calculations relative to the staff bottom line.
  */
 
+import { clefBottomLineDiatonic } from '../core/clef';
 import { Clef, Pitch, PitchStep } from '../core/model';
 import { getKeySignatureAlter } from './keySignature';
 
@@ -42,18 +43,8 @@ export function pitchToStaffPosition(pitch: Pitch, clef: Clef): number {
 
   const pitchDiatonic = pitch.octave * 7 + stepIdx;
 
-  let bottomLineDiatonic = 30; // Treble default: E4 = 4 * 7 + 2 = 30
-
-  if (clef.sign === 'G') {
-    bottomLineDiatonic = 30; // E4
-  } else if (clef.sign === 'F') {
-    bottomLineDiatonic = 18; // G2 = 2 * 7 + 4 = 18
-  } else if (clef.sign === 'C') {
-    // Alto clef (line 3): C4 is on middle line (step 4), so bottom line is F3 (18+6 = 24)
-    bottomLineDiatonic = 24;
-  }
-
-  return pitchDiatonic - bottomLineDiatonic;
+  // Treble: E4 = 30, bass: G2 = 18, alto: F3 = 24 (see core/clef.ts for the formula)
+  return pitchDiatonic - clefBottomLineDiatonic(clef);
 }
 
 /**
@@ -129,14 +120,7 @@ export function yToStaffPosition(clef: Clef, ySpaces: number, keySig = 0): Pitch
   const clampedStepPos = Math.max(-3, Math.min(11, rawStepPos));
 
   // 3. Determine bottom line diatonic reference
-  let bottomLineDiatonic = 30; // Treble: E4 (4 * 7 + 2 = 30)
-  if (clef.sign === 'G') {
-    bottomLineDiatonic = 30;
-  } else if (clef.sign === 'F') {
-    bottomLineDiatonic = 18; // Bass: G2 (2 * 7 + 4 = 18)
-  } else if (clef.sign === 'C') {
-    bottomLineDiatonic = 24; // Alto: F3 (3 * 7 + 3 = 24)
-  }
+  const bottomLineDiatonic = clefBottomLineDiatonic(clef);
 
   const pitchDiatonic = bottomLineDiatonic + clampedStepPos;
   const octave = Math.floor(pitchDiatonic / 7);

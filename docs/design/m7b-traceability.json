@@ -470,5 +470,29 @@
     "testFile": "tests/playback/grace_schedule.test.ts",
     "testName": "GP2: without grace notes the schedule is unchanged",
     "status": "DONE"
+  },
+  {
+    "planItemId": "B51",
+    "description": "M7c-4: one clef formula gives the bottom-line pitch for G, F and C clefs and octave clefs.",
+    "codeLocation": "src/core/clef.ts:clefBottomLineDiatonic",
+    "testFile": "tests/core/clef.test.ts",
+    "testName": "CL1: bottom line diatonic number for every clef",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B52",
+    "description": "M7c-4: staff position and y are inverse of each other for every clef.",
+    "codeLocation": "src/layout/pitch.ts:pitchToStaffPosition",
+    "testFile": "tests/core/clef.test.ts",
+    "testName": "CL2: pitchToStaffPosition and yToStaffPosition round trip for every clef",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B53",
+    "description": "M7c-4: illegal clef combinations are reported as invalid-clef.",
+    "codeLocation": "src/core/validate.ts:validateScore",
+    "testFile": "tests/core/clef.test.ts",
+    "testName": "CL4: validation reports illegal clefs",
+    "status": "DONE"
   }
 ]

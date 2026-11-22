@@ -86,7 +86,10 @@ export type ClefSign = 'G' | 'F' | 'C';
 /** Clef specification. */
 export interface Clef {
   sign: ClefSign;
-  line: number; // e.g. 2 for G clef (treble), 4 for F clef (bass)
+  /** Staff line of the clef sign, 1 = bottom .. 5 = top: 2 for the G clef (treble), 4 for the F clef (bass), 3 for the alto clef. */
+  line: number;
+  /** Octave clef (M7c-4): -1 = "8vb" (written note sounds an octave lower), +1 = "8va"; only on G and F clefs. */
+  octaveShift?: -1 | 1;
 }
 
 /** A single instrument or musical part consisting of one or more staves. */
