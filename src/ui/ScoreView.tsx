@@ -22,6 +22,7 @@ import {
   layoutOrnaments,
   layoutSlurs,
   layoutHairpins,
+  layoutGraceSlurs,
   layoutTuplets,
 } from '../layout/notations';
 import { getGlyphPath, UNITS_PER_EM } from '../render/glyphPaths.generated';
@@ -189,6 +190,7 @@ export const ScoreView: React.FC<ScoreViewProps> = ({
     return [
       ...layoutSlurs(score, layout, noteheadIndex, articulationItems),
       ...layoutHairpins(score, layout, noteheadIndex),
+      ...layoutGraceSlurs(score, layout, noteheadIndex),
     ];
   }, [score, layout, noteheadIndex, articulationItems]);
 

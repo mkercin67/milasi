@@ -25,7 +25,7 @@ export function systemViewPropsEqual<P extends SystemViewComparable>(
   for (let i = 0; i < prev.system.items.length; i++) {
     const p = prev.system.items[i];
     const n = next.system.items[i];
-    if (p.id !== n.id || p.x !== n.x || p.y !== n.y || p.glyph !== n.glyph || p.scaleY !== n.scaleY) return false;
+    if (p.id !== n.id || p.x !== n.x || p.y !== n.y || p.glyph !== n.glyph || p.scaleY !== n.scaleY || p.glyphScale !== n.glyphScale) return false;
     if (p.text !== n.text || p.x2 !== n.x2 || p.y2 !== n.y2 || p.fontSize !== n.fontSize) return false;
   }
   return true;

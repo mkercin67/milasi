@@ -63,7 +63,7 @@ export function computeItemBoundingBox(item: LayoutItem, sysY: number): Bounding
   }
 
   if (item.kind === 'glyph' && item.glyph) {
-    const scale = item.scale ?? 1.0;
+    const scale = (item.scale ?? 1.0) * (item.glyphScale ?? 1.0);
     const bbox = getGlyphBBox(item.glyph);
     if (bbox) {
       // SMuFL Y is positive upwards; screen Y is positive downwards

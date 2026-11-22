@@ -18,6 +18,8 @@ export type StemDirection = 'up' | 'down';
 export interface LayoutItem {
   id: string;
   eventId?: string;
+  /** Grace note parts (M7c-3b): the main note they belong to. They have no `eventId` on purpose. */
+  graceOf?: string;
   kind: LayoutItemKind;
   x: number;
   y: number;
@@ -33,6 +35,8 @@ export interface LayoutItem {
   thickness?: number;
   width?: number;
   scale?: number;
+  /** Size factor of a glyph as drawn by the renderers (1 = natural). Used by grace notes (M7c-3b). */
+  glyphScale?: number;
   /** Extra vertical stretch of a glyph (1 = natural). Used by the grand-staff brace. */
   scaleY?: number;
   hidden?: boolean;

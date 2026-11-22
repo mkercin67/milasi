@@ -14,6 +14,7 @@ import React, { useMemo } from 'react';
 import { LayoutItem, LayoutSystem } from '../layout/types';
 import { getGlyphChar } from '../render/smufl';
 import { UNITS_PER_EM } from '../render/glyphPaths.generated';
+import { glyphScaleAttr } from '../render/renderSvg';
 import { systemViewPropsEqual } from './scoreView/systemEquality';
 
 /** Editor-view colour of courtesy accidentals (exports draw them black). */
@@ -174,7 +175,7 @@ export const SystemView: React.FC<SystemViewProps> = React.memo(
             data-id={item.id}
             data-event-id={item.eventId}
             href={`#glyph-${item.glyph}`}
-            transform={`translate(${pxX}, ${pxY}) scale(${item.scaleY === undefined ? scale : `${scale}, ${scale * item.scaleY}`})`}
+            transform={`translate(${pxX}, ${pxY}) scale(${glyphScaleAttr(item, scale)})`}
             fill={item.courtesy ? COURTESY_COLOR : 'currentColor'}
           />
         );

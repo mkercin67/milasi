@@ -644,6 +644,55 @@ function createSlurCubicPath(
   return `M ${pX1} ${pY1} C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${pX2} ${pY2} C ${cp2x} ${inCp2y}, ${cp1x} ${inCp1y}, ${pX1} ${pY1} Z`;
 }
 
+/**
+ * Slurs from the first grace note of a group to its main note (M7c-3b). The curve runs below the noteheads
+ * because grace stems always point up. Returned in the slur item shape, like hairpins.
+ */
+export function layoutGraceSlurs(
+  score: Score,
+  layout: LayoutResult,
+  noteheadIndex?: Map<string, NoteheadInfo>
+): SlurLayoutItem[] {
+  const result: SlurLayoutItem[] = [];
+  const index = noteheadIndex ?? buildNoteheadIndex(layout);
+  const firstHeads = new Map<string, { x: number; y: number; systemIndex: number }>();
+  for (let sysIdx = 0; sysIdx < layout.systems.length; sysIdx++) {
+    for (const it of layout.systems[sysIdx].items) {
+      if (it.graceOf && it.id.endsWith('-grace-0-head')) {
+        firstHeads.set(it.graceOf, { x: it.x, y: it.y, systemIndex: sysIdx });
+      }
+    }
+  }
+  if (firstHeads.size === 0) return result;
+  for (const part of score.parts) {
+    for (const staff of part.staves) {
+      for (const mDef of score.measures) {
+        const sm = staff.measures[mDef.id];
+        if (!sm) continue;
+        for (const v of sm.voices) {
+          for (const ev of v.events) {
+            if (ev.kind !== 'note' || !ev.graces || ev.graces.length === 0) continue;
+            const head = firstHeads.get(ev.id);
+            const main = index.get(ev.id);
+            if (!head || !main || head.systemIndex !== main.systemIndex) continue;
+            const x1 = head.x + NOTEHEAD_WIDTH * 0.325;
+            const y1 = head.y + 0.7;
+            const x2 = main.x + NOTEHEAD_WIDTH * 0.2;
+            const y2 = main.y + 0.7;
+            result.push({
+              id: `${ev.id}-grace-slur`,
+              slurId: `${ev.id}-grace-slur`,
+              systemIndex: head.systemIndex,
+              d: createSlurCubicPath(x1, y1, x2, y2, 'below', 0.6),
+            });
+          }
+        }
+      }
+    }
+  }
+  return result;
+}
+
 /** Open width of a hairpin at its wide end, in staff spaces. */
 const HAIRPIN_OPENING = 1.2;
 /** Thickness of each hairpin line, in staff spaces. */

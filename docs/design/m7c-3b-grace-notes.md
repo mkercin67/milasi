@@ -1,6 +1,6 @@
 # M7c-3b: Grace notes (appoggiatura, acciaccatura)
 
-Status: IN PROGRESS (owner approved). Part 1 (model, validation, commands, transpose, clipboard) is implemented. Differences from the proposal: a grace note has no `id` (it is addressed by its index in `graces`); the clipboard did not carry event-level marks before, so `pasteEvents` now carries graces, ornament, fermata, breath mark/caesura and the courtesy flag on the first slice of a copied note.
+Status: IN PROGRESS (owner approved). Part 1 (model, validation, commands, transpose, clipboard) and part 2 (layout) are implemented. Differences from the proposal: a grace note has no `id` (it is addressed by its index in `graces`); the clipboard did not carry event-level marks before, so `pasteEvents` now carries graces, ornament, fermata, breath mark/caesura and the courtesy flag on the first slice of a copied note.
 Part of `docs/design/m7c-plan.md` (owner decision Q2: in scope). Engraving rules follow the literature (Gould,
 *Behind Bars*, chapter on ornaments; Ross, *The Art of Music Engraving*). Sizes and distances are a first proposal and
 stay **UNVERIFIED until the owner compares the result with a public-domain edition** (BWV 772 and flute literature).
@@ -39,6 +39,16 @@ that stays untouched: measure sums, tuplets, delete, transpose of ranges (graces
 - Accidentals: grace pitches run through the same accidental tracker as normal notes, **before** the main note, so a
   sharp on a grace note correctly carries on within the bar.
 - Ledger lines for grace notes follow the normal rule, drawn short.
+
+### 3a. As built (part 2)
+- Grace items are LayoutItems with `graceOf` (the main note's id) and **no `eventId`**, so mouse picking, the notehead
+  index, ties, articulations and every other event-based pass ignore them. v1 consequence: a grace note cannot be
+  clicked; click its main note.
+- A new `LayoutItem.glyphScale` draws glyphs smaller (all three renderers and the bounding box honour it). The older
+  `LayoutItem.scale` stays as it was (tempo glyphs), so no existing output changed.
+- Beams of a grace group are thick `line` items (not polygons), so system justification can keep them at a fixed offset.
+- Polyphonic staff measures (several voices in one staff) do **not** draw grace notes yet: documented gap.
+- The slur is computed by `layoutGraceSlurs` (notation layer), like hairpins.
 
 ## 4. Editing (decision D3: no new "event" type to select)
 Grace notes cannot be selected one by one in v1. They are edited through their main note:

@@ -374,5 +374,53 @@
     "testFile": "tests/core/grace_notes.test.ts",
     "testName": "GN9: copy and paste carry the grace notes (deep copy) and the ornament",
     "status": "DONE"
+  },
+  {
+    "planItemId": "B39",
+    "description": "M7c-3b grace note drawing: small head, stem, flag, slash for acciaccatura, left of the main note.",
+    "codeLocation": "src/layout/graceLayout.ts:planGraceGroup",
+    "testFile": "tests/layout/grace_layout.test.ts",
+    "testName": "GL1: a single acciaccatura has a small head, a stem, a flag and a slash, left of the main note",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B40",
+    "description": "M7c-3b two or more grace notes are joined by a beam instead of flags.",
+    "codeLocation": "src/layout/graceLayout.ts:planGraceGroup",
+    "testFile": "tests/layout/grace_layout.test.ts",
+    "testName": "GL3: two grace notes are joined by a beam and have no flags",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B41",
+    "description": "M7c-3b grace notes keep their distance to the main note when the system is stretched.",
+    "codeLocation": "src/layout/layoutPrimitives.ts:applyEventAnchors",
+    "testFile": "tests/layout/grace_layout.test.ts",
+    "testName": "GL5: the grace head keeps its distance to the main note when the system is stretched",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B42",
+    "description": "M7c-3b a sharp on a grace note carries on in the bar.",
+    "codeLocation": "src/layout/graceLayout.ts:planGraceGroup",
+    "testFile": "tests/layout/grace_layout.test.ts",
+    "testName": "GL6: a sharp on a grace note carries on in the bar: the following natural note prints a natural sign",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B43",
+    "description": "M7c-3b a changed grace pitch refreshes the cached measure layout.",
+    "codeLocation": "src/layout/measureLayout.ts:layoutSingleMeasure",
+    "testFile": "tests/layout/grace_layout.test.ts",
+    "testName": "GL7: changing a grace pitch in place refreshes the cached measure layout",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B44",
+    "description": "M7c-3b a slur joins the first grace note and the main note.",
+    "codeLocation": "src/layout/notations.ts:layoutGraceSlurs",
+    "testFile": "tests/layout/grace_layout.test.ts",
+    "testName": "GL10: a slur runs from the first grace note to the main note, one per group",
+    "status": "DONE"
   }
 ]

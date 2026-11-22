@@ -12,11 +12,17 @@
 
 import { LayoutItem, LayoutResult, LayoutSystem } from '../layout/types';
 import { computeLayoutBoundingBox } from '../layout/boundingBox';
-import { layoutArticulations, layoutDynamics, layoutHairpins, layoutSlurs } from '../layout/notations';
+import { layoutArticulations, layoutDynamics, layoutGraceSlurs, layoutHairpins, layoutSlurs } from '../layout/notations';
 import { layoutTies } from '../layout/ties';
 import { Score } from '../core/model';
 import { getGlyphChar } from './smufl';
 import { getGlyphPath, UNITS_PER_EM } from './glyphPaths.generated';
+
+/** SVG `scale(...)` argument of a glyph: the base scale, stretched vertically by `scaleY` and shrunk by `glyphScale`. */
+export function glyphScaleAttr(item: { scaleY?: number; glyphScale?: number }, scale: number): string {
+  const s = scale * (item.glyphScale ?? 1);
+  return item.scaleY === undefined ? `${s}` : `${s}, ${s * item.scaleY}`;
+}
 
 export interface RenderSvgOptions {
   /** Number of screen pixels per staff space. Defaults to 10. */
@@ -189,7 +195,9 @@ export function renderSvg(
 
   const score = options.score ?? layout.score;
   const ties = score ? layoutTies(score, layout) : [];
-  const slurs = score ? [...layoutSlurs(score, layout), ...layoutHairpins(score, layout)] : [];
+  const slurs = score
+    ? [...layoutSlurs(score, layout), ...layoutHairpins(score, layout), ...layoutGraceSlurs(score, layout)]
+    : [];
   const dynamics = score ? layoutDynamics(score, layout) : [];
   const articulations = score ? layoutArticulations(score, layout) : [];
 
@@ -342,7 +350,7 @@ function renderItemToSvgElement(
       use.setAttribute('data-event-id', item.eventId);
     }
     use.setAttribute('href', `#glyph-${item.glyph}`);
-    use.setAttribute('transform', `translate(${pxX}, ${pxY}) scale(${item.scaleY === undefined ? scale : `${scale}, ${scale * item.scaleY}`})`);
+    use.setAttribute('transform', `translate(${pxX}, ${pxY}) scale(${glyphScaleAttr(item, scale)})`);
     use.setAttribute('fill', 'currentColor');
     return use;
   }
@@ -489,7 +497,7 @@ export function renderSvgToString(
           const char = getGlyphChar(item.glyph);
           elementsXml += `    <text data-id="${item.id}"${eventAttr} x="${pxX}" y="${pxY}" class="scoreforge-glyph" font-size="${fontSize}px" fill="currentColor">${char}</text>\n`;
         } else {
-          elementsXml += `    <use data-id="${item.id}"${eventAttr} href="#glyph-${item.glyph}" transform="translate(${pxX}, ${pxY}) scale(${item.scaleY === undefined ? scale : `${scale}, ${scale * item.scaleY}`})" fill="currentColor" />\n`;
+          elementsXml += `    <use data-id="${item.id}"${eventAttr} href="#glyph-${item.glyph}" transform="translate(${pxX}, ${pxY}) scale(${glyphScaleAttr(item, scale)})" fill="currentColor" />\n`;
         }
       } else if (item.kind === 'text' && item.text) {
         const anchorAttr = item.textAnchor ? ` text-anchor="${item.textAnchor}"` : '';
@@ -516,7 +524,9 @@ export function renderSvgToString(
 
   const score = options.score ?? layout.score;
   const ties = score ? layoutTies(score, layout) : [];
-  const slurs = score ? [...layoutSlurs(score, layout), ...layoutHairpins(score, layout)] : [];
+  const slurs = score
+    ? [...layoutSlurs(score, layout), ...layoutHairpins(score, layout), ...layoutGraceSlurs(score, layout)]
+    : [];
   const dynamics = score ? layoutDynamics(score, layout) : [];
   const articulations = score ? layoutArticulations(score, layout) : [];
 

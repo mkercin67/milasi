@@ -71,6 +71,12 @@ export function applyEventAnchors(
   anchors: ReadonlyMap<string, number>
 ): void {
   for (const entry of entries) {
+    const graceOf = entry.item.graceOf;
+    if (graceOf !== undefined) {
+      const graceAnchor = anchors.get(graceOf);
+      if (graceAnchor !== undefined) entry.anchorX = graceAnchor;
+      continue;
+    }
     const eventId = entry.item.eventId;
     if (eventId === undefined) continue;
     const anchor = anchors.get(eventId);

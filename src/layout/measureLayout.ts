@@ -16,6 +16,7 @@ import { PPQ } from '../core/time';
 import { MeasureAccidentalTracker } from './accidentals';
 import { getBeamGroupStemDirection } from './beamLayout';
 import { groupBeams } from './beams';
+import { GracePlan, planGraceGroup } from './graceLayout';
 import {
   getKeySignatureAlter,
   getKeySignatureChangeAccidentals,
@@ -745,6 +746,21 @@ export function layoutSingleMeasure(
               ((p.alter ?? 0) + 2) * 100) |
             0;
         }
+        // Grace notes are laid out inside the measure chunk (M7c-3b), so they are part of the cache key.
+        const gr = ev.graces;
+        if (gr) {
+          for (let j = 0; j < gr.length; j++) {
+            const g = gr[j];
+            eventsHash =
+              (eventsHash * 31 +
+                (g.kind === 'acciaccatura' ? 1301 : 1303) +
+                g.baseType.charCodeAt(0) * 13 +
+                g.pitch.step.charCodeAt(0) * 10 +
+                g.pitch.octave +
+                ((g.pitch.alter ?? 0) + 2) * 100) |
+              0;
+          }
+        }
         // Lyrics are laid out inside the measure chunk, so they must be part of the cache key.
         // Without this, adding/removing syllables kept a stale cached layout until a reload.
         const lyr = ev.lyrics;
@@ -941,8 +957,13 @@ export function layoutSingleMeasure(
           estNameWidth > 0 ? estNameWidth + 1.2 : 0
         );
 
+    // Grace notes (M7c-3b): planned first, so their accidentals reach the bar's tracker before the main note's.
+    const gracePlan: GracePlan | null =
+      ev.kind === 'note' ? planGraceGroup(ev as NoteEvent, mDef.keySig, clef, tracker) : null;
+    const graceReserve = gracePlan ? gracePlan.width : 0;
+
     let firstEventAccidentalPadding = 0;
-    if (eIdx === 0 && ev.kind === 'note') {
+    if (eIdx === 0 && ev.kind === 'note' && !gracePlan) {
       const noteEv = ev as NoteEvent;
       const hasAccidental = noteEv.pitches.some((p) => {
         const activeAlter = getKeySignatureAlter(p.step, mDef.keySig);
@@ -973,7 +994,10 @@ export function layoutSingleMeasure(
 
     const eventCenterX = isWholeMeasureRest
       ? relX + eventWidth / 2 - 0.7
-      : relX + 0.8 + firstEventAccidentalPadding;
+      : relX + 0.8 + firstEventAccidentalPadding + graceReserve;
+    if (gracePlan) {
+      for (const entry of gracePlan.build(relX + 0.8 + firstEventAccidentalPadding)) measureItems.push(entry);
+    }
     if (!isWholeMeasureRest) {
       columns.set(tickAcc, eventCenterX);
       eventAnchors.set(ev.id, eventCenterX);
@@ -1226,7 +1250,7 @@ export function layoutSingleMeasure(
       }
     }
 
-      relX += eventWidth + firstEventAccidentalPadding;
+      relX += eventWidth + firstEventAccidentalPadding + graceReserve;
       tickAcc += ev.duration;
     }
 
