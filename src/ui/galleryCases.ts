@@ -517,7 +517,7 @@ export function getGalleryCases(): GalleryCase[] {
     {
       id: 'clef-alto',
       title: '29. Alto Clef (C clef, line 3)',
-      description: 'D major in the alto clef (viola): the middle line is C4; the high C5 and the low A3 use ledger lines. Key signature positions on C clefs are UNVERIFIED until compared with a printed viola part.',
+      description: 'D major in the alto clef (viola): the middle line is C4, A3 sits on the second line, and the high C5 uses a ledger line and a natural sign (the key has C sharp). Key signature positions on C clefs are UNVERIFIED until compared with a printed viola part.',
       fixedSize: true,
       build: () => {
         let score = createEmptyScore({ title: '29. Alto Clef', keySig: 2, measures: 2 });
