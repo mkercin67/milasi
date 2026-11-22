@@ -354,6 +354,151 @@ exports[`H1 Regression Gallery: Golden Snapshot Tests > golden snapshot matches 
 </svg>"
 `;
 
+exports[`H1 Regression Gallery: Golden Snapshot Tests > golden snapshot matches for case [clef-alto]: 29. Alto Clef (C clef, line 3) 1`] = `
+"<svg xmlns="http://www.w3.org/2000/svg" viewBox="-16 -3 505 180" width="505px" height="180px" style="color: currentColor; overflow: visible; user-select: none;">
+  <defs>
+    <path id="glyph-accidentalNatural" d="M141-181C139-181 138-180 137-180C137-180 73-157 47-157C41-157 37-158 37-162L37-329C37-336 31-341 25-341L12-341C5-341 0-336 0-329L0 186C0 192 3 195 8 195C9 195 11 194 12 194C12 194 14 194 15 193C29 187 85 163 114 163C124 163 131 166 131 174L131 323C131 330 136 335 143 335L156 335C162 335 168 330 168 323L168-179C168-184 164-187 160-187C159-187 157-187 156-186M37-39C37-53 98-79 122-79C128-79 131-78 131-74L131 29C131 47 74 70 49 70C42 70 37 68 37 64" />
+    <path id="glyph-accidentalSharp" d="M237-118C244-121 249-129 249-135L249-206C249-211 246-214 242-214C240-214 239-214 237-213C237-213 217-205 212-204C205-204 198-209 198-217L198-339C198-345 192-350 184-350C174-350 168-345 168-339L168-209C167-199 164-186 155-180C143-173 109-159 92-155C83-155 80-167 80-175L80-295C80-301 73-306 66-306C56-306 50-301 50-295L50-160C50-146 44-136 38-133C32-130 12-122 12-122C5-120 0-112 0-106L0-35C0-29 3-26 8-26C9-26 11-27 12-27C12-27 27-33 34-37C35-37 36-38 37-38C44-38 50-28 50-20L50 79C50 90 45 99 39 102C33 104 12 113 12 113C5 115 0 123 0 129L0 200C0 206 3 209 8 209C9 209 11 208 12 208C12 208 26 202 35 199C36 198 37 198 38 198C45 198 50 209 50 214L50 337C50 343 56 348 63 348C73 348 80 343 80 337L80 198C80 185 85 178 90 176L151 151C152 151 154 150 155 150C163 150 168 162 168 168L168 293C168 299 174 304 181 304C192 304 198 299 198 293L198 151C198 143 202 131 209 128C216 125 237 117 237 117C244 114 249 106 249 100L249 29C249 24 246 21 242 21C240 21 239 21 237 22L211 32C205 32 198 26 198 14L198-79C198-86 203-105 211-108M168 45C162 65 115 85 92 85C86 85 81 83 80 80C78 76 77 54 77 30C77-1 78-36 80-44C82-61 128-82 153-82C160-82 166-80 168-76C170-71 172-46 172-19C172 8 170 36 168 45" />
+    <path id="glyph-cClef" d="M230-482C230-496 223-503 209-503L208-503C194-503 187-496 187-482L187 482C187 496 194 503 208 503L209 503C223 503 230 496 230 482L230 44C230 36 235 37 239 38C265 45 307 71 328 184C331 200 337 209 347 209C358 209 363 199 368 182C381 138 404 89 475 89C540 89 558 153 558 284C558 415 535 474 452 474C430 474 410 471 394 466C377 461 367 454 367 447C367 442 383 436 394 432C414 425 434 405 434 367C434 323 405 298 366 298C323 298 289 327 289 380C289 443 344 506 463 506C627 506 699 391 699 287C699 149 623 53 490 53C461 53 442 58 429 62C424 64 418 65 413 65C409 65 404 64 400 61C386 52 364 20 364 0C364-20 386-52 400-61C404-64 409-65 413-65C418-65 424-64 429-62C442-58 461-53 490-53C623-53 699-149 699-287C699-391 627-506 463-506C344-506 289-443 289-380C289-327 323-298 366-298C405-298 434-323 434-367C434-405 414-425 394-432C383-436 367-442 367-447C367-454 377-461 394-466C410-471 430-474 452-474C535-474 558-415 558-284C558-153 540-89 475-89C404-89 381-138 368-182C363-199 358-209 347-209C337-209 331-200 328-184C307-71 265-45 239-38C235-37 230-36 230-44M21-503C7-503 0-496 0-482L0 482C0 496 7 503 21 503L107 503C121 503 128 496 128 482L128-482C128-496 121-503 107-503" />
+    <path id="glyph-noteheadBlack" d="M97 125C186 125 295 43 295-42C295-93 255-125 198-125C88-125 0-44 0 42C0 94 43 125 97 125" />
+    <path id="glyph-noteheadHalf" d="M97 125C262 125 295-9 295-42C295-93 254-125 196-125C47-125 0-10 0 42C0 95 42 125 97 125M173 46C128 76 97 87 75 87C54 87 42 76 35 64C32 58 29 51 29 44C29 22 51-5 120-45C170-74 201-84 221-84C240-84 251-75 258-63C261-57 264-51 264-44C264-24 243 0 173 46" />
+    <path id="glyph-timeSig4" d="M362 74L362-140C362-148 361-157 350-157C341-157 336-155 330-148L235-33C231-28 226-22 226-10L226 74L91 74C171 6 331-221 334-232C334-234 335-235 335-237C335-245 328-251 320-251C311-251 270-249 252-249C234-249 189-251 181-251C172-251 158-248 158-232C158-108 60 31 30 73L24 81C24 82 23 83 23 84C21 88 20 92 20 95C20 105 28 112 40 112L226 112L226 175C226 202 204 210 186 210C170 210 163 219 163 229C163 239 167 250 182 250L395 250C405 250 415 243 415 229C415 215 403 209 393 209C383 209 362 203 362 171L362 112L435 112C445 112 450 105 450 93C450 81 446 74 435 74" />
+  </defs>
+  <g data-system-index="0">
+    <line data-id="sys-0-staffline-4" x1="0" y1="151.5" x2="472.6" y2="151.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="butt" />
+    <line data-id="sys-0-staffline-3" x1="0" y1="141.5" x2="472.6" y2="141.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="butt" />
+    <line data-id="sys-0-staffline-2" x1="0" y1="131.5" x2="472.6" y2="131.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="butt" />
+    <line data-id="sys-0-staffline-1" x1="0" y1="121.5" x2="472.6" y2="121.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="butt" />
+    <line data-id="sys-0-staffline-0" x1="0" y1="111.5" x2="472.6" y2="111.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="butt" />
+    <text data-id="header-title" x="350" y="32" fill="currentColor" text-anchor="middle" font-family="&quot;Times New Roman&quot;, Times, &quot;Liberation Serif&quot;, serif" font-size="22px" font-weight="bold">29. Alto Clef</text>
+    <line data-id="sys-0-sys-start-barline" x1="0" y1="111.5" x2="0" y2="151.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="butt" />
+    <use data-id="sys-0-clef-0.4" href="#glyph-cClef" transform="translate(4, 131.5) scale(0.04)" fill="currentColor" />
+    <use data-id="sys-0-keysig-0" href="#glyph-accidentalSharp" transform="translate(31.999999999999996, 116.5) scale(0.04)" fill="currentColor" />
+    <use data-id="sys-0-keysig-1" href="#glyph-accidentalSharp" transform="translate(43, 131.5) scale(0.04)" fill="currentColor" />
+    <use data-id="timesig-num-0" href="#glyph-timeSig4" transform="translate(58.00000000000001, 121.5) scale(0.04)" fill="currentColor" />
+    <use data-id="timesig-den-0" href="#glyph-timeSig4" transform="translate(58.00000000000001, 141.5) scale(0.04)" fill="currentColor" />
+    <use data-id="uuid-normalized" data-event-id="uuid-normalized" href="#glyph-noteheadBlack" transform="translate(88, 126.5) scale(0.04)" fill="currentColor" />
+    <line data-id="uuid-normalized-stem" data-event-id="uuid-normalized" x1="88" y1="128.18" x2="88" y2="161.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
+    <use data-id="uuid-normalized" data-event-id="uuid-normalized" href="#glyph-noteheadBlack" transform="translate(143, 121.5) scale(0.04)" fill="currentColor" />
+    <line data-id="uuid-normalized-stem" data-event-id="uuid-normalized" x1="143" y1="123.17999999999999" x2="143" y2="156.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
+    <use data-id="uuid-normalized" data-event-id="uuid-normalized" href="#glyph-noteheadBlack" transform="translate(198, 116.5) scale(0.04)" fill="currentColor" />
+    <line data-id="uuid-normalized-stem" data-event-id="uuid-normalized" x1="198" y1="118.17999999999999" x2="198" y2="151.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
+    <use data-id="uuid-normalized" data-event-id="uuid-normalized" href="#glyph-noteheadBlack" transform="translate(253, 111.5) scale(0.04)" fill="currentColor" />
+    <line data-id="uuid-normalized-stem" data-event-id="uuid-normalized" x1="253" y1="113.17999999999999" x2="253" y2="146.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
+    <line data-id="barline-uuid-normalized" x1="306" y1="111.5" x2="306" y2="151.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="butt" />
+    <use data-id="uuid-normalized" data-event-id="uuid-normalized" href="#glyph-noteheadHalf" transform="translate(315.6, 141.5) scale(0.04)" fill="currentColor" />
+    <line data-id="uuid-normalized-stem" data-event-id="uuid-normalized" x1="327.40000000000003" y1="139.82" x2="327.40000000000003" y2="106.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
+    <use data-id="uuid-normalized-acc-0" data-event-id="uuid-normalized" href="#glyph-accidentalNatural" transform="translate(378.6, 96.5) scale(0.04)" fill="currentColor" />
+    <use data-id="uuid-normalized" data-event-id="uuid-normalized" href="#glyph-noteheadHalf" transform="translate(390.6, 96.5) scale(0.04)" fill="currentColor" />
+    <line data-id="uuid-normalized-ledger-0--1" data-event-id="uuid-normalized" x1="386.6" y1="101.5" x2="406.4" y2="101.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="butt" />
+    <line data-id="uuid-normalized-stem" data-event-id="uuid-normalized" x1="390.6" y1="98.17999999999999" x2="390.6" y2="131.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
+    <line data-id="barline-uuid-normalized-thin" x1="463.6" y1="111.5" x2="463.6" y2="151.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="butt" />
+    <line data-id="barline-uuid-normalized-thick" x1="467.6" y1="111.5" x2="467.6" y2="151.5" stroke="currentColor" stroke-width="5" stroke-linecap="butt" />
+    <rect class="event-hit-area" data-event-id="uuid-normalized" x="83" y="111.5" width="21.999999999999993" height="55" fill="transparent" pointer-events="all" style="cursor: pointer;" />
+    <rect class="event-hit-area" data-event-id="uuid-normalized" x="138" y="106.5" width="21.999999999999993" height="55" fill="transparent" pointer-events="all" style="cursor: pointer;" />
+    <rect class="event-hit-area" data-event-id="uuid-normalized" x="193" y="101.5" width="21.999999999999993" height="55" fill="transparent" pointer-events="all" style="cursor: pointer;" />
+    <rect class="event-hit-area" data-event-id="uuid-normalized" x="248" y="96.5" width="21.999999999999993" height="55" fill="transparent" pointer-events="all" style="cursor: pointer;" />
+    <rect class="event-hit-area" data-event-id="uuid-normalized" x="310.6" y="101.5" width="22.00000000000003" height="50" fill="transparent" pointer-events="all" style="cursor: pointer;" />
+    <rect class="event-hit-area" data-event-id="uuid-normalized" x="373.6" y="81.5" width="37.80000000000001" height="55" fill="transparent" pointer-events="all" style="cursor: pointer;" />
+  </g>
+</svg>"
+`;
+
+exports[`H1 Regression Gallery: Golden Snapshot Tests > golden snapshot matches for case [clef-tenor]: 30. Tenor Clef (C clef, line 4) 1`] = `
+"<svg xmlns="http://www.w3.org/2000/svg" viewBox="-16 -3 516 185" width="516px" height="185px" style="color: currentColor; overflow: visible; user-select: none;">
+  <defs>
+    <path id="glyph-accidentalFlat" d="M12 170C15 174 18 175 21 175C24 175 27 173 27 173C57 156 81 129 106 112C195 50 226-11 226-57C226-114 182-150 136-153C129-153 122-152 115-150C104-147 92-143 81-136C75-131 64-122 59-122C57-122 56-122 54-123C47-126 43-133 43-140C44-162 50-402 50-422C50-433 41-439 31-439C17-439 1-429 0-411C0-411 4 160 12 170M47 81C47 81 44 21 44-19C44-35 45-47 46-51C50-63 76-85 90-93C99-98 108-100 116-100C126-100 135-96 141-89C151-78 157-61 157-42C157-24 152-3 140 18C127 42 98 74 68 93C64 95 61 96 58 96C49 96 47 86 47 81" />
+    <path id="glyph-cClef" d="M230-482C230-496 223-503 209-503L208-503C194-503 187-496 187-482L187 482C187 496 194 503 208 503L209 503C223 503 230 496 230 482L230 44C230 36 235 37 239 38C265 45 307 71 328 184C331 200 337 209 347 209C358 209 363 199 368 182C381 138 404 89 475 89C540 89 558 153 558 284C558 415 535 474 452 474C430 474 410 471 394 466C377 461 367 454 367 447C367 442 383 436 394 432C414 425 434 405 434 367C434 323 405 298 366 298C323 298 289 327 289 380C289 443 344 506 463 506C627 506 699 391 699 287C699 149 623 53 490 53C461 53 442 58 429 62C424 64 418 65 413 65C409 65 404 64 400 61C386 52 364 20 364 0C364-20 386-52 400-61C404-64 409-65 413-65C418-65 424-64 429-62C442-58 461-53 490-53C623-53 699-149 699-287C699-391 627-506 463-506C344-506 289-443 289-380C289-327 323-298 366-298C405-298 434-323 434-367C434-405 414-425 394-432C383-436 367-442 367-447C367-454 377-461 394-466C410-471 430-474 452-474C535-474 558-415 558-284C558-153 540-89 475-89C404-89 381-138 368-182C363-199 358-209 347-209C337-209 331-200 328-184C307-71 265-45 239-38C235-37 230-36 230-44M21-503C7-503 0-496 0-482L0 482C0 496 7 503 21 503L107 503C121 503 128 496 128 482L128-482C128-496 121-503 107-503" />
+    <path id="glyph-noteheadBlack" d="M97 125C186 125 295 43 295-42C295-93 255-125 198-125C88-125 0-44 0 42C0 94 43 125 97 125" />
+    <path id="glyph-noteheadHalf" d="M97 125C262 125 295-9 295-42C295-93 254-125 196-125C47-125 0-10 0 42C0 95 42 125 97 125M173 46C128 76 97 87 75 87C54 87 42 76 35 64C32 58 29 51 29 44C29 22 51-5 120-45C170-74 201-84 221-84C240-84 251-75 258-63C261-57 264-51 264-44C264-24 243 0 173 46" />
+    <path id="glyph-timeSig4" d="M362 74L362-140C362-148 361-157 350-157C341-157 336-155 330-148L235-33C231-28 226-22 226-10L226 74L91 74C171 6 331-221 334-232C334-234 335-235 335-237C335-245 328-251 320-251C311-251 270-249 252-249C234-249 189-251 181-251C172-251 158-248 158-232C158-108 60 31 30 73L24 81C24 82 23 83 23 84C21 88 20 92 20 95C20 105 28 112 40 112L226 112L226 175C226 202 204 210 186 210C170 210 163 219 163 229C163 239 167 250 182 250L395 250C405 250 415 243 415 229C415 215 403 209 393 209C383 209 362 203 362 171L362 112L435 112C445 112 450 105 450 93C450 81 446 74 435 74" />
+  </defs>
+  <g data-system-index="0">
+    <line data-id="sys-0-staffline-4" x1="0" y1="151.5" x2="483.6" y2="151.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="butt" />
+    <line data-id="sys-0-staffline-3" x1="0" y1="141.5" x2="483.6" y2="141.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="butt" />
+    <line data-id="sys-0-staffline-2" x1="0" y1="131.5" x2="483.6" y2="131.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="butt" />
+    <line data-id="sys-0-staffline-1" x1="0" y1="121.5" x2="483.6" y2="121.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="butt" />
+    <line data-id="sys-0-staffline-0" x1="0" y1="111.5" x2="483.6" y2="111.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="butt" />
+    <text data-id="header-title" x="350" y="32" fill="currentColor" text-anchor="middle" font-family="&quot;Times New Roman&quot;, Times, &quot;Liberation Serif&quot;, serif" font-size="22px" font-weight="bold">30. Tenor Clef</text>
+    <line data-id="sys-0-sys-start-barline" x1="0" y1="111.5" x2="0" y2="151.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="butt" />
+    <use data-id="sys-0-clef-0.4" href="#glyph-cClef" transform="translate(4, 121.5) scale(0.04)" fill="currentColor" />
+    <use data-id="sys-0-keysig-0" href="#glyph-accidentalFlat" transform="translate(31.999999999999996, 126.5) scale(0.04)" fill="currentColor" />
+    <use data-id="sys-0-keysig-1" href="#glyph-accidentalFlat" transform="translate(43, 111.5) scale(0.04)" fill="currentColor" />
+    <use data-id="sys-0-keysig-2" href="#glyph-accidentalFlat" transform="translate(54, 131.5) scale(0.04)" fill="currentColor" />
+    <use data-id="timesig-num-0" href="#glyph-timeSig4" transform="translate(69, 121.5) scale(0.04)" fill="currentColor" />
+    <use data-id="timesig-den-0" href="#glyph-timeSig4" transform="translate(69, 141.5) scale(0.04)" fill="currentColor" />
+    <use data-id="uuid-normalized" data-event-id="uuid-normalized" href="#glyph-noteheadBlack" transform="translate(99, 146.5) scale(0.04)" fill="currentColor" />
+    <line data-id="uuid-normalized-stem" data-event-id="uuid-normalized" x1="110.8" y1="144.82" x2="110.8" y2="111.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
+    <use data-id="uuid-normalized" data-event-id="uuid-normalized" href="#glyph-noteheadBlack" transform="translate(154, 141.5) scale(0.04)" fill="currentColor" />
+    <line data-id="uuid-normalized-stem" data-event-id="uuid-normalized" x1="165.79999999999998" y1="139.82" x2="165.79999999999998" y2="106.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
+    <use data-id="uuid-normalized" data-event-id="uuid-normalized" href="#glyph-noteheadBlack" transform="translate(209, 136.5) scale(0.04)" fill="currentColor" />
+    <line data-id="uuid-normalized-stem" data-event-id="uuid-normalized" x1="220.79999999999998" y1="134.82" x2="220.79999999999998" y2="101.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
+    <use data-id="uuid-normalized" data-event-id="uuid-normalized" href="#glyph-noteheadBlack" transform="translate(264, 131.5) scale(0.04)" fill="currentColor" />
+    <line data-id="uuid-normalized-stem" data-event-id="uuid-normalized" x1="264" y1="133.18" x2="264" y2="166.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
+    <line data-id="barline-uuid-normalized" x1="317" y1="111.5" x2="317" y2="151.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="butt" />
+    <use data-id="uuid-normalized" data-event-id="uuid-normalized" href="#glyph-noteheadHalf" transform="translate(326.59999999999997, 121.5) scale(0.04)" fill="currentColor" />
+    <line data-id="uuid-normalized-stem" data-event-id="uuid-normalized" x1="326.59999999999997" y1="123.17999999999999" x2="326.59999999999997" y2="156.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
+    <use data-id="uuid-normalized" data-event-id="uuid-normalized" href="#glyph-noteheadHalf" transform="translate(401.59999999999997, 101.5) scale(0.04)" fill="currentColor" />
+    <line data-id="uuid-normalized-ledger-0--1" data-event-id="uuid-normalized" x1="397.59999999999997" y1="101.5" x2="417.4" y2="101.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="butt" />
+    <line data-id="uuid-normalized-stem" data-event-id="uuid-normalized" x1="401.59999999999997" y1="103.17999999999999" x2="401.59999999999997" y2="136.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
+    <line data-id="barline-uuid-normalized-thin" x1="474.6" y1="111.5" x2="474.6" y2="151.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="butt" />
+    <line data-id="barline-uuid-normalized-thick" x1="478.6" y1="111.5" x2="478.6" y2="151.5" stroke="currentColor" stroke-width="5" stroke-linecap="butt" />
+    <rect class="event-hit-area" data-event-id="uuid-normalized" x="94" y="106.5" width="21.999999999999993" height="50" fill="transparent" pointer-events="all" style="cursor: pointer;" />
+    <rect class="event-hit-area" data-event-id="uuid-normalized" x="149" y="101.5" width="22.00000000000001" height="50" fill="transparent" pointer-events="all" style="cursor: pointer;" />
+    <rect class="event-hit-area" data-event-id="uuid-normalized" x="204" y="96.5" width="21.999999999999993" height="50" fill="transparent" pointer-events="all" style="cursor: pointer;" />
+    <rect class="event-hit-area" data-event-id="uuid-normalized" x="259" y="116.5" width="21.999999999999993" height="55" fill="transparent" pointer-events="all" style="cursor: pointer;" />
+    <rect class="event-hit-area" data-event-id="uuid-normalized" x="321.59999999999997" y="106.5" width="22.00000000000003" height="55" fill="transparent" pointer-events="all" style="cursor: pointer;" />
+    <rect class="event-hit-area" data-event-id="uuid-normalized" x="392.59999999999997" y="86.5" width="29.79999999999997" height="55" fill="transparent" pointer-events="all" style="cursor: pointer;" />
+  </g>
+</svg>"
+`;
+
+exports[`H1 Regression Gallery: Golden Snapshot Tests > golden snapshot matches for case [clef-treble-8vb]: 31. Treble Clef, Octave Down (8vb) 1`] = `
+"<svg xmlns="http://www.w3.org/2000/svg" viewBox="-16 -3 494 195" width="494px" height="195px" style="color: currentColor; overflow: visible; user-select: none;">
+  <defs>
+    <path id="glyph-accidentalSharp" d="M237-118C244-121 249-129 249-135L249-206C249-211 246-214 242-214C240-214 239-214 237-213C237-213 217-205 212-204C205-204 198-209 198-217L198-339C198-345 192-350 184-350C174-350 168-345 168-339L168-209C167-199 164-186 155-180C143-173 109-159 92-155C83-155 80-167 80-175L80-295C80-301 73-306 66-306C56-306 50-301 50-295L50-160C50-146 44-136 38-133C32-130 12-122 12-122C5-120 0-112 0-106L0-35C0-29 3-26 8-26C9-26 11-27 12-27C12-27 27-33 34-37C35-37 36-38 37-38C44-38 50-28 50-20L50 79C50 90 45 99 39 102C33 104 12 113 12 113C5 115 0 123 0 129L0 200C0 206 3 209 8 209C9 209 11 208 12 208C12 208 26 202 35 199C36 198 37 198 38 198C45 198 50 209 50 214L50 337C50 343 56 348 63 348C73 348 80 343 80 337L80 198C80 185 85 178 90 176L151 151C152 151 154 150 155 150C163 150 168 162 168 168L168 293C168 299 174 304 181 304C192 304 198 299 198 293L198 151C198 143 202 131 209 128C216 125 237 117 237 117C244 114 249 106 249 100L249 29C249 24 246 21 242 21C240 21 239 21 237 22L211 32C205 32 198 26 198 14L198-79C198-86 203-105 211-108M168 45C162 65 115 85 92 85C86 85 81 83 80 80C78 76 77 54 77 30C77-1 78-36 80-44C82-61 128-82 153-82C160-82 166-80 168-76C170-71 172-46 172-19C172 8 170 36 168 45" />
+    <path id="glyph-gClef8vb" d="M376-415C374-427 376-428 382-434C398-449 419-470 438-491C522-583 572-702 572-815C572-902 548-988 507-1048C492-1070 466-1098 455-1098C441-1098 410-1072 390-1050C316-968 292-843 292-739C292-681 299-616 306-575C308-563 309-561 297-551C233-498 164-437 112-373C43-287 0-194 0-87C0 87 119 252 364 252C387 252 413 250 433 246C444 244 446 243 448 255C460 322 475 409 475 456C475 604 375 622 316 622C262 622 236 606 236 593C236 586 245 583 268 576C299 567 335 540 335 482C335 427 300 380 239 380C172 380 132 433 132 495C132 556 166 645 294 657C276 668 266 686 266 709C266 724 270 736 278 746C283 753 285 755 273 760C241 773 228 795 228 819C228 852 252 878 306 878C355 878 397 853 397 807C397 789 393 776 381 763C374 755 372 753 384 747C411 733 421 712 421 694C421 674 411 657 390 648C452 629 519 579 519 458C519 401 501 306 490 244C488 232 489 233 503 227C604 187 671 102 671-11C671-139 577-252 430-252C404-252 404-252 401-270M470-943C503-943 530-916 530-861C530-792 497-728 419-650C403-634 379-611 356-591C349-585 345-586 343-599C339-625 337-659 337-691C337-847 409-943 470-943M361-262C364-243 364-244 346-238C258-208 201-129 201-44C201 46 248 110 316 133C324 136 336 139 343 139C351 139 355 134 355 128C355 121 347 118 340 115C298 97 268 54 268 8C268-49 307-92 368-109C384-113 386-112 388-101L438 197C440 208 439 208 424 211C408 214 388 216 368 216C193 216 80 119 80-20C80-79 90-158 173-252C233-319 279-356 326-394C336-402 338-401 340-390M430-103C428-115 429-118 441-117C522-110 589-42 589 46C589 109 551 160 495 188C483 194 481 194 479 182M351 657C375 657 383 673 383 689C383 706 376 723 359 735C355 738 352 738 344 733C321 715 313 706 313 692C313 670 329 657 351 657M295 773C300 770 303 771 310 776C342 801 350 808 350 823C350 849 331 863 307 863C277 863 267 843 267 825C267 809 274 786 295 773" />
+    <path id="glyph-noteheadBlack" d="M97 125C186 125 295 43 295-42C295-93 255-125 198-125C88-125 0-44 0 42C0 94 43 125 97 125" />
+    <path id="glyph-noteheadHalf" d="M97 125C262 125 295-9 295-42C295-93 254-125 196-125C47-125 0-10 0 42C0 95 42 125 97 125M173 46C128 76 97 87 75 87C54 87 42 76 35 64C32 58 29 51 29 44C29 22 51-5 120-45C170-74 201-84 221-84C240-84 251-75 258-63C261-57 264-51 264-44C264-24 243 0 173 46" />
+    <path id="glyph-timeSig4" d="M362 74L362-140C362-148 361-157 350-157C341-157 336-155 330-148L235-33C231-28 226-22 226-10L226 74L91 74C171 6 331-221 334-232C334-234 335-235 335-237C335-245 328-251 320-251C311-251 270-249 252-249C234-249 189-251 181-251C172-251 158-248 158-232C158-108 60 31 30 73L24 81C24 82 23 83 23 84C21 88 20 92 20 95C20 105 28 112 40 112L226 112L226 175C226 202 204 210 186 210C170 210 163 219 163 229C163 239 167 250 182 250L395 250C405 250 415 243 415 229C415 215 403 209 393 209C383 209 362 203 362 171L362 112L435 112C445 112 450 105 450 93C450 81 446 74 435 74" />
+  </defs>
+  <g data-system-index="0">
+    <line data-id="sys-0-staffline-4" x1="0" y1="151.5" x2="461.59999999999997" y2="151.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="butt" />
+    <line data-id="sys-0-staffline-3" x1="0" y1="141.5" x2="461.59999999999997" y2="141.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="butt" />
+    <line data-id="sys-0-staffline-2" x1="0" y1="131.5" x2="461.59999999999997" y2="131.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="butt" />
+    <line data-id="sys-0-staffline-1" x1="0" y1="121.5" x2="461.59999999999997" y2="121.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="butt" />
+    <line data-id="sys-0-staffline-0" x1="0" y1="111.5" x2="461.59999999999997" y2="111.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="butt" />
+    <text data-id="header-title" x="350" y="32" fill="currentColor" text-anchor="middle" font-family="&quot;Times New Roman&quot;, Times, &quot;Liberation Serif&quot;, serif" font-size="22px" font-weight="bold">31. Treble 8vb</text>
+    <line data-id="sys-0-sys-start-barline" x1="0" y1="111.5" x2="0" y2="151.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="butt" />
+    <use data-id="sys-0-clef-0.4" href="#glyph-gClef8vb" transform="translate(4, 141.5) scale(0.04)" fill="currentColor" />
+    <use data-id="sys-0-keysig-0" href="#glyph-accidentalSharp" transform="translate(31.999999999999996, 111.5) scale(0.04)" fill="currentColor" />
+    <use data-id="timesig-num-0" href="#glyph-timeSig4" transform="translate(46.99999999999999, 121.5) scale(0.04)" fill="currentColor" />
+    <use data-id="timesig-den-0" href="#glyph-timeSig4" transform="translate(46.99999999999999, 141.5) scale(0.04)" fill="currentColor" />
+    <use data-id="uuid-normalized" data-event-id="uuid-normalized" href="#glyph-noteheadBlack" transform="translate(77, 151.5) scale(0.04)" fill="currentColor" />
+    <line data-id="uuid-normalized-stem" data-event-id="uuid-normalized" x1="88.79999999999998" y1="149.82" x2="88.79999999999998" y2="116.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
+    <use data-id="uuid-normalized" data-event-id="uuid-normalized" href="#glyph-noteheadBlack" transform="translate(132, 141.5) scale(0.04)" fill="currentColor" />
+    <line data-id="uuid-normalized-stem" data-event-id="uuid-normalized" x1="143.79999999999998" y1="139.82" x2="143.79999999999998" y2="106.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
+    <use data-id="uuid-normalized" data-event-id="uuid-normalized" href="#glyph-noteheadBlack" transform="translate(187, 131.5) scale(0.04)" fill="currentColor" />
+    <line data-id="uuid-normalized-stem" data-event-id="uuid-normalized" x1="187" y1="133.18" x2="187" y2="166.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
+    <use data-id="uuid-normalized" data-event-id="uuid-normalized" href="#glyph-noteheadBlack" transform="translate(242, 121.5) scale(0.04)" fill="currentColor" />
+    <line data-id="uuid-normalized-stem" data-event-id="uuid-normalized" x1="242" y1="123.17999999999999" x2="242" y2="156.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
+    <line data-id="barline-uuid-normalized" x1="295" y1="111.5" x2="295" y2="151.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="butt" />
+    <use data-id="uuid-normalized" data-event-id="uuid-normalized" href="#glyph-noteheadHalf" transform="translate(304.6, 141.5) scale(0.04)" fill="currentColor" />
+    <line data-id="uuid-normalized-stem" data-event-id="uuid-normalized" x1="316.4" y1="139.82" x2="316.4" y2="106.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
+    <use data-id="uuid-normalized" data-event-id="uuid-normalized" href="#glyph-noteheadHalf" transform="translate(379.6, 106.5) scale(0.04)" fill="currentColor" />
+    <line data-id="uuid-normalized-stem" data-event-id="uuid-normalized" x1="379.6" y1="108.17999999999999" x2="379.6" y2="141.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" />
+    <line data-id="barline-uuid-normalized-thin" x1="452.59999999999997" y1="111.5" x2="452.59999999999997" y2="151.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="butt" />
+    <line data-id="barline-uuid-normalized-thick" x1="456.59999999999997" y1="111.5" x2="456.59999999999997" y2="151.5" stroke="currentColor" stroke-width="5" stroke-linecap="butt" />
+    <rect class="event-hit-area" data-event-id="uuid-normalized" x="72" y="111.5" width="21.999999999999993" height="50" fill="transparent" pointer-events="all" style="cursor: pointer;" />
+    <rect class="event-hit-area" data-event-id="uuid-normalized" x="127" y="101.5" width="21.999999999999993" height="50" fill="transparent" pointer-events="all" style="cursor: pointer;" />
+    <rect class="event-hit-area" data-event-id="uuid-normalized" x="182" y="116.5" width="21.999999999999993" height="55" fill="transparent" pointer-events="all" style="cursor: pointer;" />
+    <rect class="event-hit-area" data-event-id="uuid-normalized" x="237" y="106.5" width="21.999999999999993" height="55" fill="transparent" pointer-events="all" style="cursor: pointer;" />
+    <rect class="event-hit-area" data-event-id="uuid-normalized" x="299.6" y="101.5" width="21.999999999999993" height="50" fill="transparent" pointer-events="all" style="cursor: pointer;" />
+    <rect class="event-hit-area" data-event-id="uuid-normalized" x="374.6" y="91.5" width="22.00000000000003" height="55" fill="transparent" pointer-events="all" style="cursor: pointer;" />
+  </g>
+</svg>"
+`;
+
 exports[`H1 Regression Gallery: Golden Snapshot Tests > golden snapshot matches for case [dynamics-range]: 12. Dynamics Palette 1`] = `
 "<svg xmlns="http://www.w3.org/2000/svg" viewBox="-16 -3 549 201" width="549px" height="201px" style="color: currentColor; overflow: visible; user-select: none;">
   <defs>

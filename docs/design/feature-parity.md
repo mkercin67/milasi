@@ -21,7 +21,7 @@ motivated the row, so priorities follow use, not feature lists.
 |---|---|---|
 | Treble and bass clefs, key signatures, time signatures | DONE | all |
 | Common time and cut time symbols | DONE (M7c-1) | BWV 772, BWV 1030 |
-| C clefs (alto, tenor, ...), octave clefs | PLANNED M7c-4 | viola, cello, tenor |
+| C clefs (soprano, mezzo-soprano, alto, tenor, baritone), octave clefs (8vb/8va), F-clef lines 3 and 5, French violin | DONE v1 (M7c-4): toolbar "Anahtar" dialog changes the whole staff; pitches stay, only the written position changes. Key signature positions on C clefs are UNVERIFIED until compared with an IMSLP alto and tenor example; soprano, mezzo and baritone-C derive from the alto table and may touch a ledger line | viola, cello, tenor |
 | Clef change inside a staff | PLANNED M7c-5 | K. 545 |
 | Key and time change mid-score | DONE (scope: from here / whole score) | all |
 | Transposing instruments (written vs sounding pitch) | GAP | clarinet, horn, band parts |

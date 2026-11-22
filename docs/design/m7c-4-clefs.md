@@ -1,6 +1,6 @@
 # M7c-4: Clef model (C clefs, octave clefs, staff clef choice)
 
-Status: IN PROGRESS (approved by the owner; part 1 model/formula done).
+Status: IMPLEMENTED v1, parts 1 to 4 (model and formula, layout, command and dialog, gallery cards 29 to 31). NOT CLOSED: C-clef key signature tables stay UNVERIFIED until the owner compares an alto and a tenor example from IMSLP.
 Part of `docs/design/m7c-plan.md` (step M7c-4, no dependencies). Clef conventions follow the engraving literature
 (Gould, *Behind Bars*, chapter on clefs and key signatures; Ross). Key signature placement on C clefs is
 **UNVERIFIED until the owner compares it with a public-domain viola or tenor part** (see section 5).
@@ -55,6 +55,11 @@ diatonic staff positions per clef family** (treble, bass, and each C clef), gene
   them (alto and tenor are the two common cases). I will write the tables from Gould and Ross, and I will **not close
   the step until the owner confirms one public-domain alto and one tenor example** (IMSLP). Until then the status
   note in this file says UNVERIFIED.
+
+**As implemented (v1):** `src/layout/keySignature.ts` holds explicit position tables for treble, bass, alto and tenor
+(treble and bass are the old values, unchanged). Any other clef takes the table of its family (G like treble, F like
+bass, C lines 1, 2, 5 like alto) shifted by whole octaves, preferring a placement without ledger lines. The tenor table
+(sharps F3 C4 G3 D4 A3 E4 B3) is from memory of Gould and is the least certain one.
 
 ## 6. Editing
 - New command `setStaffClef(staffId, clef)`; undoable; **pitches are not changed** (notes move on the staff, the

@@ -23,6 +23,7 @@ import {
   setRepeatEnd,
   setVolta,
   setLyrics,
+  setStaffClef,
 } from '../core/commands';
 import {
   setMeasureEventsViaCommands,
@@ -510,6 +511,45 @@ export function getGalleryCases(): GalleryCase[] {
         score = setMeasureEventsViaCommands(score, 0, [
           qNote('C', 5), qNote('B', 4), qNote('C', 5), qNote('D', 5),
         ], 1, lower);
+        return score;
+      },
+    },
+    {
+      id: 'clef-alto',
+      title: '29. Alto Clef (C clef, line 3)',
+      description: 'D major in the alto clef (viola): the middle line is C4; the high C5 and the low A3 use ledger lines. Key signature positions on C clefs are UNVERIFIED until compared with a printed viola part.',
+      fixedSize: true,
+      build: () => {
+        let score = createEmptyScore({ title: '29. Alto Clef', keySig: 2, measures: 2 });
+        score = setStaffClef(score.parts[0].staves[0].id, { sign: 'C', line: 3 }).apply(score);
+        score = setMeasureEventsViaCommands(score, 0, [qNote('D', 4), qNote('E', 4), qNote('F', 4, 1), qNote('G', 4)]);
+        score = setMeasureEventsViaCommands(score, 1, [hNote('A', 3), hNote('C', 5)]);
+        return score;
+      },
+    },
+    {
+      id: 'clef-tenor',
+      title: '30. Tenor Clef (C clef, line 4)',
+      description: 'E-flat major in the tenor clef (cello, bassoon, trombone): the C clef sits on the fourth line, so C4 is on that line. Key signature positions on C clefs are UNVERIFIED until compared with a printed part.',
+      fixedSize: true,
+      build: () => {
+        let score = createEmptyScore({ title: '30. Tenor Clef', keySig: -3, measures: 2 });
+        score = setStaffClef(score.parts[0].staves[0].id, { sign: 'C', line: 4 }).apply(score);
+        score = setMeasureEventsViaCommands(score, 0, [qNote('E', 3, -1), qNote('F', 3), qNote('G', 3), qNote('A', 3, -1)]);
+        score = setMeasureEventsViaCommands(score, 1, [hNote('C', 4), hNote('G', 4)]);
+        return score;
+      },
+    },
+    {
+      id: 'clef-treble-8vb',
+      title: '31. Treble Clef, Octave Down (8vb)',
+      description: 'Tenor voice written in the treble clef with a small 8 below: the notes sound an octave lower than they would in a plain treble clef (the bottom line is E3).',
+      fixedSize: true,
+      build: () => {
+        let score = createEmptyScore({ title: '31. Treble 8vb', keySig: 1, measures: 2 });
+        score = setStaffClef(score.parts[0].staves[0].id, { sign: 'G', line: 2, octaveShift: -1 }).apply(score);
+        score = setMeasureEventsViaCommands(score, 0, [qNote('E', 3), qNote('G', 3), qNote('B', 3), qNote('D', 4)]);
+        score = setMeasureEventsViaCommands(score, 1, [hNote('G', 3), hNote('G', 4)]);
         return score;
       },
     },
