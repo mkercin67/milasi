@@ -4,7 +4,8 @@
  */
 
 import { produce } from 'immer';
-import { BarlineType, BeamGroupingMode, Id, MeasureDef, Score, TimeSigDisplay, VoltaDef } from './model';
+import { BarlineType, BeamGroupingMode, Clef, Id, MeasureDef, Score, TimeSigDisplay, VoltaDef } from './model';
+import { isValidClef } from './clef';
 import { Command } from './commandTypes';
 import { createMeasure, createRest, inheritTimeSigDisplay, newId } from './factory';
 import { fillMeasureWithRests, measureTicks } from './time';
@@ -72,6 +73,30 @@ export function setShowNoteNames(show: boolean): Command {
           }
         } else {
           draft.layoutSettings = { ...(draft.layoutSettings ?? {}), showNoteNames: true };
+        }
+      });
+    },
+  };
+}
+
+/**
+ * Changes the clef of a whole staff (M7c-4). Pitches are sounding pitches and stay as they are; only the way they are
+ * written on the staff changes. An illegal clef (see isValidClef) leaves the score untouched.
+ */
+export function setStaffClef(staffId: Id, clef: Clef): Command {
+  return {
+    name: 'setStaffClef',
+    apply(score: Score): Score {
+      if (!isValidClef(clef)) return score;
+      return produce(score, (draft) => {
+        for (const part of draft.parts) {
+          for (const staff of part.staves) {
+            if (staff.id === staffId) {
+              staff.clef = clef.octaveShift
+                ? { sign: clef.sign, line: clef.line, octaveShift: clef.octaveShift }
+                : { sign: clef.sign, line: clef.line };
+            }
+          }
         }
       });
     },

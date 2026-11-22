@@ -534,5 +534,21 @@
     "testFile": "tests/layout/clef_layout.test.ts",
     "testName": "CL10: a score with a changed clef lays out the note at the clef-specific height",
     "status": "DONE"
+  },
+  {
+    "planItemId": "B59",
+    "description": "M7c-4: every clef preset is valid and maps back to its own id (clef dialog list).",
+    "codeLocation": "src/core/clef.ts:CLEF_PRESETS",
+    "testFile": "tests/core/clef.test.ts",
+    "testName": "CL11: every preset is valid and maps back to its own id",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B60",
+    "description": "M7c-4: setStaffClef changes only the clef, keeps pitches, ignores illegal clefs.",
+    "codeLocation": "src/core/structureCommands.ts:setStaffClef",
+    "testFile": "tests/core/clef.test.ts",
+    "testName": "CL12: setStaffClef changes only the clef; pitches stay; an illegal clef is ignored",
+    "status": "DONE"
   }
 ]

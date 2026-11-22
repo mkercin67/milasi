@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // M7c-4 part 1: clef model, one staff-position formula, validation, first-note reference.
 import { describe, expect, it } from 'vitest';
-import { clefBottomLineDiatonic, clefMiddleLinePitch, isValidClef } from '../../src/core/clef';
-import { createEmptyScore } from '../../src/core/factory';
+import { CLEF_PRESETS, clefBottomLineDiatonic, clefMiddleLinePitch, clefPresetId, isValidClef } from '../../src/core/clef';
+import { createEmptyScore, createNote, createPitch } from '../../src/core/factory';
+import { setStaffClef } from '../../src/core/structureCommands';
 import { pitchFromLetter } from '../../src/core/input';
 import { validateScore } from '../../src/core/validate';
 import { pitchToStaffPosition, yToStaffPosition } from '../../src/layout/pitch';
@@ -80,5 +81,30 @@ describe('M7c-4 clefs (part 1)', () => {
     expect(validateScore(score).some((p) => p.code === 'invalid-clef')).toBe(false);
     score.parts[0].staves[0].clef = { sign: 'G', line: 3 };
     expect(validateScore(score).some((p) => p.code === 'invalid-clef')).toBe(true);
+  });
+
+  it('CL11: every preset is valid and maps back to its own id', () => {
+    for (const p of CLEF_PRESETS) {
+      expect(isValidClef(p.clef)).toBe(true);
+      expect(clefPresetId(p.clef)).toBe(p.id);
+    }
+  });
+
+  it('CL12: setStaffClef changes only the clef; pitches stay; an illegal clef is ignored', () => {
+    const score = createEmptyScore({ numMeasures: 1 });
+    const staff = score.parts[0].staves[0];
+    const note = createNote({ pitches: [createPitch('C', 4, 0)], baseType: 'whole' });
+    staff.measures[score.measures[0].id].voices[0].events = [note];
+    const alto = setStaffClef(staff.id, { sign: 'C', line: 3 }).apply(score);
+    const st = alto.parts[0].staves[0];
+    expect(st.clef.sign).toBe('C');
+    expect(st.clef.line).toBe(3);
+    const ev = st.measures[score.measures[0].id].voices[0].events[0];
+    expect(ev.kind === 'note' ? ev.pitches[0].octave : -1).toBe(4);
+    expect(score.parts[0].staves[0].clef.sign).toBe('G'); // original untouched
+    const bad = setStaffClef(staff.id, { sign: 'G', line: 3 }).apply(score);
+    expect(bad).toBe(score);
+    const oct = setStaffClef(staff.id, { sign: 'G', line: 2, octaveShift: -1 }).apply(score);
+    expect(oct.parts[0].staves[0].clef.octaveShift).toBe(-1);
   });
 });

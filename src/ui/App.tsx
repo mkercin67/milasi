@@ -491,6 +491,7 @@ const EditorShell: React.FC = () => {
         onToggleGraceEntry={toggleGraceEntry}
         onClearGraces={clearGraces}
         onClearNotations={clearNotations}
+        onOpenClef={modalState.handleOpenClefModal}
         onOpenKeySig={modalState.handleOpenKeySigModal}
         onOpenTimeSig={modalState.handleOpenTimeSigModal}
         onOpenTempo={modalState.handleOpenTempoModal}
@@ -601,6 +602,11 @@ const EditorShell: React.FC = () => {
         scoreBeamGroupingInput={modalState.scoreBeamGroupingInput}
         setScoreBeamGroupingInput={modalState.setScoreBeamGroupingInput}
         handleSaveScoreInfo={modalState.handleSaveScoreInfo}
+        isClefModalOpen={modalState.isClefModalOpen}
+        setIsClefModalOpen={modalState.setIsClefModalOpen}
+        clefInput={modalState.clefInput}
+        setClefInput={modalState.setClefInput}
+        handleApplyClef={modalState.handleApplyClef}
         isKeySigModalOpen={modalState.isKeySigModalOpen}
         setIsKeySigModalOpen={modalState.setIsKeySigModalOpen}
         keySigInput={modalState.keySigInput}

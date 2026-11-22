@@ -21,6 +21,32 @@ const LEGAL_LINES: Record<ClefSign, readonly number[]> = {
   C: [1, 2, 3, 4, 5],
 };
 
+/** The clefs offered to the user (M7c-4). `id` is stable and also the i18n key suffix (dialog.clef.preset.<id>). */
+export const CLEF_PRESETS: readonly { id: string; clef: Clef }[] = [
+  { id: 'treble', clef: { sign: 'G', line: 2 } },
+  { id: 'treble8vb', clef: { sign: 'G', line: 2, octaveShift: -1 } },
+  { id: 'treble8va', clef: { sign: 'G', line: 2, octaveShift: 1 } },
+  { id: 'frenchViolin', clef: { sign: 'G', line: 1 } },
+  { id: 'bass', clef: { sign: 'F', line: 4 } },
+  { id: 'bass8vb', clef: { sign: 'F', line: 4, octaveShift: -1 } },
+  { id: 'baritoneF', clef: { sign: 'F', line: 3 } },
+  { id: 'subbass', clef: { sign: 'F', line: 5 } },
+  { id: 'soprano', clef: { sign: 'C', line: 1 } },
+  { id: 'mezzoSoprano', clef: { sign: 'C', line: 2 } },
+  { id: 'alto', clef: { sign: 'C', line: 3 } },
+  { id: 'tenor', clef: { sign: 'C', line: 4 } },
+  { id: 'baritoneC', clef: { sign: 'C', line: 5 } },
+];
+
+/** Preset id of a clef; falls back to 'treble' for a clef that is not in the list. */
+export function clefPresetId(clef: Clef): string {
+  const shift = clef.octaveShift ?? 0;
+  const hit = CLEF_PRESETS.find(
+    (p) => p.clef.sign === clef.sign && p.clef.line === clef.line && (p.clef.octaveShift ?? 0) === shift
+  );
+  return hit ? hit.id : 'treble';
+}
+
 const STEPS: PitchStep[] = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
 
 /** True when sign and line are a legal pair and the octave shift is allowed (only -1 or +1, only on G and F clefs). */

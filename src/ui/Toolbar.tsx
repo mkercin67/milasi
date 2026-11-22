@@ -84,6 +84,7 @@ export interface ToolbarProps {
   onClearGraces?: () => void;
   onClearNotations?: () => void;
   // M6c Structure Modals
+  onOpenClef?: () => void;
   onOpenKeySig?: () => void;
   onOpenTimeSig?: () => void;
   onOpenTempo?: () => void;
@@ -155,6 +156,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
   onToggleGraceEntry,
   onClearGraces,
   onClearNotations,
+  onOpenClef,
   onOpenKeySig,
   onOpenTimeSig,
   onOpenTempo,
@@ -198,6 +200,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
         onSave={onSave}
         onSaveAs={onSaveAs}
         onOpenScoreInfo={onOpenScoreInfo}
+        onOpenClef={onOpenClef}
         onOpenKeySig={onOpenKeySig}
         onOpenTimeSig={onOpenTimeSig}
         onOpenTempo={onOpenTempo}

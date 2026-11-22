@@ -4,6 +4,7 @@ import { BarlineType, BeamGroupingMode, Score } from '../../core/model';
 import { NewScoreConfig, NewScoreModal } from '../NewScoreModal';
 import { Diagnostics, PerfSample } from '../Diagnostics';
 import { ScoreInfoModal } from './modals/ScoreInfoModal';
+import { ClefModal } from './modals/ClefModal';
 import { KeySigModal } from './modals/KeySigModal';
 import { TimeSigModal } from './modals/TimeSigModal';
 import { TempoModal } from './modals/TempoModal';
@@ -40,6 +41,12 @@ export interface AppModalsProps {
   scoreBeamGroupingInput: BeamGroupingMode;
   setScoreBeamGroupingInput: (val: BeamGroupingMode) => void;
   handleSaveScoreInfo: () => void;
+  // Clef (M7c-4)
+  isClefModalOpen: boolean;
+  setIsClefModalOpen: (open: boolean) => void;
+  clefInput: string;
+  setClefInput: (val: string) => void;
+  handleApplyClef: () => void;
   // Key Sig
   isKeySigModalOpen: boolean;
   setIsKeySigModalOpen: (open: boolean) => void;
@@ -134,6 +141,11 @@ export const AppModals: React.FC<AppModalsProps> = ({
   scoreBeamGroupingInput,
   setScoreBeamGroupingInput,
   handleSaveScoreInfo,
+  isClefModalOpen,
+  setIsClefModalOpen,
+  clefInput,
+  setClefInput,
+  handleApplyClef,
   isKeySigModalOpen,
   setIsKeySigModalOpen,
   keySigInput,
@@ -223,6 +235,14 @@ export const AppModals: React.FC<AppModalsProps> = ({
         beamGrouping={scoreBeamGroupingInput}
         setBeamGrouping={setScoreBeamGroupingInput}
         onSave={handleSaveScoreInfo}
+      />
+
+      <ClefModal
+        isOpen={isClefModalOpen}
+        onClose={() => setIsClefModalOpen(false)}
+        clefInput={clefInput}
+        setClefInput={setClefInput}
+        onApply={handleApplyClef}
       />
 
       <KeySigModal

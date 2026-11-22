@@ -9,6 +9,7 @@ export interface ToolbarFileHistoryProps {
   onSave?: () => void;
   onSaveAs?: () => void;
   onOpenScoreInfo?: () => void;
+  onOpenClef?: () => void;
   onOpenKeySig?: () => void;
   onOpenTimeSig?: () => void;
   onOpenTempo?: () => void;
@@ -37,6 +38,7 @@ export const ToolbarFileHistory: React.FC<ToolbarFileHistoryProps> = ({
   onSave,
   onSaveAs,
   onOpenScoreInfo,
+  onOpenClef,
   onOpenKeySig,
   onOpenTimeSig,
   onOpenTempo,
@@ -182,6 +184,27 @@ export const ToolbarFileHistory: React.FC<ToolbarFileHistoryProps> = ({
 
       {/* Structure Controls */}
       <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
+        {onOpenClef && (
+          <button
+            type="button"
+            data-testid="btn-open-clef"
+            onClick={handleButtonClick(onOpenClef)}
+            onMouseDown={(e) => e.preventDefault()}
+            title={t('toolbar.clef')}
+            style={{
+              padding: '0.4rem 0.65rem',
+              fontSize: '0.85rem',
+              fontWeight: 500,
+              color: '#1e293b',
+              backgroundColor: '#f1f5f9',
+              border: '1px solid #cbd5e1',
+              borderRadius: '6px',
+              cursor: 'pointer',
+            }}
+          >
+            𝄞 {t('toolbar.clef')}
+          </button>
+        )}
         {onOpenKeySig && (
           <button
             type="button"
