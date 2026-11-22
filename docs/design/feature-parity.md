@@ -11,7 +11,7 @@ motivated the row, so priorities follow use, not feature lists.
 |---|---|---|
 | Notes, rests, dots, ties, chords, beams, beam grouping | DONE | all |
 | Tuplets: triplet entry, number, beaming | DONE v1 (M7c-2b); bracket, other ratios and unequal groups are GAPs | Barge BWV 1030 m. 2 |
-| Grace notes (appoggiatura, acciaccatura) | PLANNED M7c-3b | Baroque flute and keyboard |
+| Grace notes (appoggiatura, acciaccatura) | DONE v1 (M7c-3b): small notes with slash/beam/slur, entry through the main note, playback convention; single-voice measures only | Baroque flute and keyboard |
 | Pickup (anacrusis) measure | DONE | BWV 1030 |
 | Multi-measure rests | GAP | orchestral parts, flute parts |
 | Cross-staff beams | NOT PLANNED | piano repertoire later |

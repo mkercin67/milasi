@@ -446,5 +446,29 @@
     "testFile": "tests/ui/grace_entry.test.ts",
     "testName": "GE7: Escape leaves the mode; other keys, modified keys, Shift+letter and an off mode are ignored",
     "status": "DONE"
+  },
+  {
+    "planItemId": "B48",
+    "description": "M7c-3b playback: acciaccatura at most a 32nd, appoggiatura half of the main note, shared.",
+    "codeLocation": "src/playback/schedule.ts:graceTicks",
+    "testFile": "tests/playback/grace_schedule.test.ts",
+    "testName": "GP1: graceTicks: an acciaccatura is at most a 32nd, an appoggiatura takes half of the main note, shared",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B49",
+    "description": "M7c-3b playback: the grace note sounds first and the main note ends where it always did; later notes do not move.",
+    "codeLocation": "src/playback/schedule.ts:buildSchedule",
+    "testFile": "tests/playback/grace_schedule.test.ts",
+    "testName": "GP3: an acciaccatura sounds first for a 32nd and the main note ends where it always did",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B50",
+    "description": "M7c-3b playback: without grace notes the schedule is unchanged.",
+    "codeLocation": "src/playback/schedule.ts:buildSchedule",
+    "testFile": "tests/playback/grace_schedule.test.ts",
+    "testName": "GP2: without grace notes the schedule is unchanged",
+    "status": "DONE"
   }
 ]

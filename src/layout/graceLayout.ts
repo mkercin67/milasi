@@ -24,7 +24,7 @@ const GRACE_PITCH = 1.3;
 /** Extra width for a small accidental in front of a grace note. */
 const GRACE_ACC_W = 0.8;
 /** Air between the last grace note and the main note (or the main note's accidental). */
-const GRACE_TAIL = 0.5;
+const GRACE_TAIL = 0.9;
 /** Room for the main note's own accidental, which then sits between the grace group and the main note. */
 const MAIN_ACC_W = 1.2;
 const GRACE_STEM_LENGTH = 2.6;

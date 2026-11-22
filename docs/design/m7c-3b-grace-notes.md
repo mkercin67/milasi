@@ -1,6 +1,6 @@
 # M7c-3b: Grace notes (appoggiatura, acciaccatura)
 
-Status: IN PROGRESS (owner approved). Part 1 (model, validation, commands, transpose, clipboard) part 2 (layout) and part 3 (editing) are implemented. Differences from the proposal: a grace note has no `id` (it is addressed by its index in `graces`); the clipboard did not carry event-level marks before, so `pasteEvents` now carries graces, ornament, fermata, breath mark/caesura and the courtesy flag on the first slice of a copied note.
+Status: IMPLEMENTED v1 (owner approved). Part 1 (model, validation, commands, transpose, clipboard) part 2 (layout), part 3 (editing) and part 4 (playback) are implemented. The gallery card is not added: the other M7c marks (fermata, hairpins, ornaments) have none either, so one combined card is left for a later step. Differences from the proposal: a grace note has no `id` (it is addressed by its index in `graces`); the clipboard did not carry event-level marks before, so `pasteEvents` now carries graces, ornament, fermata, breath mark/caesura and the courtesy flag on the first slice of a copied note.
 Part of `docs/design/m7c-plan.md` (owner decision Q2: in scope). Engraving rules follow the literature (Gould,
 *Behind Bars*, chapter on ornaments; Ross, *The Art of Music Engraving*). Sizes and distances are a first proposal and
 stay **UNVERIFIED until the owner compares the result with a public-domain edition** (BWV 772 and flute literature).
@@ -78,6 +78,9 @@ Metrical positions of all normal notes stay exactly as written. A grace group ta
 - The main note starts after the grace notes and ends at its normal end.
 This is only the schedule; sound output is unchanged otherwise. A pure unit test checks the numbers, and the test names say
 "v1 convention", so nobody confuses it with a bug.
+
+### 5a. As built (part 4)
+`graceTicks` in `src/playback/schedule.ts` gives the lengths; the main note starts after its grace notes and ends at its normal end. Tied continuation notes ignore grace notes. Grace notes carry the main note's event id, so the playback highlight follows the main note.
 
 ## 6. Not in this step
 Chords or ties as grace notes, grace notes after a note (post-grace), grace notes before a rest, selecting a single

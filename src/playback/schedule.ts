@@ -22,6 +22,24 @@ const DYNAMICS_VELOCITY: Record<string, number> = {
 };
 
 const DEFAULT_TEMPO = { bpm: 120, beatUnit: 1.0 };
+
+/** Longest sounding length of one acciaccatura, in ticks (a 32nd note). */
+const ACCIACCATURA_MAX_TICKS = 120;
+
+/**
+ * Lengths, in ticks, of the grace notes of a main note (M7c-3b, "v1 convention"). The grace notes take their time
+ * from the main note, so the metrical positions of the normal notes do not move:
+ * - an acciaccatura sounds for at most a 32nd note;
+ * - an appoggiatura takes an equal share of half of the main note.
+ * The share is `mainTicks / (2 * count)` for both, so the whole group never takes more than half of the main note.
+ */
+export function graceTicks(
+  graces: ReadonlyArray<{ kind: 'acciaccatura' | 'appoggiatura' }>,
+  mainTicks: number
+): number[] {
+  const share = mainTicks / (2 * Math.max(1, graces.length));
+  return graces.map((g) => (g.kind === 'acciaccatura' ? Math.min(ACCIACCATURA_MAX_TICKS, share) : share));
+}
 const DEFAULT_VELOCITY = 0.7;
 
 function pitchesMatch(p1: Pitch[], p2: Pitch[]): boolean {
@@ -260,6 +278,29 @@ export function buildSchedule(
                 activeTies = null;
                 const newTiedNotes: Array<{ note: ScheduledNote; pitches: Pitch[] }> = [];
 
+                // Grace notes (M7c-3b): sounded first, taken out of the main note's own time
+                let graceSeconds = 0;
+                if (ev.graces && ev.graces.length > 0) {
+                  const lengths = graceTicks(ev.graces, ev.duration);
+                  let graceStart = evStartSeconds;
+                  for (let gIdx = 0; gIdx < ev.graces.length; gIdx++) {
+                    const gSeconds = lengths[gIdx] * secondsPerTick;
+                    const { midi: gMidi, detuneCents: gDetune } = pitchToMidi(ev.graces[gIdx].pitch);
+                    scheduledNotes.push({
+                      eventId: ev.id,
+                      partId: part.id,
+                      midi: gMidi,
+                      detuneCents: gDetune,
+                      startSeconds: graceStart,
+                      durationSeconds: gSeconds,
+                      velocity: noteVelocity,
+                      midiChannel: part.midiChannel,
+                    });
+                    graceStart += gSeconds;
+                  }
+                  graceSeconds = graceStart - evStartSeconds;
+                }
+
                 for (const pitch of ev.pitches) {
                   const { midi, detuneCents } = pitchToMidi(pitch);
                   const scheduled: ScheduledNote = {
@@ -267,8 +308,9 @@ export function buildSchedule(
                     partId: part.id,
                     midi,
                     detuneCents,
-                    startSeconds: evStartSeconds,
-                    durationSeconds: soundingDuration,
+                    startSeconds: evStartSeconds + graceSeconds,
+                    durationSeconds:
+                      graceSeconds > 0 ? Math.max(0.02, soundingDuration - graceSeconds) : soundingDuration,
                     velocity: noteVelocity,
                     midiChannel: part.midiChannel,
                   };
