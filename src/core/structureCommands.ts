@@ -237,7 +237,7 @@ export function setEndBarline(measureId: Id, barline: BarlineType): Command {
  */
 export function setTempo(
   measureIndexOrId: number | Id,
-  tempo: { bpm: number; beatUnit?: number; tempoText?: string }
+  tempo: { bpm: number; beatUnit?: number; tempoText?: string; hideMetronome?: boolean }
 ): Command {
   return {
     name: 'Set Tempo',
@@ -254,6 +254,7 @@ export function setTempo(
             bpm: Math.max(20, Math.min(300, Math.round(tempo.bpm))),
             beatUnit: tempo.beatUnit ?? m.tempo?.beatUnit ?? 1.0,
             tempoText: tempo.tempoText?.trim() || undefined,
+            ...(tempo.hideMetronome && tempo.tempoText?.trim() ? { hideMetronome: true } : {}),
           };
         }
       });

@@ -70,6 +70,8 @@ export interface MeasureDef {
     bpm: number;
     beatUnit: number;
     tempoText?: string;
+    /** When true and tempoText is set, only the text is drawn (no metronome mark). BPM still drives playback. */
+    hideMetronome?: boolean;
   };
   actualTicks?: number; // Optional custom duration in ticks (e.g. pickup/anacrusis measures)
   endBarline?: BarlineType;

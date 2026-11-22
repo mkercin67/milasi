@@ -187,6 +187,7 @@
   "dialog.tempo.bpm": "BPM",
   "dialog.tempo.beatUnit": "Birim",
   "dialog.tempo.prefix": "Metin (Örn: Allegro)",
+  "dialog.tempo.hideMetronome": "Metronom değerini notada gösterme (BPM çalma için kalır)",
   "dialog.tempo.apply": "Uygula",
   "dialog.barline.title": "Ölçü Çizgisi ve Anakruz",
   "dialog.barline.single": "Tek Çizgi (Normal)",

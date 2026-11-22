@@ -187,6 +187,7 @@
   "dialog.tempo.bpm": "BPM",
   "dialog.tempo.beatUnit": "Beat Unit",
   "dialog.tempo.prefix": "Prefix Text (e.g. Allegro)",
+  "dialog.tempo.hideMetronome": "Do not show the metronome mark in the score (BPM still drives playback)",
   "dialog.tempo.apply": "Apply",
   "dialog.barline.title": "Barline & Anacrusis",
   "dialog.barline.single": "Single Barline (Normal)",

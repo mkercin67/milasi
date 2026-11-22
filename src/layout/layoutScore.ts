@@ -451,43 +451,45 @@ export function layoutScore(score: Score, options: LayoutOptions = {}): LayoutRe
             curTempoX += tempo.tempoText.length * 0.65 + 0.5;
           }
 
-          let beatGlyph = 'metNoteQuarterUp';
-          if (tempo.beatUnit === 0.5) beatGlyph = 'metNote8thUp';
-          else if (tempo.beatUnit === 2.0) beatGlyph = 'metNoteHalfUp';
-          else if (tempo.beatUnit === 1.5) beatGlyph = 'metNoteQuarterUp';
+          if (!(tempo.hideMetronome && tempo.tempoText)) {
+            let beatGlyph = 'metNoteQuarterUp';
+            if (tempo.beatUnit === 0.5) beatGlyph = 'metNote8thUp';
+            else if (tempo.beatUnit === 2.0) beatGlyph = 'metNoteHalfUp';
+            else if (tempo.beatUnit === 1.5) beatGlyph = 'metNoteQuarterUp';
 
-          systemItems.push({
-            id: `tempo-glyph-${mDef.id}`,
-            kind: 'glyph',
-            glyph: beatGlyph,
-            x: curTempoX,
-            y: -2.4,
-            scale: 0.8,
-          });
-          curTempoX += 1.4;
-
-          if (tempo.beatUnit === 1.5) {
             systemItems.push({
-              id: `tempo-dot-${mDef.id}`,
+              id: `tempo-glyph-${mDef.id}`,
               kind: 'glyph',
-              glyph: 'metAugmentationDot',
+              glyph: beatGlyph,
               x: curTempoX,
               y: -2.4,
               scale: 0.8,
             });
-            curTempoX += 0.8;
-          }
+            curTempoX += 1.4;
 
-          systemItems.push({
-            id: `tempo-bpm-${mDef.id}`,
-            kind: 'text',
-            text: ` = ${tempo.bpm}`,
-            x: curTempoX,
-            y: -2.4,
-            fontSize: 1.2,
-            fontWeight: 'bold',
-            fontFamily: '"Times New Roman", Times, "Liberation Serif", serif',
-          });
+            if (tempo.beatUnit === 1.5) {
+              systemItems.push({
+                id: `tempo-dot-${mDef.id}`,
+                kind: 'glyph',
+                glyph: 'metAugmentationDot',
+                x: curTempoX,
+                y: -2.4,
+                scale: 0.8,
+              });
+              curTempoX += 0.8;
+            }
+
+            systemItems.push({
+              id: `tempo-bpm-${mDef.id}`,
+              kind: 'text',
+              text: ` = ${tempo.bpm}`,
+              x: curTempoX,
+              y: -2.4,
+              fontSize: 1.2,
+              fontWeight: 'bold',
+              fontFamily: '"Times New Roman", Times, "Liberation Serif", serif',
+            });
+          }
         }
 
         const placeStaffItems = (stChunk: MeasureLayoutChunk, staffIdx: number) => {

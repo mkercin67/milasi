@@ -81,6 +81,28 @@ describe('Milestone 6c: Score Structure Layout & Rendering', () => {
     expect(svg).toContain('= 132');
   });
 
+  it('hideMetronome draws only the tempo text; BPM stays in the model', () => {
+    const score = createEmptyScore({ numMeasures: 2 });
+    const withTempo = setTempo(score.measures[0].id, {
+      bpm: 80,
+      tempoText: 'Andante.',
+      hideMetronome: true,
+    }).apply(score);
+    expect(withTempo.measures[0].tempo?.bpm).toBe(80);
+    const items = layoutScore(withTempo, { width: 80 }).systems[0].items;
+    expect(items.find((it) => it.id.startsWith('tempo-text-'))?.text).toBe('Andante.');
+    expect(items.some((it) => it.id.startsWith('tempo-glyph-'))).toBe(false);
+    expect(items.some((it) => it.id.startsWith('tempo-bpm-'))).toBe(false);
+  });
+
+  it('hideMetronome is ignored when there is no tempo text', () => {
+    const score = createEmptyScore({ numMeasures: 2 });
+    const withTempo = setTempo(score.measures[0].id, { bpm: 90, hideMetronome: true }).apply(score);
+    expect(withTempo.measures[0].tempo?.hideMetronome).toBeUndefined();
+    const items = layoutScore(withTempo, { width: 80 }).systems[0].items;
+    expect(items.some((it) => it.id.startsWith('tempo-bpm-'))).toBe(true);
+  });
+
   it('renders key signature change mid-score with cancellation naturals', () => {
     // Measure 1: 3 flats (Eb major), Measure 2 onwards: 1 flat (F major)
     // Expect 2 cancellation naturals for removed flats followed by 1 flat

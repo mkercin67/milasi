@@ -11,6 +11,8 @@ export interface TempoModalProps {
   setTempoBeatUnitInput: (val: number) => void;
   tempoTextInput: string;
   setTempoTextInput: (val: string) => void;
+  tempoHideMetronomeInput: boolean;
+  setTempoHideMetronomeInput: (val: boolean) => void;
   onApply: () => void;
 }
 
@@ -23,6 +25,8 @@ export const TempoModal: React.FC<TempoModalProps> = ({
   setTempoBeatUnitInput,
   tempoTextInput,
   setTempoTextInput,
+  tempoHideMetronomeInput,
+  setTempoHideMetronomeInput,
   onApply,
 }) => {
   const { t } = useI18n();
@@ -120,6 +124,16 @@ export const TempoModal: React.FC<TempoModalProps> = ({
               outline: 'none',
             }}
           />
+          <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', color: '#475569' }}>
+            <input
+              type="checkbox"
+              data-testid="tempo-hide-metronome"
+              checked={tempoHideMetronomeInput}
+              disabled={tempoTextInput.trim() === ''}
+              onChange={(e) => setTempoHideMetronomeInput(e.target.checked)}
+            />
+            {t('dialog.tempo.hideMetronome')}
+          </label>
         </div>
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.6rem', marginTop: '0.5rem' }}>
           <button

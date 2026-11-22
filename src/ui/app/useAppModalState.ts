@@ -61,6 +61,7 @@ export function useAppModalState({
   const [tempoBpmInput, setTempoBpmInput] = useState<number>(120);
   const [tempoBeatUnitInput, setTempoBeatUnitInput] = useState<number>(1.0);
   const [tempoTextInput, setTempoTextInput] = useState<string>('');
+  const [tempoHideMetronomeInput, setTempoHideMetronomeInput] = useState<boolean>(false);
 
   const [isBarlineModalOpen, setIsBarlineModalOpen] = useState<boolean>(false);
   const [barlineInput, setBarlineInput] = useState<BarlineType>('single');
@@ -174,6 +175,7 @@ export function useAppModalState({
     setTempoBpmInput(targetMeasure?.tempo?.bpm ?? 120);
     setTempoBeatUnitInput(targetMeasure?.tempo?.beatUnit ?? 1.0);
     setTempoTextInput(targetMeasure?.tempo?.tempoText ?? '');
+    setTempoHideMetronomeInput(targetMeasure?.tempo?.hideMetronome ?? false);
     setIsTempoModalOpen(true);
   }, [score.measures, selectedEventInfo?.measureId]);
 
@@ -186,6 +188,7 @@ export function useAppModalState({
           bpm: tempoBpmInput,
           beatUnit: tempoBeatUnitInput,
           tempoText: tempoTextInput,
+          hideMetronome: tempoHideMetronomeInput,
         })
       );
     }
@@ -197,6 +200,7 @@ export function useAppModalState({
     tempoBeatUnitInput,
     tempoBpmInput,
     tempoTextInput,
+    tempoHideMetronomeInput,
   ]);
 
   const handleOpenBarlineModal = useCallback(() => {
@@ -313,6 +317,8 @@ export function useAppModalState({
     setTempoBeatUnitInput,
     tempoTextInput,
     setTempoTextInput,
+    tempoHideMetronomeInput,
+    setTempoHideMetronomeInput,
     isBarlineModalOpen,
     setIsBarlineModalOpen,
     barlineInput,

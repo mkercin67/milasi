@@ -613,6 +613,8 @@ const EditorShell: React.FC = () => {
         setTempoBeatUnitInput={modalState.setTempoBeatUnitInput}
         tempoTextInput={modalState.tempoTextInput}
         setTempoTextInput={modalState.setTempoTextInput}
+        tempoHideMetronomeInput={modalState.tempoHideMetronomeInput}
+        setTempoHideMetronomeInput={modalState.setTempoHideMetronomeInput}
         handleApplyTempo={modalState.handleApplyTempo}
         isBarlineModalOpen={modalState.isBarlineModalOpen}
         setIsBarlineModalOpen={modalState.setIsBarlineModalOpen}

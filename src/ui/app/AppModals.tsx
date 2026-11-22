@@ -65,6 +65,8 @@ export interface AppModalsProps {
   setTempoBeatUnitInput: (val: number) => void;
   tempoTextInput: string;
   setTempoTextInput: (val: string) => void;
+  tempoHideMetronomeInput: boolean;
+  setTempoHideMetronomeInput: (val: boolean) => void;
   handleApplyTempo: () => void;
   // Barline
   isBarlineModalOpen: boolean;
@@ -154,6 +156,8 @@ export const AppModals: React.FC<AppModalsProps> = ({
   setTempoBeatUnitInput,
   tempoTextInput,
   setTempoTextInput,
+  tempoHideMetronomeInput,
+  setTempoHideMetronomeInput,
   handleApplyTempo,
   isBarlineModalOpen,
   setIsBarlineModalOpen,
@@ -250,6 +254,8 @@ export const AppModals: React.FC<AppModalsProps> = ({
         setTempoBeatUnitInput={setTempoBeatUnitInput}
         tempoTextInput={tempoTextInput}
         setTempoTextInput={setTempoTextInput}
+        tempoHideMetronomeInput={tempoHideMetronomeInput}
+        setTempoHideMetronomeInput={setTempoHideMetronomeInput}
         onApply={handleApplyTempo}
       />
 
