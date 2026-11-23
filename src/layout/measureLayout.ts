@@ -6,6 +6,7 @@
 import {
   BeamGroupingMode,
   Clef,
+  isValidLyricVerse,
   MeasureDef,
   NoteEvent,
   RestEvent,
@@ -61,7 +62,7 @@ export const measureLayoutCacheStats = {
 
 const measureChunkCache = new WeakMap<StaffMeasure, Map<string, MeasureLayoutChunk>>();
 
-import { layoutMeasureLyrics, LyricLayoutEntry } from './lyricLayout';
+import { layoutMeasureLyrics, LyricLayoutEntry, LYRIC_VERSE_STEP } from './lyricLayout';
 import { labelWidth, noteLabel } from './noteLabels';
 
 /** Baseline (staff spaces, staff top line = 0) of the derived note-name line under a staff. */
@@ -249,8 +250,9 @@ function layoutPolyphonicEvents(
     let widestLyric = 0;
     for (const e of colEntries) {
       if (e.event.kind === 'note') {
-        const v1 = e.event.lyrics?.find((l) => l.verse === 1);
-        if (v1 && v1.text) widestLyric = Math.max(widestLyric, v1.text.length * 0.72);
+        for (const l of e.event.lyrics ?? []) {
+          if (isValidLyricVerse(l.verse) && l.text) widestLyric = Math.max(widestLyric, l.text.length * 0.72);
+        }
       }
     }
     const colWidth = Math.max(
@@ -294,25 +296,29 @@ function layoutPolyphonicEvents(
     for (const e of colEntries) eventAnchors.set(e.event.id, colCenterX);
     for (const e of [...colEntries].sort((a, b) => a.voiceIndex - b.voiceIndex)) {
       if (e.event.kind !== 'note') continue;
-      const v1 = e.event.lyrics?.find((l) => l.verse === 1);
-      if (!v1 || !v1.text) continue;
       const voiceEvents = staffMeasure.voices.find((v) => v.voiceIndex === e.voiceIndex)?.events ?? [];
-      const raw = v1.text;
-      let bucket = polyLyrics.get(e.voiceIndex);
-      if (!bucket) {
-        bucket = { entries: [], positions: [] };
-        polyLyrics.set(e.voiceIndex, bucket);
+      for (const syl of e.event.lyrics ?? []) {
+        if (!syl.text || !isValidLyricVerse(syl.verse)) continue;
+        const raw = syl.text;
+        let bucket = polyLyrics.get(e.voiceIndex);
+        if (!bucket) {
+          bucket = { entries: [], positions: [] };
+          polyLyrics.set(e.voiceIndex, bucket);
+        }
+        bucket.entries.push({
+          ev: e.event,
+          eIdx: voiceEvents.indexOf(e.event),
+          lyricX: colCenterX + NOTEHEAD_WIDTH / 2,
+          lyricY: 6.8,
+          displayText: raw.replace(/[-_]+$/, ''),
+          hasHyphen: raw.endsWith('-'),
+          hasExtender: raw.endsWith('_') || raw === '_',
+          verse: syl.verse,
+        });
+        if (!bucket.positions.some((p) => p.evId === e.event.id)) {
+          bucket.positions.push({ evId: e.event.id, noteheadRightX: colCenterX + NOTEHEAD_WIDTH });
+        }
       }
-      bucket.entries.push({
-        ev: e.event,
-        eIdx: voiceEvents.indexOf(e.event),
-        lyricX: colCenterX + NOTEHEAD_WIDTH / 2,
-        lyricY: 6.8,
-        displayText: raw.replace(/[-_]+$/, ''),
-        hasHyphen: raw.endsWith('-'),
-        hasExtender: raw.endsWith('_') || raw === '_',
-      });
-      bucket.positions.push({ evId: e.event.id, noteheadRightX: colCenterX + NOTEHEAD_WIDTH });
     }
     colLabels.forEach((l, k) => {
       const labelItem: LayoutItem = {
@@ -706,20 +712,21 @@ function layoutPolyphonicEvents(
     }
     lyricBase = base + stack * NOTE_LABEL_STEP + 0.2;
   }
-  // Lyrics: one line per voice that has verse-1 text, below the note names, in voice order.
-  let lyricLine = 0;
+  // Lyrics: one line per (voice, verse) that has text in this measure, below the note names, in voice then
+  // verse order. A new voice is 1.2 sp below the previous line, a further verse of the same voice 2.0 sp.
+  let lyricY = lyricBase;
+  let firstLine = true;
   for (const vIdx of [...polyLyrics.keys()].sort((a, b) => a - b)) {
     const bucket = polyLyrics.get(vIdx)!;
     const voiceEvents = staffMeasure.voices.find((v) => v.voiceIndex === vIdx)?.events ?? [];
-    for (const entry of bucket.entries) entry.lyricY = lyricBase + lyricLine * NOTE_LABEL_STEP;
-    layoutMeasureLyrics(
-      bucket.entries,
-      voiceEvents,
-      bucket.positions,
-      relX + 0.6,
-      measureItems
-    );
-    lyricLine++;
+    const verses = [...new Set(bucket.entries.map((en) => en.verse ?? 1))].sort((a, b) => a - b);
+    verses.forEach((verse, vi) => {
+      if (!firstLine) lyricY += vi === 0 ? NOTE_LABEL_STEP : LYRIC_VERSE_STEP;
+      firstLine = false;
+      const lineEntries = bucket.entries.filter((en) => (en.verse ?? 1) === verse);
+      for (const entry of lineEntries) entry.lyricY = lyricY;
+      layoutMeasureLyrics(lineEntries, voiceEvents, bucket.positions, relX + 0.6, measureItems);
+    });
   }
   return relX;
 }
@@ -967,9 +974,8 @@ export function layoutSingleMeasure(
     const durationFactor = ev.duration / PPQ;
     let estLyricWidth = 0;
     if (ev.kind === 'note' && (ev as NoteEvent).lyrics && (ev as NoteEvent).lyrics!.length > 0) {
-      const v1 = (ev as NoteEvent).lyrics!.find((l) => l.verse === 1);
-      if (v1 && v1.text) {
-        estLyricWidth = v1.text.length * 0.72;
+      for (const l of (ev as NoteEvent).lyrics!) {
+        if (isValidLyricVerse(l.verse) && l.text) estLyricWidth = Math.max(estLyricWidth, l.text.length * 0.72);
       }
     }
     const nameText =
@@ -1259,20 +1265,18 @@ export function layoutSingleMeasure(
       }
 
       if (ev.kind === 'note' && (ev as NoteEvent).lyrics && (ev as NoteEvent).lyrics!.length > 0) {
-        const verse1 = (ev as NoteEvent).lyrics!.find((l) => l.verse === 1);
-        if (verse1 && verse1.text) {
-          const rawText = verse1.text;
-          const hasHyphen = rawText.endsWith('-');
-          const hasExtender = rawText.endsWith('_') || rawText === '_';
-          const displayText = rawText.replace(/[-_]+$/, '');
+        for (const syl of (ev as NoteEvent).lyrics!) {
+          if (!syl.text || !isValidLyricVerse(syl.verse)) continue;
+          const rawText = syl.text;
           lyricsToLayout.push({
             ev: ev as NoteEvent,
             eIdx,
             lyricX: eventLyricX,
-            lyricY: 6.8,
-            displayText,
-            hasHyphen,
-            hasExtender,
+            lyricY: 6.8 + (syl.verse - 1) * LYRIC_VERSE_STEP,
+            displayText: rawText.replace(/[-_]+$/, ''),
+            hasHyphen: rawText.endsWith('-'),
+            hasExtender: rawText.endsWith('_') || rawText === '_',
+            verse: syl.verse,
           });
         }
       }
@@ -1290,11 +1294,23 @@ export function layoutSingleMeasure(
     if (nameItems.length > 0) {
       const base = noteLabelBaseline(measureItems);
       for (const it of nameItems) it.y = base;
-      for (const l of lyricsToLayout) l.lyricY = Math.max(l.lyricY, base + NOTE_LABEL_STEP + 0.2);
+      for (const l of lyricsToLayout) {
+        const offset = ((l.verse ?? 1) - 1) * LYRIC_VERSE_STEP;
+        l.lyricY = Math.max(l.lyricY, base + NOTE_LABEL_STEP + 0.2 + offset);
+      }
     }
 
     // Render lyric text, centered hyphens, and melisma extender lines
-    layoutMeasureLyrics(lyricsToLayout, events, notePositions, relX + 0.6, measureItems);
+    const verses = [...new Set(lyricsToLayout.map((l) => l.verse ?? 1))].sort((a, b) => a - b);
+    for (const verse of verses) {
+      layoutMeasureLyrics(
+        lyricsToLayout.filter((l) => (l.verse ?? 1) === verse),
+        events,
+        notePositions,
+        relX + 0.6,
+        measureItems
+      );
+    }
   }
 
   // The next measure opens with another clef: draw it small before the barline (warning clef at a system end).

@@ -14,6 +14,8 @@ export interface LyricLayoutEntry {
   displayText: string;
   hasHyphen: boolean;
   hasExtender: boolean;
+  /** Verse of this syllable (M7c-7); absent = 1. All entries of one call belong to the same verse. */
+  verse?: number;
 }
 
 export interface NoteheadPositionEntry {
@@ -21,6 +23,15 @@ export interface NoteheadPositionEntry {
   noteheadRightX: number;
 }
 
+/** Distance between the lines of two verses on one staff (staff spaces). */
+export const LYRIC_VERSE_STEP = 2.0;
+
+/** Id prefix of a verse: verse 1 keeps the ids of every earlier version. */
+function idPrefix(verse: number): string {
+  return verse === 1 ? 'lyric' : `lyric-v${verse}`;
+}
+
+/** The syllables of ONE verse (entries of different verses must be laid out in separate calls). */
 export function layoutMeasureLyrics(
   lyricsToLayout: LyricLayoutEntry[],
   events: ScoreEvent[],
@@ -31,11 +42,13 @@ export function layoutMeasureLyrics(
   for (let lIdx = 0; lIdx < lyricsToLayout.length; lIdx++) {
     const lInfo = lyricsToLayout[lIdx];
     const { ev, eIdx, lyricX, lyricY, displayText, hasHyphen, hasExtender } = lInfo;
+    const verse = lInfo.verse ?? 1;
+    const prefix = idPrefix(verse);
 
     if (displayText.length > 0) {
       measureItems.push({
         item: {
-          id: `lyric-text-${ev.id}`,
+          id: `${prefix}-text-${ev.id}`,
           eventId: ev.id,
           kind: 'text',
           text: displayText,
@@ -61,7 +74,7 @@ export function layoutMeasureLyrics(
       const hyphenX = (lyricX + nextX) / 2;
       measureItems.push({
         item: {
-          id: `lyric-hyphen-${ev.id}`,
+          id: `${prefix}-hyphen-${ev.id}`,
           eventId: ev.id,
           kind: 'text',
           text: '-',
@@ -80,8 +93,8 @@ export function layoutMeasureLyrics(
       for (let candIdx = eIdx + 1; candIdx < events.length; candIdx++) {
         const cand = events[candIdx];
         if (cand.kind === 'note') {
-          const candVerse1 = (cand as NoteEvent).lyrics?.find((l) => l.verse === 1);
-          if (candVerse1 && candVerse1.text && candVerse1.text.replace(/[-_]+$/, '').length > 0) {
+          const candVerse = (cand as NoteEvent).lyrics?.find((l) => l.verse === verse);
+          if (candVerse && candVerse.text && candVerse.text.replace(/[-_]+$/, '').length > 0) {
             // Next syllable starts here; stop melisma
             break;
           }
@@ -96,7 +109,7 @@ export function layoutMeasureLyrics(
 
       measureItems.push({
         item: {
-          id: `lyric-extender-${ev.id}`,
+          id: `${prefix}-extender-${ev.id}`,
           eventId: ev.id,
           kind: 'line',
           x: extStartX,

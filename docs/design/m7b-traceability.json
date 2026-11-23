@@ -857,10 +857,10 @@
   },
   {
     "planItemId": "B99",
-    "description": "M7c-6 benchmark: relayout after one note change in a 50-measure string quartet (200 measure-staves) has p95 <= 30 ms.",
+    "description": "M7c-6 benchmark: relayout after one note change in a 50-measure string quartet (200 measure-staves); gate p95 <= 30 ms in isolation (about 9 ms measured), median <= 15 ms and p95 <= 60 ms inside the parallel suite.",
     "codeLocation": "src/layout/layoutScore.ts:layoutScore",
     "testFile": "tests/performance/ensemble_perf.test.ts",
-    "testName": "EP-PERF: relayout after one note change in a 50-measure quartet has p95 <= 30 ms",
+    "testName": "EP-PERF: relayout after one note change in a 50-measure quartet stays within budget (median <= 15 ms, p95 <= 60 ms under load)",
     "status": "DONE"
   },
   {
@@ -885,6 +885,30 @@
     "codeLocation": "src/core/validate.ts:validateScore",
     "testFile": "tests/core/lyric_verses.test.ts",
     "testName": "LV5: validation rejects a bad verse number and two syllables for one verse",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B103",
+    "description": "M7c-7: every verse is drawn on its own line, 2 sp apart, with its own ids; verse 1 is unchanged.",
+    "codeLocation": "src/layout/measureLayout.ts:layoutSingleMeasure",
+    "testFile": "tests/layout/lyric_verses_layout.test.ts",
+    "testName": "LL2: every verse is on its own line, 2 sp apart, with its own ids",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B104",
+    "description": "M7c-7: hyphens and extenders are evaluated per verse.",
+    "codeLocation": "src/layout/lyricLayout.ts:layoutMeasureLyrics",
+    "testFile": "tests/layout/lyric_verses_layout.test.ts",
+    "testName": "LL4: hyphens are placed per verse, between the syllables of that verse",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B105",
+    "description": "M7c-7: voices of one staff stack their verse lines in voice, then verse order.",
+    "codeLocation": "src/layout/measureLayout.ts:layoutPolyphonicEvents",
+    "testFile": "tests/layout/lyric_verses_layout.test.ts",
+    "testName": "LL7: voices of one staff stack their verse lines in voice, then verse order",
     "status": "DONE"
   }
 ]
