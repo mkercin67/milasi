@@ -1,6 +1,6 @@
 # M7c-5: Clef changes inside a staff
 
-Status: APPROVED (owner, 2026-11-22; Q1 to Q3 as proposed). Parts 1 (model, helpers, commands, validation) and 2 (layout: per-event clef, small clef, trailing clef, header, cache key, gallery card 32) done. Part 3 (mouse, ghost note, keyboard and grace entry use the clef in force; the "Anahtar" dialog has the scope choice whole staff / from the selected note) is done. Part 4 (docs, parity, acceptance fixture) remains. The warning clef at a system end (Q1) came for free from the trailing-clef design and is already part of part 2.
+Status: CLOSED as v1 (2026-11-23). Parts 1 to 4 done; the Breidenbach acceptance fixture is planned for M7c-9. Approved by the owner 2026-11-22, Q1 to Q3 as proposed. Parts 1 (model, helpers, commands, validation) and 2 (layout: per-event clef, small clef, trailing clef, header, cache key, gallery card 32) done. Part 3 (mouse, ghost note, keyboard and grace entry use the clef in force; the "Anahtar" dialog has the scope choice whole staff / from the selected note) is done. Part 4 (docs, parity, acceptance fixture) remains. The warning clef at a system end (Q1) came for free from the trailing-clef design and is already part of part 2.
 Part of `docs/design/m7c-plan.md`, depends on M7c-4 (done). Closes the K. 545 gap 1 and is needed by the acceptance
 excerpts below. Engraving conventions follow Gould, *Behind Bars*, "Clef changes".
 
