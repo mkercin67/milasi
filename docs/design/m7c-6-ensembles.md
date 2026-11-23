@@ -1,6 +1,6 @@
 # M7c-6 — Ensembles (multi-part scores)
 
-Status: PROPOSAL (awaiting owner approval; no code yet)
+Status: APPROVED v1 (owner approved Q1–Q3 as proposed, 2026-11-23)
 
 ## 1. Goal
 

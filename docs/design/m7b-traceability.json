@@ -678,5 +678,45 @@
     "testFile": "tests/ui/clef_dialog.test.ts",
     "testName": "CD6: buildClefCommand picks setStaffClef or setClefChange and applies it",
     "status": "DONE"
+  },
+  {
+    "planItemId": "B77",
+    "description": "M7c-6: addPart builds a rest-filled part (all measures, pickups included) with a fresh MIDI channel; piano preset has two staves.",
+    "codeLocation": "src/core/ensembleCommands.ts:addPart",
+    "testFile": "tests/core/ensemble.test.ts",
+    "testName": "E1: addPart appends a part with a rest-filled staff in every measure and a fresh MIDI channel",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B78",
+    "description": "M7c-6: removePart and movePart keep groups consistent; the last part cannot be removed.",
+    "codeLocation": "src/core/ensembleCommands.ts:removePart",
+    "testFile": "tests/core/ensemble.test.ts",
+    "testName": "E4: removePart removes the part and cleans groups; the last part cannot be removed",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B79",
+    "description": "M7c-6: setGroup needs adjacent parts, replaces a same-part group, nests and refuses crossings.",
+    "codeLocation": "src/core/ensembleCommands.ts:setGroup",
+    "testFile": "tests/core/ensemble.test.ts",
+    "testName": "E7: setGroup needs existing adjacent parts, replaces a group over the same parts and refuses crossings",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B80",
+    "description": "M7c-6: applyTemplate replaces an empty score (SATB shape) and keeps existing music otherwise.",
+    "codeLocation": "src/core/ensembleCommands.ts:applyTemplate",
+    "testFile": "tests/core/ensemble.test.ts",
+    "testName": "E10: applyTemplate on a score with music keeps it and adds the template parts",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B81",
+    "description": "M7c-6: validation rejects empty, crossing and non-adjacent groups.",
+    "codeLocation": "src/core/validate.ts:validateScore",
+    "testFile": "tests/core/ensemble.test.ts",
+    "testName": "E13: validation rejects empty, crossing and non-adjacent groups",
+    "status": "DONE"
   }
 ]

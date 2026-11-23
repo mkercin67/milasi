@@ -788,6 +788,38 @@ export function validateScore(score: Score): ValidationProblem[] {
           });
         }
       }
+      // M7c-6: a group names at least one part, the parts are adjacent in score order, and groups nest or are disjoint.
+      if (group.partIds.length === 0) {
+        problems.push({
+          code: 'group-empty',
+          message: `StaffGroup "${group.id}" has no parts`,
+          severity: 'error',
+        });
+      } else {
+        const idx = group.partIds.map((id) => score.parts.findIndex((p) => p.id === id)).filter((i) => i >= 0);
+        const sorted = [...idx].sort((a, b) => a - b);
+        if (sorted.length > 0 && (new Set(sorted).size !== sorted.length || sorted[sorted.length - 1] - sorted[0] !== sorted.length - 1)) {
+          problems.push({
+            code: 'group-not-adjacent',
+            message: `StaffGroup "${group.id}" does not cover adjacent parts`,
+            severity: 'error',
+          });
+        }
+      }
+    }
+    for (let a = 0; a < score.groups.length; a++) {
+      for (let b = a + 1; b < score.groups.length; b++) {
+        const ga = score.groups[a].partIds;
+        const gb = score.groups[b].partIds;
+        const inter = ga.filter((x) => gb.includes(x)).length;
+        if (inter > 0 && inter < ga.length && inter < gb.length) {
+          problems.push({
+            code: 'group-crossing',
+            message: `StaffGroups "${score.groups[a].id}" and "${score.groups[b].id}" overlap without nesting`,
+            severity: 'error',
+          });
+        }
+      }
     }
   }
 
