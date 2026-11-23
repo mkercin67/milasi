@@ -48,6 +48,11 @@ export interface LayoutItem {
   level?: number;
   /** Staff the item belongs to. Set only in multi-staff layouts (Milestone 7b). */
   staffId?: string;
+  /**
+   * Ensembles (M7c-6): the staff where a vertically spanning item (through barline, bracket, brace) ends.
+   * It starts at `staffId`; skyline spacing moves both ends with their staves.
+   */
+  spanStaffId?: string;
   /** Beam group identifier attached to beam items (`data-beam-group`). */
   beamGroupId?: string;
   /** Ordered event IDs belonging to this beam item (`data-event-ids`). */

@@ -27,6 +27,7 @@ import {
   STAFF_LINE_THICKNESS,
 } from './layoutPrimitives';
 import { alignStaffColumns } from './columnAlignment';
+import { barRules, ensembleKey, groupMarks, GroupMark } from './ensembleLayout';
 import { computeHeaderLayout } from './headerLayout';
 import { layoutSingleMeasure } from './measureLayout';
 import { applyVisualOverrides } from './overrideLayout';
@@ -58,6 +59,8 @@ export function clearSystemLayoutCache(): void {
 
 /** Left offset (staff spaces) of the grand-staff brace relative to the system start barline. */
 const BRACE_X = -0.9;
+const BRACKET_X = -0.55; // centre of the bracket bar (M7c-6)
+const MARK_STEP = 1.2; // every nesting level of braces/brackets moves this far left
 
 export function layoutScore(score: Score, options: LayoutOptions = {}): LayoutResult {
   const targetWidth = options.width ?? options.contentWidth ?? 70;
@@ -91,11 +94,13 @@ export function layoutScore(score: Score, options: LayoutOptions = {}): LayoutRe
   const systemExtra = staffOffsets[staffCount - 1];
   const spanBottom = systemExtra + 4; // bottom line of the last staff, system-relative
   const sysStep = systemSpacing + 4 + systemExtra;
-  // Group semantics (M7b-1c-ii): a group naming the part decides ('brace' draws it, other kinds draw
-  // none here); a multi-staff part without any group gets the piano brace by default.
-  const braceGroup = score.groups.find((g) => score.parts[0] && g.partIds.includes(score.parts[0].id));
-  // Brackets and braces of several parts follow with M7c-6 step 3; until then only a single multi-staff part has one.
-  const hasBrace = multiStaff && score.parts.length === 1 && (braceGroup ? braceGroup.bracket === 'brace' : true);
+  // Groups (M7b-1c-ii, M7c-6): braces/brackets per group, a multi-staff part without its own group gets
+  // the piano brace; barline spans (through / individual / mensurstrich) decide which staves share lines.
+  const marks: GroupMark[] = multiStaff ? groupMarks(score) : [];
+  const rules = multiStaff ? barRules(score) : [];
+  const ensKey = multiStaff ? ensembleKey(score) : '';
+  /** The brace over the whole system keeps the item shape every earlier version drew. */
+  const isWholeBrace = (m: GroupMark) => m.kind === 'brace' && m.from === 0 && m.to === staffCount - 1 && m.depth === 0;
 
   function createClefItems(startX: number, clefToUse: Clef): { items: LayoutItem[]; width: number } {
     const glyph = clefGlyphName(clefToUse);
@@ -298,7 +303,7 @@ export function layoutScore(score: Score, options: LayoutOptions = {}): LayoutRe
       y2: multiStaff ? spanBottom : 4,
       thickness: BARLINE_THICKNESS,
     });
-    if (hasBrace) {
+    if (marks.some(isWholeBrace)) {
       // The SMuFL brace is 4 sp tall at natural size and rises from its baseline: stretch it to the
       // full system span and hang it just left of the system start barline.
       items.push({
@@ -336,6 +341,34 @@ export function layoutScore(score: Score, options: LayoutOptions = {}): LayoutRe
         }
       }
     }
+
+    // Braces and brackets over part of the system (M7c-6); the whole-system brace was added above.
+    marks.forEach((m, i) => {
+      if (isWholeBrace(m)) return;
+      const top = staffOffsets[m.from];
+      const bottom = staffOffsets[m.to] + 4;
+      const fromId = staves[m.from].id;
+      const toId = staves[m.to].id;
+      if (m.kind === 'brace') {
+        items.push({
+          id: `sys-brace-${i}`,
+          kind: 'glyph',
+          glyph: 'brace',
+          x: BRACE_X - m.depth * MARK_STEP,
+          y: bottom,
+          scaleY: (bottom - top) / 4,
+          staffId: fromId,
+          spanStaffId: toId,
+        });
+        return;
+      }
+      const lx = BRACKET_X - m.depth * MARK_STEP;
+      items.push(
+        { id: `sys-bracket-${i}`, kind: 'line', x: lx, y: top, x2: lx, y2: bottom, thickness: 0.5, staffId: fromId, spanStaffId: toId },
+        { id: `sys-bracket-${i}-top`, kind: 'line', x: lx - 0.25, y: top, x2: lx + 0.9, y2: top, thickness: 0.3, staffId: fromId },
+        { id: `sys-bracket-${i}-bottom`, kind: 'line', x: lx - 0.25, y: bottom, x2: lx + 0.9, y2: bottom, thickness: 0.3, staffId: toId }
+      );
+    });
 
     return { headerWidth: startX, headerItems: items };
   }
@@ -401,7 +434,7 @@ export function layoutScore(score: Score, options: LayoutOptions = {}): LayoutRe
         for (const ch of list) mKeys += `|${ch.cacheKey ?? ch.measureDefId}`;
       }
     }
-    const staffKey = multiStaff ? `_n${staves.map((st) => st.id).join(',')}${hasBrace ? 'b' : ''}` : '';
+    const staffKey = multiStaff ? `_n${staves.map((st) => st.id).join(',')}_e${ensKey}` : '';
     const sysKey = !hasOverrides
       ? `${sIdx === 0 ? 's0' : 'sx'}_${isLastSystem ? 'last' : 'norm'}_${targetWidth}_${preliminarySys0Y}${staffKey}_${plan.measureIndices[0]}_${mKeys}`
       : null;
@@ -556,8 +589,10 @@ export function layoutScore(score: Score, options: LayoutOptions = {}): LayoutRe
 
           const isBarline = iIdx >= stChunk.barlineItemIndex;
           // One barline line spans all staves (drawn by staff 0); other staves skip theirs.
-          const isThroughBarline = multiStaff && isBarline && itemToPlace.kind === 'line';
-          if (isThroughBarline && staffIdx > 0) continue;
+          const barRule = multiStaff && isBarline && itemToPlace.kind === 'line' ? rules[staffIdx] : undefined;
+          if (barRule?.mode === 'skip') continue;
+          // A line through ALL staves keeps the legacy shape (no staff id, stretched by skyline spacing).
+          const isThroughBarline = barRule?.mode === 'start' && staffIdx === 0 && barRule.to === staffCount - 1;
 
           let finalX: number;
           let finalX2: number | undefined = undefined;
@@ -601,6 +636,16 @@ export function layoutScore(score: Score, options: LayoutOptions = {}): LayoutRe
                 placed.y = itemToPlace.y + yOff;
                 if (itemToPlace.y2 !== undefined) placed.y2 = itemToPlace.y2 + yOff;
                 if (!itemToPlace.eventId) placed.id = `s${staffIdx}-${itemToPlace.id}`;
+              }
+              if (barRule && barRule.mode === 'start') {
+                // Barline through several staves, but not the whole system (M7c-6).
+                placed.y2 = staffOffsets[barRule.to] + 4;
+                placed.spanStaffId = staves[barRule.to].id;
+              } else if (barRule && barRule.mode === 'gap') {
+                // Mensurstrich: the line only crosses the gap down to the next staff.
+                placed.y = staffOffsets[staffIdx] + 4;
+                placed.y2 = staffOffsets[barRule.to];
+                placed.spanStaffId = staves[barRule.to].id;
               }
             }
           }

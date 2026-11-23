@@ -16,7 +16,7 @@ interface Extent {
 
 /** Items that span the whole system (brace, through barlines): they never take part in the skyline. */
 function isSystemSpanItem(it: LayoutItem): boolean {
-  return it.glyph === 'brace' || (it.kind === 'line' && it.staffId === undefined);
+  return it.glyph === 'brace' || it.spanStaffId !== undefined || (it.kind === 'line' && it.staffId === undefined);
 }
 
 /** Parts of the items that stick out BELOW the bottom line (`bottomY`, system-relative). */
@@ -114,7 +114,19 @@ export function applySkylineSpacing(systems: LayoutSystem[], spanBottomBase: num
       if (hit) return hit;
       let next = it;
       const k = it.staffId !== undefined ? staffIndexById.get(it.staffId) : undefined;
-      if (it.glyph === 'brace') {
+      if (it.spanStaffId !== undefined) {
+        // Ensemble span (M7c-6): the top follows its staff, the bottom follows the end staff.
+        const kEnd = staffIndexById.get(it.spanStaffId) ?? 0;
+        const dTop = k !== undefined ? shifts[k] : 0;
+        const dBot = shifts[kEnd];
+        if (it.glyph) {
+          const top = it.y - 4 * (it.scaleY ?? 1) + dTop;
+          const y = it.y + dBot;
+          next = { ...it, y, scaleY: (y - top) / 4 };
+        } else {
+          next = { ...it, y: it.y + dTop, ...(it.y2 !== undefined ? { y2: it.y2 + dBot } : {}) };
+        }
+      } else if (it.glyph === 'brace') {
         next = { ...it, y: spanBottom, scaleY: spanBottom / 4 };
       } else if (it.staffId === undefined && it.kind === 'line' && it.y2 === spanBottomBase) {
         next = { ...it, y2: spanBottom };

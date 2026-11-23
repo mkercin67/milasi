@@ -742,5 +742,53 @@
     "testFile": "tests/layout/ensemble_layout.test.ts",
     "testName": "EL6: notes at the same beat of different parts share one x column",
     "status": "DONE"
+  },
+  {
+    "planItemId": "B85",
+    "description": "M7c-6: a through group draws one barline from the first to the last staff of the group.",
+    "codeLocation": "src/layout/ensembleLayout.ts:barRules",
+    "testFile": "tests/layout/ensemble_groups.test.ts",
+    "testName": "EG1: a through group draws ONE barline from the first to the last staff",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B86",
+    "description": "M7c-6: individual groups draw a barline per staff and a bracket over the group.",
+    "codeLocation": "src/layout/layoutScore.ts:computeHeader",
+    "testFile": "tests/layout/ensemble_groups.test.ts",
+    "testName": "EG2: an individual group draws a barline per staff and a bracket over all of them",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B87",
+    "description": "M7c-6: voice + piano: own barline for the voice, shared one and a brace for the piano only.",
+    "codeLocation": "src/layout/ensembleLayout.ts:groupMarks",
+    "testFile": "tests/layout/ensemble_groups.test.ts",
+    "testName": "EG3: voice + piano: the voice has its own barline, the piano staves share one, the brace covers the piano only",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B88",
+    "description": "M7c-6: mensurstrich draws lines only in the gaps between staves.",
+    "codeLocation": "src/layout/ensembleLayout.ts:barRules",
+    "testFile": "tests/layout/ensemble_groups.test.ts",
+    "testName": "EG4: a mensurstrich group draws lines only in the gaps between staves",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B89",
+    "description": "M7c-6: skyline spacing moves partial braces and barlines with their staves.",
+    "codeLocation": "src/layout/skylineSpacing.ts:applySkylineSpacing",
+    "testFile": "tests/layout/ensemble_groups.test.ts",
+    "testName": "EG8: skyline spacing moves a partial brace and barline with their staves",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B90",
+    "description": "M7c-6: the single-part grand staff keeps its brace and through barline exactly as before.",
+    "codeLocation": "src/layout/layoutScore.ts:computeHeader",
+    "testFile": "tests/layout/ensemble_groups.test.ts",
+    "testName": "EG9: the single-part grand staff keeps its brace and through barline exactly as before",
+    "status": "DONE"
   }
 ]
