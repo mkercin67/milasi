@@ -566,5 +566,37 @@
     "testFile": "tests/layout/clef_layout.test.ts",
     "testName": "CL14: alto clef, four sharps: F# in the top space, C# on the middle line, G# on the top line, D# in the second space from the top (checked against a printed viola part)",
     "status": "DONE"
+  },
+  {
+    "planItemId": "B63",
+    "description": "M7c-5: clefAt gives the clef in force at a tick; changes hold until the next one.",
+    "codeLocation": "src/core/clef.ts:clefAt",
+    "testFile": "tests/core/clef_changes.test.ts",
+    "testName": "CC2: a change holds from its tick onwards, also in later measures",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B64",
+    "description": "M7c-5: setClefChange keeps changes sorted, replaces, and removes a change to the clef already in force.",
+    "codeLocation": "src/core/structureCommands.ts:setClefChange",
+    "testFile": "tests/core/clef_changes.test.ts",
+    "testName": "CC5: replacing a change, and a change to the clef already in force removes it",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B65",
+    "description": "M7c-5: validation reports invalid clef changes.",
+    "codeLocation": "src/core/validate.ts:validateScore",
+    "testFile": "tests/core/clef_changes.test.ts",
+    "testName": "CC8: validation reports invalid clef changes",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B66",
+    "description": "M7c-5: deleting a measure removes the clef changes inside it.",
+    "codeLocation": "src/core/structureCommands.ts:deleteMeasure",
+    "testFile": "tests/core/clef_changes.test.ts",
+    "testName": "CC9: deleting a measure removes the clef changes inside it",
+    "status": "DONE"
   }
 ]

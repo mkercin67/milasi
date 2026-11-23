@@ -132,9 +132,20 @@ export const ALLOWED_ARTICULATIONS: ReadonlySet<string> = new Set([
 ]);
 
 /** A single staff belonging to a part. */
+/** A clef change inside a staff (M7c-5): from `tick` of the measure onwards, `clef` holds for all voices of the staff. */
+export interface ClefChange {
+  measureId: Id;
+  /** Offset in the measure in ticks, 0 <= tick < measure length. */
+  tick: number;
+  clef: Clef;
+}
+
 export interface Staff {
   id: Id;
+  /** Clef at the very start of the staff; later changes are in `clefChanges`. */
   clef: Clef;
+  /** Clef changes, sorted by measure order, then tick (M7c-5). Absent = no change. */
+  clefChanges?: ClefChange[];
   measures: Record<Id, StaffMeasure>; // Keyed by MeasureDef.id
   slurs?: Slur[];
   hairpins?: Hairpin[];

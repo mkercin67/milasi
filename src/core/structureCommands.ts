@@ -4,8 +4,8 @@
  */
 
 import { produce } from 'immer';
-import { BarlineType, BeamGroupingMode, Clef, Id, MeasureDef, Score, TimeSigDisplay, VoltaDef } from './model';
-import { isValidClef } from './clef';
+import { BarlineType, BeamGroupingMode, Clef, ClefChange, Id, MeasureDef, Score, Staff, TimeSigDisplay, VoltaDef } from './model';
+import { clefAt, isValidClef, sameClef } from './clef';
 import { Command } from './commandTypes';
 import { createMeasure, createRest, inheritTimeSigDisplay, newId } from './factory';
 import { fillMeasureWithRests, measureTicks } from './time';
@@ -96,6 +96,72 @@ export function setStaffClef(staffId: Id, clef: Clef): Command {
                 ? { sign: clef.sign, line: clef.line, octaveShift: clef.octaveShift }
                 : { sign: clef.sign, line: clef.line };
             }
+          }
+        }
+      });
+    },
+  };
+}
+
+function normalizedClef(clef: Clef): Clef {
+  return clef.octaveShift
+    ? { sign: clef.sign, line: clef.line, octaveShift: clef.octaveShift }
+    : { sign: clef.sign, line: clef.line };
+}
+
+/**
+ * Adds, replaces or removes a clef change inside a staff (M7c-5). From `tick` of the measure onwards the staff uses `clef`.
+ * If `clef` equals the clef in force just before that place, the change is removed instead (a change to the same clef
+ * means nothing). An illegal clef, an unknown staff or measure, or a tick outside the measure leaves the score untouched.
+ */
+export function setClefChange(staffId: Id, measureId: Id, tick: number, clef: Clef): Command {
+  return {
+    name: 'setClefChange',
+    apply(score: Score): Score {
+      if (!isValidClef(clef) || !Number.isInteger(tick) || tick < 0) return score;
+      const mIdx = score.measures.findIndex((m) => m.id === measureId);
+      if (mIdx < 0) return score;
+      const mDef = score.measures[mIdx];
+      if (tick >= (mDef.actualTicks ?? measureTicks(mDef.timeSig))) return score;
+      return produce(score, (draft) => {
+        for (const part of draft.parts) {
+          for (const staff of part.staves) {
+            if (staff.id !== staffId) continue;
+            const others = (staff.clefChanges ?? []).filter((c) => !(c.measureId === measureId && c.tick === tick));
+            // The clef in force just before this place, ignoring any change that already sits exactly here
+            const before = clefAt(draft as Score, { ...staff, clefChanges: others } as Staff, measureId, tick);
+            const next: ClefChange[] = [...others];
+            if (!sameClef(before, clef)) next.push({ measureId, tick, clef: normalizedClef(clef) });
+            next.sort((a, b) => {
+              const ai = draft.measures.findIndex((m) => m.id === a.measureId);
+              const bi = draft.measures.findIndex((m) => m.id === b.measureId);
+              return ai - bi || a.tick - b.tick;
+            });
+            if (next.length > 0) staff.clefChanges = next;
+            else delete staff.clefChanges;
+          }
+        }
+      });
+    },
+  };
+}
+
+/** Removes the clef change at exactly this place, if there is one. */
+export function removeClefChange(staffId: Id, measureId: Id, tick: number): Command {
+  return {
+    name: 'removeClefChange',
+    apply(score: Score): Score {
+      const has = score.parts.some((p) =>
+        p.staves.some((s) => s.id === staffId && (s.clefChanges ?? []).some((c) => c.measureId === measureId && c.tick === tick))
+      );
+      if (!has) return score;
+      return produce(score, (draft) => {
+        for (const part of draft.parts) {
+          for (const staff of part.staves) {
+            if (staff.id !== staffId || !staff.clefChanges) continue;
+            const rest = staff.clefChanges.filter((c) => !(c.measureId === measureId && c.tick === tick));
+            if (rest.length > 0) staff.clefChanges = rest;
+            else delete staff.clefChanges;
           }
         }
       });
@@ -371,6 +437,11 @@ export function deleteMeasure(index: number): Command {
               for (const id of gone) delete draft.overrides[id];
             }
             delete staff.measures[deletedDef.id];
+            if (staff.clefChanges) {
+              const rest = staff.clefChanges.filter((c) => c.measureId !== deletedDef.id);
+              if (rest.length > 0) staff.clefChanges = rest;
+              else delete staff.clefChanges;
+            }
           }
         }
       });

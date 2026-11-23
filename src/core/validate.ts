@@ -259,6 +259,37 @@ export function validateScore(score: Score): ValidationProblem[] {
           staffId: staff.id,
         });
       }
+      if (staff.clefChanges) {
+        const seen = new Set<string>();
+        let prevOrder = -1;
+        let prevTick = -1;
+        for (const c of staff.clefChanges) {
+          const order = score.measures.findIndex((m) => m.id === c.measureId);
+          const mDef = order >= 0 ? score.measures[order] : undefined;
+          const key = `${c.measureId}@${c.tick}`;
+          const bad =
+            !mDef ||
+            !isValidClef(c.clef) ||
+            !Number.isInteger(c.tick) ||
+            c.tick < 0 ||
+            c.tick >= (mDef.actualTicks ?? measureTicks(mDef.timeSig)) ||
+            seen.has(key) ||
+            order < prevOrder ||
+            (order === prevOrder && c.tick <= prevTick);
+          if (bad) {
+            problems.push({
+              code: 'invalid-clef-change',
+              message: `Staff ${staff.id} has an invalid clef change at ${key}`,
+              severity: 'error',
+              partId: part.id,
+              staffId: staff.id,
+            });
+          }
+          seen.add(key);
+          prevOrder = order;
+          prevTick = c.tick;
+        }
+      }
       // Schema v7: Every MeasureDef must exist on every staff
       if (score.schemaVersion === 7) {
         for (const mDef of score.measures) {

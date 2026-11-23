@@ -6,7 +6,7 @@
  * `octave * 7 + stepIndex` (C = 0 .. B = 6, so C4 = 28). Each clef sign has a reference note that sits on the clef's
  * staff line: G4 for the G clef, F3 for the F clef, C4 for the C clef. Lines are counted from the bottom (1 = bottom line).
  */
-import { Clef, ClefSign, Pitch, PitchStep } from './model';
+import { Clef, ClefSign, Id, Pitch, PitchStep, Score, Staff } from './model';
 
 const REFERENCE_DIATONIC: Record<ClefSign, number> = {
   G: 32, // G4
@@ -56,6 +56,34 @@ export function isValidClef(clef: Clef): boolean {
   const shift: number | undefined = clef.octaveShift;
   if (shift === undefined || shift === 0) return true;
   return (shift === -1 || shift === 1) && clef.sign !== 'C';
+}
+
+/** True when both clefs are the same clef (sign, line and octave shift; an absent shift equals 0). */
+export function sameClef(a: Clef, b: Clef): boolean {
+  return a.sign === b.sign && a.line === b.line && (a.octaveShift ?? 0) === (b.octaveShift ?? 0);
+}
+
+/**
+ * The clef that holds at `tick` of the measure `measureId` on `staff` (M7c-5): the last clef change at or before that place,
+ * or the opening clef of the staff. Layout and every entry path use this one rule.
+ */
+export function clefAt(score: Score, staff: Staff, measureId: Id, tick: number): Clef {
+  const changes = staff.clefChanges;
+  if (!changes || changes.length === 0) return staff.clef;
+  const mIdx = score.measures.findIndex((m) => m.id === measureId);
+  let current = staff.clef;
+  for (const c of changes) {
+    const cIdx = score.measures.findIndex((m) => m.id === c.measureId);
+    if (cIdx < 0) continue;
+    if (cIdx < mIdx || (cIdx === mIdx && c.tick <= tick)) current = c.clef;
+    else break;
+  }
+  return current;
+}
+
+/** The clef in force at the start of a measure (a change at tick 0 of that measure counts). */
+export function clefAtMeasureStart(score: Score, staff: Staff, measureId: Id): Clef {
+  return clefAt(score, staff, measureId, 0);
 }
 
 /**
