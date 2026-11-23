@@ -7,6 +7,7 @@
  */
 
 import { createEmptyScore, createGrandStaffScore, createNote, createPitch } from '../core/factory';
+import { applyTemplate } from '../core/ensembleCommands';
 import { Score } from '../core/model';
 import {
   toggleTie,
@@ -571,6 +572,62 @@ export function getGalleryCases(): GalleryCase[] {
         score = setClefChange(staffId, m[0], 1920, { sign: 'C', line: 4 }).apply(score);
         score = setClefChange(staffId, m[1], 0, { sign: 'G', line: 2 }).apply(score);
         score = setClefChange(staffId, m[2], 1920, { sign: 'F', line: 4 }).apply(score);
+        return score;
+      },
+    },
+    {
+      id: 'ensemble-string-quartet',
+      title: '33. String Quartet (Bracket, Through Barlines)',
+      description: 'Four parts in one system: violin I, violin II, viola (alto clef) and cello (bass clef). A square bracket joins the parts, one barline runs through all four staves, full names stand left of the first system.',
+      fixedSize: true,
+      build: () => {
+        let score = applyTemplate('stringQuartet').apply(createEmptyScore({ title: '33. String Quartet', measures: 2 }));
+        const [v1, v2, va, vc] = score.parts.map((p) => p.staves[0].id);
+        score = setMeasureEventsViaCommands(score, 0, [qNote('C', 5), qNote('E', 5), qNote('G', 5), qNote('E', 5)], 1, v1);
+        score = setMeasureEventsViaCommands(score, 1, [hNote('C', 5), hNote('G', 4)], 1, v1);
+        score = setMeasureEventsViaCommands(score, 0, [qNote('E', 4), qNote('G', 4), qNote('C', 5), qNote('G', 4)], 1, v2);
+        score = setMeasureEventsViaCommands(score, 1, [hNote('E', 4), hNote('E', 4)], 1, v2);
+        score = setMeasureEventsViaCommands(score, 0, [qNote('C', 4), qNote('C', 4), qNote('E', 4), qNote('C', 4)], 1, va);
+        score = setMeasureEventsViaCommands(score, 1, [hNote('G', 3), hNote('C', 4)], 1, va);
+        score = setMeasureEventsViaCommands(score, 0, [hNote('C', 3), hNote('G', 2)], 1, vc);
+        score = setMeasureEventsViaCommands(score, 1, [wNote('C', 3)], 1, vc);
+        return score;
+      },
+    },
+    {
+      id: 'ensemble-satb',
+      title: '34. Choir SATB (Separate Barlines, Tenor 8vb)',
+      description: 'Soprano, alto, tenor and bass on separate staves. The bracket joins them, but each staff has its own barline, which leaves room for lyrics between the staves. The tenor staff uses the treble clef with a small 8 below.',
+      fixedSize: true,
+      build: () => {
+        let score = applyTemplate('satb').apply(createEmptyScore({ title: '34. Choir SATB', measures: 2 }));
+        const [s, a, t, b] = score.parts.map((p) => p.staves[0].id);
+        score = setMeasureEventsViaCommands(score, 0, [qNote('E', 5), qNote('D', 5), qNote('C', 5), qNote('D', 5)], 1, s);
+        score = setMeasureEventsViaCommands(score, 1, [wNote('C', 5)], 1, s);
+        score = setMeasureEventsViaCommands(score, 0, [qNote('G', 4), qNote('F', 4), qNote('G', 4), qNote('F', 4)], 1, a);
+        score = setMeasureEventsViaCommands(score, 1, [wNote('E', 4)], 1, a);
+        score = setMeasureEventsViaCommands(score, 0, [qNote('G', 3), qNote('G', 3), qNote('E', 3), qNote('F', 3)], 1, t);
+        score = setMeasureEventsViaCommands(score, 1, [wNote('E', 3)], 1, t);
+        score = setMeasureEventsViaCommands(score, 0, [qNote('C', 3), qNote('B', 2), qNote('C', 3), qNote('G', 2)], 1, b);
+        score = setMeasureEventsViaCommands(score, 1, [wNote('C', 3)], 1, b);
+        return score;
+      },
+    },
+    {
+      id: 'ensemble-voice-piano',
+      title: '35. Voice and Piano (Brace on the Piano Only)',
+      description: 'A voice part above a piano part. The voice has its own barline; the piano staves share one barline and a brace.',
+      fixedSize: true,
+      build: () => {
+        let score = applyTemplate('voicePiano').apply(createEmptyScore({ title: '35. Voice and Piano', measures: 2 }));
+        const voice = score.parts[0].staves[0].id;
+        const [upper, lower] = score.parts[1].staves.map((st) => st.id);
+        score = setMeasureEventsViaCommands(score, 0, [qNote('E', 5), qNote('G', 5), qNote('E', 5), qNote('C', 5)], 1, voice);
+        score = setMeasureEventsViaCommands(score, 1, [hNote('C', 5), hNote('G', 4)], 1, voice);
+        score = setMeasureEventsViaCommands(score, 0, [qNote('C', 4), qNote('E', 4), qNote('G', 4), qNote('E', 4)], 1, upper);
+        score = setMeasureEventsViaCommands(score, 1, [hNote('C', 4), hNote('E', 4)], 1, upper);
+        score = setMeasureEventsViaCommands(score, 0, [hNote('C', 3), hNote('G', 2)], 1, lower);
+        score = setMeasureEventsViaCommands(score, 1, [wNote('C', 3)], 1, lower);
         return score;
       },
     },

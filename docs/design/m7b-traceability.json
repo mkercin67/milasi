@@ -846,5 +846,21 @@
     "testFile": "tests/ui/parts_dialog.test.tsx",
     "testName": "PD5: the Parts dialog lists the parts and disables impossible moves",
     "status": "DONE"
+  },
+  {
+    "planItemId": "B98",
+    "description": "M7c-6: the three ensemble gallery cards (quartet, SATB, voice + piano) build valid scores with notes on every staff.",
+    "codeLocation": "src/ui/galleryCases.ts:getGalleryCases",
+    "testFile": "tests/layout/ensemble_layout.test.ts",
+    "testName": "EL8: the three ensemble gallery cards build valid scores with notes on every staff",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B99",
+    "description": "M7c-6 benchmark: relayout after one note change in a 50-measure string quartet (200 measure-staves) has p95 <= 30 ms.",
+    "codeLocation": "src/layout/layoutScore.ts:layoutScore",
+    "testFile": "tests/performance/ensemble_perf.test.ts",
+    "testName": "EP-PERF: relayout after one note change in a 50-measure quartet has p95 <= 30 ms",
+    "status": "DONE"
   }
 ]

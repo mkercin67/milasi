@@ -4,6 +4,8 @@ import { describe, expect, it } from 'vitest';
 import { createEmptyScore, createGrandStaffScore, createNote, createPitch } from '../../src/core/factory';
 import { applyTemplate } from '../../src/core/ensembleCommands';
 import { layoutScore } from '../../src/layout/layoutScore';
+import { validateScore } from '../../src/core/validate';
+import { getGalleryCases } from '../../src/ui/galleryCases';
 import type { Score } from '../../src/core/model';
 import type { LayoutItem } from '../../src/layout/types';
 
@@ -71,5 +73,22 @@ describe('M7c-6 ensemble layout (step 2)', () => {
   it('EL7: a single-staff score still has no staff ids and one container', () => {
     const r = layoutScore(createEmptyScore({ numMeasures: 2 }));
     expect(r.systems[0].staves.length).toBe(1);
+  });
+
+  it('EL8: the three ensemble gallery cards build valid scores with notes on every staff', () => {
+    const ids = ['ensemble-string-quartet', 'ensemble-satb', 'ensemble-voice-piano'];
+    const expectedStaves = [4, 4, 3];
+    ids.forEach((id, i) => {
+      const card = getGalleryCases().find((c) => c.id === id);
+      expect(card !== undefined).toBe(true);
+      const score = card!.build();
+      expect(validateScore(score).filter((p) => p.severity === 'error').length).toBe(0);
+      const staves = score.parts.flatMap((p) => p.staves);
+      expect(staves.length).toBe(expectedStaves[i]);
+      for (const st of staves) {
+        const first = st.measures[score.measures[0].id].voices[0].events[0];
+        expect(first.kind).toBe('note');
+      }
+    });
   });
 });

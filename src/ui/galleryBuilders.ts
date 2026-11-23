@@ -18,9 +18,10 @@ export function setMeasureEventsViaCommands(
   voiceIndex: 1 | 2 | 3 | 4 = 1,
   targetStaffId?: string
 ): Score {
-  const partId = score.parts[0].id;
   const staff = (targetStaffId ? findStaff(score, targetStaffId) : undefined) ?? score.parts[0].staves[0];
   const staffId = staff.id;
+  // The part that owns the staff (a staff of a later part in an ensemble, M7c-6).
+  const partId = (score.parts.find((p) => p.staves.some((s) => s.id === staffId)) ?? score.parts[0]).id;
   const measureId = score.measures[measureIndex].id;
   const sm = staff.measures[measureId];
   const targetVoice = sm?.voices.find((v) => v.voiceIndex === voiceIndex) ?? sm?.voices.find((v) => v.voiceIndex === 1);

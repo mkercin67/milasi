@@ -1,6 +1,6 @@
 # M7c-6 — Ensembles (multi-part scores)
 
-Status: APPROVED v1 (owner approved Q1–Q3 as proposed, 2026-11-23)
+Status: CLOSED v1 (owner approved Q1–Q3 as proposed, 2026-11-23)
 
 ## 1. Goal
 
@@ -97,3 +97,4 @@ per-part playback (M7c-8), transposing instruments (separate roadmap item), part
 
 - Step 1 (commands, templates, validation) DONE: CI #92. Step 2 (layout of all parts) DONE: CI #93. Step 3a (braces, brackets, barline spans) DONE: CI #94. Step 3b (part labels, indent) implemented. Decisions Q1–Q3 approved as proposed.
 - Step 4 (new-score templates, Parts dialog, renamePart) implemented; remaining: gallery cards, performance benchmark, staff-zero ratchet.
+- Step 5 DONE: gallery cards 33–35, benchmark card (50-measure quartet relayout p95 about 9 ms locally, gate 30 ms). The staff-zero ratchet stays at 14: the remaining `firstStaff` callers are fallbacks for a missing staff id and are reduced in M7c-9 together with cross-part selection.
