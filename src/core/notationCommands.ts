@@ -9,6 +9,7 @@ import {
   GraceNote,
   HairpinType,
   Id,
+  isValidLyricVerse,
   MAX_GRACE_NOTES,
   NoteEvent,
   OrnamentType,
@@ -680,6 +681,7 @@ export function setLyrics(eventId: Id, text: string | undefined, verse: number =
   return {
     name: 'Set Lyrics',
     apply(score: Score): Score {
+      if (!isValidLyricVerse(verse)) return score;
       return produce(score, (draft) => {
         for (const part of draft.parts) {
           for (const staff of part.staves) {
@@ -725,6 +727,7 @@ export function pasteLyrics(startEventId: Id, text: string, _score?: Score, vers
   return {
     name: 'Paste Lyrics',
     apply(currentScore: Score): Score {
+      if (!isValidLyricVerse(verse)) return currentScore;
       return produce(currentScore, (draft) => {
         if (syllables.length === 0) return;
 

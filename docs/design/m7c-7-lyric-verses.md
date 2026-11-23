@@ -1,6 +1,6 @@
 # M7c-7 — Multi-verse lyrics
 
-Status: PROPOSAL (awaiting owner approval; no code yet)
+Status: APPROVED v1 (owner approved Q1–Q4 as proposed, 2026-11-24)
 
 ## 1. Where we are
 

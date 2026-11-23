@@ -862,5 +862,29 @@
     "testFile": "tests/performance/ensemble_perf.test.ts",
     "testName": "EP-PERF: relayout after one note change in a 50-measure quartet has p95 <= 30 ms",
     "status": "DONE"
+  },
+  {
+    "planItemId": "B100",
+    "description": "M7c-7: setLyrics keeps every verse of a note separate and removes one verse alone.",
+    "codeLocation": "src/core/notationCommands.ts:setLyrics",
+    "testFile": "tests/core/lyric_verses.test.ts",
+    "testName": "LV2: setLyrics keeps every verse of a note separate",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B101",
+    "description": "M7c-7: setLyrics and pasteLyrics ignore a verse outside 1..8.",
+    "codeLocation": "src/core/notationCommands.ts:pasteLyrics",
+    "testFile": "tests/core/lyric_verses.test.ts",
+    "testName": "LV3: setLyrics and pasteLyrics ignore a verse outside 1..8",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B102",
+    "description": "M7c-7: validation rejects a bad verse number and two syllables for one verse.",
+    "codeLocation": "src/core/validate.ts:validateScore",
+    "testFile": "tests/core/lyric_verses.test.ts",
+    "testName": "LV5: validation rejects a bad verse number and two syllables for one verse",
+    "status": "DONE"
   }
 ]

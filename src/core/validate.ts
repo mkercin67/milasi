@@ -10,6 +10,7 @@ import {
   ALLOWED_ARTICULATIONS,
   ALLOWED_DYNAMICS,
   Id,
+  isValidLyricVerse,
   MAX_GRACE_NOTES,
   MeasureDef,
   NoteEvent,
@@ -476,6 +477,31 @@ export function validateScore(score: Score): ValidationProblem[] {
                   voiceId: voice.id,
                   eventId: ev.id,
                 });
+              }
+            }
+
+            // Lyric verses (M7c-7): a whole number from 1 to MAX_LYRIC_VERSES, at most one syllable per verse
+            if (ev.kind === 'note' && ev.lyrics) {
+              const seen = new Set<number>();
+              for (const l of ev.lyrics) {
+                const bad = !isValidLyricVerse(l.verse);
+                const dup = !bad && seen.has(l.verse);
+                if (!bad) seen.add(l.verse);
+                if (bad || dup) {
+                  problems.push({
+                    code: 'invalid-lyric-verse',
+                    message: bad
+                      ? `Note ${ev.id} has a lyric with invalid verse ${String(l.verse)}`
+                      : `Note ${ev.id} has two lyrics for verse ${l.verse}`,
+                    severity: 'error',
+                    partId: part.id,
+                    staffId: staff.id,
+                    measureId,
+                    voiceId: voice.id,
+                    eventId: ev.id,
+                  });
+                  break;
+                }
               }
             }
 

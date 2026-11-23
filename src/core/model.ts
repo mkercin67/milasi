@@ -184,6 +184,14 @@ export type GraceBaseType = 'eighth' | '16th' | '32nd';
 /** Maximum number of grace notes before one main note. */
 export const MAX_GRACE_NOTES = 4;
 
+/** Most lyric verses a note can carry (M7c-7). */
+export const MAX_LYRIC_VERSES = 8;
+
+/** True for a verse number from 1 to MAX_LYRIC_VERSES. */
+export function isValidLyricVerse(verse: unknown): verse is number {
+  return typeof verse === 'number' && Number.isInteger(verse) && verse >= 1 && verse <= MAX_LYRIC_VERSES;
+}
+
 /**
  * A grace note (M7c-3b). It belongs to the main note that follows it and has no duration in the bar,
  * so measure sums, tuplets and cursors are not affected. Identified by its index in `NoteEvent.graces`.
