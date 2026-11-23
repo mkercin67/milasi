@@ -67,3 +67,6 @@ note takes no syllable).
 - Q2. Verse number labels ("1.", "2.") before each line: left out of v1 (proposed) or included?
 - Q3. Verse chosen with a selector in lyrics mode, no new keyboard shortcut in v1 (proposed)?
 - Q4. Polyphonic measures stack lines per measure (alignment limit documented), as proposed?
+
+## 8. Progress
+- Step 1 DONE (CI #99). Step 2 DONE (CI #100). Step 3 implemented: lyric text counts 1.0 sp taller in the skyline rule (2.5 sp clearance), corridor property test.

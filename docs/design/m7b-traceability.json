@@ -910,5 +910,21 @@
     "testFile": "tests/layout/lyric_verses_layout.test.ts",
     "testName": "LL7: voices of one staff stack their verse lines in voice, then verse order",
     "status": "DONE"
+  },
+  {
+    "planItemId": "B106",
+    "description": "M7c-7: the staff below a lyric line starts at least 2.5 sp under the lowest lyric.",
+    "codeLocation": "src/layout/skylineSpacing.ts:belowExtents",
+    "testFile": "tests/layout/lyric_corridor.test.ts",
+    "testName": "LC1: with three verses the next staff starts at least 2.5 sp below the lowest lyric",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B107",
+    "description": "M7c-7: individual SATB barlines never touch a lyric box (lyric corridor).",
+    "codeLocation": "src/layout/ensembleLayout.ts:barRules",
+    "testFile": "tests/layout/lyric_corridor.test.ts",
+    "testName": "LC4: individual barlines never touch a lyric box",
+    "status": "DONE"
   }
 ]

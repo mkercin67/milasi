@@ -6,6 +6,12 @@ import { getItemRect } from './mouse';
 export const MIN_STAFF_GAP_SP = 7.0;
 /** Clear space kept between the lowest item of the upper staff and the highest of the lower staff. */
 export const SKYLINE_PADDING_SP = 1.5;
+/** Lyrics keep 2.5 sp (padding + this) from the staff below (M7c-7). */
+export const LYRIC_EXTRA_CLEARANCE_SP = 1.0;
+
+function isLyricItem(it: LayoutItem): boolean {
+  return it.id.includes('lyric-');
+}
 
 interface Extent {
   x1: number;
@@ -25,7 +31,7 @@ function belowExtents(items: LayoutItem[], bottomY: number): Extent[] {
   for (const it of items) {
     if (it.hidden || isSystemSpanItem(it)) continue;
     const r = getItemRect(it);
-    if (r.y2 > bottomY) out.push({ x1: r.x1, x2: r.x2, ext: r.y2 - bottomY });
+    if (r.y2 > bottomY) out.push({ x1: r.x1, x2: r.x2, ext: r.y2 - bottomY + (isLyricItem(it) ? LYRIC_EXTRA_CLEARANCE_SP : 0) });
   }
   return out;
 }
