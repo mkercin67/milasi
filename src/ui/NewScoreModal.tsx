@@ -10,10 +10,18 @@ import React, { useState } from 'react';
 import { Clef } from '../core/model';
 import { useI18n } from './i18n';
 
-type NewScoreTemplate = 'single' | 'piano';
+export type NewScoreTemplate = 'single' | 'piano' | 'satb' | 'stringQuartet' | 'voicePiano';
+
+const TEMPLATE_KEYS: Record<NewScoreTemplate, string> = {
+  single: 'dialog.newScore.templateSingle',
+  piano: 'dialog.newScore.templatePiano',
+  satb: 'dialog.newScore.templateSatb',
+  stringQuartet: 'dialog.newScore.templateQuartet',
+  voicePiano: 'dialog.newScore.templateVoicePiano',
+};
 
 export interface NewScoreConfig {
-  /** 'single' (default) = one staff with the chosen clef; 'piano' = treble + bass grand staff. */
+  /** 'single' (default) = one staff with the chosen clef; 'piano' = treble + bass grand staff; the rest are ensembles. */
   template?: NewScoreTemplate;
   clef: Clef;
   keySig: number;
@@ -178,12 +186,12 @@ export const NewScoreModal: React.FC<NewScoreModalProps> = ({
             <label style={{ fontSize: '0.875rem', fontWeight: 500, color: '#334155' }}>
               {t('dialog.newScore.template')}
             </label>
-            <div style={{ display: 'flex', gap: '0.75rem' }}>
-              {(['single', 'piano'] as const).map((tpl) => (
+            <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+              {(Object.keys(TEMPLATE_KEYS) as NewScoreTemplate[]).map((tpl) => (
                 <label
                   key={tpl}
                   style={{
-                    flex: 1,
+                    flex: '1 1 40%',
                     display: 'flex',
                     alignItems: 'center',
                     gap: '0.5rem',
@@ -205,22 +213,22 @@ export const NewScoreModal: React.FC<NewScoreModalProps> = ({
                     onChange={() => setTemplate(tpl)}
                     style={{ accentColor: '#2563eb' }}
                   />
-                  {tpl === 'single' ? t('dialog.newScore.templateSingle') : t('dialog.newScore.templatePiano')}
+                  {t(TEMPLATE_KEYS[tpl])}
                 </label>
               ))}
             </div>
           </div>
 
-          {/* Clef selection (single staff only: the piano template has treble + bass) */}
+          {/* Clef selection (single staff only: the other templates bring their own clefs) */}
           <div
             style={{
               display: 'flex',
               flexDirection: 'column',
               gap: '0.4rem',
-              opacity: template === 'piano' ? 0.45 : 1,
-              pointerEvents: template === 'piano' ? 'none' : 'auto',
+              opacity: template !== 'single' ? 0.45 : 1,
+              pointerEvents: template !== 'single' ? 'none' : 'auto',
             }}
-            aria-disabled={template === 'piano'}
+            aria-disabled={template !== 'single'}
           >
             <label style={{ fontSize: '0.875rem', fontWeight: 500, color: '#334155' }}>
               {t('dialog.newScore.clef')}

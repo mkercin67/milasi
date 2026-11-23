@@ -10,6 +10,7 @@ export interface ToolbarFileHistoryProps {
   onSaveAs?: () => void;
   onOpenScoreInfo?: () => void;
   onOpenClef?: () => void;
+  onOpenParts?: () => void;
   onOpenKeySig?: () => void;
   onOpenTimeSig?: () => void;
   onOpenTempo?: () => void;
@@ -39,6 +40,7 @@ export const ToolbarFileHistory: React.FC<ToolbarFileHistoryProps> = ({
   onSaveAs,
   onOpenScoreInfo,
   onOpenClef,
+  onOpenParts,
   onOpenKeySig,
   onOpenTimeSig,
   onOpenTempo,
@@ -184,6 +186,27 @@ export const ToolbarFileHistory: React.FC<ToolbarFileHistoryProps> = ({
 
       {/* Structure Controls */}
       <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
+        {onOpenParts && (
+          <button
+            type="button"
+            data-testid="btn-open-parts"
+            onClick={handleButtonClick(onOpenParts)}
+            onMouseDown={(e) => e.preventDefault()}
+            title={t('toolbar.parts')}
+            style={{
+              padding: '0.4rem 0.65rem',
+              fontSize: '0.85rem',
+              fontWeight: 500,
+              color: '#1e293b',
+              backgroundColor: '#f1f5f9',
+              border: '1px solid #cbd5e1',
+              borderRadius: '6px',
+              cursor: 'pointer',
+            }}
+          >
+            🎻 {t('toolbar.parts')}
+          </button>
+        )}
         {onOpenClef && (
           <button
             type="button"

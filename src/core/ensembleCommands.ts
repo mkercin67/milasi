@@ -70,6 +70,22 @@ export function removePart(partId: Id): Command {
   };
 }
 
+/** Sets the full and the short name of a part (labels at the system start). Unknown part: no change. */
+export function renamePart(partId: Id, name: string, shortName: string): Command {
+  return {
+    name: 'renamePart',
+    apply(score: Score): Score {
+      const part = score.parts.find((p) => p.id === partId);
+      if (!part || (part.name === name && part.shortName === shortName)) return score;
+      return produce(score, (draft) => {
+        const p = draft.parts.find((x) => x.id === partId)!;
+        p.name = name;
+        p.shortName = shortName;
+      });
+    },
+  };
+}
+
 /** Moves a part one place up (-1) or down (+1); at the ends nothing changes. */
 export function movePart(partId: Id, direction: -1 | 1): Command {
   return {

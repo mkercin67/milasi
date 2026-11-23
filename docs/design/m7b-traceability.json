@@ -814,5 +814,37 @@
     "testFile": "tests/layout/ensemble_labels.test.ts",
     "testName": "EP5: a one-part score has no labels and no indent",
     "status": "DONE"
+  },
+  {
+    "planItemId": "B94",
+    "description": "M7c-6: the New Score dialog builds single, piano and ensemble scores.",
+    "codeLocation": "src/ui/app/newScoreBuilder.ts:buildNewScore",
+    "testFile": "tests/ui/parts_dialog.test.tsx",
+    "testName": "PD1: buildNewScore makes single, piano and ensemble scores",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B95",
+    "description": "M7c-6: a pickup measure reaches every staff of an ensemble.",
+    "codeLocation": "src/ui/app/newScoreBuilder.ts:buildNewScore",
+    "testFile": "tests/ui/parts_dialog.test.tsx",
+    "testName": "PD2: a pickup measure gives every staff of an ensemble its pickup rest",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B96",
+    "description": "M7c-6: renamePart sets full and short names.",
+    "codeLocation": "src/core/ensembleCommands.ts:renamePart",
+    "testFile": "tests/ui/parts_dialog.test.tsx",
+    "testName": "PD3: renamePart sets both names and ignores unknown parts",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B97",
+    "description": "M7c-6: the Parts dialog lists parts and disables impossible moves and removals.",
+    "codeLocation": "src/ui/app/modals/PartsModal.tsx:PartsModal",
+    "testFile": "tests/ui/parts_dialog.test.tsx",
+    "testName": "PD5: the Parts dialog lists the parts and disables impossible moves",
+    "status": "DONE"
   }
 ]

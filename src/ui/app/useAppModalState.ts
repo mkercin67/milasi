@@ -13,9 +13,8 @@ import {
   setTimeSignature,
   Command,
 } from '../../core/commands';
-import { createEmptyScore, createGrandStaffScore, createRest } from '../../core/factory';
 import { CLEF_PRESETS, clefPresetId } from '../../core/clef';
-import { allStaves } from '../../core/staffLookup';
+import { buildNewScore } from './newScoreBuilder';
 import { buildClefCommand, clefDialogTarget, clefInForce, ClefScope } from './clefDialog';
 import { SelectedEventInfo } from './types';
 import { NewScoreConfig } from '../NewScoreModal';
@@ -49,6 +48,9 @@ export function useAppModalState({
   const [scoreBeamGroupingInput, setScoreBeamGroupingInput] = useState<BeamGroupingMode>(
     score.layoutSettings?.beamGrouping ?? 'beat'
   );
+
+  // M7c-6 parts dialog
+  const [isPartsModalOpen, setIsPartsModalOpen] = useState<boolean>(false);
 
   // M7c-4 clef dialog
   const [isClefModalOpen, setIsClefModalOpen] = useState<boolean>(false);
@@ -286,27 +288,7 @@ export function useAppModalState({
 
   const handleCreateNewScore = (config: NewScoreConfig) => {
     const t0 = performance.now();
-    const options = {
-      clef: config.clef,
-      keySig: config.keySig,
-      timeSig: config.timeSig,
-      measures: config.measures,
-    };
-    const fresh = config.template === 'piano' ? createGrandStaffScore(options) : createEmptyScore(options);
-    if (config.isPickup && config.pickupDurationTicks) {
-      const pickupTicks = config.pickupDurationTicks;
-      fresh.measures[0].actualTicks = pickupTicks;
-      const m0Id = fresh.measures[0].id;
-      // Every staff gets the pickup rest (one staff, both of a grand staff, or every part of a template).
-      for (const st of allStaves(fresh)) {
-        st.measures[m0Id].voices.find((v) => v.voiceIndex === 1)!.events = [
-          createRest({
-            baseType: pickupTicks === 480 ? 'eighth' : pickupTicks === 1920 ? 'half' : 'quarter',
-            duration: pickupTicks,
-          }),
-        ];
-      }
-    }
+    const fresh = buildNewScore(config);
     resetScore(fresh);
     setMode('select');
     const elapsed = performance.now() - t0;
@@ -328,6 +310,8 @@ export function useAppModalState({
     setScoreArrangerInput,
     scoreBeamGroupingInput,
     setScoreBeamGroupingInput,
+    isPartsModalOpen,
+    setIsPartsModalOpen,
     isClefModalOpen,
     setIsClefModalOpen,
     clefInput,

@@ -96,3 +96,4 @@ per-part playback (M7c-8), transposing instruments (separate roadmap item), part
 ## 10. Progress
 
 - Step 1 (commands, templates, validation) DONE: CI #92. Step 2 (layout of all parts) DONE: CI #93. Step 3a (braces, brackets, barline spans) DONE: CI #94. Step 3b (part labels, indent) implemented. Decisions Q1–Q3 approved as proposed.
+- Step 4 (new-score templates, Parts dialog, renamePart) implemented; remaining: gallery cards, performance benchmark, staff-zero ratchet.
