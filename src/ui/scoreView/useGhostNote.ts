@@ -13,7 +13,7 @@ import { resolvePointerStaff, xToEntryCursor } from '../../layout/pointerCursor'
 import { computeCursorPosition } from '../../layout/cursor';
 import { GhostNoteData } from './types';
 import { durationTicks } from '../../core/time';
-import { findStaff, firstStaff } from '../../core/staffLookup';
+import { clefAtPosition } from '../../core/clef';
 
 export function useGhostNote(
   score: Score,
@@ -79,7 +79,6 @@ export function useGhostNote(
     }
 
     const { targetSys, sysRelX: systemRelX, staffRelY: systemRelY, staffId, staffOffset } = coords;
-    const clef = (findStaff(score, staffId) ?? firstStaff(score))?.clef ?? { sign: 'G', line: 2 };
     const activeVoiceIndex = cursor?.voiceIndex ?? 1;
     const targetCursor = xToEntryCursor(
       layout,
@@ -92,6 +91,8 @@ export function useGhostNote(
     );
     const mDef = score.measures.find((m) => m.id === targetCursor?.measureId) ?? score.measures[0];
     const keySig = mDef?.keySig ?? 0;
+    // The clef in force at the hovered place (M7c-5: a clef change inside the staff counts)
+    const clef = clefAtPosition(score, staffId, targetCursor?.measureId ?? mDef?.id, targetCursor?.tick ?? 0);
 
     const hoveredPitch = yToStaffPosition(clef, systemRelY, keySig);
     const hoveredMeasureIdx = score.measures.findIndex((m) => m.id === targetCursor?.measureId);
@@ -151,7 +152,6 @@ export function useGhostNote(
     if (!coords || !isInsideStaffArea(coords)) return;
 
     const { targetSys, sysRelX, staffRelY: sysRelY, staffId } = coords;
-    const clef = (findStaff(score, staffId) ?? firstStaff(score))?.clef ?? { sign: 'G', line: 2 };
     const clickedCursor = xToEntryCursor(
       layout,
       score,
@@ -163,6 +163,7 @@ export function useGhostNote(
     );
     const mDef = score.measures.find((m) => m.id === clickedCursor?.measureId) ?? score.measures[0];
     const keySig = mDef?.keySig ?? 0;
+    const clef = clefAtPosition(score, staffId, clickedCursor?.measureId ?? mDef?.id, clickedCursor?.tick ?? 0);
     const clickedPitch = yToStaffPosition(clef, sysRelY, keySig);
 
     // The active voice (Tab / toolbar) receives the note; a missing voice is created by entry.

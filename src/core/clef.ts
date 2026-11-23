@@ -7,6 +7,8 @@
  * staff line: G4 for the G clef, F3 for the F clef, C4 for the C clef. Lines are counted from the bottom (1 = bottom line).
  */
 import { Clef, ClefSign, Id, Pitch, PitchStep, Score, Staff } from './model';
+import { findEventContext } from './selection';
+import { findStaff, firstStaff } from './staffLookup';
 
 const REFERENCE_DIATONIC: Record<ClefSign, number> = {
   G: 32, // G4
@@ -79,6 +81,24 @@ export function clefAt(score: Score, staff: Staff, measureId: Id, tick: number):
     else break;
   }
   return current;
+}
+
+/**
+ * The clef in force at a place of a staff (staff id, measure id, tick). Falls back to the first staff when the id is unknown
+ * and to the treble clef for a score without staves. Entry paths (mouse, ghost note, keyboard) use this.
+ */
+export function clefAtPosition(score: Score, staffId: Id | undefined | null, measureId: Id | undefined | null, tick: number): Clef {
+  const staff = findStaff(score, staffId) ?? firstStaff(score);
+  if (!staff) return { sign: 'G', line: 2 };
+  return measureId ? clefAt(score, staff, measureId, tick) : staff.clef;
+}
+
+/** The clef in force at an event (its staff, measure and start tick), or null when the event is not in the score. */
+export function clefOfEvent(score: Score, eventId: Id): Clef | null {
+  const ctx = findEventContext(score, eventId);
+  if (!ctx) return null;
+  const staff = findStaff(score, ctx.staffId);
+  return staff ? clefAt(score, staff, ctx.measureId, ctx.tick) : null;
 }
 
 /** The clef in force at the start of a measure (a change at tick 0 of that measure counts). */

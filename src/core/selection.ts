@@ -40,6 +40,8 @@ export function findEventContext(
   measureIndex: number;
   voiceIndex: 1 | 2 | 3 | 4;
   eventIndex: number;
+  /** Start of the event in ticks from the start of its voice in the measure. */
+  tick: number;
 } | null {
   for (const part of score.parts) {
     for (const staff of part.staves) {
@@ -57,6 +59,7 @@ export function findEventContext(
               measureIndex: mIdx,
               voiceIndex: vIndex,
               eventIndex: evIdx,
+              tick: voice.events.slice(0, evIdx).reduce((sum, e) => sum + e.duration, 0),
             };
           }
         }

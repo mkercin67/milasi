@@ -606,6 +606,9 @@ const EditorShell: React.FC = () => {
         setIsClefModalOpen={modalState.setIsClefModalOpen}
         clefInput={modalState.clefInput}
         setClefInput={modalState.setClefInput}
+        clefScope={modalState.clefScope}
+        setClefScope={modalState.handleSetClefScope}
+        hasSelectedNote={selectedEventInfo !== null}
         handleApplyClef={modalState.handleApplyClef}
         isKeySigModalOpen={modalState.isKeySigModalOpen}
         setIsKeySigModalOpen={modalState.setIsKeySigModalOpen}

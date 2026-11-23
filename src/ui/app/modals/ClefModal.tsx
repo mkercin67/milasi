@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import React from 'react';
 import { CLEF_PRESETS } from '../../../core/clef';
+import type { ClefScope } from '../clefDialog';
 import { useI18n } from '../../i18n';
 
 export interface ClefModalProps {
@@ -8,10 +9,22 @@ export interface ClefModalProps {
   onClose: () => void;
   clefInput: string;
   setClefInput: (val: string) => void;
+  clefScope: ClefScope;
+  setClefScope: (val: ClefScope) => void;
+  hasSelectedNote: boolean;
   onApply: () => void;
 }
 
-export const ClefModal: React.FC<ClefModalProps> = ({ isOpen, onClose, clefInput, setClefInput, onApply }) => {
+export const ClefModal: React.FC<ClefModalProps> = ({
+  isOpen,
+  onClose,
+  clefInput,
+  setClefInput,
+  clefScope,
+  setClefScope,
+  hasSelectedNote,
+  onApply,
+}) => {
   const { t } = useI18n();
   if (!isOpen) return null;
 
@@ -69,6 +82,42 @@ export const ClefModal: React.FC<ClefModalProps> = ({ isOpen, onClose, clefInput
             ))}
           </select>
           <span style={{ fontSize: '0.78rem', color: '#64748b' }}>{t('dialog.clef.hint')}</span>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+          <label style={{ fontSize: '0.85rem', color: '#475569', fontWeight: 500 }}>{t('dialog.clef.scope')}</label>
+          <div style={{ display: 'flex', gap: '0.75rem' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.85rem', cursor: 'pointer' }}>
+              <input
+                type="radio"
+                name="clef-scope"
+                data-testid="radio-clef-scope-staff"
+                checked={clefScope === 'staff'}
+                onChange={() => setClefScope('staff')}
+              />
+              {t('dialog.clef.scopeStaff')}
+            </label>
+            <label
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                fontSize: '0.85rem',
+                cursor: hasSelectedNote ? 'pointer' : 'not-allowed',
+                opacity: hasSelectedNote ? 1 : 0.5,
+              }}
+              title={hasSelectedNote ? undefined : t('dialog.clef.scopeFromNoteNeedsNote')}
+            >
+              <input
+                type="radio"
+                name="clef-scope"
+                data-testid="radio-clef-scope-from-note"
+                disabled={!hasSelectedNote}
+                checked={clefScope === 'from-note'}
+                onChange={() => setClefScope('from-note')}
+              />
+              {t('dialog.clef.scopeFromNote')}
+            </label>
+          </div>
         </div>
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.6rem', marginTop: '0.5rem' }}>
           <button

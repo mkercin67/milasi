@@ -28,6 +28,7 @@ import {
 import { durationTicks, measureTicks } from '../../core/time';
 import { newId } from '../../core/factory';
 import { Command, changePitch } from '../../core/commands';
+import { clefAtPosition } from '../../core/clef';
 import { findStaff, firstStaff } from '../../core/staffLookup';
 
 /** Triplet entry: three notes in the time of two (M7c-2b). */
@@ -131,9 +132,7 @@ export function useEditorInput({
         return;
       }
 
-      const part = score.parts.find((p) => p.staves.some((s) => s.id === activeCursor.staffId));
-      const staff = part?.staves.find((s) => s.id === activeCursor.staffId);
-      const clef = staff?.clef ?? { sign: 'G' as const, line: 2 };
+      const clef = clefAtPosition(score, activeCursor.staffId, activeCursor.measureId, activeCursor.tick);
       const keySig = mDef.keySig;
 
       const refPitch =

@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { BaseDurationType, NoteEvent, Pitch, Score } from '../../core/model';
+import { BaseDurationType, Clef, NoteEvent, Pitch, Score } from '../../core/model';
 import { LayoutResult } from '../../layout/types';
-import { RangeSelection, findEventContext } from '../../core/selection';
+import { RangeSelection } from '../../core/selection';
 import { EditorMode, isCancelDragEvent } from '../keymap';
 import { ScoreCursor } from '../../core/input';
 import {
@@ -23,12 +23,12 @@ import { findEventLocation } from './types';
 import { renderManualDragFeedback, renderPitchDragFeedback } from './scoreDragFeedback';
 import { useScoreMarquee } from './useScoreMarquee';
 import { useGhostNote } from './useGhostNote';
-import { findStaff, firstStaff } from '../../core/staffLookup';
+import { firstStaff } from '../../core/staffLookup';
+import { clefOfEvent as coreClefOfEvent } from '../../core/clef';
 
 /** Clef of the staff that holds the event (pitch maths of a drag must use it, not staff 0's). */
-function clefOfEvent(score: Score, eventId: string) {
-  const staff = findStaff(score, findEventContext(score, eventId)?.staffId) ?? firstStaff(score);
-  return staff?.clef ?? { sign: 'G' as const, line: 2 };
+function clefOfEvent(score: Score, eventId: string): Clef {
+  return coreClefOfEvent(score, eventId) ?? firstStaff(score)?.clef ?? { sign: 'G', line: 2 };
 }
 
 export interface UseScoreInteractionsParams {

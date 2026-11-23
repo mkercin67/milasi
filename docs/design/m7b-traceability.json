@@ -646,5 +646,37 @@
     "testFile": "tests/layout/clef_change_layout.test.ts",
     "testName": "LC6: a polyphonic measure follows the change in both voices",
     "status": "DONE"
+  },
+  {
+    "planItemId": "B73",
+    "description": "M7c-5: findEventContext reports the start tick of an event.",
+    "codeLocation": "src/core/selection.ts:findEventContext",
+    "testFile": "tests/ui/clef_dialog.test.ts",
+    "testName": "CD1: findEventContext reports the start tick of the event",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B74",
+    "description": "M7c-5: clefOfEvent and clefAtPosition follow a clef change inside the staff (mouse, ghost note, keyboard use them).",
+    "codeLocation": "src/core/clef.ts:clefAtPosition",
+    "testFile": "tests/ui/clef_dialog.test.ts",
+    "testName": "CD2: clefOfEvent and clefAtPosition follow a change inside the staff",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B75",
+    "description": "M7c-5: the first typed note after a clef change starts from the middle line of the clef in force.",
+    "codeLocation": "src/ui/editor/useEditorInput.ts:enterPitchAtCursor",
+    "testFile": "tests/ui/clef_dialog.test.ts",
+    "testName": "CD3: the first typed note after a change starts from the middle line of the clef in force",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B76",
+    "description": "M7c-5: the clef dialog picks setStaffClef or setClefChange for its scope and removes a change by choosing the clef in force.",
+    "codeLocation": "src/ui/app/clefDialog.ts:buildClefCommand",
+    "testFile": "tests/ui/clef_dialog.test.ts",
+    "testName": "CD6: buildClefCommand picks setStaffClef or setClefChange and applies it",
+    "status": "DONE"
   }
 ]

@@ -5,6 +5,7 @@ import { NewScoreConfig, NewScoreModal } from '../NewScoreModal';
 import { Diagnostics, PerfSample } from '../Diagnostics';
 import { ScoreInfoModal } from './modals/ScoreInfoModal';
 import { ClefModal } from './modals/ClefModal';
+import type { ClefScope } from './clefDialog';
 import { KeySigModal } from './modals/KeySigModal';
 import { TimeSigModal } from './modals/TimeSigModal';
 import { TempoModal } from './modals/TempoModal';
@@ -46,6 +47,9 @@ export interface AppModalsProps {
   setIsClefModalOpen: (open: boolean) => void;
   clefInput: string;
   setClefInput: (val: string) => void;
+  clefScope: ClefScope;
+  setClefScope: (val: ClefScope) => void;
+  hasSelectedNote: boolean;
   handleApplyClef: () => void;
   // Key Sig
   isKeySigModalOpen: boolean;
@@ -145,6 +149,9 @@ export const AppModals: React.FC<AppModalsProps> = ({
   setIsClefModalOpen,
   clefInput,
   setClefInput,
+  clefScope,
+  setClefScope,
+  hasSelectedNote,
   handleApplyClef,
   isKeySigModalOpen,
   setIsKeySigModalOpen,
@@ -242,6 +249,9 @@ export const AppModals: React.FC<AppModalsProps> = ({
         onClose={() => setIsClefModalOpen(false)}
         clefInput={clefInput}
         setClefInput={setClefInput}
+        clefScope={clefScope}
+        setClefScope={setClefScope}
+        hasSelectedNote={hasSelectedNote}
         onApply={handleApplyClef}
       />
 

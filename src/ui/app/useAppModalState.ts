@@ -5,7 +5,6 @@ import {
   setBeamGrouping,
   setEndBarline,
   setKeySignature,
-  setStaffClef,
   setPickup,
   setRepeatEnd,
   setRepeatStart,
@@ -17,6 +16,7 @@ import {
 import { createEmptyScore, createGrandStaffScore, createRest } from '../../core/factory';
 import { CLEF_PRESETS, clefPresetId } from '../../core/clef';
 import { firstPartStaves } from '../../core/staffLookup';
+import { buildClefCommand, clefDialogTarget, clefInForce, ClefScope } from './clefDialog';
 import { SelectedEventInfo } from './types';
 import { NewScoreConfig } from '../NewScoreModal';
 import { EditorMode } from '../keymap';
@@ -53,6 +53,7 @@ export function useAppModalState({
   // M7c-4 clef dialog
   const [isClefModalOpen, setIsClefModalOpen] = useState<boolean>(false);
   const [clefInput, setClefInput] = useState<string>('treble');
+  const [clefScope, setClefScope] = useState<ClefScope>('staff');
 
   // M6c Modals State
   const [isKeySigModalOpen, setIsKeySigModalOpen] = useState<boolean>(false);
@@ -129,32 +130,29 @@ export function useAppModalState({
     score.layoutSettings?.beamGrouping,
   ]);
 
-  // The staff of the selected note; the first staff when nothing is selected
-  const findClefTargetStaff = useCallback(() => {
-    const staves = score.parts.flatMap((p) => p.staves);
-    const eventId = selectedEventInfo?.eventId;
-    if (eventId) {
-      for (const staff of staves) {
-        for (const sm of Object.values(staff.measures)) {
-          if (sm.voices.some((v) => v.events.some((e) => e.id === eventId))) return staff;
-        }
-      }
-    }
-    return staves[0];
-  }, [score.parts, selectedEventInfo?.eventId]);
-
   const handleOpenClefModal = useCallback(() => {
-    const staff = findClefTargetStaff();
-    setClefInput(staff ? clefPresetId(staff.clef) : 'treble');
+    const target = clefDialogTarget(score, selectedEventInfo?.eventId);
+    setClefScope('staff');
+    setClefInput(target ? clefPresetId(clefInForce(score, target, 'staff')) : 'treble');
     setIsClefModalOpen(true);
-  }, [findClefTargetStaff]);
+  }, [score, selectedEventInfo?.eventId]);
+
+  // Switching the scope shows the clef that is in force for that scope
+  const handleSetClefScope = useCallback(
+    (scope: ClefScope) => {
+      setClefScope(scope);
+      const target = clefDialogTarget(score, selectedEventInfo?.eventId);
+      if (target) setClefInput(clefPresetId(clefInForce(score, target, scope)));
+    },
+    [score, selectedEventInfo?.eventId]
+  );
 
   const handleApplyClef = useCallback(() => {
-    const staff = findClefTargetStaff();
+    const target = clefDialogTarget(score, selectedEventInfo?.eventId);
     const preset = CLEF_PRESETS.find((p) => p.id === clefInput);
-    if (staff && preset) executeCommand(setStaffClef(staff.id, preset.clef));
+    if (target && preset) executeCommand(buildClefCommand(target, clefScope, preset.clef));
     setIsClefModalOpen(false);
-  }, [clefInput, executeCommand, findClefTargetStaff]);
+  }, [clefInput, clefScope, executeCommand, score, selectedEventInfo?.eventId]);
 
   const handleOpenKeySigModal = useCallback(() => {
     const targetMeasure =
@@ -334,6 +332,8 @@ export function useAppModalState({
     setIsClefModalOpen,
     clefInput,
     setClefInput,
+    clefScope,
+    handleSetClefScope,
     isKeySigModalOpen,
     setIsKeySigModalOpen,
     keySigInput,

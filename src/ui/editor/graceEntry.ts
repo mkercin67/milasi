@@ -6,6 +6,7 @@
 import { addGraceNote, removeGraceNote, setGracePitch } from '../../core/notationCommands';
 import { Command } from '../../core/commands';
 import { pitchFromLetter } from '../../core/input';
+import { clefAtPosition } from '../../core/clef';
 import { findEventContext } from '../../core/selection';
 import { GraceKeyIntent, KeyEventLike, mapGraceKey } from '../keymap';
 import {
@@ -71,9 +72,13 @@ export function graceKeyResult(
 
   const ctx = findEventContext(score, note.id);
   if (!ctx) return { kind: 'ignore' };
-  const staff = score.parts.flatMap((p) => p.staves).find((s) => s.id === ctx.staffId);
   const keySig = score.measures[ctx.measureIndex]?.keySig ?? 0;
-  const pitch = pitchFromLetter(intent.step, note.pitches[0], staff?.clef ?? { sign: 'G', line: 2 }, keySig);
+  const pitch = pitchFromLetter(
+    intent.step,
+    note.pitches[0],
+    clefAtPosition(score, ctx.staffId, ctx.measureId, ctx.tick),
+    keySig
+  );
   return {
     kind: 'command',
     command: addGraceNote(note.id, { kind: graceEntry, pitch, baseType: graceDuration(activeDuration) }),
