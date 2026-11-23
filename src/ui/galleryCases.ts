@@ -24,6 +24,7 @@ import {
   setVolta,
   setLyrics,
   setStaffClef,
+  setClefChange,
 } from '../core/commands';
 import {
   setMeasureEventsViaCommands,
@@ -550,6 +551,26 @@ export function getGalleryCases(): GalleryCase[] {
         score = setStaffClef(score.parts[0].staves[0].id, { sign: 'G', line: 2, octaveShift: -1 }).apply(score);
         score = setMeasureEventsViaCommands(score, 0, [qNote('E', 3), qNote('G', 3), qNote('B', 3), qNote('D', 4)]);
         score = setMeasureEventsViaCommands(score, 1, [hNote('G', 3), hNote('G', 4)]);
+        return score;
+      },
+    },
+    {
+      id: 'clef-changes',
+      title: '32. Clef Changes Inside a Staff',
+      description: 'Bass clef with a change to the tenor clef inside bar 1 (small clef before the note), a change to the treble clef at the start of bar 2 (small clef before the barline of bar 1), and back to the bass clef inside bar 3. The notes keep their pitch; only their place on the staff changes.',
+      fixedSize: true,
+      build: () => {
+        let score = createEmptyScore({ title: '32. Clef Changes', measures: 4 });
+        const staffId = score.parts[0].staves[0].id;
+        const m = score.measures.map((x) => x.id);
+        score = setStaffClef(staffId, { sign: 'F', line: 4 }).apply(score);
+        score = setMeasureEventsViaCommands(score, 0, [qNote('C', 3), qNote('D', 3), qNote('E', 3), qNote('F', 3)]);
+        score = setMeasureEventsViaCommands(score, 1, [qNote('G', 3), qNote('A', 3), qNote('B', 3), qNote('C', 4)]);
+        score = setMeasureEventsViaCommands(score, 2, [qNote('C', 4), qNote('D', 4), qNote('E', 4), qNote('F', 4)]);
+        score = setMeasureEventsViaCommands(score, 3, [wNote('C', 3)]);
+        score = setClefChange(staffId, m[0], 1920, { sign: 'C', line: 4 }).apply(score);
+        score = setClefChange(staffId, m[1], 0, { sign: 'G', line: 2 }).apply(score);
+        score = setClefChange(staffId, m[2], 1920, { sign: 'F', line: 4 }).apply(score);
         return score;
       },
     },

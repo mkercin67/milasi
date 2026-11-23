@@ -598,5 +598,53 @@
     "testFile": "tests/core/clef_changes.test.ts",
     "testName": "CC9: deleting a measure removes the clef changes inside it",
     "status": "DONE"
+  },
+  {
+    "planItemId": "B67",
+    "description": "M7c-5: notes after an in-measure clef change are drawn for the new clef.",
+    "codeLocation": "src/layout/measureLayout.ts:layoutSingleMeasure",
+    "testFile": "tests/layout/clef_change_layout.test.ts",
+    "testName": "LC1: notes after an in-measure change are drawn for the new clef",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B68",
+    "description": "M7c-5: a small clef stands before the first affected note.",
+    "codeLocation": "src/layout/clefLayout.ts:advanceClefChanges",
+    "testFile": "tests/layout/clef_change_layout.test.ts",
+    "testName": "LC2: a small clef stands before the first affected note",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B69",
+    "description": "M7c-5: a change at a measure start is drawn small before the previous barline.",
+    "codeLocation": "src/layout/measureLayout.ts:layoutSingleMeasure",
+    "testFile": "tests/layout/clef_change_layout.test.ts",
+    "testName": "LC3: a change at the start of a measure is drawn small before the previous barline; the measure itself draws none",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B70",
+    "description": "M7c-5: a system starting with a changed clef shows it full size and gets the key signature for it; the previous system ends with the warning clef.",
+    "codeLocation": "src/layout/layoutScore.ts:computeHeader",
+    "testFile": "tests/layout/clef_change_layout.test.ts",
+    "testName": "LC4: a system that starts with a changed clef shows it full size in the header, with the key signature for that clef",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B71",
+    "description": "M7c-5: the measure cache notices a new clef change on a shared staff measure object.",
+    "codeLocation": "src/layout/clefLayout.ts:clefInfoKey",
+    "testFile": "tests/layout/clef_change_layout.test.ts",
+    "testName": "LC5: the measure cache sees a new change although the staff measure object is shared",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B72",
+    "description": "M7c-5: a polyphonic measure follows the clef change in both voices.",
+    "codeLocation": "src/layout/measureLayout.ts:layoutPolyphonicEvents",
+    "testFile": "tests/layout/clef_change_layout.test.ts",
+    "testName": "LC6: a polyphonic measure follows the change in both voices",
+    "status": "DONE"
   }
 ]

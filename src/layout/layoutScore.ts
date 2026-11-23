@@ -7,7 +7,9 @@
  */
 
 import { applySkylineSpacing } from './skylineSpacing';
-import { Clef, Score } from '../core/model';
+import { clefAt, clefAtMeasureStart, sameClef } from '../core/clef';
+import { Clef, Score, Staff } from '../core/model';
+import { clefGlyphName, clefLineY, MeasureClefInfo } from './clefLayout';
 import { getKeySignatureAccidentals } from './keySignature';
 import {
   LayoutItem,
@@ -48,15 +50,6 @@ interface CachedSystemLayout {
 const MAX_SYSTEM_CACHE = 1000;
 const systemLayoutCache = new Map<string, CachedSystemLayout>();
 
-/** SMuFL glyph of a clef, including the octave clefs. */
-function clefGlyphName(clef: Clef): string {
-  if (clef.sign === 'C') return 'cClef';
-  const base = clef.sign === 'F' ? 'fClef' : 'gClef';
-  if (clef.octaveShift === -1) return `${base}8vb`;
-  if (clef.octaveShift === 1) return `${base}8va`;
-  return base;
-}
-
 /** Clears the system layout memoization cache (for tests or hard resets). */
 export function clearSystemLayoutCache(): void {
   systemLayoutCache.clear();
@@ -96,8 +89,7 @@ export function layoutScore(score: Score, options: LayoutOptions = {}): LayoutRe
 
   function createClefItems(startX: number, clefToUse: Clef): { items: LayoutItem[]; width: number } {
     const glyph = clefGlyphName(clefToUse);
-    // The clef sign sits on its own staff line (1 = bottom line, y = 4 - (line - 1))
-    const y = 4 - (clefToUse.line - 1);
+    const y = clefLineY(clefToUse);
     return {
       items: [
         {
@@ -133,6 +125,31 @@ export function layoutScore(score: Score, options: LayoutOptions = {}): LayoutRe
     return { items, width: curX - startX + 0.4 };
   }
 
+  /** The clef that opens a measure on a staff (M7c-5: a change at tick 0 counts). */
+  function measureStartClef(st: Staff, measureId: string): Clef {
+    return clefAtMeasureStart(score, st, measureId);
+  }
+
+  /**
+   * Clef changes inside a measure and the clef that opens the next one (drawn small before the barline).
+   * Undefined for a staff without clef changes, so such scores take exactly the code path they always did.
+   */
+  function measureClefInfo(st: Staff, measureId: string): MeasureClefInfo | undefined {
+    if (!st.clefChanges || st.clefChanges.length === 0) return undefined;
+    const idx = score.measures.findIndex((m) => m.id === measureId);
+    const changes = st.clefChanges
+      .filter((c) => c.measureId === measureId && c.tick > 0)
+      .map((c) => ({ tick: c.tick, clef: c.clef }));
+    let trailing: Clef | undefined;
+    const next = score.measures[idx + 1];
+    if (next) {
+      const nextStart = clefAtMeasureStart(score, st, next.id);
+      if (!sameClef(clefAt(score, st, measureId, Number.MAX_SAFE_INTEGER), nextStart)) trailing = nextStart;
+    }
+    if (changes.length === 0 && !trailing) return undefined;
+    return { changes, trailing };
+  }
+
   // Measure each measure definition into a natural chunk
   const measureChunks: MeasureLayoutChunk[] = [];
   // Chunks of staves 1..n-1 (multi-staff only), indexed like measureChunks.
@@ -153,14 +170,15 @@ export function layoutScore(score: Score, options: LayoutOptions = {}): LayoutRe
       layoutSingleMeasure(
         st.measures[mDefIn.id],
         mDefIn,
-        st.clef,
+        measureStartClef(st, mDefIn.id),
         isFirstMeasureIn,
         isLastMeasureIn,
         prevMDefIn,
         undefined,
         scopeOf(k),
         beamGrouping,
-        noteLabels
+        noteLabels,
+        measureClefInfo(st, mDefIn.id)
       )
     );
     const al = alignStaffColumns(
@@ -185,14 +203,15 @@ export function layoutScore(score: Score, options: LayoutOptions = {}): LayoutRe
       return layoutSingleMeasure(
         staves[k].measures[mDefIn.id],
         mDefIn,
-        staves[k].clef,
+        measureStartClef(staves[k], mDefIn.id),
         isFirstMeasureIn,
         isLastMeasureIn,
         prevMDefIn,
         alignment,
         scopeOf(k),
         beamGrouping,
-        noteLabels
+        noteLabels,
+        measureClefInfo(staves[k], mDefIn.id)
       );
     });
   }
@@ -213,14 +232,15 @@ export function layoutScore(score: Score, options: LayoutOptions = {}): LayoutRe
       layoutSingleMeasure(
         staffMeasure,
         mDef,
-        clef,
+        staff ? measureStartClef(staff, mDef.id) : clef,
         isFirstMeasure,
         isLastMeasure,
         prevMDef,
         undefined,
         undefined,
         beamGrouping,
-        noteLabels
+        noteLabels,
+        staff ? measureClefInfo(staff, mDef.id) : undefined
       )
     );
   }
@@ -283,12 +303,13 @@ export function layoutScore(score: Score, options: LayoutOptions = {}): LayoutRe
     startX += 0.4;
     const afterBarlineX = startX;
 
-    const clefLayout = createClefItems(startX, clef);
+    const headerClef = staff ? measureStartClef(staff, score.measures[firstMIdx]?.id ?? '') : clef;
+    const clefLayout = createClefItems(startX, headerClef);
     items.push(...clefLayout.items);
     startX += clefLayout.width;
 
     const keySigToUse = score.measures[firstMIdx]?.keySig ?? 0;
-    const keySigLayout = createKeySigItems(startX, keySigToUse, clef);
+    const keySigLayout = createKeySigItems(startX, keySigToUse, headerClef);
     items.push(...keySigLayout.items);
     startX += keySigLayout.width;
 
@@ -297,7 +318,7 @@ export function layoutScore(score: Score, options: LayoutOptions = {}): LayoutRe
         if (it.id !== 'sys-start-barline') it.staffId = staves[0].id;
       }
       for (let k = 1; k < staffCount; k++) {
-        const stClef = staves[k].clef;
+        const stClef = measureStartClef(staves[k], score.measures[firstMIdx]?.id ?? '');
         const cl = createClefItems(afterBarlineX, stClef);
         const ks = createKeySigItems(afterBarlineX + cl.width, keySigToUse, stClef);
         for (const it of [...cl.items, ...ks.items]) {

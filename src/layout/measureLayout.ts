@@ -16,6 +16,14 @@ import { PPQ } from '../core/time';
 import { MeasureAccidentalTracker } from './accidentals';
 import { getBeamGroupStemDirection } from './beamLayout';
 import { groupBeams } from './beams';
+import {
+  advanceClefChanges,
+  CLEF_CHANGE_WIDTH,
+  clefChangeItem,
+  clefForTick,
+  clefInfoKey,
+  MeasureClefInfo,
+} from './clefLayout';
 import { GracePlan, planGraceGroup } from './graceLayout';
 import {
   getKeySignatureAlter,
@@ -121,10 +129,12 @@ function layoutPolyphonicEvents(
   alignment?: MeasureAlignment,
   idScope?: string,
   beamGrouping: BeamGroupingMode = 'beat',
-  noteLabels?: NoteLabelStyle
+  noteLabels?: NoteLabelStyle,
+  clefInfo?: MeasureClefInfo
 ): number {
   let relX = relXStart;
   let alignShift = 0;
+  let nextClefChange = 0;
   const eventAnchors = new Map<string, number>();
   const polyLabels: Array<{ item: LayoutItem; k: number }> = [];
   // Verse-1 lyrics per voice (drawn on their own line per voice, stacked in voice order).
@@ -184,7 +194,7 @@ function layoutPolyphonicEvents(
           const stepPositions =
             evObj.kind === 'note'
               ? (evObj as NoteEvent).pitches
-                  .map((p) => pitchToStaffPosition(p, clef))
+                  .map((p) => pitchToStaffPosition(p, clefForTick(clef, clefInfo?.changes, (entry?.startTick ?? 0) - pickupOffset)))
                   .sort((a, b) => a - b)
               : [];
           return {
@@ -215,6 +225,13 @@ function layoutPolyphonicEvents(
   for (let colIdx = 0; colIdx < uniqueStartTicks.length; colIdx++) {
     const curTick = uniqueStartTicks[colIdx];
     const nextTick = uniqueStartTicks[colIdx + 1] ?? measureEndTick;
+    // Clef changes (M7c-5): a small clef before the first column it affects; the column's notes use the clef in force.
+    const colClef = clefForTick(clef, clefInfo?.changes, curTick - pickupOffset);
+    if (clefInfo && nextClefChange < clefInfo.changes.length) {
+      const adv = advanceClefChanges(clefInfo.changes, nextClefChange, curTick - pickupOffset, relX, `${mDef.id}${idScope ?? ''}`, measureItems);
+      nextClefChange = adv.next;
+      relX = adv.relX;
+    }
     const colDuration = nextTick - curTick;
     const durationFactor = colDuration / PPQ;
     const colEntries = allEntries.filter((e) => e.startTick === curTick);
@@ -462,14 +479,14 @@ function layoutPolyphonicEvents(
       const ne1 = v1Note.event as NoteEvent;
       const ne2 = v2Note.event as NoteEvent;
       const p1Lowest = [...ne1.pitches].sort(
-        (a, b) => pitchToStaffPosition(a, clef) - pitchToStaffPosition(b, clef)
+        (a, b) => pitchToStaffPosition(a, colClef) - pitchToStaffPosition(b, colClef)
       )[0];
       const p2Highest = [...ne2.pitches].sort(
-        (a, b) => pitchToStaffPosition(b, clef) - pitchToStaffPosition(a, clef)
+        (a, b) => pitchToStaffPosition(b, colClef) - pitchToStaffPosition(a, colClef)
       )[0];
 
-      const step1 = pitchToStaffPosition(p1Lowest, clef);
-      const step2 = pitchToStaffPosition(p2Highest, clef);
+      const step1 = pitchToStaffPosition(p1Lowest, colClef);
+      const step2 = pitchToStaffPosition(p2Highest, colClef);
 
       if (step1 === step2) {
         isUnison = true;
@@ -526,9 +543,9 @@ function layoutPolyphonicEvents(
       }
 
       const sortedPitches = [...ev.pitches].sort((a, b) => {
-        return pitchToStaffPosition(a, clef) - pitchToStaffPosition(b, clef);
+        return pitchToStaffPosition(a, colClef) - pitchToStaffPosition(b, colClef);
       });
-      const stepPositions = sortedPitches.map((p) => pitchToStaffPosition(p, clef));
+      const stepPositions = sortedPitches.map((p) => pitchToStaffPosition(p, colClef));
 
       let noteheadGlyph = 'noteheadBlack';
       if (ev.baseType === 'whole') noteheadGlyph = 'noteheadWhole';
@@ -721,7 +738,8 @@ export function layoutSingleMeasure(
   alignment?: MeasureAlignment,
   idScope?: string,
   beamGrouping: BeamGroupingMode = 'beat',
-  noteLabels?: NoteLabelStyle
+  noteLabels?: NoteLabelStyle,
+  clefInfo?: MeasureClefInfo
 ): MeasureLayoutChunk {
   measureLayoutCacheStats.calls++;
 
@@ -783,7 +801,7 @@ export function layoutSingleMeasure(
     ? `${prevMDef.keySig}_${prevMDef.timeSig.num}/${prevMDef.timeSig.den}${effectiveTimeSigDisplay(prevMDef)}`
     : 'none';
   const barlineType = mDef.endBarline ?? (isLastMeasure ? 'final' : 'single');
-  const cacheKey = `${mDef.id}_${mDef.keySig}_${mDef.timeSig.num}/${mDef.timeSig.den}${effectiveTimeSigDisplay(mDef)}_${clef.sign}${clef.line}${clef.octaveShift ?? ''}_${isFirstMeasure}_${isLastMeasure}_${prevKey}_${mDef.actualTicks ?? 'full'}_${barlineType}_${mDef.repeatStart ? 'rs' : ''}_${mDef.repeatEnd ? 're' : ''}_${mDef.volta?.number ?? 'none'}_${eventsHash}${alignment ? `_al${alignmentKey(alignment)}` : ''}${idScope ? `_sc${idScope}` : ''}${beamGrouping === 'beat' ? '' : `_bg${beamGrouping}`}${noteLabels ? `_nl${noteLabels}` : ''}`;
+  const cacheKey = `${mDef.id}_${mDef.keySig}_${mDef.timeSig.num}/${mDef.timeSig.den}${effectiveTimeSigDisplay(mDef)}_${clef.sign}${clef.line}${clef.octaveShift ?? ''}_${isFirstMeasure}_${isLastMeasure}_${prevKey}_${mDef.actualTicks ?? 'full'}_${barlineType}_${mDef.repeatStart ? 'rs' : ''}_${mDef.repeatEnd ? 're' : ''}_${mDef.volta?.number ?? 'none'}_${eventsHash}${alignment ? `_al${alignmentKey(alignment)}` : ''}${idScope ? `_sc${idScope}` : ''}${beamGrouping === 'beat' ? '' : `_bg${beamGrouping}`}${noteLabels ? `_nl${noteLabels}` : ''}${clefInfoKey(clefInfo)}`;
 
   if (staffMeasure) {
     const existing = measureChunkCache.get(staffMeasure);
@@ -803,6 +821,7 @@ export function layoutSingleMeasure(
   const measureItems: MeasureItemEntry[] = [];
   const eventAnchors = new Map<string, number>();
   let relX = 0;
+  let nextClefChange = 0;
 
   const eventToBeamDir = new Map<string, StemDirection>();
   const beamGroupsMeta: MeasureBeamGroupMeta[] = [];
@@ -818,11 +837,12 @@ export function layoutSingleMeasure(
       mDef.actualTicks && mDef.actualTicks < fullTicks ? fullTicks - mDef.actualTicks : 0;
     let runningTick = 0;
     for (const ev of events) {
+      const evClefForBeams = clefForTick(clef, clefInfo?.changes, runningTick);
       startTickMap.set(ev.id, runningTick + pickupOffset);
       runningTick += ev.duration;
       if (ev.kind === 'note') {
         const sortedSteps = [...ev.pitches]
-          .map((p) => pitchToStaffPosition(p, clef))
+          .map((p) => pitchToStaffPosition(p, evClefForBeams))
           .sort((a, b) => a - b);
         noteStepsMap.set(ev.id, sortedSteps);
       }
@@ -925,7 +945,8 @@ export function layoutSingleMeasure(
       alignment,
       idScope,
       beamGrouping,
-      noteLabels
+      noteLabels,
+      clefInfo
     );
   } else {
     const lyricsToLayout: LyricLayoutEntry[] = [];
@@ -935,6 +956,13 @@ export function layoutSingleMeasure(
     // Process events
   for (let eIdx = 0; eIdx < events.length; eIdx++) {
     const ev = events[eIdx];
+    // Clef changes (M7c-5): a small clef before the first event it affects; this event uses the clef in force.
+    const evClef = clefForTick(clef, clefInfo?.changes, tickAcc);
+    if (clefInfo && nextClefChange < clefInfo.changes.length) {
+      const adv = advanceClefChanges(clefInfo.changes, nextClefChange, tickAcc, relX, `${mDef.id}${idScope ?? ''}`, measureItems);
+      nextClefChange = adv.next;
+      relX = adv.relX;
+    }
     const isWholeMeasureRest = ev.kind === 'rest' && Boolean((ev as RestEvent).wholeMeasure);
     const durationFactor = ev.duration / PPQ;
     let estLyricWidth = 0;
@@ -959,7 +987,7 @@ export function layoutSingleMeasure(
 
     // Grace notes (M7c-3b): planned first, so their accidentals reach the bar's tracker before the main note's.
     const gracePlan: GracePlan | null =
-      ev.kind === 'note' ? planGraceGroup(ev as NoteEvent, mDef.keySig, clef, tracker) : null;
+      ev.kind === 'note' ? planGraceGroup(ev as NoteEvent, mDef.keySig, evClef, tracker) : null;
     const graceReserve = gracePlan ? gracePlan.width : 0;
 
     let firstEventAccidentalPadding = 0;
@@ -1049,10 +1077,10 @@ export function layoutSingleMeasure(
     } else if (ev.kind === 'note') {
       const noteEv = ev as NoteEvent;
       const sortedPitches = [...noteEv.pitches].sort((a, b) => {
-        return pitchToStaffPosition(a, clef) - pitchToStaffPosition(b, clef);
+        return pitchToStaffPosition(a, evClef) - pitchToStaffPosition(b, evClef);
       });
 
-      const stepPositions = sortedPitches.map((p) => pitchToStaffPosition(p, clef));
+      const stepPositions = sortedPitches.map((p) => pitchToStaffPosition(p, evClef));
       const meanStepPos =
         stepPositions.reduce((sum, sp) => sum + sp, 0) / (stepPositions.length || 1);
       const beamStemDir = eventToBeamDir.get(ev.id);
@@ -1267,6 +1295,12 @@ export function layoutSingleMeasure(
 
     // Render lyric text, centered hyphens, and melisma extender lines
     layoutMeasureLyrics(lyricsToLayout, events, notePositions, relX + 0.6, measureItems);
+  }
+
+  // The next measure opens with another clef: draw it small before the barline (warning clef at a system end).
+  if (clefInfo?.trailing) {
+    measureItems.push({ item: clefChangeItem(`clefchange-${mDef.id}${idScope ?? ''}-end`, clefInfo.trailing, relX + 0.3) });
+    relX += 0.3 + CLEF_CHANGE_WIDTH;
   }
 
   // Cross-staff alignment: every staff of the measure ends its content at the same x.

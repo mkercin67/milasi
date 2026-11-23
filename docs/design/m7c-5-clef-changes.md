@@ -1,6 +1,6 @@
 # M7c-5: Clef changes inside a staff
 
-Status: APPROVED (owner, 2026-11-22; Q1 to Q3 as proposed). Part 1 (model, helpers, commands, validation) done.
+Status: APPROVED (owner, 2026-11-22; Q1 to Q3 as proposed). Parts 1 (model, helpers, commands, validation) and 2 (layout: per-event clef, small clef, trailing clef, header, cache key, gallery card 32) done. Part 3 (entry paths and dialog scope) and part 4 (docs, parity) remain. The warning clef at a system end (Q1) came for free from the trailing-clef design and is already part of part 2.
 Part of `docs/design/m7c-plan.md`, depends on M7c-4 (done). Closes the K. 545 gap 1 and is needed by the acceptance
 excerpts below. Engraving conventions follow Gould, *Behind Bars*, "Clef changes".
 
