@@ -134,6 +134,48 @@ export function barRules(score: Score): StaffBarRule[] {
   return rules;
 }
 
+/** Font size (staff spaces) and approximate advance per character of part labels. */
+export const LABEL_FONT_SP = 1.5;
+const LABEL_CHAR_SP = 0.62 * LABEL_FONT_SP;
+/** Space between the widest label and the system start (also leaves room for brackets). */
+const LABEL_MARGIN_SP = 2.0;
+/** Distance every nesting level of braces/brackets moves left (shared with layoutScore). */
+export const MARK_STEP_SP = 1.2;
+
+export interface PartLabel {
+  text: string;
+  /** First and last staff index of the part. */
+  from: number;
+  to: number;
+}
+
+/**
+ * Labels left of the staves: full names on the first system, short names afterwards. A one-part score
+ * has none. Parts with an empty label are left out.
+ */
+export function partLabels(score: Score, full: boolean): PartLabel[] {
+  if (score.parts.length < 2) return [];
+  return partRanges(score)
+    .map((r) => ({ text: (full ? score.parts[r.partIndex].name : score.parts[r.partIndex].shortName).trim(), from: r.from, to: r.to }))
+    .filter((l) => l.text.length > 0);
+}
+
+/** Estimated width of a (possibly multi-line) label in staff spaces. */
+export function labelWidth(text: string): number {
+  return Math.max(...text.split('\n').map((l) => l.length)) * LABEL_CHAR_SP;
+}
+
+/** Distance from the right edge of the labels to the system start. */
+export function labelGap(marks: GroupMark[]): number {
+  const depth = marks.reduce((d, m) => Math.max(d, m.depth + 1), 0);
+  return Math.max(LABEL_MARGIN_SP, depth * MARK_STEP_SP + 0.8);
+}
+
+/** Indent of a system: widest label plus the gap; 0 without labels. */
+export function labelIndent(labels: PartLabel[], gap: number): number {
+  return labels.length === 0 ? 0 : Math.max(...labels.map((l) => labelWidth(l.text))) + gap;
+}
+
 /** Stable text of everything above that changes the system layout (part of the system cache key). */
 export function ensembleKey(score: Score): string {
   const marks = groupMarks(score)
@@ -143,5 +185,6 @@ export function ensembleKey(score: Score): string {
     .map((r) => `${r.mode[0]}${r.to}`)
     .join(',');
   const parts = score.parts.map((p) => p.staves.length).join('');
-  return `${parts}|${marks}|${rules}`;
+  const names = score.parts.map((p) => `${p.name}/${p.shortName}`).join(';');
+  return `${parts}|${marks}|${rules}|${names}`;
 }

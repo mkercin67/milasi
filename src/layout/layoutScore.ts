@@ -27,7 +27,17 @@ import {
   STAFF_LINE_THICKNESS,
 } from './layoutPrimitives';
 import { alignStaffColumns } from './columnAlignment';
-import { barRules, ensembleKey, groupMarks, GroupMark } from './ensembleLayout';
+import {
+  barRules,
+  ensembleKey,
+  groupMarks,
+  GroupMark,
+  labelGap,
+  labelIndent,
+  LABEL_FONT_SP,
+  MARK_STEP_SP,
+  partLabels,
+} from './ensembleLayout';
 import { computeHeaderLayout } from './headerLayout';
 import { layoutSingleMeasure } from './measureLayout';
 import { applyVisualOverrides } from './overrideLayout';
@@ -60,7 +70,7 @@ export function clearSystemLayoutCache(): void {
 /** Left offset (staff spaces) of the grand-staff brace relative to the system start barline. */
 const BRACE_X = -0.9;
 const BRACKET_X = -0.55; // centre of the bracket bar (M7c-6)
-const MARK_STEP = 1.2; // every nesting level of braces/brackets moves this far left
+const MARK_STEP = MARK_STEP_SP; // every nesting level of braces/brackets moves this far left
 
 export function layoutScore(score: Score, options: LayoutOptions = {}): LayoutResult {
   const targetWidth = options.width ?? options.contentWidth ?? 70;
@@ -266,13 +276,14 @@ export function layoutScore(score: Score, options: LayoutOptions = {}): LayoutRe
   function makePlan(
     chunks: MeasureLayoutChunk[],
     indices: number[],
-    header: { headerWidth: number; headerItems: LayoutItem[] }
+    header: { headerWidth: number; headerItems: LayoutItem[]; indent: number }
   ): SystemPlan {
     const plan: SystemPlan = {
       measures: chunks,
       measureIndices: indices,
       headerWidth: header.headerWidth,
       headerItems: header.headerItems,
+      ...(header.indent > 0 ? { indent: header.indent } : {}),
     };
     if (multiStaff) {
       plan.staffChunks = extraChunks.map((list) => indices.map((i) => list[i]));
@@ -290,9 +301,13 @@ export function layoutScore(score: Score, options: LayoutOptions = {}): LayoutRe
   let currentPlanIndices: number[] = [];
   let currentUsedWidth = 0;
 
-  function computeHeader(firstMIdx: number = 0): { headerWidth: number; headerItems: LayoutItem[] } {
+  function computeHeader(firstMIdx: number = 0): { headerWidth: number; headerItems: LayoutItem[]; indent: number } {
     const items: LayoutItem[] = [];
-    let startX = 0;
+    // Part labels (M7c-6): full names on the first system, short names afterwards; the system starts at `indent`.
+    const labels = multiStaff ? partLabels(score, firstMIdx === 0) : [];
+    const gap = labelGap(marks);
+    const indent = labelIndent(labels, gap);
+    let startX = indent;
 
     items.push({
       id: `sys-start-barline`,
@@ -310,7 +325,7 @@ export function layoutScore(score: Score, options: LayoutOptions = {}): LayoutRe
         id: 'sys-brace',
         kind: 'glyph',
         glyph: 'brace',
-        x: BRACE_X,
+        x: indent + BRACE_X,
         y: spanBottom,
         scaleY: spanBottom / 4,
       });
@@ -354,7 +369,7 @@ export function layoutScore(score: Score, options: LayoutOptions = {}): LayoutRe
           id: `sys-brace-${i}`,
           kind: 'glyph',
           glyph: 'brace',
-          x: BRACE_X - m.depth * MARK_STEP,
+          x: indent + BRACE_X - m.depth * MARK_STEP,
           y: bottom,
           scaleY: (bottom - top) / 4,
           staffId: fromId,
@@ -362,7 +377,7 @@ export function layoutScore(score: Score, options: LayoutOptions = {}): LayoutRe
         });
         return;
       }
-      const lx = BRACKET_X - m.depth * MARK_STEP;
+      const lx = indent + BRACKET_X - m.depth * MARK_STEP;
       items.push(
         { id: `sys-bracket-${i}`, kind: 'line', x: lx, y: top, x2: lx, y2: bottom, thickness: 0.5, staffId: fromId, spanStaffId: toId },
         { id: `sys-bracket-${i}-top`, kind: 'line', x: lx - 0.25, y: top, x2: lx + 0.9, y2: top, thickness: 0.3, staffId: fromId },
@@ -370,7 +385,26 @@ export function layoutScore(score: Score, options: LayoutOptions = {}): LayoutRe
       );
     });
 
-    return { headerWidth: startX, headerItems: items };
+    for (const [i, l] of labels.entries()) {
+      const lines = l.text.split('\n');
+      const centre = staffOffsets[l.from] + (staffOffsets[l.to] + 4 - staffOffsets[l.from]) / 2;
+      const lineStep = LABEL_FONT_SP * 1.15;
+      lines.forEach((line, li) => {
+        items.push({
+          id: `part-label-${i}-${li}`,
+          kind: 'text',
+          text: line,
+          x: indent - gap,
+          y: centre + 0.35 * LABEL_FONT_SP + (li - (lines.length - 1) / 2) * lineStep,
+          textAnchor: 'end',
+          fontSize: LABEL_FONT_SP,
+          fontFamily: '"Times New Roman", Times, "Liberation Serif", serif',
+          staffId: staves[l.from].id,
+        });
+      });
+    }
+
+    return { headerWidth: startX, headerItems: items, indent };
   }
 
   let currentHeader = computeHeader(0);
@@ -468,7 +502,7 @@ export function layoutScore(score: Score, options: LayoutOptions = {}): LayoutRe
             id: `sys-${sIdx}-measure-number`,
             kind: 'text',
             text: String(measureNumber),
-            x: 0,
+            x: plan.indent ?? 0,
             y: -1.2,
             fontSize: 1.1,
             fontWeight: 'bold',
@@ -735,7 +769,7 @@ export function layoutScore(score: Score, options: LayoutOptions = {}): LayoutRe
         systemItems.unshift({
           id: `sys-${sIdx}-staffline-${line}`,
           kind: 'line',
-          x: 0,
+          x: plan.indent ?? 0,
           y: line,
           x2: staffEndEndX,
           y2: line,
@@ -748,7 +782,7 @@ export function layoutScore(score: Score, options: LayoutOptions = {}): LayoutRe
           systemItems.push({
             id: `sys-${sIdx}-s${k}-staffline-${line}`,
             kind: 'line',
-            x: 0,
+            x: plan.indent ?? 0,
             y: staffOffsets[k] + line,
             x2: staffEndEndX,
             y2: staffOffsets[k] + line,

@@ -92,3 +92,7 @@ per-part playback (M7c-8), transposing instruments (separate roadmap item), part
 - Q1. Default for several parts without a group: no bracket + individual barlines (proposed) vs. automatic bracket.
 - Q2. Hide-empty-staves is deferred (proposed) — OK?
 - Q3. Part labels: full names on system 1, short names afterwards (proposed) — OK?
+
+## 10. Progress
+
+- Step 1 (commands, templates, validation) DONE: CI #92. Step 2 (layout of all parts) DONE: CI #93. Step 3a (braces, brackets, barline spans) DONE: CI #94. Step 3b (part labels, indent) implemented. Decisions Q1–Q3 approved as proposed.

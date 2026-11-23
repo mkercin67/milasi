@@ -16,7 +16,7 @@ interface Extent {
 
 /** Items that span the whole system (brace, through barlines): they never take part in the skyline. */
 function isSystemSpanItem(it: LayoutItem): boolean {
-  return it.glyph === 'brace' || it.spanStaffId !== undefined || (it.kind === 'line' && it.staffId === undefined);
+  return it.id.includes('part-label-') || it.glyph === 'brace' || it.spanStaffId !== undefined || (it.kind === 'line' && it.staffId === undefined);
 }
 
 /** Parts of the items that stick out BELOW the bottom line (`bottomY`, system-relative). */

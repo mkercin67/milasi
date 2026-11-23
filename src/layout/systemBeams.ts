@@ -13,6 +13,8 @@ export interface SystemPlan {
   measureIndices: number[];
   headerWidth: number;
   headerItems: LayoutItem[];
+  /** Left indent of the system for part labels (M7c-6); absent = 0. */
+  indent?: number;
   /** Multi-staff: the chunks of staves 1..n-1 (aligned with `measures`), for cache keys. */
   staffChunks?: MeasureLayoutChunk[][];
   /** Multi-staff: every staff's chunks with that staff's vertical offset, for beam generation. */

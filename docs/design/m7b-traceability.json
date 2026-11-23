@@ -790,5 +790,29 @@
     "testFile": "tests/layout/ensemble_groups.test.ts",
     "testName": "EG9: the single-part grand staff keeps its brace and through barline exactly as before",
     "status": "DONE"
+  },
+  {
+    "planItemId": "B91",
+    "description": "M7c-6: first system shows full part names right-aligned in one column.",
+    "codeLocation": "src/layout/ensembleLayout.ts:partLabels",
+    "testFile": "tests/layout/ensemble_labels.test.ts",
+    "testName": "EP1: the first system shows the full part names, right-aligned in one column",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B92",
+    "description": "M7c-6: later systems show short names with a smaller indent.",
+    "codeLocation": "src/layout/layoutScore.ts:computeHeader",
+    "testFile": "tests/layout/ensemble_labels.test.ts",
+    "testName": "EP2: later systems show the short names and a smaller indent",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B93",
+    "description": "M7c-6: a one-part score has no labels and no indent.",
+    "codeLocation": "src/layout/ensembleLayout.ts:partLabels",
+    "testFile": "tests/layout/ensemble_labels.test.ts",
+    "testName": "EP5: a one-part score has no labels and no indent",
+    "status": "DONE"
   }
 ]
