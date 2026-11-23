@@ -27,11 +27,11 @@ export function firstStaff(score: Score): Staff | undefined {
 }
 
 /**
- * All staves of the first part (a grand staff is one part with several staves).
- * Layout draws exactly this set as one system until multi-part scores (M7c).
+ * All staves of the score in system order: the parts in order, each part's staves in order (M7c-6).
+ * Layout draws exactly this set as one system; a one-part score gets that part's staves as before.
  */
-export function firstPartStaves(score: Score): Staff[] {
-  return score.parts[0]?.staves ?? []; // staff-zero-ok: the single definition of the layout part
+export function allStaves(score: Score): Staff[] {
+  return score.parts.flatMap((p) => p.staves);
 }
 
 /**

@@ -15,7 +15,7 @@ import {
 } from '../../core/commands';
 import { createEmptyScore, createGrandStaffScore, createRest } from '../../core/factory';
 import { CLEF_PRESETS, clefPresetId } from '../../core/clef';
-import { firstPartStaves } from '../../core/staffLookup';
+import { allStaves } from '../../core/staffLookup';
 import { buildClefCommand, clefDialogTarget, clefInForce, ClefScope } from './clefDialog';
 import { SelectedEventInfo } from './types';
 import { NewScoreConfig } from '../NewScoreModal';
@@ -297,8 +297,8 @@ export function useAppModalState({
       const pickupTicks = config.pickupDurationTicks;
       fresh.measures[0].actualTicks = pickupTicks;
       const m0Id = fresh.measures[0].id;
-      // Every staff of the first part gets the pickup rest (one staff, or both of a grand staff).
-      for (const st of firstPartStaves(fresh)) {
+      // Every staff gets the pickup rest (one staff, both of a grand staff, or every part of a template).
+      for (const st of allStaves(fresh)) {
         st.measures[m0Id].voices.find((v) => v.voiceIndex === 1)!.events = [
           createRest({
             baseType: pickupTicks === 480 ? 'eighth' : pickupTicks === 1920 ? 'half' : 'quarter',

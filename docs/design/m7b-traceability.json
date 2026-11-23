@@ -718,5 +718,29 @@
     "testFile": "tests/core/ensemble.test.ts",
     "testName": "E13: validation rejects empty, crossing and non-adjacent groups",
     "status": "DONE"
+  },
+  {
+    "planItemId": "B82",
+    "description": "M7c-6: layout draws the staves of all parts as one system, in part order.",
+    "codeLocation": "src/layout/layoutScore.ts:layoutScore",
+    "testFile": "tests/layout/ensemble_layout.test.ts",
+    "testName": "EL1: a string quartet system has four staves in part order",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B83",
+    "description": "M7c-6: the gap between parts is larger than inside a part; a grand staff keeps its pitch of 11 sp.",
+    "codeLocation": "src/layout/layoutScore.ts:layoutScore",
+    "testFile": "tests/layout/ensemble_layout.test.ts",
+    "testName": "EL2: staves are stacked downwards; the gap between parts is larger than inside a piano part",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B84",
+    "description": "M7c-6: all staves of a system share one beat column grid across parts.",
+    "codeLocation": "src/layout/layoutScore.ts:layoutAllStaves",
+    "testFile": "tests/layout/ensemble_layout.test.ts",
+    "testName": "EL6: notes at the same beat of different parts share one x column",
+    "status": "DONE"
   }
 ]

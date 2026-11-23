@@ -7,7 +7,7 @@ import { LayoutResult, LayoutSystem } from './types';
 import { Score } from '../core/model';
 import { measureTicks as timeSigTicks } from '../core/time';
 import type { ScoreCursor } from '../core/input';
-import { findStaff, firstPartStaves, firstStaff } from '../core/staffLookup';
+import { allStaves, findStaff, firstStaff } from '../core/staffLookup';
 import { staffOffsetInSystem } from './systemStaves';
 import { getSystemMeasureBounds } from './mouse';
 
@@ -200,11 +200,11 @@ export function xToCursor(
 }
 
 /**
- * Every voice of every staff of the first part in one measure. The staves of a grand staff share
- * one column grid (M7b-1), so the beat columns of ALL staves decide where a click lands.
+ * Every voice of every staff of the score in one measure. All staves of a system share one column
+ * grid (M7b-1, M7c-6), so the beat columns of ALL staves decide where a click lands.
  */
 function voicesOfMeasure(score: Score, measureId: string): VoiceLike[] {
-  return firstPartStaves(score).flatMap((st) => st.measures[measureId]?.voices ?? []);
+  return allStaves(score).flatMap((st) => st.measures[measureId]?.voices ?? []);
 }
 
 type VoiceLike = { events: Array<{ id: string; kind: string; duration: number }> };

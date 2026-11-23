@@ -31,7 +31,7 @@ import { computeHeaderLayout } from './headerLayout';
 import { layoutSingleMeasure } from './measureLayout';
 import { applyVisualOverrides } from './overrideLayout';
 import { generateSingleSystemBeams, generateSystemBeams, SystemPlan } from './systemBeams';
-import { firstPartStaves, firstStaff } from '../core/staffLookup';
+import { allStaves, firstStaff } from '../core/staffLookup';
 
 export * from './layoutPrimitives';
 export * from './headerLayout';
@@ -40,7 +40,8 @@ export * from './overrideLayout';
 export * from './systemBeams';
 
 /** Vertical gap in staff spaces between the bottom line of one staff and the top line of the next. */
-const STAFF_GAP_SP = 7.0;
+const STAFF_GAP_SP = 7.0; // between two staves of one part (grand staff)
+const PART_GAP_SP = 9.0; // between the last staff of a part and the first of the next (M7c-6)
 
 interface CachedSystemLayout {
   items: LayoutItem[];
@@ -72,20 +73,29 @@ export function layoutScore(score: Score, options: LayoutOptions = {}): LayoutRe
   const staff = firstStaff(score);
   const clef: Clef = staff?.clef ?? { sign: 'G', line: 2 };
 
-  // Multi-staff (Milestone 7b): all staves of the first part form one grand-staff system.
+  // Multi-staff (M7b) and ensembles (M7c-6): the staves of ALL parts form one system, parts in order.
   // A single-staff score takes exactly the code paths it always did.
-  const staves = firstPartStaves(score);
+  const staves = allStaves(score);
   const staffCount = Math.max(1, staves.length);
   const multiStaff = staffCount > 1;
-  const staffPitch = 4 + STAFF_GAP_SP; // top line to top line
-  const staffOffsets = Array.from({ length: staffCount }, (_, k) => k * staffPitch);
-  const systemExtra = (staffCount - 1) * staffPitch;
+  const partOfStaff = score.parts.flatMap((p) => p.staves.map(() => p.id));
+  const staffOffsets: number[] = [];
+  for (let k = 0; k < staffCount; k++) {
+    if (k === 0) {
+      staffOffsets.push(0);
+      continue;
+    }
+    const gap = partOfStaff[k] === partOfStaff[k - 1] ? STAFF_GAP_SP : PART_GAP_SP;
+    staffOffsets.push(staffOffsets[k - 1] + 4 + gap); // top line to top line
+  }
+  const systemExtra = staffOffsets[staffCount - 1];
   const spanBottom = systemExtra + 4; // bottom line of the last staff, system-relative
   const sysStep = systemSpacing + 4 + systemExtra;
   // Group semantics (M7b-1c-ii): a group naming the part decides ('brace' draws it, other kinds draw
   // none here); a multi-staff part without any group gets the piano brace by default.
   const braceGroup = score.groups.find((g) => score.parts[0] && g.partIds.includes(score.parts[0].id));
-  const hasBrace = multiStaff && (braceGroup ? braceGroup.bracket === 'brace' : true);
+  // Brackets and braces of several parts follow with M7c-6 step 3; until then only a single multi-staff part has one.
+  const hasBrace = multiStaff && score.parts.length === 1 && (braceGroup ? braceGroup.bracket === 'brace' : true);
 
   function createClefItems(startX: number, clefToUse: Clef): { items: LayoutItem[]; width: number } {
     const glyph = clefGlyphName(clefToUse);
