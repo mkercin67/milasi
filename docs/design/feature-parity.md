@@ -34,7 +34,7 @@ motivated the row, so priorities follow use, not feature lists.
 | Hairpins (crescendo, diminuendo) | DONE v1 (M7c-2c): select a range, button "Cresc." or "Dim."; below the staff; no keyboard shortcut, no manual length or position, not cleared by "clear notations", not carried by copy-paste | Barge BWV 1030 mm. 7 and later |
 | Courtesy (cautionary) accidentals: print an accidental where key and bar do not require it | DONE v1: toolbar "Hatırlatma" on the selected notes (no keyboard shortcut yet) | Barge BWV 1030 mm. 9 and 12 |
 | Slur clears articulations on its side (staccato dots sit between the heads and the slur) | DONE (same-system slurs; cross-system slurs unchanged) | Barge BWV 1030 m. 3 (four staccato eighths under one slur) |
-| Text expressions ("cresc.", "dolce", "espr.") | GAP | Barge BWV 1030 (expected) |
+| Text expressions ("cresc.", "dolce", "espr.", "pizz.", "arco"), bowing signs (down-bow, up-bow) | GAP (M10; Méditation uses "poco a poco cresc.", "pizz.", "arco", down-bows) | Barge BWV 1030 (expected) |
 | Tempo text and BPM | DONE (basic); styled text M10 | BWV 1030 "Andante" |
 | Fermata, breath mark, caesura | DONE (M7c-2) | chorales, wind parts |
 | Ornaments: trill, mordent, inverted mordent, turn | DONE v1 (M7c-3): sign above the note, toolbar only, ignored by playback (M11) | Barge BWV 1030 m. 10, BWV 772, K. 545 |
@@ -48,10 +48,10 @@ motivated the row, so priorities follow use, not feature lists.
 |---|---|---|
 | Barlines: single, double, final, repeat | DONE | all |
 | Volta endings (1st and 2nd time) | DONE (M6d model field `volta`) | all |
-| Rehearsal marks, measure numbers | GAP | Barge BWV 1030 (rehearsal "A"), ensemble parts |
+| Rehearsal marks, measure numbers | GAP (measure numbers at system starts are drawn; boxed rehearsal letters are not; seen again in Breidenbach, Méditation, marks A and P) | Barge BWV 1030 (rehearsal "A"), ensemble parts |
 | D.C., D.S., coda, segno | GAP | all |
 | Staves and parts: grand staff, voices 1 to 4 | DONE | piano, SATB on two staves |
-| Four-staff ensembles, groups, brackets, templates | PLANNED M7c-6 | string quartet, choir |
+| Four-staff ensembles, groups, brackets, templates | DONE v1 (M7c-6); see KNOWN_ISSUES for bracket ends and part labels | string quartet, choir |
 | Part extraction from a score | GAP | ensembles |
 
 ## 5. Text and lyrics
@@ -59,7 +59,7 @@ motivated the row, so priorities follow use, not feature lists.
 |---|---|---|
 | Title, composer, subtitle | DONE | all |
 | Lyrics verse 1, hyphens, melismas, polyphonic measures | DONE | vocal |
-| Multi-verse lyrics | PLANNED M7c-7 | hymns, songs |
+| Multi-verse lyrics | DONE v1 (M7c-7): up to 8 verses, stacked; no verse-number labels | hymns, songs |
 | Note-name layer (solfege and letter) | DONE | students |
 | Chord symbols (guitar style) | GAP | lead sheets |
 
@@ -82,7 +82,7 @@ motivated the row, so priorities follow use, not feature lists.
 | MIDI export, audio export (WAV or MP3) | GAP | students |
 | Playback: metrical, with dynamics | DONE | all |
 | Playback: fermata pause, ornaments, repeats | PLANNED M11 | all |
-| Per-part mute and solo, mixer | PLANNED M7c-8 | ensembles |
+| Per-part mute and solo, mixer | DONE v1 (M7c-8): one MIDI channel per part, mute and solo per staff | ensembles |
 
 ## 8. Engraving quality
 | Feature | Status | Needed by |

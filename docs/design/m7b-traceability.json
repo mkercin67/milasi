@@ -1390,5 +1390,13 @@
     "testFile": "tests/layout/notations.test.ts",
     "testName": "DY2: an ff under a low note keeps clear of the head, and of an accent below it",
     "status": "DONE"
+  },
+  {
+    "planItemId": "B166",
+    "description": "M7c-9f gate 2: relayout of a 50-measure four-staff score with three lyric verses stays within the performance budget.",
+    "codeLocation": "src/layout/layoutScore.ts",
+    "testFile": "tests/performance/ensemble_perf.test.ts",
+    "testName": "EP-PERF2: the same relayout with three lyric verses under every note of every staff (M7c-9f gate)",
+    "status": "DONE"
   }
 ]

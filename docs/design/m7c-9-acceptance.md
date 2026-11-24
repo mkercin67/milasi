@@ -44,6 +44,13 @@ only when the piece shows something no card shows yet.
    `m7c-plan.md` marked DONE, v3.2 release notes draft.
 5. **Visual sign-off**: the owner confirms each fixture next to its scan page (plan section 7).
 
+### Results of the gates (9f)
+1. Staff-zero: audit repeated, ceiling stays 14 (no hidden single-part assumption; see `m7b-staff-ratchet.json`).
+2. Performance: EP-PERF2 (50 measures, four staves, three verses) measured in isolation on the owner's machine: median 9.74 ms, p95 11.59 ms (50-measure quartet without lyrics: 4.06 / 5.49 ms); the gate is 30 ms. Under the parallel suite the owner's machine showed a median of 21.5 ms, so the test gates at median 35 ms and p95 90 ms; the design gate is re-checked in isolation with `npx vitest run tests/performance/ensemble_perf.test.ts`. Layout only, no React paint and no mixer panel.
+3. Cross-part selection: out of scope, stated in `KNOWN_ISSUES.md`.
+4. Docs: feature parity, KNOWN_ISSUES, plan and a release notes draft updated.
+5. Visual sign-off: open, owner.
+
 ## 4. What I need from the owner per step
 
 - The measures typed in the token grammar (or screenshots of the scan pages in the chat, which I read and

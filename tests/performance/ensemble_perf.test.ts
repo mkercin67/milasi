@@ -5,6 +5,7 @@
 import { describe, expect, it } from 'vitest';
 import { applyTemplate } from '../../src/core/ensembleCommands';
 import { deleteEvent, insertNote } from '../../src/core/commands';
+import { pasteLyrics } from '../../src/core/notationCommands';
 import { createEmptyScore, createNote, createPitch } from '../../src/core/factory';
 import type { Score } from '../../src/core/model';
 import { layoutScore } from '../../src/layout/layoutScore';
@@ -51,5 +52,38 @@ describe('M7c-6 ensemble performance', () => {
     console.log(`[PERF] 50-measure quartet relayout: median ${median.toFixed(2)} ms, p95 ${p95.toFixed(2)} ms`);
     expect(median).toBeLessThanOrEqual(15);
     expect(p95).toBeLessThanOrEqual(60);
+  });
+  it('EP-PERF2: the same relayout with three lyric verses under every note of every staff (M7c-9f gate)', () => {
+    let score = filledQuartet();
+    const text = Array.from({ length: 200 }, (_, i) => `w${i}`).join(' ');
+    for (const p of score.parts) {
+      for (const st of p.staves) {
+        const first = st.measures[score.measures[0].id].voices[0].events[0].id;
+        for (const verse of [1, 2, 3]) score = pasteLyrics(first, text, undefined, verse).apply(score);
+      }
+    }
+    const opts = { width: 100 };
+    for (let i = 0; i < 3; i++) layoutScore(score, opts);
+    const part = score.parts[2];
+    const staff = part.staves[0];
+    const measureId = score.measures[20].id;
+    const lastId = staff.measures[measureId].voices[0].events[3].id;
+    const times: number[] = [];
+    for (let i = 0; i < 30; i++) {
+      const ev = createNote({ pitches: [createPitch('D', 4 + (i % 2))], baseType: 'quarter' });
+      let next = insertNote({ partId: part.id, staffId: staff.id, measureId, voiceIndex: 1, index: 0, event: ev }).apply(score);
+      next = deleteEvent(lastId).apply(next);
+      const t0 = performance.now();
+      layoutScore(next, opts);
+      times.push(performance.now() - t0);
+    }
+    times.sort((a, b) => a - b);
+    const median = times[Math.floor(times.length / 2)];
+    const p95 = times[Math.floor(times.length * 0.95) - 1];
+    console.log(`[PERF] 50-measure quartet with 3 verses relayout: median ${median.toFixed(2)} ms, p95 ${p95.toFixed(2)} ms`);
+    // Under the parallel suite the median was 21.5 ms on the owner's machine (10.7 ms in isolation on the review VM), so the
+    // gates here are looser than EP-PERF; the design gate (p95 <= 30 ms) is checked in isolation, see m7c-9-acceptance.md.
+    expect(median).toBeLessThanOrEqual(35);
+    expect(p95).toBeLessThanOrEqual(90);
   });
 });

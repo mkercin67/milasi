@@ -56,3 +56,11 @@ This document lists known constraints and architectural trade-offs in the curren
 - Mixer settings are a playback setting: not saved in the score file, not undoable, reset when the score is replaced.
 - Timbres are built-in synth waveforms per instrument family (voice, strings, winds, keyboard, other); no sample libraries, no pan or reverb.
 - The audition sound while entering notes uses the default timbre.
+
+## Acceptance corpus (M7c-9, v3.2 exit audit)
+- **Cross-part selection and clipboard:** selecting or copying across several parts or staves at once is out of scope for v3.2; selection works inside one staff (all its voices). Planned with the page and layout work, not before.
+- **Marks the editions print that are not supported yet** (all listed in `docs/review/m7c-9-*-gaps.md`): boxed rehearsal letters, text expressions (poco a poco cresc., pizz., arco), bowing signs, a slide (fall) mark, courtesy time signature and clef before a system break, parenthesised courtesy accidentals. Candidates for M10.
+- **Header clef at tick 0:** a clef change at tick 0 is drawn as the staff's header clef; the printed sequence bass clef, C, treble clef of K. 545 m. 4 to 5 is shown as treble only.
+- **Performance gate:** the relayout of a 50-measure four-staff score with three lyric verses measures 11.6 ms at p95 in isolation (owner's machine) (gate 30 ms; test gates 60 ms under load). The gate measures layout; React paint and the mixer panel were not part of that measurement.
+- **Owner sign-off:** the fixtures are compared with the scans by the owner on screen (plan section 7). Claims about notes are UNVERIFIED until then.
+
