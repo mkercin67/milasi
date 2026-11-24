@@ -31,3 +31,4 @@ Entered by hand in the application by the project owner; fixture and tests:
 
 ## Found in M7c-9d
 - The first seven notes of the right hand of m. 1 were entered an octave too high (C5 ... instead of C4 ...); found when the first system of the Breitkopf scan was compared. Fixed (A11); test A6 now expects middle C (MIDI 60) as the first note.
+- Checked note by note against the first page of the Breitkopf scan (M7c-9d, by the project lead): pitches, octaves, accidentals and rhythms of mm. 2-7 in both hands match the edition. Only the first seven notes of m. 1 (right hand) differed (octave, fixed). The owner has still to confirm this by eye on screen.

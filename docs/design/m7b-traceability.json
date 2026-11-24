@@ -1294,5 +1294,53 @@
     "testFile": "tests/layout/bwv772_acceptance.test.ts",
     "testName": "A11: the first right-hand run of m. 1 starts on middle C (C4 D4 E4 F4 D4 E4 C4), as in the edition",
     "status": "DONE"
+  },
+  {
+    "planItemId": "B154",
+    "description": "M7c-9e-1: Méditation mm. 13-21, metres and bar sums.",
+    "codeLocation": "tests/fixtures/breidenbachMeditationMm13to21.ts",
+    "testFile": "tests/layout/meditation_acceptance.test.ts",
+    "testName": "ME1: one cello staff, E flat major, nine measures with the metres 4/4 4/4 4/4 4/4 4/4 3/4 4/4 2/4 4/4 and exact tick sums",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B155",
+    "description": "M7c-9e-1: Méditation notes.",
+    "codeLocation": "tests/fixtures/breidenbachMeditationMm13to21.ts",
+    "testFile": "tests/layout/meditation_acceptance.test.ts",
+    "testName": "ME2: the notes match the edition (bass-clef double stops, then the sixths in the tenor clef)",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B156",
+    "description": "M7c-9e-1: tenor clef change.",
+    "codeLocation": "tests/fixtures/breidenbachMeditationMm13to21.ts",
+    "testFile": "tests/layout/meditation_acceptance.test.ts",
+    "testName": "ME3: the clef changes to the tenor clef (C on line 4) at the start of m. 17",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B157",
+    "description": "M7c-9e-1: dynamics, slurs, hairpin.",
+    "codeLocation": "tests/fixtures/breidenbachMeditationMm13to21.ts",
+    "testFile": "tests/layout/meditation_acceptance.test.ts",
+    "testName": "ME4: marks: pp in m. 14, f in m. 17, a slur m. 15 to the first quarter of m. 16, a crescendo to the last quarter of m. 16, three slurs in m. 18 and two in m. 20",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B158",
+    "description": "M7c-9e-1: layout finite.",
+    "codeLocation": "tests/fixtures/breidenbachMeditationMm13to21.ts",
+    "testFile": "tests/layout/meditation_acceptance.test.ts",
+    "testName": "ME5: layout produces only finite numbers",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B159",
+    "description": "M7c-9e-1: round trip and playback.",
+    "codeLocation": "tests/fixtures/breidenbachMeditationMm13to21.ts",
+    "testFile": "tests/layout/meditation_acceptance.test.ts",
+    "testName": "ME6: JSON round trip keeps the score and playback lasts 16.5 s at 120 with 42 sounding notes",
+    "status": "DONE"
   }
 ]

@@ -9,6 +9,7 @@ import { buildBachBwv140KeyboardMm1to6, buildBachBwv140Mm1to6 } from '../tests/f
 import { buildSchubertD547Mm1to5 } from '../tests/fixtures/schubertD547Mm1to5.ts';
 import { buildK545Mm1to7 } from '../tests/fixtures/mozartK545Mm1to7.ts';
 import { buildBwv772Mm1to7 } from '../tests/fixtures/bwv772Mm1to7.ts';
+import { buildBreidenbachMeditationMm13to21 } from '../tests/fixtures/breidenbachMeditationMm13to21.ts';
 import { serializeScore } from '../src/io/json.ts';
 
 mkdirSync('tests/private', { recursive: true });
@@ -18,6 +19,7 @@ const files = {
   'schubert_d547_mm1-5.sfscore': buildSchubertD547Mm1to5(),
   'k545_fixture_mm1-7.sfscore': buildK545Mm1to7(),
   'bwv772_fixture_mm1-7.sfscore': buildBwv772Mm1to7(),
+  'meditation_mm13-21.sfscore': buildBreidenbachMeditationMm13to21(),
 };
 for (const [name, score] of Object.entries(files)) {
   const out = `tests/private/${name}`;
