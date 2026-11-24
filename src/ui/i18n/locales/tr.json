@@ -271,5 +271,7 @@
   "dialog.parts.applyGroup": "Uygula",
   "dialog.parts.removeGroup": "Grubu kaldır",
   "dialog.parts.close": "Kapat",
-  "dialog.parts.hint": "Her değişiklik Geri Al ile geri alınabilir."
+  "dialog.parts.hint": "Her değişiklik Geri Al ile geri alınabilir.",
+  "dialog.lyrics.verse": "Kıta",
+  "dialog.lyrics.newVerse": "Yeni kıta"
 }

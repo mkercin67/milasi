@@ -926,5 +926,29 @@
     "testFile": "tests/layout/lyric_corridor.test.ts",
     "testName": "LC4: individual barlines never touch a lyric box",
     "status": "DONE"
+  },
+  {
+    "planItemId": "B108",
+    "description": "M7c-7: verse helpers pick the next free verse and cap at 8.",
+    "codeLocation": "src/ui/app/lyricVerses.ts:nextNewVerse",
+    "testFile": "tests/ui/lyric_verse_ui.test.tsx",
+    "testName": "LU1: highestVerse, nextNewVerse and canAddVerse follow the verses used in the score",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B109",
+    "description": "M7c-7: lyric entry box has a 1-8 verse selector.",
+    "codeLocation": "src/ui/app/LyricsEditorOverlay.tsx",
+    "testFile": "tests/ui/lyric_verse_ui.test.tsx",
+    "testName": "LU2: the entry box offers verses 1 to 8 with the current verse selected",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B110",
+    "description": "M7c-7: new-verse button disabled at 8 verses.",
+    "codeLocation": "src/ui/app/LyricsEditorOverlay.tsx",
+    "testFile": "tests/ui/lyric_verse_ui.test.tsx",
+    "testName": "LU3: \"new verse\" is disabled once eight verses exist",
+    "status": "DONE"
   }
 ]

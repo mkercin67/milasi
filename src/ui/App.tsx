@@ -234,6 +234,10 @@ const EditorShell: React.FC = () => {
     handleLyricsPaste,
     handleToggleNoteNames,
     handleClearLyrics,
+    lyricsVerse,
+    setLyricsVerse,
+    handleNewVerse,
+    canAddLyricsVerse,
   } = useAppLyrics({
     score,
     selectedEventId,
@@ -559,6 +563,10 @@ const EditorShell: React.FC = () => {
           onLyricsKeyDown={handleLyricsKeyDown}
           onLyricsPaste={handleLyricsPaste}
           onClose={() => setMode('select')}
+          lyricsVerse={lyricsVerse}
+          onVerseChange={setLyricsVerse}
+          onNewVerse={handleNewVerse}
+          canAddVerse={canAddLyricsVerse}
         />
       )}
 

@@ -271,5 +271,7 @@
   "dialog.parts.applyGroup": "Apply",
   "dialog.parts.removeGroup": "Remove group",
   "dialog.parts.close": "Close",
-  "dialog.parts.hint": "Every change can be undone with Undo."
+  "dialog.parts.hint": "Every change can be undone with Undo.",
+  "dialog.lyrics.verse": "Verse",
+  "dialog.lyrics.newVerse": "New verse"
 }

@@ -3,7 +3,9 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Score } from '../../core/model';
 import type { Selection } from '../../core/selection';
 import { clearLyrics, pasteLyrics, setLyrics, setShowNoteNames, Command } from '../../core/commands';
+import { isValidLyricVerse } from '../../core/model';
 import { EditorMode, mapKeyEvent } from '../keymap';
+import { canAddVerse, nextNewVerse } from './lyricVerses';
 
 export interface UseAppLyricsParams {
   score: Score;
@@ -46,14 +48,16 @@ export function useAppLyrics({
   }, [score, selectedEventId]);
 
   const [lyricsInputValue, setLyricsInputValue] = useState('');
+  // Verse the entry box shows and writes (M7c-7)
+  const [lyricsVerse, setLyricsVerseState] = useState(1);
 
   useEffect(() => {
     if (mode !== 'lyrics') return;
-    const nextText = selectedNote ? (selectedNote.lyrics?.find((l) => l.verse === 1)?.text ?? '') : '';
+    const nextText = selectedNote ? (selectedNote.lyrics?.find((l) => l.verse === lyricsVerse)?.text ?? '') : '';
     if (lyricsInputValue !== nextText) {
       setLyricsInputValue(nextText);
     }
-  }, [mode, selectedNote, lyricsInputValue]);
+  }, [mode, selectedNote, lyricsInputValue, lyricsVerse]);
 
   const eligibleLyricsNoteIds = useMemo(() => {
     const ids: string[] = [];
@@ -113,7 +117,7 @@ export function useAppLyrics({
     if (action === 'lyrics-commit-and-next' || action === 'lyrics-next-note') {
       e.preventDefault();
       if (selectedNote && lyricsInputValue.trim().length > 0) {
-        executeCommand(setLyrics(selectedNote.id, lyricsInputValue.trim(), 1));
+        executeCommand(setLyrics(selectedNote.id, lyricsInputValue.trim(), lyricsVerse));
       }
       moveLyricsNote('next');
       return;
@@ -121,7 +125,7 @@ export function useAppLyrics({
     if (action === 'lyrics-prev-note') {
       e.preventDefault();
       if (selectedNote && lyricsInputValue.trim().length > 0) {
-        executeCommand(setLyrics(selectedNote.id, lyricsInputValue.trim(), 1));
+        executeCommand(setLyrics(selectedNote.id, lyricsInputValue.trim(), lyricsVerse));
       }
       moveLyricsNote('prev');
       return;
@@ -142,7 +146,7 @@ export function useAppLyrics({
     const val = e.target.value;
     setLyricsInputValue(val);
     if (selectedNote) {
-      executeCommand(setLyrics(selectedNote.id, val.length > 0 ? val : undefined, 1));
+      executeCommand(setLyrics(selectedNote.id, val.length > 0 ? val : undefined, lyricsVerse));
     }
   };
 
@@ -150,13 +154,20 @@ export function useAppLyrics({
     const pastedText = e.clipboardData.getData('text');
     if (/\s+/.test(pastedText.trim()) && selectedNote) {
       e.preventDefault();
-      executeCommand(pasteLyrics(selectedNote.id, pastedText, score));
+      executeCommand(pasteLyrics(selectedNote.id, pastedText, score, lyricsVerse));
       const syllables = pastedText.trim().split(/\s+/).filter(Boolean);
       if (syllables.length > 0) {
         setLyricsInputValue(syllables[0]);
       }
     }
   };
+
+  const setLyricsVerse = useCallback((verse: number) => {
+    if (isValidLyricVerse(verse)) setLyricsVerseState(verse);
+  }, []);
+  const handleNewVerse = useCallback(() => {
+    setLyricsVerseState(nextNewVerse(score));
+  }, [score]);
 
   // The note-name line is a derived view setting; it never writes or removes lyrics.
   const showNoteNames = Boolean(score.layoutSettings?.showNoteNames);
@@ -171,6 +182,10 @@ export function useAppLyrics({
 
   return {
     lyricsInputValue,
+    lyricsVerse,
+    setLyricsVerse,
+    handleNewVerse,
+    canAddLyricsVerse: canAddVerse(score),
     handleLyricsKeyDown,
     handleLyricsChange,
     handleLyricsPaste,

@@ -70,3 +70,4 @@ note takes no syllable).
 
 ## 8. Progress
 - Step 1 DONE (CI #99). Step 2 DONE (CI #100). Step 3 implemented: lyric text counts 1.0 sp taller in the skyline rule (2.5 sp clearance), corridor property test.
+- Step 4 implemented: verse selector (1-8) and "New verse" button in the lyrics entry box; typing, next/previous note and paste act on the chosen verse.
