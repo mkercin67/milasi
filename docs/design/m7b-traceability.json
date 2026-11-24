@@ -950,5 +950,77 @@
     "testFile": "tests/ui/lyric_verse_ui.test.tsx",
     "testName": "LU3: \"new verse\" is disabled once eight verses exist",
     "status": "DONE"
+  },
+  {
+    "planItemId": "B111",
+    "description": "M7c-8: a muted part is not triggered; the schedule is unchanged.",
+    "codeLocation": "src/playback/player.ts:tick",
+    "testFile": "tests/playback/mixer.test.ts",
+    "testName": "MX1: a muted part is not triggered and the schedule stays identical",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B112",
+    "description": "M7c-8: solo overrides mute; several solos sound together.",
+    "codeLocation": "src/playback/mixer.ts:isAudible",
+    "testFile": "tests/playback/mixer.test.ts",
+    "testName": "MX2: solo overrides mute and two solos sound together",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B113",
+    "description": "M7c-8: part volume reaches the engine as gain.",
+    "codeLocation": "src/playback/player.ts:tick",
+    "testFile": "tests/playback/mixer.test.ts",
+    "testName": "MX3: part volume reaches the engine as gain and zero silences the part",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B114",
+    "description": "M7c-8: mixer changes affect only notes not yet triggered.",
+    "codeLocation": "src/playback/player.ts:setMixer",
+    "testFile": "tests/playback/mixer.test.ts",
+    "testName": "MX4: changing the mixer while playing affects only notes not yet triggered",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B115",
+    "description": "M7c-8: timbre mapping is total; pruning drops removed parts.",
+    "codeLocation": "src/playback/mixer.ts:timbreFamily",
+    "testFile": "tests/playback/mixer.test.ts",
+    "testName": "MX5: every instrument string maps to exactly one timbre family and pruning drops unknown parts",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B116",
+    "description": "M7c-8: engine receives channel and timbre of the part.",
+    "codeLocation": "src/playback/player.ts:tick",
+    "testFile": "tests/playback/mixer.test.ts",
+    "testName": "MX6: the engine gets the channel and timbre of the part",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B117",
+    "description": "M7c-8: mixer panel lists every part with controls.",
+    "codeLocation": "src/ui/toolbar/MixerPanel.tsx",
+    "testFile": "tests/ui/mixer_panel.test.tsx",
+    "testName": "MP1: lists every part with mute, solo and volume controls",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B118",
+    "description": "M7c-8: pressed state follows mixer; hidden for one part.",
+    "codeLocation": "src/ui/toolbar/MixerPanel.tsx",
+    "testFile": "tests/ui/mixer_panel.test.tsx",
+    "testName": "MP2: pressed state follows the mixer and the panel is hidden for single-part scores",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B119",
+    "description": "M7c-8: panel closed by default, labels translated.",
+    "codeLocation": "src/ui/toolbar/MixerPanel.tsx",
+    "testFile": "tests/ui/mixer_panel.test.tsx",
+    "testName": "MP3: closed by default and labels are translated",
+    "status": "DONE"
   }
 ]

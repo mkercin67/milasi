@@ -3,6 +3,7 @@
  * Type definitions for ScoreForge playback engine and schedule representation.
  */
 
+import type { TimbreFamily } from './mixer';
 
 export interface MidiPitch {
   midi: number;
@@ -37,12 +38,21 @@ export interface BuildScheduleOptions {
   fromEventId?: string;
 }
 
+/** What an engine receives per note; the extra fields are optional so simple engines may ignore them. */
+export interface TriggerNote {
+  midi: number;
+  detuneCents: number;
+  velocity: number;
+  durationSeconds: number;
+  midiChannel?: number;
+  /** Part gain 0..1 from the mixer. */
+  gain?: number;
+  timbre?: TimbreFamily;
+}
+
 export interface AudioEngine {
   ready(): Promise<void>;
-  trigger(
-    note: { midi: number; detuneCents: number; velocity: number; durationSeconds: number },
-    atSeconds: number
-  ): void;
+  trigger(note: TriggerNote, atSeconds: number): void;
   stopAll(): void;
   setVolume(v: number): void;
   now(): number;

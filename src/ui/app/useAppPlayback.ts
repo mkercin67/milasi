@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Pitch, Score } from '../../core/model';
-import { AudioEngine, FakeEngine, Player, PreviewPlayer, ToneEngine } from '../../playback';
+import { AudioEngine, EMPTY_MIXER, FakeEngine, MixerState, Player, PreviewPlayer, ToneEngine, pruneMixer } from '../../playback';
 import { setTempo, Command } from '../../core/commands';
 
 export interface UseAppPlaybackParams {
@@ -45,6 +45,8 @@ export function useAppPlayback({
   const [isMuted, setIsMuted] = useState<boolean>(false);
   const [previewSound, setPreviewSound] = useState<boolean>(() => previewPlayer.enabled);
 
+  const [mixer, setMixer] = useState<MixerState>(EMPTY_MIXER);
+
   const isPlayingRef = useRef(isPlaying);
   isPlayingRef.current = isPlaying;
   const isPausedRef = useRef(isPaused);
@@ -61,6 +63,20 @@ export function useAppPlayback({
       setIsPaused(nextPaused);
     }
   }, [score, player]);
+
+  // M7c-8: the mixer is a playback setting; drop entries of parts that no longer exist.
+  useEffect(() => {
+    setMixer((prev) => {
+      const next = pruneMixer(prev, score.parts.map((p) => p.id));
+      const same =
+        next.muted.size === prev.muted.size && next.solo.size === prev.solo.size && next.volume.size === prev.volume.size;
+      return same ? prev : next;
+    });
+  }, [score.parts]);
+
+  useEffect(() => {
+    player.setMixer(mixer);
+  }, [player, mixer]);
 
   useEffect(() => {
     const unsub = player.onPosition((pos) => {
@@ -165,6 +181,8 @@ export function useAppPlayback({
     volume,
     isMuted,
     previewSound,
+    mixer,
+    setMixer,
     handleTogglePlay,
     handleStop,
     handleChangeTempo,

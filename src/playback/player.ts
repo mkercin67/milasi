@@ -2,6 +2,7 @@
 import { Score } from '../core/model';
 import { validateScore } from '../core/validate';
 import { buildSchedule } from './schedule';
+import { EMPTY_MIXER, MixerState, gainFor, isAudible, timbreFamily } from './mixer';
 import { AudioEngine, ScheduleResult } from './types';
 
 export type PlayerState = 'idle' | 'playing' | 'paused';
@@ -30,6 +31,7 @@ export class Player {
   private _timerId: ReturnType<typeof setInterval> | null = null;
   private _positionListeners: Set<PositionCallback> = new Set();
   private _stopAtSeconds: number | null = null;
+  private _mixer: MixerState = EMPTY_MIXER;
 
   constructor(
     private _score: Score,
@@ -40,6 +42,18 @@ export class Player {
 
   get state(): PlayerState {
     return this._state;
+  }
+
+  get mixer(): MixerState {
+    return this._mixer;
+  }
+
+  /**
+   * M7c-8: applies mute, solo and volume. Takes effect for notes not yet triggered; the schedule
+   * (timing, cursor, total length) is never rebuilt or changed by the mixer.
+   */
+  setMixer(mixer: MixerState): void {
+    this._mixer = mixer;
   }
 
   get position(): PlaybackPosition {
@@ -176,7 +190,21 @@ export class Player {
           now,
           now + (note.startSeconds - this._playbackPosition)
         );
-        this._engine.trigger(note, atSeconds);
+        if (isAudible(this._mixer, note.partId) && gainFor(this._mixer, note.partId) > 0) {
+          const part = this._score.parts.find((p) => p.id === note.partId);
+          this._engine.trigger(
+            {
+              midi: note.midi,
+              detuneCents: note.detuneCents,
+              velocity: note.velocity,
+              durationSeconds: note.durationSeconds,
+              midiChannel: note.midiChannel,
+              gain: gainFor(this._mixer, note.partId),
+              timbre: timbreFamily(part?.instrument ?? 'default'),
+            },
+            atSeconds
+          );
+        }
         this._nextNoteIndex++;
       } else {
         break;

@@ -17,6 +17,8 @@ import {
 import { EditorMode } from './keymap';
 import { ToolbarFileHistory } from './toolbar/ToolbarFileHistory';
 import { ToolbarPlayback } from './toolbar/ToolbarPlayback';
+import type { MixerPart } from './toolbar/MixerPanel';
+import type { MixerState } from '../playback/mixer';
 import { ToolbarModePalette } from './toolbar/ToolbarModePalette';
 import { ToolbarVoiceSelector } from './toolbar/ToolbarVoiceSelector';
 import { ToolbarNotations } from './toolbar/ToolbarNotations';
@@ -65,6 +67,9 @@ export interface ToolbarProps {
   onToggleMute?: () => void;
   previewSound?: boolean;
   onTogglePreviewSound?: () => void;
+  mixerParts?: MixerPart[];
+  mixer?: MixerState;
+  onMixerChange?: (next: MixerState) => void;
   // M6b Notations
   activeDynamic?: string | null;
   onSelectDynamic?: (dynamic: DynamicType | null) => void;
@@ -140,6 +145,9 @@ export const Toolbar: React.FC<ToolbarProps> = ({
   onToggleMute,
   previewSound = true,
   onTogglePreviewSound,
+  mixerParts,
+  mixer,
+  onMixerChange,
   activeDynamic = null,
   onSelectDynamic,
   activeArticulations = [],
@@ -240,6 +248,9 @@ export const Toolbar: React.FC<ToolbarProps> = ({
           onToggleMute={onToggleMute}
           previewSound={previewSound}
           onTogglePreviewSound={onTogglePreviewSound}
+          mixerParts={mixerParts}
+          mixer={mixer}
+          onMixerChange={onMixerChange}
           handleButtonClick={handleButtonClick}
         />
 

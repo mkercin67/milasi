@@ -2,6 +2,8 @@
 import React from 'react';
 import { useI18n } from '../i18n';
 import { isInputCommitEvent } from '../keymap';
+import { MixerState } from '../../playback/mixer';
+import { MixerPanel, MixerPart } from './MixerPanel';
 
 export interface ToolbarPlaybackProps {
   isPlaying?: boolean;
@@ -16,6 +18,9 @@ export interface ToolbarPlaybackProps {
   onToggleMute?: () => void;
   previewSound?: boolean;
   onTogglePreviewSound?: () => void;
+  mixerParts?: MixerPart[];
+  mixer?: MixerState;
+  onMixerChange?: (next: MixerState) => void;
   handleButtonClick: (cb: () => void) => (e: React.MouseEvent<HTMLButtonElement>) => void;
 }
 
@@ -32,6 +37,9 @@ export const ToolbarPlayback: React.FC<ToolbarPlaybackProps> = ({
   onToggleMute,
   previewSound = true,
   onTogglePreviewSound,
+  mixerParts = [],
+  mixer,
+  onMixerChange,
   handleButtonClick,
 }) => {
   const { t } = useI18n();
@@ -200,6 +208,8 @@ export const ToolbarPlayback: React.FC<ToolbarPlaybackProps> = ({
       >
         🔔 {t('toolbar.previewSound')}
       </button>
+
+      {mixer && onMixerChange && <MixerPanel parts={mixerParts} mixer={mixer} onMixerChange={onMixerChange} />}
     </div>
   );
 };

@@ -188,6 +188,8 @@ const EditorShell: React.FC = () => {
     volume,
     isMuted,
     previewSound,
+    mixer,
+    setMixer,
     handleTogglePlay,
     handleStop,
     handleChangeTempo,
@@ -476,6 +478,9 @@ const EditorShell: React.FC = () => {
         onToggleMute={handleToggleMute}
         previewSound={previewSound}
         onTogglePreviewSound={handleTogglePreviewSound}
+        mixerParts={score.parts.map((p) => ({ id: p.id, name: p.name }))}
+        mixer={mixer}
+        onMixerChange={setMixer}
         onInsertMeasure={insertNewMeasure}
         onDeleteMeasure={modalState.handleDeleteMeasureWithPrompt}
         activeDynamic={selectedEventInfo?.dynamic}

@@ -1,13 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-import { AudioEngine } from './types';
+import { AudioEngine, TriggerNote } from './types';
 
 export interface TriggeredNoteLog {
-  note: {
-    midi: number;
-    detuneCents: number;
-    velocity: number;
-    durationSeconds: number;
-  };
+  note: TriggerNote;
   atSeconds: number;
 }
 
@@ -29,10 +24,7 @@ export class FakeEngine implements AudioEngine {
     this.isReady = true;
   }
 
-  trigger(
-    note: { midi: number; detuneCents: number; velocity: number; durationSeconds: number },
-    atSeconds: number
-  ): void {
+  trigger(note: TriggerNote, atSeconds: number): void {
     this.logs.push({ note: { ...note }, atSeconds });
   }
 

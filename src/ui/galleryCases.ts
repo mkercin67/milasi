@@ -659,7 +659,7 @@ export function getGalleryCases(): GalleryCase[] {
     {
       id: 'ensemble-satb-verses',
       title: '37. Choir SATB, Two Verses on Soprano and Bass',
-      description: 'Soprano and bass carry two verses each. The extra lyric line pushes the next staff down, so the staves grow apart only where lyrics need room; alto and tenor keep their normal gap.',
+      description: 'Soprano and bass carry two verses each. The second lyric line sits 2 sp under the first, inside the space between the staves, and the barlines stop at the staff bottom so they never cross the lyrics.',
       fixedSize: true,
       build: () => {
         let score = applyTemplate('satb').apply(createEmptyScore({ title: '37. Choir SATB, Two Verses', measures: 2 }));

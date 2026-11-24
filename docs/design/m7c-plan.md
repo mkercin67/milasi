@@ -29,7 +29,7 @@ and states the acceptance test of each step. Nothing here changes what M7b accep
 | **M7c-5** (DONE v1) | Clef changes inside a staff: `Staff.clefChanges[] = { measureId, tick, clef }`. Small clef drawn before the first affected note (before the barline when the change falls on a measure start). Stored pitches are absolute, so playback and transposition are unaffected; only the staff position of notes changes. | M7c-4 | K. 545 gap 1 |
 | **M7c-6** (DONE v1) | Ensemble model and layout: add or remove staves and parts, `Score.groups` (bracket, brace, barline span), templates SATB (4 staves), string quartet, voice + piano. Layout generalises from the first part to **all** parts of a system. Part labels with dynamic first-system indent. Through, individual and Mensurstrich barlines. | M7c-4 | v3.2 scope |
 | **M7c-7** (DONE v1) | Multi-verse lyrics: verses 2 and above drawn, stacked, independent hyphens and extenders, 2.5 sp clearance against the next staff, lyric corridor between staves for individual barlines. Lyric entry targets a chosen verse. | M7c-6 | v3.2 scope |
-| **M7c-8** | Playback per part: one MIDI channel per part, mute and solo per staff. (Clef octave shifts need nothing here: pitches are sounding pitches, see m7c-4-clefs.md.) | M7c-6 | M7b-grand-staff B10 |
+| **M7c-8** (DONE v1) | Playback per part: one MIDI channel per part, mute and solo per staff. (Clef octave shifts need nothing here: pitches are sounding pitches, see m7c-4-clefs.md.) | M7c-6 | M7b-grand-staff B10 |
 | **M7c-9** | Acceptance entries from public-domain editions (section 5) and the gallery cards of the v3.2 exit gates. | all above | exit gates |
 
 Order rationale: steps 1 to 3 are small, independent and each removes a visible difference from the editions we

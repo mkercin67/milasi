@@ -50,3 +50,9 @@ This document lists known constraints and architectural trade-offs in the curren
 - No verse-number labels ("1.", "2.") are drawn before the first syllable.
 - At most 8 verses; the verse is chosen with the selector in lyrics mode (no shortcut).
 - In polyphonic measures lyric lines are stacked per measure; alignment across voices is approximate.
+
+## Per-part playback (M7c-8, v1)
+- Mute, solo and volume are per part; the two staves of a piano move together.
+- Mixer settings are a playback setting: not saved in the score file, not undoable, reset when the score is replaced.
+- Timbres are built-in synth waveforms per instrument family (voice, strings, winds, keyboard, other); no sample libraries, no pan or reverb.
+- The audition sound while entering notes uses the default timbre.
