@@ -1,6 +1,6 @@
 # M7c-7 — Multi-verse lyrics
 
-Status: APPROVED v1 (owner approved Q1–Q4 as proposed, 2026-11-24)
+Status: CLOSED v1 (owner approved Q1–Q4 as proposed, 2026-11-24)
 
 ## 1. Where we are
 
@@ -71,3 +71,10 @@ note takes no syllable).
 ## 8. Progress
 - Step 1 DONE (CI #99). Step 2 DONE (CI #100). Step 3 implemented: lyric text counts 1.0 sp taller in the skyline rule (2.5 sp clearance), corridor property test.
 - Step 4 implemented: verse selector (1-8) and "New verse" button in the lyrics entry box; typing, next/previous note and paste act on the chosen verse.
+- Step 5 implemented: gallery cards 36 (one staff, three verses, hyphens and melisma) and 37 (SATB, two verses on soprano and bass).
+
+## 9. Known limits (v1)
+- No verse-number labels are drawn (Q2).
+- Maximum 8 verses per note.
+- In polyphonic measures lyric lines stack per measure; alignment across voices is approximate.
+- Verse selection has no keyboard shortcut; use the selector in lyrics mode.

@@ -632,6 +632,59 @@ export function getGalleryCases(): GalleryCase[] {
       },
     },
     {
+      id: 'lyrics-three-verses',
+      title: '36. Lyrics, Three Verses (Hyphens and Melisma)',
+      description: 'One staff with three verses stacked under the notes. Verse 1 uses hyphens and an extender line (melisma); verses 2 and 3 sit 2 sp lower each, and the system below keeps a clear gap.',
+      fixedSize: true,
+      build: () => {
+        let score = createEmptyScore({ title: '36. Lyrics, Three Verses', measures: 2 });
+        const n = [qNote('C', 5), qNote('D', 5), qNote('E', 5), qNote('D', 5)];
+        const m = [hNote('C', 5), hNote('G', 4)];
+        score = setMeasureEventsViaCommands(score, 0, n);
+        score = setMeasureEventsViaCommands(score, 1, m);
+        const all = [...n, ...m];
+        const verses: string[][] = [
+          ['Glo-', 'ri-', 'a_', 'in', 'ex-', 'cel-'],
+          ['Ful-', 'ly', 'sing', 'the', 'song', 'now'],
+          ['Hear', 'the', 'bells', 'ring', 'out', 'clear'],
+        ];
+        verses.forEach((words, vi) => {
+          words.forEach((w, i) => {
+            score = setLyrics(all[i].id, w, vi + 1).apply(score);
+          });
+        });
+        return score;
+      },
+    },
+    {
+      id: 'ensemble-satb-verses',
+      title: '37. Choir SATB, Two Verses on Soprano and Bass',
+      description: 'Soprano and bass carry two verses each. The extra lyric line pushes the next staff down, so the staves grow apart only where lyrics need room; alto and tenor keep their normal gap.',
+      fixedSize: true,
+      build: () => {
+        let score = applyTemplate('satb').apply(createEmptyScore({ title: '37. Choir SATB, Two Verses', measures: 2 }));
+        const [s, a, t, b] = score.parts.map((p) => p.staves[0].id);
+        const sop = [qNote('E', 5), qNote('D', 5), qNote('C', 5), qNote('D', 5)];
+        const bas = [qNote('C', 3), qNote('B', 2), qNote('C', 3), qNote('G', 2)];
+        score = setMeasureEventsViaCommands(score, 0, sop, 1, s);
+        score = setMeasureEventsViaCommands(score, 1, [wNote('C', 5)], 1, s);
+        score = setMeasureEventsViaCommands(score, 0, [qNote('G', 4), qNote('F', 4), qNote('G', 4), qNote('F', 4)], 1, a);
+        score = setMeasureEventsViaCommands(score, 1, [wNote('E', 4)], 1, a);
+        score = setMeasureEventsViaCommands(score, 0, [qNote('G', 3), qNote('G', 3), qNote('E', 3), qNote('F', 3)], 1, t);
+        score = setMeasureEventsViaCommands(score, 1, [wNote('E', 3)], 1, t);
+        score = setMeasureEventsViaCommands(score, 0, bas, 1, b);
+        score = setMeasureEventsViaCommands(score, 1, [wNote('C', 3)], 1, b);
+        const words: string[][] = [['Ky-', 'ri-', 'e', 'e-'], ['Lord', 'have', 'mer-', 'cy']];
+        words.forEach((line, vi) => {
+          line.forEach((w, i) => {
+            score = setLyrics(sop[i].id, w, vi + 1).apply(score);
+            score = setLyrics(bas[i].id, w, vi + 1).apply(score);
+          });
+        });
+        return score;
+      },
+    },
+    {
       id: 'multi-voice',
       title: '26. Multi-Voice Polyphony (Pending M7a)',
       description: 'Two independent voices on a single staff (deferred to Milestone 7a).',

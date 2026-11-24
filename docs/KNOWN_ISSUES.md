@@ -45,3 +45,8 @@ This document lists known constraints and architectural trade-offs in the curren
 - **Ornaments (M7c-3, v1):** one ornament per note, drawn above the note; toolbar buttons only (no keyboard shortcut yet); no wavy continuation line for a trill over several notes, no accidental above or below the sign, playback ignores ornaments (M11). "Notasyonu temizle" does not remove ornaments yet. See `docs/design/m7c-3-ornaments.md`.
 - **Grace notes (M7c-3b, v1):** drawn only in single-voice staff measures (polyphonic measures ignore them); a grace note cannot be selected or clicked on its own; the slur to the main note is always drawn; grace entry keys are not in the keymap (so not in `SHORTCUTS.md`); "Notasyonu temizle" does not clear grace notes (use "Süsleri sil"); playback follows a v1 convention (acciaccatura at most a 32nd, appoggiatura half of the main note; no long appoggiatura rule for dotted main notes). See `docs/design/m7c-3b-grace-notes.md`.
 - **Ensembles (M7c-6, v1):** brackets are a thick bar with two short serifs (no curled SMuFL ends); part labels are single-line estimates by character count (multi-line names are split at line breaks); no hiding of empty staves; the Parts dialog groups ALL parts at once (no partial groups from the UI yet); the status bar shows "Staff n/m" only inside a multi-staff part; selection, clipboard and paste stay inside one staff.
+
+## Multi-verse lyrics (M7c-7, v1)
+- No verse-number labels ("1.", "2.") are drawn before the first syllable.
+- At most 8 verses; the verse is chosen with the selector in lyrics mode (no shortcut).
+- In polyphonic measures lyric lines are stacked per measure; alignment across voices is approximate.
