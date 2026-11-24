@@ -24,9 +24,8 @@ const MEASURES = 8;
 // Entered from the IMSLP #973801 scan (Breitkopf Gesamtausgabe, 1862, Public Domain). Notes of m. 1-4 by the
 // project lead and of m. 5-8 by the project owner (program entry, converted to this grammar); checked on screen
 // against the scan by the owner. Marks follow the scan: p under m. 1, slurs, staccato, hairpins (< m. 5, > m. 6).
-// Open points, see docs/review/m7c-9-beethoven-gaps.md: the acciaccatura before the half note of violin II m. 7,
-// the second hairpin of m. 7-8 (not in the scan crop read so far) and whether the first curve of m. 1 is a slur
-// (as entered) or a tie.
+// Open points, see docs/review/m7c-9-beethoven-gaps.md: the hairpins of m. 7-8 and whether the first curve of m. 1
+// is a slur (as entered) or a tie. The mark before the half note of violin II m. 7 is a stain in the scan, not a grace note.
 export const OP18_1_VIOLIN_I: readonly string[] = [
   '(F4/4@p (F4/8) G4/16 F4/16) E4/8! F4/8!',
   'C4/4 r/4 r/4',

@@ -6,8 +6,8 @@ Source: IMSLP #973801 (Breitkopf Gesamtausgabe, Serie 6 No. 37, 1862, Public Dom
 Entered: 3/4, F major, notes, `p` under m. 1, slurs, staccato and the hairpins of mm. 5-8 for four parts.
 
 ## Open points
-1. **Acciaccatura** before the half note of violin II, m. 7 (a small slashed note in the scan). Not entered: its
-   pitch has not been read yet. The program can write it (`addGraceNote`), the fixture grammar cannot yet.
+1. **Mark before the half note of violin II, m. 7**: CLOSED. It looked like a small slashed grace note in a low-resolution
+   crop; the owner checked the scan and reads it as a stain, so no grace note is entered.
 2. **First curve of m. 1** (F4 to F4 in every part): entered as a slur. If the owner reads it as a tie the
    playback changes (one held note instead of two). To be confirmed from the scan or a recording.
 3. **Hairpins of mm. 7-8** and the dynamics after m. 8 (`cresc.`, `f` of the second system) are outside this

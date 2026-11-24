@@ -36,6 +36,7 @@ describe('Corpus & Intellectual Property Policy Enforcement (docs/CORPUS_POLICY.
       path.resolve('tests/fixtures/bwv772Mm1to7.ts'),
       path.resolve('tests/fixtures/mozartK545Mm1to7.ts'),
       path.resolve('tests/fixtures/beethovenOp18No1Mm1to8.ts'),
+      path.resolve('tests/fixtures/bachBwv140Mm1to6.ts'),
     ];
 
     const requiredMetadataTags = [

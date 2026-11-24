@@ -6,14 +6,16 @@
  *   ")" suffix   the slur that is open ends on this note (checked first, so a token that has both
  *                closes the open slur and then starts a new one);
  *   "!" suffix   staccato;
- *   "@p" suffix  dynamic marking (any dynamic the program knows: pp, p, mp, mf, f, ff, ...).
+ *   "@p" suffix  dynamic marking (any dynamic the program knows: pp, p, mp, mf, f, ff, ...);
+ *   "~" suffix   the note is tied to the next note of the same pitch;
+ *   "^" suffix   fermata above (one cycleFermata step).
  * Slurs may run over bar lines; they are tracked per staff in the order the measures are given.
  *   "<" / ">" prefix  a crescendo / diminuendo hairpin starts on this note;
  *   "]" suffix   the hairpin that is open ends on this note (closed first, so a token may end one hairpin
  *                and start the next).
  * Marks are applied through the public commands, like everything else a user does.
  */
-import { setDynamic, toggleArticulation, toggleHairpin, toggleSlur } from '../../src/core/commands';
+import { cycleFermata, setDynamic, toggleArticulation, toggleHairpin, toggleSlur, toggleTie } from '../../src/core/commands';
 import type { Score, ScoreEvent } from '../../src/core/model';
 import { parseMeasure } from './mozartK545Mm1to7';
 
@@ -21,6 +23,8 @@ export interface TokenMarks {
   slurStart: boolean;
   slurEnd: boolean;
   staccato: boolean;
+  tie: boolean;
+  fermata: boolean;
   dynamic?: string;
   hairpinStart?: 'crescendo' | 'diminuendo';
   hairpinEnd: boolean;
@@ -31,7 +35,7 @@ export interface MarkedMeasure {
   marks: TokenMarks[];
 }
 
-const TOKEN = /^(\()?([<>])?(.*?)(?:@([a-z]+))?(!)?(\))?(\])?$/;
+const TOKEN = /^(\()?([<>])?(.*?)(?:@([a-z]+))?(!)?(~)?(\^)?(\))?(\])?$/;
 
 /** Parses one measure string with marks. Plain strings (no marks) give the same events as parseMeasure. */
 export function parseMarkedMeasure(text: string): MarkedMeasure {
@@ -41,11 +45,13 @@ export function parseMarkedMeasure(text: string): MarkedMeasure {
     if (!m) throw new Error(`Bad token: ${token}`);
     marks.push({
       slurStart: !!m[1],
-      slurEnd: !!m[6],
+      slurEnd: !!m[8],
       staccato: !!m[5],
+      tie: !!m[6],
+      fermata: !!m[7],
       dynamic: m[4],
       hairpinStart: m[2] === '<' ? 'crescendo' : m[2] === '>' ? 'diminuendo' : undefined,
-      hairpinEnd: !!m[7],
+      hairpinEnd: !!m[9],
     });
     return m[3];
   });
@@ -80,6 +86,8 @@ export function applyMarks(score: Score, pending: PendingMarks): Score {
   for (const { id, marks } of pending.items) {
     if (marks.dynamic) result = setDynamic(id, marks.dynamic).apply(result);
     if (marks.staccato) result = toggleArticulation(id, 'staccato').apply(result);
+    if (marks.tie) result = toggleTie(id).apply(result);
+    if (marks.fermata) result = cycleFermata(id).apply(result);
     if (marks.slurEnd) {
       if (open === null) throw new Error(`Slur ends without a start at event ${id}`);
       result = toggleSlur({

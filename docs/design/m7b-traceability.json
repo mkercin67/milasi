@@ -1102,5 +1102,61 @@
     "testFile": "tests/layout/slur_ensemble.test.ts",
     "testName": "HP1: a crescendo and the diminuendo that starts on its last note do not touch (gap of at least 0.6 sp)",
     "status": "DONE"
+  },
+  {
+    "planItemId": "B130",
+    "description": "M7c-9b: Bach chorale fixture has four SATB parts, 4/4, E flat major, full measures.",
+    "codeLocation": "tests/fixtures/bachBwv140Mm1to6.ts",
+    "testFile": "tests/layout/bach_bwv140_acceptance.test.ts",
+    "testName": "BA1: SATB in 4/4 and E flat major, every staff measure exactly 3840 ticks, no validation error",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B131",
+    "description": "M7c-9b: entered notes match the edition.",
+    "codeLocation": "tests/fixtures/bachBwv140Mm1to6.ts",
+    "testFile": "tests/layout/bach_bwv140_acceptance.test.ts",
+    "testName": "BA2: the entered notes match the edition at chosen places",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B132",
+    "description": "M7c-9b: fermatas on mm. 3 and 6.",
+    "codeLocation": "src/core/notationCommands.ts:cycleFermata",
+    "testFile": "tests/layout/bach_bwv140_acceptance.test.ts",
+    "testName": "BA3: the fermatas sit on the half notes of mm. 3 and 6 in all four voices, nowhere else",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B133",
+    "description": "M7c-9b: ties in the fixture grammar.",
+    "codeLocation": "src/core/notationCommands.ts:toggleTie",
+    "testFile": "tests/layout/bach_bwv140_acceptance.test.ts",
+    "testName": "BA4: the bass of m. 1 is tied (half note to eighth) and the alto of m. 5 is tied (quarter to eighth)",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B134",
+    "description": "M7c-9b: layout without non-finite coordinates.",
+    "codeLocation": "src/layout/ensembleLayout.ts",
+    "testFile": "tests/layout/bach_bwv140_acceptance.test.ts",
+    "testName": "BA5: lays out with four staves and no non-finite coordinate",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B135",
+    "description": "M7c-9b: JSON round trip is lossless.",
+    "codeLocation": "src/io/json.ts",
+    "testFile": "tests/layout/bach_bwv140_acceptance.test.ts",
+    "testName": "BA6: round-trips through JSON unchanged",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B136",
+    "description": "M7c-9b: playback length and note count.",
+    "codeLocation": "src/playback/schedule.ts",
+    "testFile": "tests/layout/bach_bwv140_acceptance.test.ts",
+    "testName": "BA7: plays 12 s at the default tempo (6 bars of 4/4 at 120) with 90 notes (92 written, the two ties merged)",
+    "status": "DONE"
   }
 ]
