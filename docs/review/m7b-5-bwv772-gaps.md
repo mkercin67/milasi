@@ -15,7 +15,7 @@ Entered by hand in the application by the project owner; fixture and tests:
 ## Open differences (decision)
 | # | Difference | Decision |
 |---|------------|----------|
-| 1 | No trill sign (mm. 1, 2 and 5 of the entered range) | M7c (ornaments) |
+| 1 | No trill sign (mm. 1, 2 and 5 of the entered range) | DONE M7c-9d: ornament signs entered as trills at m. 1 B4, m. 2 F5, m. 5 dotted C5, m. 6 B4 (A10); the sign in the edition looks like the old trill/Pralltriller sign |
 | 2 | The edition writes the common-time sign, the program writes 4/4 | DONE M7c-9d: the fixture uses the common-time sign (A9) |
 | 3 | Beam slopes are flatter than the engraving (clamped to one staff space) | accepted (cosmetic) |
 | 4 | An entry that does not fit the measure (an eighth at the last sixteenth slot) gives no message; the player only sees that nothing happens | backlog: status bar hint "does not fit" |
@@ -28,3 +28,6 @@ Entered by hand in the application by the project owner; fixture and tests:
 - Every measure sums to 3840 ticks in both hands; `validateScore` reports nothing.
 - Layout at widths 100/140/200: no notehead overlaps, no staff collisions, columns aligned (42 shared ticks), barlines through both staves.
 - Playback: 14 s at 120 bpm, 152 sounded notes, tied C4 as one note of 0.625 s.
+
+## Found in M7c-9d
+- The first seven notes of the right hand of m. 1 were entered an octave too high (C5 ... instead of C4 ...); found when the first system of the Breitkopf scan was compared. Fixed (A11); test A6 now expects middle C (MIDI 60) as the first note.

@@ -15,16 +15,17 @@
  *   "~" = tied to the next note of the same pitch.
  * One string per measure, one voice per staff (right hand, left hand), 4/4, C major.
  *
- * M7c-9d: the common-time sign is used. Differences from the edition (accepted, see
- * docs/review/m7b-5-bwv772-gaps.md): no trill signs yet, beam slopes are engraved by the program.
+ * M7c-9d: the common-time sign and the four ornament signs (mm. 1, 2, 5, 6) are entered, and the
+ * first seven notes of m. 1 are in the octave of the edition (C4 ...; they were an octave too high before).
+ * Difference accepted (docs/review/m7b-5-bwv772-gaps.md): beam slopes are engraved by the program.
  */
 
 import { createGrandStaffScore, createNote, createPitch, createRest } from '../../src/core/factory';
-import { setBeamGrouping, setScoreMetadata, setTimeSignature } from '../../src/core/commands';
+import { setBeamGrouping, setScoreMetadata, setTimeSignature, toggleOrnament } from '../../src/core/commands';
 import type { BaseDurationType, Score, ScoreEvent } from '../../src/core/model';
 
 export const BWV772_RIGHT_HAND: readonly string[] = [
-    'r/16 C5/16 D5/16 E5/16 F5/16 D5/16 E5/16 C5/16 G4/8 C5/8 B4/8 C5/8',
+    'r/16 C4/16 D4/16 E4/16 F4/16 D4/16 E4/16 C4/16 G4/8 C5/8 B4/8 C5/8',
     'D5/16 G4/16 A4/16 B4/16 C5/16 A4/16 B4/16 G4/16 D5/8 G5/8 F5/8 G5/8',
     'E5/16 A5/16 G5/16 F5/16 E5/16 G5/16 F5/16 A5/16 G5/16 F5/16 E5/16 D5/16 C5/16 E5/16 D5/16 F5/16',
     'E5/16 D5/16 C5/16 B4/16 A4/16 C5/16 B4/16 D5/16 C5/16 B4/16 A4/16 G4/16 F#4/16 A4/16 G4/16 B4/16',
@@ -87,5 +88,12 @@ export function buildBwv772Mm1to7(): Score {
     composer: 'J. S. Bach',
   }).apply(score);
   const common = setTimeSignature(titled.measures[0].id, { num: 4, den: 4 }, 'score', 'common').apply(titled);
-  return setBeamGrouping('half-bar').apply(common);
+  // The four ornament signs of the edition (written as trills): m. 1 over B4, m. 2 over F5, m. 5 over the dotted
+  // eighth C5, m. 6 over the eighth B4 (event indexes in the right hand).
+  let result = common;
+  for (const [m, idx] of [[0, 10], [1, 10], [4, 2], [5, 13]]) {
+    const ev = result.parts[0].staves[0].measures[result.measures[m].id].voices[0].events[idx];
+    result = toggleOrnament(ev.id, 'trill').apply(result);
+  }
+  return setBeamGrouping('half-bar').apply(result);
 }

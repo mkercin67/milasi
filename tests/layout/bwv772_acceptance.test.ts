@@ -140,7 +140,7 @@ describe('M7b-5 acceptance: Bach BWV 772 mm. 1-7', () => {
     expect(sched.totalSeconds).toBeCloseTo(14, 9);
     expect(sched.notes).toHaveLength(152);
     const first = [...sched.notes].sort((a, b) => a.startSeconds - b.startSeconds)[0];
-    expect(first.midi).toBe(72); // C5, after the 16th rest
+    expect(first.midi).toBe(60); // C4 (middle C), after the 16th rest
     expect(first.startSeconds).toBeCloseTo(0.125, 9);
     const tied = sched.notes.filter((n) => n.midi === 60 && Math.abs(n.startSeconds - 7.5) < 1e-9);
     expect(tied).toHaveLength(1);
@@ -189,5 +189,26 @@ describe('M7b-5 acceptance: Bach BWV 772 mm. 1-7', () => {
   it('A9: the time signature is written as common time (C)', () => {
     const score = buildBwv772Mm1to7();
     expect(score.measures.every((m) => m.timeSig.num === 4 && m.timeSig.den === 4 && m.timeSigDisplay === 'common')).toBe(true);
+  });
+
+  it('A10: the four ornament signs sit on B4 (m. 1), F5 (m. 2), the dotted C5 (m. 5) and B4 (m. 6), nowhere else', () => {
+    const score = buildBwv772Mm1to7();
+    const found: string[] = [];
+    score.parts[0].staves.forEach((staff, st) =>
+      score.measures.forEach((m, mi) =>
+        staff.measures[m.id].voices[0].events.forEach((e, i) => {
+          if (e.kind === 'note' && e.ornament) found.push(`${st}:${mi + 1}.${i}:${e.ornament}:${e.pitches[0].step}${e.pitches[0].octave}`);
+        })
+      )
+    );
+    expect(found).toEqual(['0:1.10:trill:B4', '0:2.10:trill:F5', '0:5.2:trill:C5', '0:6.13:trill:B4']);
+  });
+
+  it('A11: the first right-hand run of m. 1 starts on middle C (C4 D4 E4 F4 D4 E4 C4), as in the edition', () => {
+    const score = buildBwv772Mm1to7();
+    const evs = score.parts[0].staves[0].measures[score.measures[0].id].voices[0].events;
+    expect(evs.map((e) => (e.kind === 'note' ? `${e.pitches[0].step}${e.pitches[0].octave}` : 'r')).slice(0, 8)).toEqual([
+      'r', 'C4', 'D4', 'E4', 'F4', 'D4', 'E4', 'C4',
+    ]);
   });
 });

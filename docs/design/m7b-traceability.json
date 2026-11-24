@@ -1278,5 +1278,21 @@
     "testFile": "tests/layout/k545_acceptance.test.ts",
     "testName": "K10: the right hand has two slurs: m. 2 from B4 to the quarter C5 and m. 4 from F5 (eighth) to F5 (last sixteenth)",
     "status": "DONE"
+  },
+  {
+    "planItemId": "B152",
+    "description": "M7c-9d: BWV 772 ornament signs of mm. 1, 2, 5 and 6.",
+    "codeLocation": "tests/fixtures/bwv772Mm1to7.ts",
+    "testFile": "tests/layout/bwv772_acceptance.test.ts",
+    "testName": "A10: the four ornament signs sit on B4 (m. 1), F5 (m. 2), the dotted C5 (m. 5) and B4 (m. 6), nowhere else",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B153",
+    "description": "M7c-9d: BWV 772 m. 1 right-hand run in the octave of the edition (octave error found with the Breitkopf scan).",
+    "codeLocation": "tests/fixtures/bwv772Mm1to7.ts",
+    "testFile": "tests/layout/bwv772_acceptance.test.ts",
+    "testName": "A11: the first right-hand run of m. 1 starts on middle C (C4 D4 E4 F4 D4 E4 C4), as in the edition",
+    "status": "DONE"
   }
 ]
