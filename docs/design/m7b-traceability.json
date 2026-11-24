@@ -1158,5 +1158,29 @@
     "testFile": "tests/layout/bach_bwv140_acceptance.test.ts",
     "testName": "BA7: plays 12 s at the default tempo (6 bars of 4/4 at 120) with 90 notes (92 written, the two ties merged)",
     "status": "DONE"
+  },
+  {
+    "planItemId": "B137",
+    "description": "M7c-9b: keyboard layout (grand staff, two voices per staff) has full voices.",
+    "codeLocation": "src/layout/measureLayout.ts",
+    "testFile": "tests/layout/bach_bwv140_acceptance.test.ts",
+    "testName": "BA8: keyboard layout: one grand-staff part, two voices per staff, every voice exactly 3840 ticks",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B138",
+    "description": "M7c-9b: keyboard layout carries the same notes, fermata above and below.",
+    "codeLocation": "src/core/notationCommands.ts:cycleFermata",
+    "testFile": "tests/layout/bach_bwv140_acceptance.test.ts",
+    "testName": "BA9: keyboard layout: same notes as the SATB version, fermata above the upper and below the lower staff",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B139",
+    "description": "M7c-9b: keyboard layout lays out, round-trips and plays.",
+    "codeLocation": "src/layout/measureLayout.ts",
+    "testFile": "tests/layout/bach_bwv140_acceptance.test.ts",
+    "testName": "BA10: keyboard layout lays out (two staves, no non-finite coordinate), round-trips and plays like the SATB version",
+    "status": "DONE"
   }
 ]

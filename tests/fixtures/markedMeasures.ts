@@ -8,7 +8,7 @@
  *   "!" suffix   staccato;
  *   "@p" suffix  dynamic marking (any dynamic the program knows: pp, p, mp, mf, f, ff, ...);
  *   "~" suffix   the note is tied to the next note of the same pitch;
- *   "^" suffix   fermata above (one cycleFermata step).
+ *   "^" / "_" suffix   fermata above / below (one / two cycleFermata steps).
  * Slurs may run over bar lines; they are tracked per staff in the order the measures are given.
  *   "<" / ">" prefix  a crescendo / diminuendo hairpin starts on this note;
  *   "]" suffix   the hairpin that is open ends on this note (closed first, so a token may end one hairpin
@@ -17,6 +17,7 @@
  */
 import { cycleFermata, setDynamic, toggleArticulation, toggleHairpin, toggleSlur, toggleTie } from '../../src/core/commands';
 import type { Score, ScoreEvent } from '../../src/core/model';
+import { newId } from '../../src/core/factory';
 import { parseMeasure } from './mozartK545Mm1to7';
 
 export interface TokenMarks {
@@ -24,7 +25,7 @@ export interface TokenMarks {
   slurEnd: boolean;
   staccato: boolean;
   tie: boolean;
-  fermata: boolean;
+  fermata?: 'above' | 'below';
   dynamic?: string;
   hairpinStart?: 'crescendo' | 'diminuendo';
   hairpinEnd: boolean;
@@ -35,7 +36,7 @@ export interface MarkedMeasure {
   marks: TokenMarks[];
 }
 
-const TOKEN = /^(\()?([<>])?(.*?)(?:@([a-z]+))?(!)?(~)?(\^)?(\))?(\])?$/;
+const TOKEN = /^(\()?([<>])?(.*?)(?:@([a-z]+))?(!)?(~)?([\^_])?(\))?(\])?$/;
 
 /** Parses one measure string with marks. Plain strings (no marks) give the same events as parseMeasure. */
 export function parseMarkedMeasure(text: string): MarkedMeasure {
@@ -48,7 +49,7 @@ export function parseMarkedMeasure(text: string): MarkedMeasure {
       slurEnd: !!m[8],
       staccato: !!m[5],
       tie: !!m[6],
-      fermata: !!m[7],
+      fermata: m[7] === '^' ? 'above' : m[7] === '_' ? 'below' : undefined,
       dynamic: m[4],
       hairpinStart: m[2] === '<' ? 'crescendo' : m[2] === '>' ? 'diminuendo' : undefined,
       hairpinEnd: !!m[9],
@@ -78,6 +79,33 @@ export function fillStaffEvents(score: Score, partIndex: number, lines: readonly
   return { staffId: staff.id, items };
 }
 
+/**
+ * Like fillStaffEvents, for one voice of one staff of a part: voice 1 is the existing voice, higher voice
+ * indexes are created. The score must be a plain, unfrozen copy.
+ */
+export function fillVoiceEvents(
+  score: Score,
+  partIndex: number,
+  staffIndex: number,
+  voiceIndex: 1 | 2,
+  lines: readonly string[]
+): PendingMarks {
+  const staff = score.parts[partIndex].staves[staffIndex];
+  const items: PendingMarks['items'] = [];
+  score.measures.forEach((m, i) => {
+    const parsed = parseMarkedMeasure(lines[i]);
+    const sm = staff.measures[m.id];
+    let voice = sm.voices.find((v) => v.voiceIndex === voiceIndex);
+    if (!voice) {
+      voice = { id: newId(), voiceIndex, events: [] };
+      sm.voices.push(voice);
+    }
+    voice.events = parsed.events;
+    parsed.events.forEach((ev, k) => items.push({ id: ev.id, marks: parsed.marks[k] }));
+  });
+  return { staffId: staff.id, items };
+}
+
 /** Phase 2: applies dynamics, staccato and slurs of one staff through the public commands. */
 export function applyMarks(score: Score, pending: PendingMarks): Score {
   let result = score;
@@ -88,6 +116,7 @@ export function applyMarks(score: Score, pending: PendingMarks): Score {
     if (marks.staccato) result = toggleArticulation(id, 'staccato').apply(result);
     if (marks.tie) result = toggleTie(id).apply(result);
     if (marks.fermata) result = cycleFermata(id).apply(result);
+    if (marks.fermata === 'below') result = cycleFermata(id).apply(result);
     if (marks.slurEnd) {
       if (open === null) throw new Error(`Slur ends without a start at event ${id}`);
       result = toggleSlur({

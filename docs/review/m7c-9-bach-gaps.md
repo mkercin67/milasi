@@ -8,3 +8,6 @@ Source: IMSLP #948558 (Toru Yaskawa, Public Domain dedication). All claims UNVER
 - Open: m. 4 beat 4 bass is read as Eb4 (a notehead shared with the tenor, with an up stem and a down stem). Check the scan.
 - Open: m. 2 tenor beat 4 is A natural (natural sign in the scan); m. 6 bass last eighth is Db3 (flat sign).
 - Ties: bass m. 1 (half to eighth) and alto m. 5 (quarter to eighth).
+
+## Keyboard layout version
+The fixture also exists in the layout of the edition (piano grand staff, soprano/alto as voices 1/2 on the treble staff, tenor/bass as voices 1/2 on the bass staff, one fermata above the upper and one below the lower staff). Same notes as the SATB version; the owner compares its rendering with the scan.

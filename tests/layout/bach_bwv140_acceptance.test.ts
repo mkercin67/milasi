@@ -9,7 +9,7 @@ import { validateScore } from '../../src/core/validate';
 import { deserializeScore, serializeScore } from '../../src/io/json';
 import { layoutScore } from '../../src/layout/layoutScore';
 import { buildSchedule } from '../../src/playback/schedule';
-import { buildBachBwv140Mm1to6 } from '../fixtures/bachBwv140Mm1to6';
+import { buildBachBwv140KeyboardMm1to6, buildBachBwv140Mm1to6 } from '../fixtures/bachBwv140Mm1to6';
 
 const name = (e: ScoreEvent): string =>
   e.kind === 'note' ? `${e.pitches[0].step}${e.pitches[0].alter > 0 ? '#' : e.pitches[0].alter < 0 ? 'b' : ''}${e.pitches[0].octave}` : 'r';
@@ -82,5 +82,44 @@ describe('M7c-9b acceptance: Bach BWV 140/7, mm. 1-6', () => {
     const sched = buildSchedule(buildBachBwv140Mm1to6());
     expect(sched.totalSeconds).toBeCloseTo(12, 6);
     expect(sched.notes).toHaveLength(90);
+  });
+
+  it('BA8: keyboard layout: one grand-staff part, two voices per staff, every voice exactly 3840 ticks', () => {
+    const score = buildBachBwv140KeyboardMm1to6();
+    expect(validateScore(score).filter((i) => i.severity === 'error')).toEqual([]);
+    expect(score.parts).toHaveLength(1);
+    expect(score.parts[0].staves).toHaveLength(2);
+    for (const staff of score.parts[0].staves) {
+      for (const m of score.measures) {
+        const voices = staff.measures[m.id].voices;
+        expect(voices.map((v) => v.voiceIndex)).toEqual([1, 2]);
+        for (const v of voices) expect(v.events.reduce((t, e) => t + e.duration, 0)).toBe(3840);
+      }
+    }
+  });
+
+  it('BA9: keyboard layout: same notes as the SATB version, fermata above the upper and below the lower staff', () => {
+    const score = buildBachBwv140KeyboardMm1to6();
+    const voice = (st: number, v: number, m: number) =>
+      score.parts[0].staves[st].measures[score.measures[m].id].voices[v - 1].events;
+    expect(voice(0, 1, 3).map(name)).toEqual(['Eb5', 'Bb4', 'Eb5', 'F5', 'G5']);
+    expect(voice(0, 2, 4).map(name)).toEqual(['Bb4', 'C5', 'C5', 'Bb4', 'A4']);
+    expect(voice(1, 1, 1).map(name)).toEqual(['Eb4', 'Bb3', 'Bb3', 'A3']);
+    expect(voice(1, 2, 3).map(name)).toEqual(['G3', 'Ab3', 'G3', 'F3', 'Eb3', 'Eb4']);
+    expect(voice(0, 1, 2)[0].fermata).toBe('above');
+    expect(voice(0, 2, 2)[0].fermata).toBeUndefined();
+    expect(voice(1, 2, 5)[0].fermata).toBe('below');
+    expect(voice(1, 1, 5)[0].fermata).toBeUndefined();
+  });
+
+  it('BA10: keyboard layout lays out (two staves, no non-finite coordinate), round-trips and plays like the SATB version', () => {
+    const score = buildBachBwv140KeyboardMm1to6();
+    for (const i of layoutScore(score, { width: 90 }).systems.flatMap((s) => s.items)) {
+      if (typeof i.x === 'number') expect(Number.isFinite(i.x)).toBe(true);
+      if (typeof i.y === 'number') expect(Number.isFinite(i.y)).toBe(true);
+    }
+    const again = deserializeScore(serializeScore(score));
+    expect(serializeScore(again, undefined, false) === serializeScore(score, undefined, false)).toBe(true);
+    expect(buildSchedule(score).notes).toHaveLength(90);
   });
 });

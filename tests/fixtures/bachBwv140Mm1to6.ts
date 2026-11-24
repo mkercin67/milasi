@@ -17,7 +17,7 @@ import { setKeySignature, setScoreMetadata } from '../../src/core/commands';
 import { createEmptyScore } from '../../src/core/factory';
 import { applyTemplate } from '../../src/core/ensembleCommands';
 import type { Score } from '../../src/core/model';
-import { applyMarks, fillStaffEvents } from './markedMeasures';
+import { applyMarks, fillStaffEvents, fillVoiceEvents } from './markedMeasures';
 
 const MEASURES = 6;
 // Open points, see docs/review/m7c-9-bach-gaps.md: the bass of m. 4 beat 4 (Eb4, a notehead shared with the tenor?).
@@ -66,6 +66,32 @@ export function buildBachBwv140Mm1to6(): Score {
   score = setKeySignature(score.measures[0].id, -3, 'score').apply(score);
   return setScoreMetadata({
     title: 'Gloria sei dir gesungen, BWV 140/7 (mm. 1-6)',
+    composer: 'J. S. Bach',
+  }).apply(score);
+}
+
+/**
+ * The same chorale in the layout of the edition: a piano grand staff, soprano (voice 1) and alto (voice 2) on the
+ * treble staff, tenor (voice 1) and bass (voice 2) on the bass staff. One fermata above the upper staff and one
+ * below the lower staff, as printed. Sounding pitches; the tenor is written in the bass clef, as in the edition.
+ */
+export function buildBachBwv140KeyboardMm1to6(): Score {
+  let score = applyTemplate('piano').apply(createEmptyScore({ measures: MEASURES }));
+  score = structuredClone(score);
+  const lower = (line: readonly string[]) => line.map((m) => m.replace(/\^/g, ''));
+  const bassBelow = BWV140_BASS.map((m) => m.replace(/\^/g, '_'));
+  const pending = [
+    fillVoiceEvents(score, 0, 0, 1, BWV140_SOPRANO),
+    fillVoiceEvents(score, 0, 0, 2, lower(BWV140_ALTO)),
+    fillVoiceEvents(score, 0, 1, 1, lower(BWV140_TENOR)),
+    fillVoiceEvents(score, 0, 1, 2, bassBelow),
+  ];
+  pending.forEach((pm) => {
+    score = applyMarks(score, pm);
+  });
+  score = setKeySignature(score.measures[0].id, -3, 'score').apply(score);
+  return setScoreMetadata({
+    title: 'Gloria sei dir gesungen, BWV 140/7 (mm. 1-6), keyboard layout',
     composer: 'J. S. Bach',
   }).apply(score);
 }
