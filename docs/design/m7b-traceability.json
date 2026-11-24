@@ -1182,5 +1182,61 @@
     "testFile": "tests/layout/bach_bwv140_acceptance.test.ts",
     "testName": "BA10: keyboard layout lays out (two staves, no non-finite coordinate), round-trips and plays like the SATB version",
     "status": "DONE"
+  },
+  {
+    "planItemId": "B140",
+    "description": "M7c-9c Schubert D. 547: voice and piano (two staves), D major, cut time, every staff measure exactly 3840 ticks",
+    "codeLocation": "src/layout/ensembleLayout.ts",
+    "testFile": "tests/layout/schubert_d547_acceptance.test.ts",
+    "testName": "SC1: voice and piano (two staves), D major, cut time, start repeat at m. 3, every staff measure exactly 3840 ticks",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B141",
+    "description": "M7c-9c Schubert D. 547: the entered notes match the edition at chosen places",
+    "codeLocation": "src/layout/measureLayout.ts",
+    "testFile": "tests/layout/schubert_d547_acceptance.test.ts",
+    "testName": "SC2: the entered notes match the edition at chosen places",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B142",
+    "description": "M7c-9c Schubert D. 547: lyrics, verse 1 and verse 2, under the same notes",
+    "codeLocation": "src/layout/lyricLayout.ts",
+    "testFile": "tests/layout/schubert_d547_acceptance.test.ts",
+    "testName": "SC3: lyrics, verse 1 and verse 2, under the same notes",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B143",
+    "description": "M7c-9c Schubert D. 547: marks: p under m. 1, pp under m. 3, four staccato dots, slurs 2 in the voice and 2 in the ",
+    "codeLocation": "src/core/notationCommands.ts",
+    "testFile": "tests/layout/schubert_d547_acceptance.test.ts",
+    "testName": "SC4: marks: p under m. 1, pp under m. 3, four staccato dots, slurs 2 in the voice and 2 in the left hand, one grace note, one short diminuendo hairpin in the right hand",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B144",
+    "description": "M7c-9c Schubert D. 547: lays out (no non-finite coordinate, two lyric lines), round-trips through JSON",
+    "codeLocation": "src/layout/ensembleLayout.ts",
+    "testFile": "tests/layout/schubert_d547_acceptance.test.ts",
+    "testName": "SC5: lays out (no non-finite coordinate, two lyric lines), round-trips through JSON",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B145",
+    "description": "M7c-9c Schubert D. 547: plays 10 s at the default tempo (5 bars of 2/2 at 120) with 139 notes",
+    "codeLocation": "src/playback/schedule.ts",
+    "testFile": "tests/layout/schubert_d547_acceptance.test.ts",
+    "testName": "SC6: plays 10 s at the default tempo (5 bars of 2/2 at 120) with 139 notes",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B146",
+    "description": "M7c-9c: a dynamic under a chord that reaches the second ledger line below the staff clears that note.",
+    "codeLocation": "src/layout/notations.ts:layoutDynamics",
+    "testFile": "tests/layout/notations.test.ts",
+    "testName": "DY1: a dynamic under a chord with a note on a second ledger line below the staff sits under that note",
+    "status": "DONE"
   }
 ]

@@ -51,6 +51,9 @@ const REST_EXTENT: Record<string, { top: number; bottom: number; width: number }
   rest32nd: { top: -1.0, bottom: 3.0, width: 1.5 },
 };
 
+/** Space between the lowest notehead edge and the baseline of a dynamic below it (staff spaces). */
+const DYNAMIC_HEAD_CLEARANCE = 1.6;
+
 const DYNAMIC_GLYPHS: Record<string, string> = {
   pp: 'dynamicPP',
   p: 'dynamicPiano',
@@ -277,7 +280,11 @@ export function layoutDynamics(
               const posX = nh.x + NOTEHEAD_WIDTH / 2 - 0.75 + dx;
               // Note names or lyrics under the staff push the dynamic below them (no overprinting)
               const labelY = lowestTextBelowStaff(layout, nh.systemIndex, nh.staffTop, nh.x, nh.x + NOTEHEAD_WIDTH);
-              const baseY = labelY === null ? nh.staffTop + 6.5 : Math.max(nh.staffTop + 6.5, labelY + 1.9);
+              const textY = labelY === null ? nh.staffTop + 6.5 : Math.max(nh.staffTop + 6.5, labelY + 1.9);
+              // A chord or note that reaches below the staff (ledger lines): the dynamic goes under its lowest head.
+              // Heads inside the staff give at most the default position, so nothing else moves.
+              // (maxY <= 5 is a note on the staff or on the first ledger line: default position, as before.)
+              const baseY = nh.maxY > 5.0 ? Math.max(textY, nh.maxY + 0.5 + DYNAMIC_HEAD_CLEARANCE) : textY;
               const posY = baseY + dy;
 
               items.push({

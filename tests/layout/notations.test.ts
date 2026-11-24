@@ -24,6 +24,28 @@ describe('Milestone 6b Layout: Dynamics, Articulations, Slurs (src/layout/notati
     expect(dynamics[1].y).toBe(6.5);
   });
 
+  it('DY1: a dynamic under a chord with a note on a second ledger line below the staff sits under that note', () => {
+    const score = createEmptyScore({ timeSig: { num: 4, den: 4 }, measures: 1 });
+    const staff = score.parts[0].staves[0];
+    // A3 is two spaces below the bottom line (head spans y 5.5 to 6.5): the default baseline 6.5 would touch it (8.1 = 6.5 + 1.6 clearance).
+    const chord = createNote({
+      pitches: [createPitch('A', 3), createPitch('D', 4), createPitch('F', 4, 1)],
+      baseType: 'quarter',
+      dynamic: 'p',
+    });
+    const plain = createNote({ pitches: [createPitch('C', 4)], baseType: 'quarter', dynamic: 'f' });
+    staff.measures[score.measures[0].id].voices[0].events = [
+      chord,
+      plain,
+      createNote({ pitches: [createPitch('E', 4)], baseType: 'quarter' }),
+      createNote({ pitches: [createPitch('F', 4)], baseType: 'quarter' }),
+    ];
+    const dynamics = layoutDynamics(score, layoutScore(score, { width: 70 }));
+    expect(dynamics.find((d) => d.eventId === chord.id)?.y).toBe(8.1);
+    // A note with one ledger line (C4) keeps the default position, as before.
+    expect(dynamics.find((d) => d.eventId === plain.id)?.y).toBe(6.5);
+  });
+
   it('stacks multiple articulations in correct order (staccato/tenuto closest, accent/marcato outwards)', () => {
     const score = createEmptyScore({ timeSig: { num: 4, den: 4 }, measures: 1 });
     const staff = score.parts[0].staves[0];
