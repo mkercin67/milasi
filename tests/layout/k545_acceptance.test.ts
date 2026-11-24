@@ -93,4 +93,38 @@ describe('M7b-5 acceptance: Mozart K. 545 mm. 1-7', () => {
       }
     }
   });
+
+  it('K7: the left hand starts in the treble clef and changes to the bass clef at the last quarter of m. 5', () => {
+    const score = buildK545Mm1to7();
+    const [treble, bass] = score.parts[0].staves;
+    expect(treble.clef).toEqual({ sign: 'G', line: 2 });
+    expect(bass.clef).toEqual({ sign: 'G', line: 2 });
+    expect(bass.clefChanges).toEqual([{ measureId: score.measures[4].id, tick: 2880, clef: { sign: 'F', line: 4 } }]);
+  });
+
+  it('K8: the trill sits on the F5 eighth of m. 4 and on no other note', () => {
+    const score = buildK545Mm1to7();
+    const trilled = [0, 1].flatMap((st) =>
+      score.measures.flatMap((_, m) => events(score, st, m).filter((e) => e.kind === 'note' && e.ornament === 'trill'))
+    );
+    expect(trilled).toHaveLength(1);
+    expect(trilled[0].id).toBe(events(score, 0, 3)[1].id);
+    expect(trilled[0].kind === 'note' && pitchName(trilled[0].pitches[0])).toBe('F5');
+  });
+
+  it('K9: the time signature is written as common time (C)', () => {
+    const score = buildK545Mm1to7();
+    expect(score.measures.every((m) => m.timeSig.num === 4 && m.timeSig.den === 4 && m.timeSigDisplay === 'common')).toBe(true);
+  });
+
+  it('K10: the right hand has two slurs: m. 2 from B4 to the quarter C5 and m. 4 from F5 (eighth) to F5 (last sixteenth)', () => {
+    const score = buildK545Mm1to7();
+    const slurs = score.parts[0].staves[0].slurs ?? [];
+    expect(slurs).toHaveLength(2);
+    expect(slurs[0].startEventId).toBe(events(score, 0, 1)[0].id);
+    expect(slurs[0].endEventId).toBe(events(score, 0, 1)[3].id);
+    expect(slurs[1].startEventId).toBe(events(score, 0, 3)[1].id);
+    expect(slurs[1].endEventId).toBe(events(score, 0, 3)[3].id);
+    expect(score.parts[0].staves[1].slurs ?? []).toHaveLength(0);
+  });
 });

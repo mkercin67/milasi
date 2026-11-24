@@ -185,4 +185,9 @@ describe('M7b-5 acceptance: Bach BWV 772 mm. 1-7', () => {
     }
     expect(stems).toBeGreaterThan(300);
   });
+
+  it('A9: the time signature is written as common time (C)', () => {
+    const score = buildBwv772Mm1to7();
+    expect(score.measures.every((m) => m.timeSig.num === 4 && m.timeSig.den === 4 && m.timeSigDisplay === 'common')).toBe(true);
+  });
 });

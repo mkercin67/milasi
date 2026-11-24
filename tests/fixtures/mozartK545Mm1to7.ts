@@ -19,13 +19,14 @@
  *   duration: 1 whole, 2 half, 4 quarter, 8 eighth, 16 sixteenth, 32 thirty-second; "." = dotted.
  * One string per measure, one voice per staff (right hand, left hand), 4/4, C major.
  *
- * Differences from the edition (accepted, see docs/review/m7b-5-k545-gaps.md): the left hand is written in
- * the bass clef throughout (the edition starts it in the treble clef and changes clef inside m. 5), no
- * trill sign, no slurs, the common-time sign is written 4/4.
+ * M7c-9d: like the edition, the left hand starts in the treble clef and changes to the bass clef inside m. 5
+ * (before the last quarter, F3+C4), the trill sign stands over the F5 eighth of m. 4, and the common-time sign
+ * is used, and the two slurs of mm. 2 and 4 are entered. Differences still accepted (docs/review/m7b-5-k545-gaps.md): no
+ * editorial marks.
  */
 
 import { createGrandStaffScore, createNote, createPitch, createRest } from '../../src/core/factory';
-import { setScoreMetadata } from '../../src/core/commands';
+import { setClefChange, setScoreMetadata, setTimeSignature, toggleOrnament, toggleSlur } from '../../src/core/commands';
 import type { BaseDurationType, Score, ScoreEvent } from '../../src/core/model';
 
 export const K545_RIGHT_HAND: readonly string[] = [
@@ -82,8 +83,25 @@ export function buildK545Mm1to7(): Score {
     bass.measures[m.id].voices[0].events = parseMeasure(K545_LEFT_HAND[i]);
   });
   // Commands last: they return frozen (immer) copies, so the events are filled in first.
+  // The edition prints the bass clef, the common-time sign and then a treble clef at the start of the left hand (a
+  // reminder that the clef is the treble clef). The program draws the effective clef only, so the staff starts in the
+  // treble clef (plain copy: set before the commands run) and changes back to the bass clef before the last quarter of m. 5.
+  bass.clef = { sign: 'G', line: 2 };
+  let result = setClefChange(bass.id, score.measures[4].id, 2880, { sign: 'F', line: 4 }).apply(score);
+  result = setTimeSignature(result.measures[0].id, { num: 4, den: 4 }, 'score', 'common').apply(result);
+  // The trill over the eighth F5 of m. 4 (right hand, second event).
+  const trillNote = result.parts[0].staves[0].measures[result.measures[3].id].voices[0].events[1];
+  result = toggleOrnament(trillNote.id, 'trill').apply(result);
+  // The two slurs of the right hand: m. 2 from the dotted B4 to the quarter C5, m. 4 from the eighth F5
+  // to the last sixteenth (F5), below the trill.
+  const rh = result.parts[0].staves[0];
+  const rhEvents = (m: number) => rh.measures[result.measures[m].id].voices[0].events;
+  const slur = (m: number, from: number, to: number) =>
+    toggleSlur({ kind: 'range', staffId: rh.id, voiceIndex: 1, anchorId: rhEvents(m)[from].id, focusId: rhEvents(m)[to].id });
+  result = slur(1, 0, 3).apply(result);
+  result = slur(3, 1, 3).apply(result);
   return setScoreMetadata({
     title: 'Sonata facile, K. 545, 1st movement (mm. 1-7)',
     composer: 'W. A. Mozart',
-  }).apply(score);
+  }).apply(result);
 }

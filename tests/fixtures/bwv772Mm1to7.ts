@@ -15,12 +15,12 @@
  *   "~" = tied to the next note of the same pitch.
  * One string per measure, one voice per staff (right hand, left hand), 4/4, C major.
  *
- * Differences from the edition (accepted, see docs/review/m7b-5-bwv772-gaps.md): no trill signs,
- * the common-time sign is written 4/4, beam slopes are engraved by the program.
+ * M7c-9d: the common-time sign is used. Differences from the edition (accepted, see
+ * docs/review/m7b-5-bwv772-gaps.md): no trill signs yet, beam slopes are engraved by the program.
  */
 
 import { createGrandStaffScore, createNote, createPitch, createRest } from '../../src/core/factory';
-import { setBeamGrouping, setScoreMetadata } from '../../src/core/commands';
+import { setBeamGrouping, setScoreMetadata, setTimeSignature } from '../../src/core/commands';
 import type { BaseDurationType, Score, ScoreEvent } from '../../src/core/model';
 
 export const BWV772_RIGHT_HAND: readonly string[] = [
@@ -86,5 +86,6 @@ export function buildBwv772Mm1to7(): Score {
     title: 'Invention No. 1 in C major, BWV 772 (mm. 1-7)',
     composer: 'J. S. Bach',
   }).apply(score);
-  return setBeamGrouping('half-bar').apply(titled);
+  const common = setTimeSignature(titled.measures[0].id, { num: 4, den: 4 }, 'score', 'common').apply(titled);
+  return setBeamGrouping('half-bar').apply(common);
 }

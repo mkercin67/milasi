@@ -1238,5 +1238,45 @@
     "testFile": "tests/layout/notations.test.ts",
     "testName": "DY1: a dynamic under a chord with a note on a second ledger line below the staff sits under that note",
     "status": "DONE"
+  },
+  {
+    "planItemId": "B147",
+    "description": "M7c-9d: K. 545 left hand starts in the treble clef and changes to the bass clef inside m. 5.",
+    "codeLocation": "src/core/structureCommands.ts:setClefChange",
+    "testFile": "tests/layout/k545_acceptance.test.ts",
+    "testName": "K7: the left hand starts in the treble clef and changes to the bass clef at the last quarter of m. 5",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B148",
+    "description": "M7c-9d: K. 545 trill sign over the F5 eighth of m. 4.",
+    "codeLocation": "src/core/notationCommands.ts:toggleOrnament",
+    "testFile": "tests/layout/k545_acceptance.test.ts",
+    "testName": "K8: the trill sits on the F5 eighth of m. 4 and on no other note",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B149",
+    "description": "M7c-9d: K. 545 uses the common-time sign.",
+    "codeLocation": "src/core/structureCommands.ts:setTimeSignature",
+    "testFile": "tests/layout/k545_acceptance.test.ts",
+    "testName": "K9: the time signature is written as common time (C)",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B150",
+    "description": "M7c-9d: BWV 772 uses the common-time sign.",
+    "codeLocation": "src/core/structureCommands.ts:setTimeSignature",
+    "testFile": "tests/layout/bwv772_acceptance.test.ts",
+    "testName": "A9: the time signature is written as common time (C)",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B151",
+    "description": "M7c-9d: K. 545 right-hand slurs of mm. 2 and 4.",
+    "codeLocation": "src/core/notationCommands.ts:toggleSlur",
+    "testFile": "tests/layout/k545_acceptance.test.ts",
+    "testName": "K10: the right hand has two slurs: m. 2 from B4 to the quarter C5 and m. 4 from F5 (eighth) to F5 (last sixteenth)",
+    "status": "DONE"
   }
 ]
