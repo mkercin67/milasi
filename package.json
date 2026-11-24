@@ -18,6 +18,7 @@
     "licenses": "node scripts/checkLicenses.mjs",
     "spdx": "node scripts/checkSpdx.mjs --fix",
     "spdx:check": "node scripts/checkSpdx.mjs",
+    "fixture:export": "vite-node scripts/exportFixture.mjs",
     "shortcuts": "node scripts/generateShortcuts.mjs",
     "shortcuts:check": "node scripts/generateShortcuts.mjs --check",
     "reviewpack": "node scripts/generateReviewPack.mjs",

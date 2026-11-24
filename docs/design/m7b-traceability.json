@@ -1022,5 +1022,85 @@
     "testFile": "tests/ui/mixer_panel.test.tsx",
     "testName": "MP3: closed by default and labels are translated",
     "status": "DONE"
+  },
+  {
+    "planItemId": "B120",
+    "description": "M7c-9: a slur is shaped by the noteheads and articulations of its own staff only, not by other staves of the ensemble.",
+    "codeLocation": "src/layout/notations.ts:layoutSlurs",
+    "testFile": "tests/layout/slur_ensemble.test.ts",
+    "testName": "SE1: no slur of the string quartet is taller than 4 staff spaces, whatever the other staves hold",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B121",
+    "description": "M7c-9: articulations of other staves do not stretch a slur of an ensemble staff (checked by event ownership).",
+    "codeLocation": "src/layout/notations.ts:layoutSlurs",
+    "testFile": "tests/layout/slur_ensemble.test.ts",
+    "testName": "SE2: staccato dots of another staff do not stretch a cello slur over a bar line",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B122",
+    "description": "M7c-9a: the Beethoven Op. 18 No. 1 fixture is a valid four-part score in 3/4 and F major with exact measure sums.",
+    "codeLocation": "tests/fixtures/beethovenOp18No1Mm1to8.ts",
+    "testFile": "tests/layout/beethoven_op18_acceptance.test.ts",
+    "testName": "BE1: four parts in 3/4 and F major, every staff measure exactly 2880 ticks, no validation error",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B123",
+    "description": "M7c-9a: clefs treble, treble, alto, bass.",
+    "codeLocation": "tests/fixtures/beethovenOp18No1Mm1to8.ts",
+    "testFile": "tests/layout/beethoven_op18_acceptance.test.ts",
+    "testName": "BE2: clefs are treble, treble, alto (C on line 3) and bass",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B124",
+    "description": "M7c-9a: entered notes match the edition at chosen places.",
+    "codeLocation": "tests/fixtures/beethovenOp18No1Mm1to8.ts",
+    "testFile": "tests/layout/beethoven_op18_acceptance.test.ts",
+    "testName": "BE3: the entered notes match the edition at chosen places",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B125",
+    "description": "M7c-9a: slurs, hairpins, staccato and p follow the scan.",
+    "codeLocation": "tests/fixtures/markedMeasures.ts",
+    "testFile": "tests/layout/beethoven_op18_acceptance.test.ts",
+    "testName": "BE4: marks: slurs 9/7/8/7, hairpins 2 per staff, staccato 6/4/4/4, p only under m. 1",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B126",
+    "description": "M7c-9a: the quartet lays out as one bracketed system without non-finite coordinates.",
+    "codeLocation": "src/layout/ensembleLayout.ts",
+    "testFile": "tests/layout/beethoven_op18_acceptance.test.ts",
+    "testName": "BE5: lays out as one bracketed system with four labelled staves and no non-finite coordinate",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B127",
+    "description": "M7c-9a: JSON round trip is lossless.",
+    "codeLocation": "src/io/json.ts",
+    "testFile": "tests/layout/beethoven_op18_acceptance.test.ts",
+    "testName": "BE6: round-trips through JSON unchanged",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B128",
+    "description": "M7c-9a: playback length and note counts, solo of one part.",
+    "codeLocation": "src/playback/schedule.ts",
+    "testFile": "tests/layout/beethoven_op18_acceptance.test.ts",
+    "testName": "BE7: plays 12 s at the default tempo (8 bars of 3/4 at 120) with 93 notes, 20 of them the cello",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B129",
+    "description": "M7c-9: a crescendo and the diminuendo that starts on its last note keep their open ends apart.",
+    "codeLocation": "src/layout/notations.ts:layoutHairpins",
+    "testFile": "tests/layout/slur_ensemble.test.ts",
+    "testName": "HP1: a crescendo and the diminuendo that starts on its last note do not touch (gap of at least 0.6 sp)",
+    "status": "DONE"
   }
 ]

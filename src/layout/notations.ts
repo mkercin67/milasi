@@ -697,6 +697,11 @@ export function layoutGraceSlurs(
 const HAIRPIN_OPENING = 1.2;
 /** Thickness of each hairpin line, in staff spaces. */
 const HAIRPIN_LINE = 0.13;
+/**
+ * Two hairpins that meet on one note (a crescendo that is followed by a diminuendo) must not touch with their
+ * open ends: the first stops this far BEFORE the note, the second starts this far AFTER its left edge.
+ */
+const HAIRPIN_JOIN_GAP = 0.45;
 
 /** Two thin filled strips forming a hairpin segment between x1 (width w1) and x2 (width w2). */
 function hairpinSegmentPath(x1: number, w1: number, x2: number, w2: number, y: number): string {
@@ -746,13 +751,17 @@ export function layoutHairpins(
   for (const part of score.parts) {
     for (const staff of part.staves) {
       if (!staff.hairpins || staff.hairpins.length === 0) continue;
+      const startsAt = new Set(staff.hairpins.map((x) => x.startEventId));
+      const endsAt = new Set(staff.hairpins.map((x) => x.endEventId));
       for (const h of staff.hairpins) {
         const a = index.get(h.startEventId);
         const b = index.get(h.endEventId);
         if (!a || !b) continue;
         const cresc = h.type === 'crescendo';
-        const startX = a.x;
-        const endX = b.x + NOTEHEAD_WIDTH;
+        const meetsPrevious = h.startEventId !== h.endEventId && endsAt.has(h.startEventId);
+        const meetsNext = h.startEventId !== h.endEventId && startsAt.has(h.endEventId);
+        const startX = meetsPrevious ? a.x + HAIRPIN_JOIN_GAP : a.x;
+        const endX = meetsNext ? b.x - HAIRPIN_JOIN_GAP : b.x + NOTEHEAD_WIDTH;
 
         if (a.systemIndex === b.systemIndex) {
           const text = lowestTextBelowStaff(layout, a.systemIndex, a.staffTop, startX, endX);
@@ -846,6 +855,12 @@ export function layoutSlurs(
         return level;
       };
 
+      // Event ids of this staff: articulations of other staves of an ensemble must not shape this staff's slurs.
+      const ownEventIds = new Set<string>();
+      for (const sm of Object.values(staff.measures)) {
+        for (const v of sm.voices) for (const ev of v.events) ownEventIds.add(ev.id);
+      }
+
       for (const slur of staff.slurs) {
         if (notationOpCounter.enabled) notationOpCounter.mapLookups += 2;
         const startNh = index.get(slur.startEventId);
@@ -898,9 +913,12 @@ export function layoutSlurs(
           let maxIntermediateDist = 1.2;
           if (sys) {
             for (const item of sys.items) {
+              // Only the slur's own staff: in an ensemble the other staves' noteheads lie in the same x range
+              // and would stretch the curve across the whole system.
               if (
                 item.kind === 'glyph' &&
                 item.glyph?.startsWith('notehead') &&
+                (item.staffId === undefined || item.staffId === staff.id) &&
                 item.x > startX &&
                 item.x < endX
               ) {
@@ -918,6 +936,8 @@ export function layoutSlurs(
           // Articulations of the notes in between (their x lies inside the slur span)
           for (const a of artItems) {
             if (a.systemIndex !== sysIdx || a.eventId === slur.startEventId || a.eventId === slur.endEventId) continue;
+            if (a.staffId !== undefined && a.staffId !== staff.id) continue;
+            if (a.eventId !== undefined && !ownEventIds.has(a.eventId)) continue;
             if (a.x <= startX - 1.2 || a.x >= endX) continue;
             const g = a.glyph ?? '';
             if (!g.endsWith(curvature === 'above' ? 'Above' : 'Below')) continue;

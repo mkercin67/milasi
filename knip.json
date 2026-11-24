@@ -6,6 +6,11 @@
     "tests/**/*.ts",
     "scripts/*.mjs"
   ],
-  "project": ["src/**/*.{ts,tsx}"],
-  "ignoreExportsUsedInFile": true
+  "project": [
+    "src/**/*.{ts,tsx}"
+  ],
+  "ignoreExportsUsedInFile": true,
+  "ignoreBinaries": [
+    "vite-node"
+  ]
 }
