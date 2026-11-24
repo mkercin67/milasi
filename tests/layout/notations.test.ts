@@ -46,6 +46,25 @@ describe('Milestone 6b Layout: Dynamics, Articulations, Slurs (src/layout/notati
     expect(dynamics.find((d) => d.eventId === plain.id)?.y).toBe(6.5);
   });
 
+  it('DY2: an ff under a low note keeps clear of the head, and of an accent below it', () => {
+    const score = createEmptyScore({ timeSig: { num: 4, den: 4 }, measures: 1, clef: { sign: 'F', line: 4 } });
+    const staff = score.parts[0].staves[0];
+    // C2 sits on the second ledger line below the bass staff (head centre y 6); the f glyph rises 1.8 above its baseline.
+    const plain = createNote({ pitches: [createPitch('C', 2)], baseType: 'quarter', dynamic: 'ff' });
+    const accented = createNote({ pitches: [createPitch('C', 2)], baseType: 'quarter', dynamic: 'ff', articulations: ['accent'] });
+    staff.measures[score.measures[0].id].voices[0].events = [
+      plain,
+      accented,
+      createNote({ pitches: [createPitch('E', 3)], baseType: 'quarter' }),
+      createNote({ pitches: [createPitch('F', 3)], baseType: 'quarter' }),
+    ];
+    const dynamics = layoutDynamics(score, layoutScore(score, { width: 70 }));
+    // head bottom 6.5 + gap 0.5 + glyph height 1.8
+    expect(dynamics.find((d) => d.eventId === plain.id)?.y).toBe(8.8);
+    // the accent is placed at 7.0 and hangs about 1.0 below that (bottom edge 8.0): 8.0 + gap 0.5 + glyph height 1.8 = 10.3
+    expect(dynamics.find((d) => d.eventId === accented.id)?.y).toBe(10.3);
+  });
+
   it('stacks multiple articulations in correct order (staccato/tenuto closest, accent/marcato outwards)', () => {
     const score = createEmptyScore({ timeSig: { num: 4, den: 4 }, measures: 1 });
     const staff = score.parts[0].staves[0];

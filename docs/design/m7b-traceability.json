@@ -1342,5 +1342,53 @@
     "testFile": "tests/layout/meditation_acceptance.test.ts",
     "testName": "ME6: JSON round trip keeps the score and playback lasts 16.5 s at 120 with 42 sounding notes",
     "status": "DONE"
+  },
+  {
+    "planItemId": "B160",
+    "description": "M7c-9e-2: Méditation mm. 148-153, metre and bar sums.",
+    "codeLocation": "tests/fixtures/breidenbachMeditationMm148to153.ts",
+    "testFile": "tests/layout/meditation_end_acceptance.test.ts",
+    "testName": "MD1: six measures of 4/4 in E flat major, bass clef, every measure exactly 3840 ticks",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B161",
+    "description": "M7c-9e-2: notes and rests.",
+    "codeLocation": "tests/fixtures/breidenbachMeditationMm148to153.ts",
+    "testFile": "tests/layout/meditation_end_acceptance.test.ts",
+    "testName": "MD2: the notes and rests match the edition",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B162",
+    "description": "M7c-9e-2: mid-measure tenor clef change.",
+    "codeLocation": "tests/fixtures/breidenbachMeditationMm148to153.ts",
+    "testFile": "tests/layout/meditation_end_acceptance.test.ts",
+    "testName": "MD3: the clef changes to the tenor clef (C on line 4) in the middle of m. 150",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B163",
+    "description": "M7c-9e-2: dynamics, accents, tie, slurs, hairpin.",
+    "codeLocation": "tests/fixtures/breidenbachMeditationMm148to153.ts",
+    "testFile": "tests/layout/meditation_end_acceptance.test.ts",
+    "testName": "MD4: marks: ff in m. 148, p in m. 151, four accents, a tie over the barline m. 149 to m. 150, two slurs, one diminuendo from the m. 149 half note to the last quarter of m. 150",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B164",
+    "description": "M7c-9e-2: layout, round trip, playback.",
+    "codeLocation": "tests/fixtures/breidenbachMeditationMm148to153.ts",
+    "testFile": "tests/layout/meditation_end_acceptance.test.ts",
+    "testName": "MD5: layout has only finite numbers; JSON round trip is equal; playback is 12 s at 120 with 10 sounding notes (the tie merges two)",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B165",
+    "description": "M7c-9e-2: dynamics with a tall glyph (f) clear low noteheads and accents below the note (found with the Méditation mm. 148-153 check).",
+    "codeLocation": "src/layout/notations.ts",
+    "testFile": "tests/layout/notations.test.ts",
+    "testName": "DY2: an ff under a low note keeps clear of the head, and of an accent below it",
+    "status": "DONE"
   }
 ]

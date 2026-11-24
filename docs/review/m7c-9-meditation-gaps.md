@@ -22,3 +22,16 @@ to the tenor clef at m. 17, f, sixths in slurred eighth pairs, and the metres 4/
 
 ## Open for the owner
 Check on screen: the notes of each measure, the tenor clef at m. 17, the metre changes, pp / f, the slur and the hairpin.
+
+# M7c-9e-2: mm. 148-153
+
+Same source and licence as above. Pitches read from the PDF by the project lead (UNVERIFIED until the owner compares them on screen).
+Tenor clef (C on line 4) from the third beat of m. 150, so the whole notes of mm. 151 and 153 are G4 and the quarters of mm. 150 and 152 are C4 D4.
+
+| Item | Edition | Program |
+|---|---|---|
+| Down-bow signs above C2 in mm. 148 and 149 | printed | not supported (no bowing marks yet; candidate for M10) |
+| Rehearsal mark P at m. 150 | boxed letter above the staff | not supported (M10) |
+| Accent on the C4 half note of m. 149 | printed | entered |
+| Time signature 4/4 at m. 148 | none (continues from m. 141) | drawn at the start of the excerpt |
+| Clef change in m. 150 | drawn before the notes of the third beat | drawn by the program at tick 1920 (to be compared on screen) |

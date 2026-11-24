@@ -51,8 +51,21 @@ const REST_EXTENT: Record<string, { top: number; bottom: number; width: number }
   rest32nd: { top: -1.0, bottom: 3.0, width: 1.5 },
 };
 
-/** Space between the lowest notehead edge and the baseline of a dynamic below it (staff spaces). */
-const DYNAMIC_HEAD_CLEARANCE = 1.6;
+/** Gap between the lowest notehead (or articulation) edge and the top of a dynamic below it (staff spaces). */
+const DYNAMIC_GAP = 0.5;
+/** The articulation glyphs below a note hang about 1.0 below their y (accent 0.98, marcato 1.02 in Bravura). */
+const ARTIC_BELOW_HEIGHT = 1.0;
+/** Height of the dynamic glyphs above their baseline, measured from Bravura (staff spaces). */
+const DYNAMIC_GLYPH_TOP: Record<string, number> = {
+  dynamicPiano: 1.1,
+  dynamicPP: 1.1,
+  dynamicMP: 1.1,
+  dynamicForte: 1.8,
+  dynamicFF: 1.8,
+  dynamicMF: 1.8,
+  dynamicSforzato: 1.8,
+  dynamicFortePiano: 1.8,
+};
 
 const DYNAMIC_GLYPHS: Record<string, string> = {
   pp: 'dynamicPP',
@@ -281,10 +294,15 @@ export function layoutDynamics(
               // Note names or lyrics under the staff push the dynamic below them (no overprinting)
               const labelY = lowestTextBelowStaff(layout, nh.systemIndex, nh.staffTop, nh.x, nh.x + NOTEHEAD_WIDTH);
               const textY = labelY === null ? nh.staffTop + 6.5 : Math.max(nh.staffTop + 6.5, labelY + 1.9);
-              // A chord or note that reaches below the staff (ledger lines): the dynamic goes under its lowest head.
-              // Heads inside the staff give at most the default position, so nothing else moves.
-              // (maxY <= 5 is a note on the staff or on the first ledger line: default position, as before.)
-              const baseY = nh.maxY > 5.0 ? Math.max(textY, nh.maxY + 0.5 + DYNAMIC_HEAD_CLEARANCE) : textY;
+              // A chord or note that reaches below the staff (ledger lines): the dynamic goes under its lowest head,
+              // and under the articulations that sit below the note (stem up). Letters with an ascender (f) are taller
+              // than p, so the baseline depends on the glyph. Heads inside the staff give at most the default
+              // position, so nothing else moves. (maxY <= 5 is a note on the staff or on the first ledger line.)
+              const glyphTop = DYNAMIC_GLYPH_TOP[glyph] ?? 1.1;
+              const articBelow = nh.stemDirection === 'down' ? 0 : (ev.articulations?.length ?? 0);
+              let baseY = textY;
+              if (nh.maxY > 5.0) baseY = Math.max(baseY, nh.maxY + 0.5 + DYNAMIC_GAP + glyphTop);
+              if (articBelow > 0) baseY = Math.max(baseY, nh.maxY + articBelow + ARTIC_BELOW_HEIGHT + DYNAMIC_GAP + glyphTop);
               const posY = baseY + dy;
 
               items.push({
