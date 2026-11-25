@@ -49,7 +49,7 @@ only when the piece shows something no card shows yet.
 2. Performance: EP-PERF2 (50 measures, four staves, three verses) measured in isolation on the owner's machine: median 9.74 ms, p95 11.59 ms (50-measure quartet without lyrics: 4.06 / 5.49 ms); the gate is 30 ms. Under the parallel suite the owner's machine showed a median of 21.5 ms, so the test gates at median 35 ms and p95 90 ms; the design gate is re-checked in isolation with `npx vitest run tests/performance/ensemble_perf.test.ts`. Layout only, no React paint and no mixer panel.
 3. Cross-part selection: out of scope, stated in `KNOWN_ISSUES.md`.
 4. Docs: feature parity, KNOWN_ISSUES, plan and a release notes draft updated.
-5. Visual sign-off: open, owner.
+5. Visual sign-off: given by the owner on 25.11.2026 for all seven fixtures (compared on screen with the scans).
 
 ## 4. What I need from the owner per step
 
