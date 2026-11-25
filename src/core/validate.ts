@@ -20,6 +20,7 @@ import {
 import { isValidClef } from './clef';
 import { isPercussionInstrument } from './instruments';
 import { durationTicks, measureTicks } from './time';
+import { pageSetupProblems } from './pageSetup';
 
 /** Severity level of a validation problem. */
 export type ProblemSeverity = 'error' | 'warning';
@@ -140,6 +141,13 @@ export function validateScore(score: Score): ValidationProblem[] {
       message: `Unsupported beamGrouping: ${String(beamGrouping)} (expected 'beat' or 'half-bar')`,
       severity: 'error',
     });
+  }
+
+  // Page setup (M7d-1): a setup that cannot make a page is an error.
+  if (score.pageSetup !== undefined) {
+    for (const message of pageSetupProblems(score.pageSetup)) {
+      problems.push({ code: 'invalid-page-setup', message: `Invalid pageSetup: ${message}`, severity: 'error' });
+    }
   }
 
   const showNoteNames = score.layoutSettings?.showNoteNames;

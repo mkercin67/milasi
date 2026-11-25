@@ -410,8 +410,18 @@ export function layoutScore(score: Score, options: LayoutOptions = {}): LayoutRe
   let currentHeader = computeHeader(0);
   currentUsedWidth = currentHeader.headerWidth;
 
+  // M7d-1: a measure with systemBreakBefore always starts a system (a break only shortens a system).
+  const forcedBreakBefore = new Set(score.measures.filter((m) => m.systemBreakBefore).map((m) => m.id));
+
   for (let mIdx = 0; mIdx < measureChunks.length; mIdx++) {
     const chunk = measureChunks[mIdx];
+    if (forcedBreakBefore.has(chunk.measureDefId) && currentPlanMeasures.length > 0) {
+      systemPlans.push(makePlan(currentPlanMeasures, currentPlanIndices, currentHeader));
+      currentPlanMeasures = [];
+      currentPlanIndices = [];
+      currentHeader = computeHeader(mIdx);
+      currentUsedWidth = currentHeader.headerWidth;
+    }
     const projectedWidth = currentUsedWidth + chunk.naturalWidth;
 
     if (projectedWidth > targetWidth) {

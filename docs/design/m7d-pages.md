@@ -1,6 +1,6 @@
 # M7d — Pages and layout (design note, DRAFT for owner approval)
 
-Status: DRAFT. No code is written until the owner approves this note.
+Status: APPROVED by the owner on 25.11.2026 (D1 to D9 as proposed; Q2 yes, print CSS moves to M8; Q3 the default view stays "Sürekli"; Q4 a flute piece is preferred over Debussy as the extra acceptance piece, to be chosen with the owner before M7d-5).
 Follows `multi-staff-and-pages.md` sections 7 (Milestone 7d) and 11 (page data model); where this note differs, this note wins and says so.
 
 ## 1. Where we are
@@ -57,7 +57,7 @@ Schema: optional fields. If the repository's migration policy needs a version bu
 
 | Step | Content | Tests |
 |---|---|---|
-| **M7d-1** | Page setup model, conversion mm to sp, `systemBreakBefore` honoured by `layoutScore` (no page code yet) | break forces a new system; JSON round trip; setup defaults; existing layout tests and snapshots unchanged |
+| **M7d-1** (implemented, pending CI) | Page setup model, conversion mm to sp, `systemBreakBefore` honoured by `layoutScore` (no page code yet) | break forces a new system; JSON round trip; setup defaults; existing layout tests and snapshots unchanged |
 | **M7d-2** | `paginate()` with title block on page 1 and running header from page 2, page numbers | property tests: no system overflows the printable height; margins respected; every system on exactly one page; forced breaks respected; vertical justification rules (D7) |
 | **M7d-3** | Commands and UI to set a system break and a page break before the selected measure; Page Setup dialog (paper, orientation, margins, staff size) | command tests; undo/redo; dialog test |
 | **M7d-4** | Page view in the UI: sheets with shadow, "Sürekli / Sayfa" toggle, only the visible page and its neighbours mounted | DOM node count and page switch latency (see section 7); E2E for the toggle |

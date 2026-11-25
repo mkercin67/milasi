@@ -1398,5 +1398,93 @@
     "testFile": "tests/performance/ensemble_perf.test.ts",
     "testName": "EP-PERF2: the same relayout with three lyric verses under every note of every staff (M7c-9f gate)",
     "status": "DONE"
+  },
+  {
+    "planItemId": "B167",
+    "description": "M7d-1: default page setup.",
+    "codeLocation": "src/core/pageSetup.ts",
+    "testFile": "tests/core/m7d_page_setup.test.ts",
+    "testName": "PG1: a score without page setup resolves to A4 portrait, 15 mm margins, 7 mm staff height",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B168",
+    "description": "M7d-1: mm to staff spaces.",
+    "codeLocation": "src/core/pageSetup.ts",
+    "testFile": "tests/core/m7d_page_setup.test.ts",
+    "testName": "PG2: one staff space is 1.75 mm at 7 mm staff height (so 15 mm is 8.571 sp)",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B169",
+    "description": "M7d-1: A4 page geometry.",
+    "codeLocation": "src/core/pageSetup.ts",
+    "testFile": "tests/core/m7d_page_setup.test.ts",
+    "testName": "PG3: A4 portrait is 120 x 169.71 sp with a printable area of 102.857 x 152.571 sp",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B170",
+    "description": "M7d-1: orientation, paper sizes, custom.",
+    "codeLocation": "src/core/pageSetup.ts",
+    "testFile": "tests/core/m7d_page_setup.test.ts",
+    "testName": "PG4: landscape swaps width and height; A5 and Letter have their own sizes; a custom size needs both numbers",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B171",
+    "description": "M7d-1: page setup validation.",
+    "codeLocation": "src/core/validate.ts",
+    "testFile": "tests/core/m7d_page_setup.test.ts",
+    "testName": "PG5: validateScore accepts the defaults and rejects a setup that cannot make a page",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B172",
+    "description": "M7d-1: round trip.",
+    "codeLocation": "src/core/model.ts",
+    "testFile": "tests/core/m7d_page_setup.test.ts",
+    "testName": "PG6: page setup and systemBreakBefore survive a JSON round trip",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B173",
+    "description": "M7d-1: no break, as before.",
+    "codeLocation": "src/layout/layoutScore.ts",
+    "testFile": "tests/layout/m7d_system_break.test.ts",
+    "testName": "SB1: without breaks the measures fill the systems by width only",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B174",
+    "description": "M7d-1: a break starts a system.",
+    "codeLocation": "src/layout/layoutScore.ts",
+    "testFile": "tests/layout/m7d_system_break.test.ts",
+    "testName": "SB2: a break before measure 3 (index 2) makes it the first measure of a system",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B175",
+    "description": "M7d-1: several breaks.",
+    "codeLocation": "src/layout/layoutScore.ts",
+    "testFile": "tests/layout/m7d_system_break.test.ts",
+    "testName": "SB3: several breaks give several systems; a break on the first measure changes nothing",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B176",
+    "description": "M7d-1: a break never lengthens a system.",
+    "codeLocation": "src/layout/layoutScore.ts",
+    "testFile": "tests/layout/m7d_system_break.test.ts",
+    "testName": "SB4: a break only shortens a system, it never makes a system longer than the width allows",
+    "status": "DONE"
+  },
+  {
+    "planItemId": "B177",
+    "description": "M7d-1: no regression.",
+    "codeLocation": "src/layout/layoutScore.ts",
+    "testFile": "tests/layout/m7d_system_break.test.ts",
+    "testName": "SB5: the layout is unchanged when no measure has a break (same result as before M7d)",
+    "status": "DONE"
   }
 ]

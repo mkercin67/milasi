@@ -36,12 +36,29 @@ export interface Score {
   measures: MeasureDef[];
   groups: StaffGroup[];
   overrides: Record<Id, Override>;
+  /** Paper, margins and staff size for the paged view and print (M7d). Absent = A4 portrait defaults. */
+  pageSetup?: PageSetup;
   /** Score-wide engraving settings (optional; absent = defaults). */
   layoutSettings?: {
     beamGrouping?: BeamGroupingMode;
     /** Show a derived note-name line (Do Re Mi or C D E) under each note. Absent = off. */
     showNoteNames?: boolean;
   };
+}
+
+/** Paper sizes the page setup can name; 'custom' needs widthMm and heightMm (M7d). */
+export type PaperSize = 'A4' | 'A5' | 'Letter' | 'custom';
+
+/** Page setup stored in the score (M7d). Pages themselves are derived, never stored. */
+export interface PageSetup {
+  paper: PaperSize;
+  orientation: 'portrait' | 'landscape';
+  /** Only for paper 'custom', in portrait orientation. */
+  widthMm?: number;
+  heightMm?: number;
+  marginsMm: { top: number; bottom: number; left: number; right: number };
+  /** Height of a five-line staff in millimetres (one staff space is a quarter of it). */
+  staffHeightMm: number;
 }
 
 /** Supported barline types for measure endings. */
@@ -78,6 +95,8 @@ export interface MeasureDef {
   repeatStart?: boolean;
   repeatEnd?: boolean;
   volta?: VoltaDef;
+  /** A new system must start with this measure (M7d). A break only ever shortens a system. */
+  systemBreakBefore?: boolean;
 }
 
 /** Supported clef sign symbols. */
